@@ -10,6 +10,7 @@ from core.facebook_tokens import facebook_token_state
 from core.subscriptions import (
     expire_trial_subscription,
     find_latest_subscription,
+    full_access_grant_active,
     trial_has_expired,
     trial_max_available,
 )
@@ -64,33 +65,55 @@ async def get_profile_status(request: Request):
                 "token": facebook_token_state(meta),
             }
 
+    modulos_desactivados = []
+    acceso_completo_hasta = None
+    try:
+        urows = await get_rows(
+            "usuarios",
+            {
+                "id": f"eq.{user_id}",
+                "select": "modulos_desactivados,acceso_completo_hasta",
+                "limit": "1",
+            },
+            timeout=8,
+        )
+        if urows:
+            modulos_desactivados = urows[0].get("modulos_desactivados") or []
+            acceso_completo_hasta = urows[0].get("acceso_completo_hasta")
+    except Exception:
+        pass
+
     sub_state = {"active": False, "plan": None, "status": "sin_suscripcion"}
     try:
-        rol_val = None
-        for row in rows:
-            pass
-        rol_val = await get_user_rol(user_id)
-        if rol_val in ("equipo", "admin"):
+        if full_access_grant_active(acceso_completo_hasta):
             sub_state = {
                 "active": True,
-                "plan": "Equipo Interno" if rol_val == "equipo" else "Admin",
+                "plan": "Acceso completo",
                 "status": "active",
             }
         else:
-            org_id = await get_org_id_for_user(user_id)
-            row = await find_latest_subscription(user_id, org_id, timeout=6)
-            if row:
-                status = row.get("status")
-                active = status in ("active", "trialing")
-                if status == "trialing" and row.get("trial_hasta") and trial_has_expired(row.get("trial_hasta")):
-                    active = False
-                    status = "trial_vencido"
-                    asyncio.create_task(expire_trial_subscription(row.get("id")))
+            rol_val = await get_user_rol(user_id)
+            if rol_val in ("equipo", "admin"):
                 sub_state = {
-                    "active": active,
-                    "plan": row.get("plan_nombre"),
-                    "status": status,
+                    "active": True,
+                    "plan": "Equipo Interno" if rol_val == "equipo" else "Admin",
+                    "status": "active",
                 }
+            else:
+                org_id = await get_org_id_for_user(user_id)
+                row = await find_latest_subscription(user_id, org_id, timeout=6)
+                if row:
+                    status = row.get("status")
+                    active = status in ("active", "trialing")
+                    if status == "trialing" and row.get("trial_hasta") and trial_has_expired(row.get("trial_hasta")):
+                        active = False
+                        status = "trial_vencido"
+                        asyncio.create_task(expire_trial_subscription(row.get("id")))
+                    sub_state = {
+                        "active": active,
+                        "plan": row.get("plan_nombre"),
+                        "status": status,
+                    }
     except Exception:
         pass
 
@@ -100,4 +123,10 @@ async def get_profile_status(request: Request):
         except Exception:
             sub_state["trial_disponible"] = False
 
-    return {"eb": eb_state, "fb": fb_state, "sub": sub_state}
+    return {
+        "eb": eb_state,
+        "fb": fb_state,
+        "sub": sub_state,
+        "modulos_desactivados": modulos_desactivados,
+        "acceso_completo_hasta": acceso_completo_hasta,
+    }

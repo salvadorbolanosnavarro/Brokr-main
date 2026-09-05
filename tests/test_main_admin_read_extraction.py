@@ -27,7 +27,10 @@ class AdminReadExtractionTests(unittest.TestCase):
         r = self.router
         self.assertGreaterEqual(r.count('await require_legacy_admin(request)'), 2)
         self.assertIn('users = await get_rows(', r)
-        self.assertIn('"select": "id,email,nombre,telefono,rol,activo,created_at"', r)
+        self.assertIn(
+            '"select": "id,email,nombre,telefono,rol,activo,created_at,modulos_desactivados,acceso_completo_hasta"',
+            r,
+        )
         self.assertIn('"order": "created_at.desc"', r)
         self.assertIn('"limit": "10000"', r)
         self.assertIn('raise HTTPException(status_code=500, detail=f"Error listando usuarios: {exc.response.text}")', r)

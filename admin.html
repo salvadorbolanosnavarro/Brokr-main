@@ -276,6 +276,15 @@ input,textarea,select{font-family:inherit}
 .adm-emp-grid input:focus{border-color:var(--sky-blue);background:var(--bone)}
 .adm-emp-grid input::placeholder{color:var(--mute-2)}
 
+.adm-modgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:var(--sp-2);margin-top:var(--sp-3)}
+.adm-modchip{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-2);padding:var(--sp-2) var(--sp-3);border-radius:var(--r);border:1px solid var(--line-2);background:var(--bone);text-align:left}
+.adm-modchip span:first-child{font-size:var(--fs-xs);font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adm-modchip.is-off{background:var(--paper-2)}
+.adm-modchip.is-off span:first-child{color:var(--mute)}
+.adm-modchip .adm-switch{width:32px;height:18px;flex-shrink:0}
+.adm-modchip .adm-switch::after{width:14px;height:14px}
+.adm-modchip .adm-switch.is-on::after{transform:translateX(14px)}
+
 @media(max-width:1000px){
   .adm-side.is-hidden{display:none}
   .adm-panel{position:fixed;inset:var(--topbar-h) 0 0;background:var(--paper);z-index:var(--z-nav);display:none}
@@ -455,6 +464,7 @@ input,textarea,select{font-family:inherit}
           <button class="adm-chip is-on" data-f="todos"    onclick="setFilter('todos')">Todos</button>
           <button class="adm-chip"       data-f="admin"    onclick="setFilter('admin')">Admin</button>
           <button class="adm-chip"       data-f="equipo"   onclick="setFilter('equipo')">Equipo</button>
+          <button class="adm-chip"       data-f="acceso-completo" onclick="setFilter('acceso-completo')">Acceso completo</button>
           <button class="adm-chip"       data-f="pagado"   onclick="setFilter('pagado')">Suscritos</button>
           <button class="adm-chip"       data-f="agente"   onclick="setFilter('agente')">Sin suscripción</button>
           <button class="adm-chip"       data-f="inactivo" onclick="setFilter('inactivo')">Bloqueados</button>
@@ -519,6 +529,28 @@ input,textarea,select{font-family:inherit}
               <button type="button" class="ac-btn ac-btn--blue ac-btn--block" id="d-emp-btn" onclick="activarEmpresa()">Activar como empresa</button>
               <button type="button" class="ac-btn ac-btn--block adm-btn-quitar-emp" id="d-emp-quitar" onclick="quitarEmpresa()" hidden>Quitar estatus de empresa</button>
               <div class="adm-emp-hint" id="d-emp-quitar-hint" hidden>El dueño conserva todo el inventario y los contactos de la empresa. Los demás miembros quedan dados de baja al instante y las invitaciones pendientes se cancelan.</div>
+            </div>
+
+            <div class="adm-sec full" id="acc-sec">
+              <div class="adm-sec__title">Acceso completo fuera del equipo</div>
+              <div class="adm-emp-status" id="d-acc-status">—</div>
+              <div class="adm-emp-hint">Dale a esta cuenta todas las funciones de Broquer Max hasta una fecha exacta, sin volverla parte del equipo ni tocar su suscripción de Stripe. Sirve para cortesías, pruebas extendidas o acuerdos puntuales. Al llegar la fecha, el acceso se cierra solo.</div>
+              <div class="adm-emp-grid">
+                <input type="date" id="d-acc-hasta"/>
+              </div>
+              <button type="button" class="ac-btn ac-btn--blue ac-btn--block" id="d-acc-btn" onclick="guardarAccesoCompleto()">Dar acceso completo</button>
+              <button type="button" class="ac-btn ac-btn--block adm-btn-quitar-emp" id="d-acc-quitar" onclick="quitarAccesoCompleto()" hidden>Quitar acceso completo</button>
+            </div>
+
+            <div class="adm-sec full" id="mod-sec">
+              <div class="adm-sec__title">Módulos habilitados para esta cuenta</div>
+              <div class="adm-emp-hint">Apaga los módulos que no quieres que esta cuenta use. No afecta a nadie más ni cambia su plan o suscripción.</div>
+              <div class="adm-modgrid" id="d-mod-grid"></div>
+              <div class="ac-row-acts">
+                <button type="button" class="ac-btn ac-btn--blue" id="d-mod-btn" onclick="guardarModulos()">Guardar módulos</button>
+                <button type="button" class="ac-btn ac-btn--ghost" onclick="marcarTodosModulos(true)">Encender todos</button>
+                <button type="button" class="ac-btn ac-btn--ghost" onclick="marcarTodosModulos(false)">Apagar todos</button>
+              </div>
             </div>
 
             <div class="adm-sec">
@@ -795,6 +827,17 @@ const MOD_LBL = {
   'mi-sitio':'Mi sitio', estadisticas:'Estadísticas', desconocido:'Desconocido'
 };
 
+/* Módulos que se pueden apagar por cuenta desde "Módulos habilitados".
+   Debe reflejar core.module_access.TOGGLEABLE_MODULES en el backend. */
+const MODULOS_TOGGLE = [
+  'props','contactos','tareas','estadisticas','bolsa',
+  'whatsapp','leads','correo',
+  'contratos','firmas','cumplimiento',
+  'avm','isr','finanzas',
+  'image-cleaner','ficha-manual','facebook-ads','video','mi-sitio',
+  'blog','guia'
+];
+
 let token = '';
 let tab = 'panorama';
 let rango = 30;
@@ -802,6 +845,7 @@ let salud = {};
 
 /* usuarios */
 let users = [], filter = 'todos', search = '', selId = null, draft = null;
+let modulosDraft = new Set();
 let _polling = null, _lastIds = new Set(), _usoRangeDias = 30, _usoReqId = 0;
 let empresaOwners = new Map();
 
@@ -1058,6 +1102,10 @@ async function loadUsers(){
   }
 }
 
+function accesoCompletoActivo(u){
+  return !!(u.acceso_completo_hasta && new Date(u.acceso_completo_hasta) > new Date());
+}
+
 function renderAll(){ updateStats(); renderList(); }
 
 function updateStats(){
@@ -1079,6 +1127,7 @@ function getFiltered(){
     if(filter === 'admin')    return u.rol === 'admin';
     if(filter === 'equipo')   return u.rol === 'equipo';
     if(filter === 'agente')   return u.rol === 'agente' && !u.sub_active;
+    if(filter === 'acceso-completo') return accesoCompletoActivo(u);
     return true;
   });
 }
@@ -1095,6 +1144,7 @@ function renderList(){
     if(off){ tagCls='t-off'; tagLbl='Bloqueado'; }
     else if(rol === 'admin'){  tagCls='t-admin';  tagLbl='Admin'; }
     else if(rol === 'equipo'){ tagCls='t-equipo'; tagLbl='Equipo'; }
+    else if(accesoCompletoActivo(u)){ tagCls='t-equipo'; tagLbl='Acceso completo'; }
     else if(u.sub_active){     tagCls='t-active'; tagLbl='Suscrito'; }
     else{                      tagCls='t-free';   tagLbl='Sin sub'; }
     return '<div class="adm-row' + (u.id===selId?' is-on':'') + '" id="row-' + u.id + '" onclick="selectUser(\'' + u.id + '\')">' +
@@ -1141,6 +1191,7 @@ function selectUser(uid){
   if(!u) return;
   selId = uid;
   draft = { id: u.id, rol: u.rol || 'agente', activo: u.activo !== false };
+  modulosDraft = new Set(u.modulos_desactivados || []);
   document.querySelectorAll('.adm-row').forEach(r => r.classList.remove('is-on'));
   const fila = document.getElementById('row-'+uid);
   if(fila) fila.classList.add('is-on');
@@ -1192,6 +1243,8 @@ function renderDetail(u){
     : 'No podrá iniciar sesión hasta que la reactives.';
 
   renderRolGrid();
+  renderAccesoCompleto(u);
+  renderModulosGrid();
 
   const emp = empresaOwners.get(u.id);
   const empStatus = document.getElementById('d-emp-status');
@@ -1244,6 +1297,7 @@ function resetDetail(){
   const u = users.find(x => x.id === selId);
   if(!u) return;
   draft = { id: u.id, rol: u.rol || 'agente', activo: u.activo !== false };
+  modulosDraft = new Set(u.modulos_desactivados || []);
   renderDetail(u);
 }
 function closeMobileDetail(){
@@ -1354,6 +1408,134 @@ async function quitarEmpresa(){
   }finally{
     btn.disabled = false;
     if(!btn.textContent || btn.querySelector('.adm-spinner')) btn.textContent = prev;
+  }
+}
+
+/* ── Acceso completo (independiente del rol "equipo") ────── */
+function renderAccesoCompleto(u){
+  const status = document.getElementById('d-acc-status');
+  const input = document.getElementById('d-acc-hasta');
+  const btn = document.getElementById('d-acc-btn');
+  const quitar = document.getElementById('d-acc-quitar');
+  const hasta = u.acceso_completo_hasta;
+  const activo = accesoCompletoActivo(u);
+  if(activo){
+    status.textContent = 'Activo hasta ' + fecha(hasta);
+    status.classList.add('is-emp');
+    quitar.hidden = false;
+    btn.textContent = 'Actualizar fecha';
+  } else {
+    status.textContent = hasta ? ('Venció el ' + fecha(hasta)) : 'Sin acceso completo por fuera del equipo.';
+    status.classList.remove('is-emp');
+    quitar.hidden = true;
+    btn.textContent = 'Dar acceso completo';
+  }
+  input.value = hasta ? new Date(hasta).toISOString().slice(0, 10) : '';
+}
+
+async function guardarAccesoCompleto(){
+  if(!selId) return;
+  const u = users.find(x => x.id === selId);
+  if(!u) return;
+  const raw = document.getElementById('d-acc-hasta').value;
+  if(!raw){ toast('Elige una fecha de término.', true); return; }
+  // Fin del día local para que "hasta esa fecha" incluya el día completo.
+  const hasta = new Date(raw + 'T23:59:59');
+  if(isNaN(hasta.getTime()) || hasta <= new Date()){ toast('La fecha debe ser futura.', true); return; }
+
+  const btn = document.getElementById('d-acc-btn');
+  const prev = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="adm-spinner"></span>';
+  try{
+    const d = await apiJson('/admin/user/acceso-completo', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ user_id: u.id, hasta: hasta.toISOString() })
+    });
+    u.acceso_completo_hasta = d.acceso_completo_hasta;
+    toast('Acceso completo activado.');
+    renderAccesoCompleto(u);
+    renderList();
+  }catch(e){
+    toast('Error: ' + e.message, true);
+  }finally{
+    btn.disabled = false;
+    if(btn.querySelector('.adm-spinner')) btn.textContent = prev;
+  }
+}
+
+async function quitarAccesoCompleto(){
+  if(!selId) return;
+  const u = users.find(x => x.id === selId);
+  if(!u) return;
+  if(!confirm('¿Quitar el acceso completo de esta cuenta?')) return;
+
+  const btn = document.getElementById('d-acc-quitar');
+  const prev = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="adm-spinner"></span>';
+  try{
+    const d = await apiJson('/admin/user/acceso-completo', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ user_id: u.id, hasta: null })
+    });
+    u.acceso_completo_hasta = d.acceso_completo_hasta;
+    toast('Acceso completo retirado.');
+    renderAccesoCompleto(u);
+    renderList();
+  }catch(e){
+    toast('Error: ' + e.message, true);
+  }finally{
+    btn.disabled = false;
+    if(!btn.textContent || btn.querySelector('.adm-spinner')) btn.textContent = prev;
+  }
+}
+
+/* ── Módulos habilitados por cuenta ───────────────────────── */
+function renderModulosGrid(){
+  const el = document.getElementById('d-mod-grid');
+  el.innerHTML = MODULOS_TOGGLE.map(k => {
+    const on = !modulosDraft.has(k);
+    return '<button type="button" class="adm-modchip' + (on ? '' : ' is-off') + '" onclick="toggleModulo(\'' + k + '\')">' +
+      '<span>' + escapeHtml(MOD_LBL[k] || k) + '</span>' +
+      '<span class="adm-switch' + (on ? ' is-on' : '') + '"></span>' +
+    '</button>';
+  }).join('');
+}
+
+function toggleModulo(key){
+  if(modulosDraft.has(key)) modulosDraft.delete(key);
+  else modulosDraft.add(key);
+  renderModulosGrid();
+}
+
+function marcarTodosModulos(encender){
+  modulosDraft = encender ? new Set() : new Set(MODULOS_TOGGLE);
+  renderModulosGrid();
+}
+
+async function guardarModulos(){
+  if(!selId) return;
+  const u = users.find(x => x.id === selId);
+  if(!u) return;
+  const modulos = Array.from(modulosDraft);
+
+  const btn = document.getElementById('d-mod-btn');
+  const prev = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="adm-spinner"></span>';
+  try{
+    await apiJson('/admin/user/modulos', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ user_id: u.id, modulos_desactivados: modulos })
+    });
+    u.modulos_desactivados = modulos;
+    toast('Módulos actualizados.');
+  }catch(e){
+    toast('Error: ' + e.message, true);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = prev;
   }
 }
 

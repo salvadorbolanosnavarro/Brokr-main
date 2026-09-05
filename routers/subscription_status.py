@@ -11,6 +11,7 @@ from core.organizations import get_org_context, get_org_id_for_user
 from core.subscriptions import (
     expire_trial_subscription,
     find_latest_subscription,
+    full_access_grant_active,
     trial_has_expired,
     trial_max_available,
 )
@@ -36,6 +37,15 @@ async def subscription_status(request: Request):
 
     if not activo:
         return {"active": False, "plan": None, "plan_id": None, "status": "desactivada"}
+
+    if full_access_grant_active(access.get("acceso_completo_hasta")):
+        return {
+            "active": True,
+            "plan": "Acceso completo",
+            "plan_id": "acceso-completo",
+            "status": "active",
+            "acceso_completo_hasta": access.get("acceso_completo_hasta"),
+        }
 
     if rol in ("equipo", "admin"):
         return {"active": True, "plan": "Equipo Interno" if rol == "equipo" else "Admin", "plan_id": rol, "status": "active"}

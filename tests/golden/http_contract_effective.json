@@ -1,5 +1,5 @@
 {
-  "count": 251,
+  "count": 253,
   "operations": [
     {
       "body": false,
@@ -52,6 +52,16 @@
       "body": true,
       "method": "POST",
       "params": [],
+      "path": "/admin/user/acceso-completo",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
       "path": "/admin/user/activo",
       "responses": [
         "200",
@@ -63,6 +73,16 @@
       "method": "POST",
       "params": [],
       "path": "/admin/user/eliminar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/admin/user/modulos",
       "responses": [
         "200",
         "422"

@@ -24,9 +24,12 @@ class MainUserAccessStateCoreRefactorTests(unittest.TestCase):
         start = self.source.index("async def get_user_access_state(user_id: str) -> dict:")
         block = self.source[start:]
 
-        self.assertIn('default = {"rol": "agente", "activo": False}', block)
+        self.assertIn(
+            'default = {"rol": "agente", "activo": False, "acceso_completo_hasta": None}',
+            block,
+        )
         self.assertIn('rows = await get_rows(\n            "usuarios",', block)
-        self.assertIn('"select": "rol,activo"', block)
+        self.assertIn('"select": "rol,activo,acceso_completo_hasta"', block)
         self.assertIn('"limit": "1"', block)
         self.assertIn("timeout=8", block)
         self.assertIn('"rol": rows[0].get("rol") or "agente"', block)

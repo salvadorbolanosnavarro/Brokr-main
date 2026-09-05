@@ -32,6 +32,27 @@ def _not_expired(value: object) -> bool:
         return False
 
 
+def full_access_grant_active(acceso_completo_hasta) -> bool:
+    """Return whether an admin-granted full-access window is still open.
+
+    This is independent from ``rol`` (equipo/admin) and from any Stripe
+    subscription: an admin can hand any account paid-feature access through
+    a specific end date without making them part of the internal team.
+    Unlike ``_not_expired`` — used for columns where an empty value means
+    "no limit" — a missing value here means no grant exists at all, so it
+    must return ``False`` rather than fail open.
+    """
+    if not acceso_completo_hasta:
+        return False
+    try:
+        expires_at = datetime.fromisoformat(str(acceso_completo_hasta).replace("Z", "+00:00"))
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        return expires_at > datetime.now(timezone.utc)
+    except (TypeError, ValueError):
+        return False
+
+
 def trial_has_expired(trial_hasta) -> bool:
     """Preserve the legacy trial expiration parser used by status endpoints."""
     try:
@@ -119,7 +140,7 @@ async def has_paid_feature_access(user_id: str) -> bool:
             "usuarios",
             {
                 "id": f"eq.{user_id}",
-                "select": "rol,activo",
+                "select": "rol,activo,acceso_completo_hasta",
                 "limit": "1",
             },
             timeout=8,
@@ -131,6 +152,8 @@ async def has_paid_feature_access(user_id: str) -> bool:
         if user.get("activo") is False:
             return False
         if (user.get("rol") or "agente") in INTERNAL_ACCESS_ROLES:
+            return True
+        if full_access_grant_active(user.get("acceso_completo_hasta")):
             return True
 
         context = await get_org_context(user_id)

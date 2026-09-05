@@ -38,7 +38,10 @@ class UserAccessStateNullActivoTests(unittest.IsolatedAsyncioTestCase):
             ),
         ):
             state = await get_user_access_state("user-1")
-        self.assertEqual(state, {"rol": "agente", "activo": True})
+        self.assertEqual(
+            state,
+            {"rol": "agente", "activo": True, "acceso_completo_hasta": None},
+        )
 
     async def test_explicit_false_still_disables_the_account(self):
         with (
