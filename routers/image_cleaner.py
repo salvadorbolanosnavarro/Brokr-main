@@ -17,7 +17,7 @@ from limites import exigir_cupo, exigir_sesion
 
 
 try:
-    from PIL import Image, ImageEnhance
+    from PIL import Image, ImageEnhance, ImageOps
     PIL_AVAILABLE = True
 except ImportError:
     PIL_AVAILABLE = False
@@ -44,6 +44,11 @@ def _process_image_sync(file_bytes: bytes, content_type: str) -> bytes:
     if not PIL_AVAILABLE:
         return file_bytes
     img = Image.open(io.BytesIO(file_bytes))
+    # Las fotos de celular vienen con la rotación real en el tag EXIF
+    # "Orientation", no en los píxeles. Si no se aplica aquí, todo el
+    # pipeline (numpy/cv2, resize, etc.) opera sobre la imagen "acostada"
+    # y el archivo final se guarda sin ese EXIF, quedando girado 90°.
+    img = ImageOps.exif_transpose(img)
     if img.width * img.height > MAX_IMAGE_PIXELS:
         raise ValueError("La imagen tiene demasiados píxeles.")
     img = img.convert("RGB")
@@ -103,6 +108,9 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
 
     if PIL_AVAILABLE:
         pil = Image.open(io.BytesIO(img_bytes))
+        # Misma corrección de orientación EXIF que en _process_image_sync:
+        # sin esto, Gemini recibe (y a veces devuelve) la foto girada 90°.
+        pil = ImageOps.exif_transpose(pil)
         if pil.width * pil.height > MAX_IMAGE_PIXELS:
             raise ValueError("La imagen tiene demasiados píxeles.")
         pil = pil.convert("RGB")
