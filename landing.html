@@ -450,7 +450,7 @@ button { font-family: inherit; }
         <span>Pídele a Broq</span>
       </span>
     </a>
-    <p class="ln-hero__nota">Empieza gratis. Sin tarjeta. También en iPhone y iPad.</p>
+    <p class="ln-hero__nota">También en iPhone y iPad.</p>
 
     <div class="ln-hero__media">
       <video autoplay muted loop playsinline poster="animacion-broquer.png">
@@ -499,7 +499,7 @@ button { font-family: inherit; }
           <span class="ln-mod__ico">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
           </span>
-          <span class="b2-tag b2-tag--free">Gratis</span>
+
         </div>
         <h3>CRM inmobiliario</h3>
         <p>Contactos, leads, tareas e inventario en un solo lugar.</p>
@@ -690,7 +690,7 @@ button { font-family: inherit; }
     <div class="ln-sec-head">
       <div class="eyebrow">Precios</div>
       <h2>Para ti o para toda tu inmobiliaria.</h2>
-      <p>Puedes comenzar gratis y usar el CRM.</p>
+      <p>Elige el plan que mejor se adapte a tu operación.</p>
     </div>
     <div class="ln-planes">
 
@@ -780,7 +780,7 @@ button { font-family: inherit; }
   <div class="b2-wrap">
     <h2>Tu operación inmobiliaria merece un sistema operativo a la altura</h2>
     <p>Únete a los agentes que están cerrando más.</p>
-    <a class="b2-btn b2-btn--blue" href="registro.html">Empieza gratis hoy</a>
+    <a class="b2-btn b2-btn--blue" href="registro.html">Empieza hoy</a>
   </div>
 </section>
 
@@ -952,7 +952,7 @@ button { font-family: inherit; }
 
 <!-- ═══ Agendar demo ═══ -->
 <style>
-  .ln-demo-ov[hidden], .ln-max-ov[hidden] { display: none; }
+  .ln-demo-ov[hidden] { display: none; }
   .ln-demo-ov { position: fixed; inset: 0; z-index: 90; background: rgba(8,28,78,.46);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -975,24 +975,7 @@ button { font-family: inherit; }
   .ln-demo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .ln-demo-msg { min-height: 18px; font-size: var(--fs-label-3); margin-top: 8px; }
 
-  /* ═══ Promo: evento AMPI y PIMAC ═══ */
-  .ln-max-ov { position: fixed; inset: 0; z-index: 95; background: rgba(8,28,78,.55);
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .ln-max-card { width: 100%; max-width: 480px; background: var(--sky-navy);
-    border: 1px solid color-mix(in srgb, var(--paper) 22%, transparent); border-radius: var(--r-modal);
-    padding: 48px 40px 40px; text-align: center; position: relative; box-shadow: var(--shadow-lg); }
-  .ln-max-card h2 { font-size: clamp(var(--fs-h2), 3.4vw, var(--fs-display)); line-height: 1.1; letter-spacing: -.025em;
-    color: var(--paper); margin: 0 0 14px; }
-  .ln-max-card h2 em { font-style: normal; color: var(--paper); text-decoration: underline;
-    text-decoration-thickness: 3px; text-underline-offset: 7px;
-    text-decoration-color: var(--success); }
-  .ln-max-card p { font-size: var(--fs-body-lg); color: color-mix(in srgb, var(--paper) 78%, transparent); line-height: 1.5;
-    margin: 0 0 28px; }
-  .ln-max-x { position: absolute; top: 14px; right: 16px; border: none; background: transparent;
-    color: color-mix(in srgb, var(--paper) 55%, transparent); font-size: var(--fs-h3); line-height: 1; cursor: pointer;
-    padding: 4px 8px; font-family: inherit; transition: color .15s; }
-  .ln-max-x:hover { color: var(--paper); }
+
 </style>
 
 <div class="ln-demo-ov" id="ln-demo-ov" hidden>
@@ -1031,14 +1014,7 @@ button { font-family: inherit; }
   </div>
 </div>
 
-<div class="ln-max-ov" id="ln-max-ov" hidden>
-  <div class="ln-max-card">
-    <button class="ln-max-x" type="button" onclick="lnCerrarMax()" aria-label="Cerrar">&times;</button>
-    <h2>Si vienes del evento de <em>AMPI y PIMAC</em></h2>
-    <p>Crea tu cuenta para aprovechar la promoción. Válida solo hasta la medianoche de hoy.</p>
-    <button class="b2-btn b2-btn--blue" type="button" onclick="lnIrAPromo()" style="width:100%;box-sizing:border-box;">Aprovechar la promoción</button>
-  </div>
-</div>
+
 
 <script>
 /* ── Agendar demo ── */
@@ -1098,37 +1074,7 @@ button { font-family: inherit; }
   };
 })();
 
-/* ── Promo: evento AMPI y PIMAC ──
-   Sale en cada carga de la página. Si el usuario la cierra y llega al
-   final de la landing (ya la leyó completa), vuelve a salir una vez.
-   Se apaga para siempre a partir de PROMO_AMPI_CORTE: pasada esa hora el
-   IIFE corta de inmediato y el pop-up ya nunca vuelve a aparecer, sin
-   importar cuántas veces se recargue la página en el futuro. */
-(function () {
-  var PROMO_AMPI_CORTE = new Date('2026-09-05T00:00:00-06:00'); // medianoche de hoy, hora Ciudad de México
-  if (new Date() >= PROMO_AMPI_CORTE) return;
 
-  var ov = document.getElementById('ln-max-ov');
-  var salioAlFinal = false;
-
-  window.lnCerrarMax = function () { ov.hidden = true; };
-  window.lnIrAPromo = function () {
-    try { localStorage.setItem('promo_pendiente', 'ampi'); } catch (_) {}
-    window.location.href = 'login.html?promo=ampi';
-  };
-  ov.addEventListener('click', function (e) { if (e.target === ov) lnCerrarMax(); });
-
-  setTimeout(function () { ov.hidden = false; }, 1200);
-
-  window.addEventListener('scroll', function () {
-    if (salioAlFinal || !ov.hidden) return;
-    var fondo = document.documentElement.scrollHeight - window.innerHeight - 120;
-    if (window.scrollY >= fondo) {
-      salioAlFinal = true;
-      ov.hidden = false;
-    }
-  }, { passive: true });
-})();
 </script>
 
 </body>
