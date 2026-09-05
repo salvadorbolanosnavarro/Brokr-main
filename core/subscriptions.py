@@ -13,7 +13,7 @@ import httpx
 from fastapi import HTTPException, Request
 
 from core.auth import require_user_id
-from core.database import get_rows, get_service_json_or_empty, patch_rows
+from core.database import get_rows, patch_rows
 from core.organizations import get_org_context, get_org_id_for_user
 
 ACTIVE_SUBSCRIPTION_STATUSES = frozenset({"active", "trialing"})
@@ -25,6 +25,27 @@ def _not_expired(value: object) -> bool:
         return True
     try:
         expires_at = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        return expires_at > datetime.now(timezone.utc)
+    except (TypeError, ValueError):
+        return False
+
+
+def full_access_grant_active(acceso_completo_hasta) -> bool:
+    """Return whether an admin-granted full-access window is still open.
+
+    This is independent from ``rol`` (equipo/admin) and from any Stripe
+    subscription: an admin can hand any account paid-feature access through
+    a specific end date without making them part of the internal team.
+    Unlike ``_not_expired`` — used for columns where an empty value means
+    "no limit" — a missing value here means no grant exists at all, so it
+    must return ``False`` rather than fail open.
+    """
+    if not acceso_completo_hasta:
+        return False
+    try:
+        expires_at = datetime.fromisoformat(str(acceso_completo_hasta).replace("Z", "+00:00"))
         if expires_at.tzinfo is None:
             expires_at = expires_at.replace(tzinfo=timezone.utc)
         return expires_at > datetime.now(timezone.utc)
@@ -53,28 +74,6 @@ async def expire_trial_subscription(sub_id) -> None:
         )
     except Exception:
         pass
-
-
-async def trial_max_available(user_id: str) -> bool:
-    """Return whether the one-time seven-day Broquer Max gift is still unused.
-
-    Historical policy is intentionally fail-closed because granting a trial is
-    a monetary entitlement: any uncertainty returns ``False``.
-    """
-    try:
-        users = await get_service_json_or_empty(
-            "usuarios",
-            {"id": f"eq.{user_id}", "select": "trial_max_usado", "limit": "1"},
-        )
-        if users and users[0].get("trial_max_usado"):
-            return False
-        subscriptions = await get_service_json_or_empty(
-            "suscripciones",
-            {"user_id": f"eq.{user_id}", "select": "id", "limit": "1"},
-        )
-        return not subscriptions
-    except Exception:
-        return False
 
 
 async def find_latest_subscription(
@@ -119,7 +118,7 @@ async def has_paid_feature_access(user_id: str) -> bool:
             "usuarios",
             {
                 "id": f"eq.{user_id}",
-                "select": "rol,activo",
+                "select": "rol,activo,acceso_completo_hasta",
                 "limit": "1",
             },
             timeout=8,
@@ -131,6 +130,8 @@ async def has_paid_feature_access(user_id: str) -> bool:
         if user.get("activo") is False:
             return False
         if (user.get("rol") or "agente") in INTERNAL_ACCESS_ROLES:
+            return True
+        if full_access_grant_active(user.get("acceso_completo_hasta")):
             return True
 
         context = await get_org_context(user_id)

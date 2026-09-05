@@ -21,7 +21,6 @@ class StripeConfigExtractionTests(unittest.TestCase):
             "STRIPE_PRICE_EMPRESA_ANUAL", "STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL",
             "STRIPE_PRICE_EMPRESA_EXTRA_ANUAL", "EMPRESA_ASIENTOS_BASE",
             "EMPRESA_ASIENTOS_MAX", "EMPRESA_TARIFAS", "PROMO_CODE_AMPI",
-            "TRIAL_MAX_DIAS",
         ):
             tree = ast.parse(self.main)
             assigned = {
@@ -41,7 +40,7 @@ class StripeConfigExtractionTests(unittest.TestCase):
         self.assertIn('EMPRESA_ASIENTOS_MAX = 500', core)
         self.assertIn('"mensual": {"base": 3499, "extra": 599, "etiqueta": "al mes"}', core)
         self.assertIn('"anual": {"base": 38489, "extra": 6589, "etiqueta": "al año"}', core)
-        self.assertIn('TRIAL_MAX_DIAS = 7', core)
+        self.assertNotIn('TRIAL_MAX_DIAS', core)
         self.assertIn('PROMO_CODE_AMPI = "ampi2026"', core)
         self.assertIn('"Authorization": f"Bearer {STRIPE_SECRET_KEY}"', core)
         self.assertIn('"Content-Type": "application/x-www-form-urlencoded"', core)

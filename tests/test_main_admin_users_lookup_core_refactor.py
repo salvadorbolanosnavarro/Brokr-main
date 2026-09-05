@@ -14,7 +14,10 @@ class MainAdminUsersLookupCoreRefactorTests(unittest.TestCase):
     def test_admin_users_lookup_uses_core_and_preserves_http_error_detail(self):
         block = self.block
         self.assertIn('users = await get_rows(\n            "usuarios",', block)
-        self.assertIn('"select": "id,email,nombre,telefono,rol,activo,created_at"', block)
+        self.assertIn(
+            '"select": "id,email,nombre,telefono,rol,activo,created_at,modulos_desactivados,acceso_completo_hasta"',
+            block,
+        )
         self.assertIn('"order": "created_at.desc"', block)
         self.assertIn('"limit": "10000"', block)
         self.assertIn("timeout=15", block)

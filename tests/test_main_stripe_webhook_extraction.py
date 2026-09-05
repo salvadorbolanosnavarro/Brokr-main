@@ -31,9 +31,11 @@ class StripeWebhookExtractionTests(unittest.TestCase):
     def test_checkout_completed_contract_is_preserved(self):
         r = self.router
         self.assertIn('event_type == "checkout.session.completed"', r)
-        self.assertIn('"status": "trialing" if es_trial else "active"', r)
-        self.assertIn('await patch_rows_ignoring_http_status(', r)
-        self.assertIn('{"trial_max_usado": True}', r)
+        start = r.index('event_type == "checkout.session.completed"')
+        end = r.index('elif event_type in ("customer.subscription.updated"', start)
+        checkout_block = r[start:end]
+        self.assertIn('"status": "active"', checkout_block)
+        self.assertNotIn('trial', checkout_block.lower())
         self.assertIn('await activate_enterprise_subscription(', r)
         self.assertIn('prefer="resolution=merge-duplicates,return=minimal"', r)
         self.assertIn('except httpx.HTTPStatusError:\n                pass', r)

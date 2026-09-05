@@ -1,4 +1,12 @@
-"""Permanent guards for legacy trial policies centralized in Core."""
+"""Permanent guards for legacy trial policies centralized in Core.
+
+The one-time seven-day Broquer Max gift (``trial_max_available`` and the
+``POST /subscription/trial-max`` endpoint that granted it) was removed —
+Broquer no longer offers a no-card trial to new accounts. The expiry
+machinery below stays: a "trialing" subscription created before the trial
+was retired must still run out on its own ``trial_hasta`` instead of being
+cut off mid-way.
+"""
 from pathlib import Path
 import unittest
 
@@ -11,14 +19,10 @@ class CoreSubscriptionTrialPoliciesTests(unittest.TestCase):
     def setUpClass(cls):
         cls.source = CORE.read_text(encoding="utf-8")
 
-    def test_trial_availability_remains_fail_closed_and_one_time(self):
+    def test_trial_grant_was_removed(self):
         s = self.source
-        self.assertIn("async def trial_max_available(user_id: str) -> bool:", s)
-        self.assertIn('"trial_max_usado"', s)
-        self.assertIn('"suscripciones"', s)
-        self.assertIn('return not subscriptions', s)
-        self.assertIn('except Exception:\n        return False', s)
-        self.assertIn('get_service_json_or_empty', s)
+        self.assertNotIn("async def trial_max_available(", s)
+        self.assertNotIn("trial_max_usado", s)
 
     def test_trial_expiration_parser_preserves_legacy_fail_soft(self):
         s = self.source

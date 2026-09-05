@@ -35,14 +35,13 @@ class MainProfileStatusExtractionTests(unittest.TestCase):
         self.assertIn('status in ("active", "trialing")', r)
         self.assertIn('trial_has_expired(row.get("trial_hasta"))', r)
         self.assertIn('asyncio.create_task(expire_trial_subscription(row.get("id")))', r)
-        self.assertIn('await trial_max_available(user_id)', r)
+        self.assertNotIn('trial_max_available', r)
 
     def test_main_reuses_core_trial_aliases_for_remaining_subscription_routes(self):
         m = self.main
         self.assertIn('expire_trial_subscription as _expirar_trial_suscripcion', m)
         self.assertIn('trial_has_expired as _trial_ya_vencio', m)
-        self.assertIn('trial_max_available as _trial_max_disponible', m)
-        self.assertNotIn('async def _trial_max_disponible(user_id: str) -> bool:', m)
+        self.assertNotIn('trial_max_available', m)
         self.assertNotIn('def _trial_ya_vencio(trial_hasta) -> bool:', m)
         self.assertNotIn('async def _expirar_trial_suscripcion(sub_id) -> None:', m)
 

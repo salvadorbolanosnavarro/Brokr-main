@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 from core.database import get_rows
 from core.legacy_admin import require_legacy_admin
+from core.subscriptions import full_access_grant_active
 
 
 router = APIRouter()
@@ -24,7 +25,7 @@ async def admin_list_users(request: Request):
         users = await get_rows(
             "usuarios",
             {
-                "select": "id,email,nombre,telefono,rol,activo,created_at",
+                "select": "id,email,nombre,telefono,rol,activo,created_at,modulos_desactivados,acceso_completo_hasta",
                 "order": "created_at.desc",
                 "limit": "10000",
             },
@@ -69,6 +70,9 @@ async def admin_list_users(request: Request):
             "sub_plan_id": sub.get("plan_id") if sub else None,
             "sub_updated_at": sub.get("updated_at") if sub else None,
             "sub_active": (sub.get("status") in ("active", "trialing")) if sub else False,
+            "modulos_desactivados": u.get("modulos_desactivados") or [],
+            "acceso_completo_hasta": u.get("acceso_completo_hasta"),
+            "acceso_completo_activo": full_access_grant_active(u.get("acceso_completo_hasta")),
         })
 
     return {"ok": True, "users": result, "count": len(result)}

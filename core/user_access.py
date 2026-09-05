@@ -31,20 +31,25 @@ async def get_user_rol(user_id: str) -> str:
 
 
 async def get_user_access_state(user_id: str) -> dict:
-    """Return ``rol`` + ``activo`` and deny access when state is uncertain.
+    """Return ``rol`` + ``activo`` (+ ``acceso_completo_hasta``) and deny
+    access when state is uncertain.
 
     ``activo`` is ``NULL`` for accounts that were never explicitly disabled,
     so ``NULL`` maps to ``True`` here — matching every other reader of this
     column. Fail-closed only applies when the lookup itself is uncertain:
     missing configuration, no matching row, or the Supabase request failing.
+
+    ``acceso_completo_hasta`` is the expiration of an admin-granted full
+    access window that is independent from ``rol`` and from any Stripe
+    subscription — see ``core.subscriptions.full_access_grant_active``.
     """
-    default = {"rol": "agente", "activo": False}
+    default = {"rol": "agente", "activo": False, "acceso_completo_hasta": None}
     if not user_id or not settings.supabase_url or not settings.supabase_service_key:
         return default
     try:
         rows = await get_rows(
             "usuarios",
-            {"id": f"eq.{user_id}", "select": "rol,activo", "limit": "1"},
+            {"id": f"eq.{user_id}", "select": "rol,activo,acceso_completo_hasta", "limit": "1"},
             timeout=8,
         )
         if rows:
@@ -52,6 +57,7 @@ async def get_user_access_state(user_id: str) -> dict:
             return {
                 "rol": rows[0].get("rol") or "agente",
                 "activo": True if activo is None else bool(activo),
+                "acceso_completo_hasta": rows[0].get("acceso_completo_hasta"),
             }
     except Exception:
         pass

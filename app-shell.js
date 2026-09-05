@@ -1442,7 +1442,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
     if (!user?.id) { location.href = bkAuthRedirectTarget(); return null; }
     let profile = [];
-    try { profile = await sbFetch(`usuarios?id=eq.${user.id}&select=nombre,telefono,rol`); } catch (e) {}
+    try {
+      profile = await sbFetch(`usuarios?id=eq.${user.id}&select=nombre,telefono,rol,modulos_desactivados,acceso_completo_hasta`);
+    } catch (e) {}
     const fullName = profile[0]?.nombre || user.email?.split('@')[0] || 'Usuario';
     return { user, fullName, profile: profile[0] || {}, isAdmin: profile[0]?.rol === 'admin' };
   }
@@ -1539,8 +1541,12 @@ body[data-app="facebook-ads"]{--page-max:980px}
       pageWrap.insertBefore(backWrap, pageWrap.firstChild);
     }
 
+    // Módulos que un admin apagó para esta cuenta desde la Consola —
+    // independiente del rol y de la suscripción.
+    const modulosOff = new Set((profile && profile.profile && profile.profile.modulos_desactivados) || []);
+
     // "Equipo" vive en el drawer de perfil, no en el sidebar.
-    const visible = m => (!m.adminOnly || profile?.isAdmin) && !m.hidden;
+    const visible = m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && !modulosOff.has(m.key);
     const porGrupo = k => MODS.filter(m => m.group === k && visible(m));
 
     const shell = document.createElement('div');
@@ -1657,7 +1663,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         const nq = norm(input.value.trim());
         const acts = ACCIONES.filter(a => norm(a.n).includes(nq))
           .map(a => ({ n: a.n, href: a.href, grp: 'Acción', icon: 'plus' }));
-        const mods = MODS.filter(m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && norm(m.label).includes(nq))
+        const mods = MODS.filter(m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && !modulosOff.has(m.key) && norm(m.label).includes(nq))
           .map(m => ({ n: m.label, href: m.href, grp: grupoLabel(m.group), icon: m.icon }));
         resultados = [...acts, ...mods];
         sel = 0;
@@ -4091,52 +4097,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     document.body.appendChild(ov);
     if (IS_IOS_NATIVE) rcRenderPrice();
   }
-  /* ── Trial de 7 días desde el gate ─────────────────────────────────
-     El usuario ya está registrado: si su cuenta todavía tiene el regalo,
-     el modal anuncia los 7 días gratis y los activa solo. Si el regalo ya
-     se usó (o falla la activación), cae al modal de suscripción normal. */
-  async function bkActivarTrialDesdeGate() {
-    const est = document.getElementById('bk-trial-estado');
-    const btn = document.getElementById('bk-trial-continuar');
-    try {
-      const tok = getToken();
-      const r = await fetch(API_BASE + '/subscription/trial-max', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }
-      });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.detail || 'No se pudo activar la prueba.');
-      window.__BK_SUB_ACTIVE = true;
-      window.__BK_TRIAL_DISP = false;
-      if (est) est.textContent = 'Listo: Broquer Max quedó activado por 7 días.';
-      if (btn) { btn.disabled = false; btn.textContent = 'Continuar'; }
-    } catch (e) {
-      window.__BK_TRIAL_DISP = false;
-      closeBroquerMaxModal();
-      bkShowSubscribeModal();
-    }
-  }
-
-  function bkShowTrialModal() {
-    if (document.getElementById('bk-max-modal')) return;
-    const ov = document.createElement('div');
-    ov.id = 'bk-max-modal';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(8,28,78,.46);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:var(--font-sans);';
-    ov.innerHTML = `
-      <div style="width:100%;max-width:440px;background:var(--sky-navy);border:1px solid rgba(255,255,255,.22);border-radius:28px;padding:44px 34px 34px;box-shadow:0 20px 60px rgba(5,32,60,.40);text-align:center;position:relative;">
-        <button onclick="closeBroquerMaxModal()" aria-label="Cerrar" style="position:absolute;top:12px;right:14px;border:none;background:transparent;color:rgba(255,255,255,.55);font-size:24px;line-height:1;cursor:pointer;padding:4px 8px;font-family:inherit;">&times;</button>
-        <h2 style="font-family:var(--font-display);font-size:28px;line-height:1.12;letter-spacing:-.02em;margin:0 0 12px;color:#FFFFFF;">Obtén 7 días de Broquer MAX <em style="font-style:normal;text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:6px;text-decoration-color:var(--sky-blue-on-dark);">completamente GRATIS</em></h2>
-        <p style="color:rgba(255,255,255,.78);font-size:16px;line-height:1.5;margin:0 0 20px;">Acceso ilimitado.</p>
-        <div id="bk-trial-estado" style="color:rgba(255,255,255,.85);font-size:13px;min-height:20px;margin-bottom:12px;">Activando tu acceso…</div>
-        <button id="bk-trial-continuar" disabled onclick="closeBroquerMaxModal()" style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue-on-dark);color:var(--sky-navy);font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;">Activando…</button>
-      </div>`;
-    ov.addEventListener('click', (e) => { if (e.target === ov) closeBroquerMaxModal(); });
-    document.body.appendChild(ov);
-    bkActivarTrialDesdeGate();
-  }
-
   function showBroquerMaxModal() {
-    if (window.__BK_TRIAL_DISP) { bkShowTrialModal(); return; }
     bkShowSubscribeModal();
   }
   window.showBroquerMaxModal = showBroquerMaxModal;
@@ -4253,7 +4214,6 @@ body[data-app="facebook-ads"]{--page-max:980px}
             return true;
           }
           confirmedInactive = true;
-          window.__BK_TRIAL_DISP = !!d.trial_disponible;
           // "Inactiva" es definitivo salvo justPaid (esperando el webhook
           // de Stripe): sin eso, reintentar solo repite la misma respuesta.
           if (!justPaid) break;
@@ -4279,6 +4239,17 @@ body[data-app="facebook-ads"]{--page-max:980px}
   async function boot() {
     const profile = await authInit();
     if (!profile) return; // redirected to login/landing
+
+    // Un admin puede apagar módulos por cuenta desde la Consola, sin tocar
+    // el rol ni la suscripción. Si el módulo de esta página está apagado
+    // para esta cuenta, se manda de regreso a Inicio en vez de dejar entrar
+    // por URL directa.
+    const modulosOffBoot = (profile.profile && profile.profile.modulos_desactivados) || [];
+    if (activeKey !== 'home' && modulosOffBoot.includes(activeKey)) {
+      alert('Un administrador desactivó este módulo para tu cuenta.');
+      location.href = 'index.html';
+      return;
+    }
 
     // Independientes entre sí: en paralelo en vez de 3 round-trips seguidos.
     const _tok = getToken();
