@@ -657,43 +657,93 @@ async function downloadOne(i) {
   return true;
 }
 
-async function downloadAll() {
-  const processed = results.map((r, i) => ({r, i})).filter(({r}) => r && r.cleaned_b64);
-  if (!processed.length) { showToast('No hay fotos editadas aún'); return; }
-  // Suppress Broq wake-word during download to avoid false triggers
-  try { window.parent.postMessage({ type: 'Broquer-suppress-wake', duration: 5000 }, '*'); } catch(e){}
-  showToast(`Descargando ${processed.length} imagen${processed.length !== 1 ? 'es' : ''}…`);
+// Arma el archivo final (con marca de agua si corresponde) para una imagen
+// del resultado, listo para meterlo en un share sheet o descargarlo.
+async function buildResultFile(i) {
+  const res = results[i];
+  const rawUrl = 'data:' + res.content_type + ';base64,' + res.cleaned_b64;
+  let finalUrl = rawUrl;
+  if (shouldApplyWatermark()) {
+    try { finalUrl = await addWatermark(rawUrl, res.content_type); }
+    catch (e) { console.error('Watermark error:', e); }
+  }
+  const orig = files[i].name;
+  const ext = orig.split('.').pop();
+  const base = orig.substring(0, orig.lastIndexOf('.')) || orig;
+  const filename = base + '_editada.' + ext;
+  const blob = await (await fetch(finalUrl)).blob();
+  try { return new File([blob], filename, { type: res.content_type }); }
+  catch (e) { return null; }
+}
+
+// Entrega varias imágenes de una sola vez. Antes esto era un bucle que
+// guardaba/enviaba foto por foto: en el iPhone eso significa que, salvo la
+// primera, cada intento de compartir queda bloqueado por el sistema (no hay
+// un toque del usuario detrás de cada uno) o el WebView se queda sin memoria
+// a mitad de un lote de fotos pesadas — por eso solo salían 2 o 3 de 10.
+// Ahora se arma el lote completo primero y se entrega en UNA sola acción: en
+// el iPhone eso abre el share sheet nativo con la opción "Guardar N fotos",
+// que las guarda todas de un toque. Si el navegador no soporta compartir
+// varios archivos a la vez, cae al respaldo de siempre (una por una).
+async function downloadBatch(indices) {
+  if (!indices.length) return;
+  if (indices.length === 1) {
+    const ok = await downloadOne(indices[0]);
+    if (!ok) showToast('No se pudo entregar la imagen');
+    return;
+  }
+
+  try { window.parent.postMessage({ type: 'Broquer-suppress-wake', duration: 8000 }, '*'); } catch (e) {}
+  showToast(`Preparando ${indices.length} imágenes…`);
+
+  const batchFiles = [];
+  for (const i of indices) {
+    const f = await buildResultFile(i);
+    if (f) batchFiles.push(f);
+  }
+
+  if (batchFiles.length && navigator.share &&
+      (!navigator.canShare || navigator.canShare({ files: batchFiles }))) {
+    try {
+      await navigator.share({
+        title: 'Fotos editadas — Broquer',
+        text: `${batchFiles.length} fotos editadas por Broquer`,
+        files: batchFiles,
+      });
+      showToast(`${batchFiles.length} imágenes listas`);
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') { showToast('Envío cancelado'); return; }
+      console.error('Error compartiendo el lote de fotos:', e);
+      // Sigue al respaldo de abajo (una por una).
+    }
+  }
+
   let ok = 0;
-  for (const {i} of processed) {
+  for (const i of indices) {
     if (await downloadOne(i)) ok++;
     await new Promise(res => setTimeout(res, 250));
   }
   const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
-  if (isNative) {
-    showToast(ok === processed.length
-      ? `${ok} imagen${ok !== 1 ? 'es' : ''} guardada${ok !== 1 ? 's' : ''} en tu galería`
-      : `${ok} de ${processed.length} guardadas — revisa permisos de fotos`);
-  }
+  showToast(isNative
+    ? (ok === indices.length
+        ? `${ok} imagen${ok !== 1 ? 'es' : ''} guardada${ok !== 1 ? 's' : ''} en tu galería`
+        : `${ok} de ${indices.length} guardadas — revisa permisos de fotos`)
+    : `${ok} de ${indices.length} imágenes entregadas`);
+}
+
+async function downloadAll() {
+  const processed = results.map((r, i) => ({r, i})).filter(({r}) => r && r.cleaned_b64).map(({i}) => i);
+  if (!processed.length) { showToast('No hay fotos editadas aún'); return; }
+  await downloadBatch(processed);
 }
 
 async function downloadSelected() {
   if (selectedSet.size === 0) { showToast('Selecciona al menos una imagen'); return; }
   const toDownload = [...selectedSet].filter(i => results[i] && results[i].cleaned_b64);
   if (!toDownload.length) { showToast('Sin imágenes válidas en la selección'); return; }
-  try { window.parent.postMessage({ type: 'Broquer-suppress-wake', duration: 5000 }, '*'); } catch(e){}
-  showToast(`Descargando ${toDownload.length} imagen${toDownload.length !== 1 ? 'es' : ''}…`);
   cancelSelection();
-  let ok = 0;
-  for (const i of toDownload) {
-    if (await downloadOne(i)) ok++;
-    await new Promise(res => setTimeout(res, 250));
-  }
-  const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
-  if (isNative) {
-    showToast(ok === toDownload.length
-      ? `${ok} imagen${ok !== 1 ? 'es' : ''} guardada${ok !== 1 ? 's' : ''} en tu galería`
-      : `${ok} de ${toDownload.length} guardadas — revisa permisos de fotos`);
-  }
+  await downloadBatch(toDownload);
 }
 
 // ── Utilizar en ficha ─────────────────────────────────────────────────────────
