@@ -1,5 +1,5 @@
 {
-  "count": 253,
+  "count": 252,
   "operations": [
     {
       "body": false,
@@ -2148,15 +2148,6 @@
       "method": "GET",
       "params": [],
       "path": "/subscription/status",
-      "responses": [
-        "200"
-      ]
-    },
-    {
-      "body": false,
-      "method": "POST",
-      "params": [],
-      "path": "/subscription/trial-max",
       "responses": [
         "200"
       ]

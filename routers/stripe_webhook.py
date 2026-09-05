@@ -90,7 +90,6 @@ async def stripe_webhook(request: Request):
                 plan_id, "Broquer Max"
             )
             org_id = meta.get("org_id") or await get_org_id_for_user(user_id)
-            es_trial = meta.get("trial") == "1"
             row = {
                 "user_id": user_id,
                 "org_id": org_id,
@@ -98,15 +97,9 @@ async def stripe_webhook(request: Request):
                 "plan_nombre": plan_nombre,
                 "stripe_subscription_id": subscription_id,
                 "stripe_customer_id": customer_id,
-                "status": "trialing" if es_trial else "active",
+                "status": "active",
                 "updated_at": datetime.utcnow().isoformat(),
             }
-            if es_trial:
-                await patch_rows_ignoring_http_status(
-                    "usuarios",
-                    {"id": f"eq.{user_id}"},
-                    {"trial_max_usado": True},
-                )
             if plan_id == "empresas":
                 try:
                     asientos = int(meta.get("asientos") or EMPRESA_ASIENTOS_BASE)

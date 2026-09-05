@@ -27,7 +27,6 @@ EMPRESA_TARIFAS = {
     "anual": {"base": 38489, "extra": 6589, "etiqueta": "al año"},
 }
 
-TRIAL_MAX_DIAS = 7
 PROMO_CODE_AMPI = "ampi2026"
 
 

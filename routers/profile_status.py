@@ -12,7 +12,6 @@ from core.subscriptions import (
     find_latest_subscription,
     full_access_grant_active,
     trial_has_expired,
-    trial_max_available,
 )
 from core.user_access import get_user_rol
 from core.organizations import get_org_id_for_user
@@ -116,12 +115,6 @@ async def get_profile_status(request: Request):
                     }
     except Exception:
         pass
-
-    if sub_state.get("status") == "sin_suscripcion":
-        try:
-            sub_state["trial_disponible"] = await trial_max_available(user_id)
-        except Exception:
-            sub_state["trial_disponible"] = False
 
     return {
         "eb": eb_state,

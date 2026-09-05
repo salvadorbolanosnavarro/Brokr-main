@@ -13,7 +13,7 @@ import httpx
 from fastapi import HTTPException, Request
 
 from core.auth import require_user_id
-from core.database import get_rows, get_service_json_or_empty, patch_rows
+from core.database import get_rows, patch_rows
 from core.organizations import get_org_context, get_org_id_for_user
 
 ACTIVE_SUBSCRIPTION_STATUSES = frozenset({"active", "trialing"})
@@ -74,28 +74,6 @@ async def expire_trial_subscription(sub_id) -> None:
         )
     except Exception:
         pass
-
-
-async def trial_max_available(user_id: str) -> bool:
-    """Return whether the one-time seven-day Broquer Max gift is still unused.
-
-    Historical policy is intentionally fail-closed because granting a trial is
-    a monetary entitlement: any uncertainty returns ``False``.
-    """
-    try:
-        users = await get_service_json_or_empty(
-            "usuarios",
-            {"id": f"eq.{user_id}", "select": "trial_max_usado", "limit": "1"},
-        )
-        if users and users[0].get("trial_max_usado"):
-            return False
-        subscriptions = await get_service_json_or_empty(
-            "suscripciones",
-            {"user_id": f"eq.{user_id}", "select": "id", "limit": "1"},
-        )
-        return not subscriptions
-    except Exception:
-        return False
 
 
 async def find_latest_subscription(

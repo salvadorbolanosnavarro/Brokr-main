@@ -24,16 +24,13 @@ class MainSubscriptionStatusPatchesCoreRefactorTests(unittest.TestCase):
         self.assertGreaterEqual(block.count('except httpx.HTTPStatusError:'), 3)
         self.assertNotIn('/rest/v1/', block)
 
-    def test_trial_burn_write_uses_core_after_subscription_create(self):
+    def test_no_card_trial_grant_was_removed(self):
+        # The trial-max endpoint (post_rows for the new subscription, then
+        # patch_rows to burn trial_max_usado) was retired along with the
+        # no-card trial itself.
         block = self.router
-        self.assertIn('await patch_rows(', block)
-        self.assertIn('"usuarios",', block)
-        self.assertIn('{"id": f"eq.{user_id}"}', block)
-        self.assertIn('{"trial_max_usado": True}', block)
-        self.assertIn('timeout=10', block)
-        self.assertIn('except httpx.HTTPStatusError:', block)
-        self.assertNotIn('/rest/v1/usuarios?id=eq.{user_id}', block)
-        self.assertLess(block.index('await post_rows('), block.index('await patch_rows('))
+        self.assertNotIn('trial_max_usado', block)
+        self.assertNotIn('await post_rows(', block)
 
     def test_subscription_cancel_local_mark_uses_core_without_changing_stripe_contract(self):
         block = self.cancel

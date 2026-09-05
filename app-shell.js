@@ -4097,52 +4097,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     document.body.appendChild(ov);
     if (IS_IOS_NATIVE) rcRenderPrice();
   }
-  /* ── Trial de 7 días desde el gate ─────────────────────────────────
-     El usuario ya está registrado: si su cuenta todavía tiene el regalo,
-     el modal anuncia los 7 días gratis y los activa solo. Si el regalo ya
-     se usó (o falla la activación), cae al modal de suscripción normal. */
-  async function bkActivarTrialDesdeGate() {
-    const est = document.getElementById('bk-trial-estado');
-    const btn = document.getElementById('bk-trial-continuar');
-    try {
-      const tok = getToken();
-      const r = await fetch(API_BASE + '/subscription/trial-max', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }
-      });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(d.detail || 'No se pudo activar la prueba.');
-      window.__BK_SUB_ACTIVE = true;
-      window.__BK_TRIAL_DISP = false;
-      if (est) est.textContent = 'Listo: Broquer Max quedó activado por 7 días.';
-      if (btn) { btn.disabled = false; btn.textContent = 'Continuar'; }
-    } catch (e) {
-      window.__BK_TRIAL_DISP = false;
-      closeBroquerMaxModal();
-      bkShowSubscribeModal();
-    }
-  }
-
-  function bkShowTrialModal() {
-    if (document.getElementById('bk-max-modal')) return;
-    const ov = document.createElement('div');
-    ov.id = 'bk-max-modal';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(8,28,78,.46);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:var(--font-sans);';
-    ov.innerHTML = `
-      <div style="width:100%;max-width:440px;background:var(--sky-navy);border:1px solid rgba(255,255,255,.22);border-radius:28px;padding:44px 34px 34px;box-shadow:0 20px 60px rgba(5,32,60,.40);text-align:center;position:relative;">
-        <button onclick="closeBroquerMaxModal()" aria-label="Cerrar" style="position:absolute;top:12px;right:14px;border:none;background:transparent;color:rgba(255,255,255,.55);font-size:24px;line-height:1;cursor:pointer;padding:4px 8px;font-family:inherit;">&times;</button>
-        <h2 style="font-family:var(--font-display);font-size:28px;line-height:1.12;letter-spacing:-.02em;margin:0 0 12px;color:#FFFFFF;">Obtén 7 días de Broquer MAX <em style="font-style:normal;text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:6px;text-decoration-color:var(--sky-blue-on-dark);">completamente GRATIS</em></h2>
-        <p style="color:rgba(255,255,255,.78);font-size:16px;line-height:1.5;margin:0 0 20px;">Acceso ilimitado.</p>
-        <div id="bk-trial-estado" style="color:rgba(255,255,255,.85);font-size:13px;min-height:20px;margin-bottom:12px;">Activando tu acceso…</div>
-        <button id="bk-trial-continuar" disabled onclick="closeBroquerMaxModal()" style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue-on-dark);color:var(--sky-navy);font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;">Activando…</button>
-      </div>`;
-    ov.addEventListener('click', (e) => { if (e.target === ov) closeBroquerMaxModal(); });
-    document.body.appendChild(ov);
-    bkActivarTrialDesdeGate();
-  }
-
   function showBroquerMaxModal() {
-    if (window.__BK_TRIAL_DISP) { bkShowTrialModal(); return; }
     bkShowSubscribeModal();
   }
   window.showBroquerMaxModal = showBroquerMaxModal;
@@ -4259,7 +4214,6 @@ body[data-app="facebook-ads"]{--page-max:980px}
             return true;
           }
           confirmedInactive = true;
-          window.__BK_TRIAL_DISP = !!d.trial_disponible;
           // "Inactiva" es definitivo salvo justPaid (esperando el webhook
           // de Stripe): sin eso, reintentar solo repite la misma respuesta.
           if (!justPaid) break;

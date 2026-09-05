@@ -11,11 +11,9 @@ from core.stripe import (
     STRIPE_PRICE_AMPI,
     STRIPE_PRICE_PRO,
     STRIPE_SECRET_KEY,
-    TRIAL_MAX_DIAS,
     get_or_create_stripe_customer,
     stripe_headers,
 )
-from core.subscriptions import trial_max_available
 
 
 router = APIRouter()
@@ -86,8 +84,6 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
         default_path="index.html?suscripcion=cancelada",
     )
 
-    con_trial = await trial_max_available(user_id)
-
     data = {
         "mode": "subscription",
         "customer": customer_id,
@@ -100,9 +96,6 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
         "allow_promotion_codes": "true",
         "locale": "es",
     }
-    if con_trial:
-        data["subscription_data[trial_period_days]"] = str(TRIAL_MAX_DIAS)
-        data["metadata[trial]"] = "1"
 
     async with httpx.AsyncClient(timeout=15) as client:
         r_cs = await client.post(
