@@ -29,20 +29,35 @@ try:
 except ImportError:
     CV2_AVAILABLE = False
 
+# El iPhone guarda las fotos de la cámara en HEIC por default (no JPG/PNG).
+# Pillow no lo lee de fábrica; pillow-heif le registra un "opener" para que
+# Image.open() funcione con HEIC/HEIF exactamente igual que con cualquier
+# otro formato. Sin esto, cualquier foto recién tomada con el iPhone (sin
+# haber cambiado el ajuste de cámara a "Más compatible") rebotaba con 415.
+try:
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+    HEIF_AVAILABLE = True
+except ImportError:
+    HEIF_AVAILABLE = False
+
 
 router = APIRouter()
 MAX_IMAGES = 8
 MAX_IMAGE_BYTES = 12 * 1024 * 1024
 MAX_TOTAL_BYTES = 40 * 1024 * 1024
 MAX_IMAGE_PIXELS = 40_000_000
+HEIC_MIMES = frozenset({"image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence"})
 ALLOWED_IMAGE_MIMES = frozenset({"image/jpeg", "image/jpg", "image/png", "image/webp"})
+if HEIF_AVAILABLE:
+    ALLOWED_IMAGE_MIMES = ALLOWED_IMAGE_MIMES | HEIC_MIMES
 GEMINI_CONCURRENCY = 2
 
 
-def _process_image_sync(file_bytes: bytes, content_type: str) -> bytes:
+def _process_image_sync(file_bytes: bytes, content_type: str) -> tuple[bytes, str]:
     """Pipeline de mejora automática (sin IA generativa): denoising, CLAHE, WB, unsharp."""
     if not PIL_AVAILABLE:
-        return file_bytes
+        return file_bytes, (content_type or "application/octet-stream")
     img = Image.open(io.BytesIO(file_bytes))
     # Las fotos de celular vienen con la rotación real en el tag EXIF
     # "Orientation", no en los píxeles. Si no se aplica aquí, todo el
@@ -95,9 +110,13 @@ def _process_image_sync(file_bytes: bytes, content_type: str) -> bytes:
         img = ImageEnhance.Sharpness(img).enhance(1.6)
 
     out = io.BytesIO()
-    fmt = "JPEG" if (content_type or "").lower() in ("image/jpeg", "image/jpg") else "PNG"
+    # HEIC/HEIF no lo entiende ningún navegador en un <img>: el resultado
+    # siempre se entrega como JPEG, igual que las fotos JPEG de entrada.
+    ct_lower = (content_type or "").lower()
+    fmt = "JPEG" if ct_lower in ("image/jpeg", "image/jpg") or ct_lower in HEIC_MIMES else "PNG"
+    out_mime = "image/jpeg" if fmt == "JPEG" else "image/png"
     img.save(out, format=fmt, quality=92, optimize=True)
-    return out.getvalue()
+    return out.getvalue(), out_mime
 
 
 async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str) -> bytes:
@@ -212,8 +231,16 @@ async def clean_images(
     total = 0
     for uf in files:
         ct = (uf.content_type or "").lower()
+        # Algunos navegadores/OS mandan un content-type genérico (o vacío)
+        # para .heic/.heif en vez de "image/heic" — nos fijamos también en
+        # la extensión del archivo para no rechazar de más una foto de
+        # iPhone real solo porque el content-type venga mal etiquetado.
+        ext = (uf.filename or "").rsplit(".", 1)[-1].lower() if "." in (uf.filename or "") else ""
         if ct not in ALLOWED_IMAGE_MIMES:
-            raise HTTPException(status_code=415, detail="Solo se aceptan imágenes JPG, PNG o WEBP.")
+            if HEIF_AVAILABLE and ext in ("heic", "heif"):
+                ct = "image/heic"
+            else:
+                raise HTTPException(status_code=415, detail="Solo se aceptan imágenes JPG, PNG, WEBP o HEIC.")
         raw = await uf.read(MAX_IMAGE_BYTES + 1)
         if len(raw) > MAX_IMAGE_BYTES:
             raise HTTPException(status_code=413, detail="Cada imagen debe pesar 12 MB o menos.")
@@ -241,11 +268,11 @@ async def clean_images(
                     "error": None,
                 }
             loop = asyncio.get_event_loop()
-            processed = await loop.run_in_executor(_thread_pool, _process_image_sync, raw, ct)
+            processed, out_ct = await loop.run_in_executor(_thread_pool, _process_image_sync, raw, ct)
             return {
                 "name": uf.filename,
                 "cleaned_b64": base64.b64encode(processed).decode(),
-                "content_type": ct,
+                "content_type": out_ct,
                 "used_gemini": False,
                 "error": None,
             }
