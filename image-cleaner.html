@@ -676,20 +676,49 @@ async function buildResultFile(i) {
   catch (e) { return null; }
 }
 
-// Entrega varias imágenes de una sola vez. Antes esto era un bucle que
-// guardaba/enviaba foto por foto: en el iPhone eso significa que, salvo la
-// primera, cada intento de compartir queda bloqueado por el sistema (no hay
-// un toque del usuario detrás de cada uno) o el WebView se queda sin memoria
-// a mitad de un lote de fotos pesadas — por eso solo salían 2 o 3 de 10.
-// Ahora se arma el lote completo primero y se entrega en UNA sola acción: en
-// el iPhone eso abre el share sheet nativo con la opción "Guardar N fotos",
-// que las guarda todas de un toque. Si el navegador no soporta compartir
-// varios archivos a la vez, cae al respaldo de siempre (una por una).
+// Misma detección de "estamos en un contexto móvil" que usa app-shell.js
+// (app nativa Capacitor, o navegador de iPhone/iPad/Android) — no queda
+// expuesta en window, así que se replica aquí para decidir cómo entregar
+// un lote de fotos.
+function isMobileContext() {
+  const isNative = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+  if (isNative) return true;
+  try {
+    const ua = navigator.userAgent || '';
+    if (/iPhone|iPad|iPod|Android/i.test(ua)) return true;
+    if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true; // iPadOS
+  } catch (e) {}
+  return false;
+}
+
+// Entrega varias imágenes a la vez. El comportamiento correcto es distinto
+// según de dónde viene el usuario:
+//  - Escritorio/web: cada foto se descarga sola, automática, directo a la
+//    carpeta de Descargas — es lo que se espera de un botón "Descargar" en
+//    una compu, sin diálogos de compartir de por medio.
+//  - Móvil (app nativa o navegador): un único paso para todas. Antes esto
+//    era un bucle guardando/enviando foto por foto, y en el iPhone eso
+//    significa que, salvo la primera, cada intento de compartir queda
+//    bloqueado por el sistema (no hay un toque del usuario detrás de cada
+//    uno) o el WebView se queda sin memoria a mitad de un lote pesado — por
+//    eso solo salían 2 o 3 de 10. Ahora se arma el lote completo primero y
+//    se entrega en UNA sola acción vía el share sheet del sistema, que ya
+//    trae "Guardar en Archivos", WhatsApp, AirDrop, etc. como opciones.
 async function downloadBatch(indices) {
   if (!indices.length) return;
   if (indices.length === 1) {
     const ok = await downloadOne(indices[0]);
     if (!ok) showToast('No se pudo entregar la imagen');
+    return;
+  }
+
+  if (!isMobileContext()) {
+    let ok = 0;
+    for (const i of indices) {
+      if (await downloadOne(i)) ok++;
+      await new Promise(res => setTimeout(res, 200));
+    }
+    showToast(`${ok} de ${indices.length} imágenes descargadas`);
     return;
   }
 
@@ -719,6 +748,8 @@ async function downloadBatch(indices) {
     }
   }
 
+  // Respaldo si compartir varios archivos a la vez no está disponible:
+  // guardado/entrega individual, como antes.
   let ok = 0;
   for (const i of indices) {
     if (await downloadOne(i)) ok++;
