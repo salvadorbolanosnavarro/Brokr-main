@@ -6,6 +6,7 @@ pydantic
 python-docx
 playwright
 Pillow
+pillow-heif
 python-multipart
 python-dotenv
 PyJWT
