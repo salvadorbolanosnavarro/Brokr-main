@@ -163,7 +163,6 @@
       "body": false,
       "method": "GET",
       "params": [
-        "query:ciudad",
         "query:texto!"
       ],
       "path": "/api/colonias",

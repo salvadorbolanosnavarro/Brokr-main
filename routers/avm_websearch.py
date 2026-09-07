@@ -35,8 +35,13 @@ class AvmWebSearchRequest(BaseModel):
     banos: float = 0
     estacionamientos: int = 0
     condicion_terreno: str = ""
-    ciudad: str = "Morelia"
-    estado: str = "Michoacán"
+    # Sin default geográfico: antes "Morelia"/"Michoacán" se colaban en
+    # silencio cuando el frontend no mandaba ciudad/estado (o los mandaba
+    # desalineados), produciendo combinaciones imposibles como
+    # "Guadalajara, Michoacán". Vacío es honesto; un valor concreto que
+    # nadie pidió no lo es.
+    ciudad: str = ""
+    estado: str = ""
     comentarios: str = ""
 
 
@@ -165,17 +170,21 @@ def _build_search_queries(req: AvmWebSearchRequest) -> List[str]:
         "local": "local comercial", "oficina": "oficina", "bodega": "bodega"
     }.get(req.tipo_inmueble, req.tipo_inmueble)
     op = "venta" if req.operacion == "venta" else "renta"
-    base = f'{tipo} en {op} "{req.colonia}" "{req.ciudad}" precio m2'
+    # Ciudad/estado ya no tienen default: si vinieran vacíos (llamada directa
+    # a la API sin pasar por el selector del frontend) no metemos comillas
+    # vacías a la query — eso ensucia la búsqueda en vez de acotarla.
+    lugar = " ".join(f'"{v}"' for v in (req.colonia, req.ciudad) if v)
+    base = f'{tipo} en {op} {lugar} precio m2'
     queries = [
         base,
-        f'{tipo} {op} "{req.colonia}" "{req.ciudad}" site:inmuebles24.com',
-        f'{tipo} {op} "{req.colonia}" "{req.ciudad}" site:lamudi.com.mx',
-        f'{tipo} {op} "{req.colonia}" "{req.ciudad}" site:propiedades.com',
-        f'{tipo} {op} "{req.colonia}" "{req.ciudad}" site:vivanuncios.com.mx',
-        f'{tipo} {op} "{req.colonia}" "{req.ciudad}" site:easybroker.com',
+        f'{tipo} {op} {lugar} site:inmuebles24.com',
+        f'{tipo} {op} {lugar} site:lamudi.com.mx',
+        f'{tipo} {op} {lugar} site:propiedades.com',
+        f'{tipo} {op} {lugar} site:vivanuncios.com.mx',
+        f'{tipo} {op} {lugar} site:easybroker.com',
     ]
     if req.estado:
-        queries.append(f'{tipo} {op} "{req.colonia}" "{req.ciudad}" "{req.estado}"')
+        queries.append(f'{tipo} {op} {lugar} "{req.estado}"')
     return queries
 
 
@@ -393,6 +402,116 @@ def _extract_visible_text(html: str) -> str:
         return _sameish_text(re.sub(r"<[^>]+>", " ", html or ""))[:MAX_TEXT_CHARS_PER_URL]
 
 
+_JSON_LD_TIPOS_UTILES = re.compile(r"Product|Offer|RealEstate|Residence|House|Apartment|SingleFamily", re.I)
+
+
+def _extract_json_ld(html: str) -> List[Dict[str, Any]]:
+    """Busca bloques <script type="application/ld+json"> con pinta de anuncio
+    (Product/Offer/RealEstateListing de schema.org). La mayoría de portales
+    inmobiliarios los usan para SEO — es el mismo precio y superficie que ve
+    el usuario, pero en JSON limpio en vez de enterrado en texto de página
+    junto con menús, anuncios y "propiedades similares". Leer esto primero
+    es mucho más confiable que pedirle al modelo que lo adivine del texto
+    plano."""
+    try:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html or "", "html.parser")
+    except Exception:
+        return []
+
+    encontrados: List[Dict[str, Any]] = []
+    for tag in soup.find_all("script", attrs={"type": "application/ld+json"}):
+        raw = tag.string or tag.get_text() or ""
+        if not raw.strip():
+            continue
+        try:
+            data = json.loads(raw)
+        except Exception:
+            continue
+        bloques = data if isinstance(data, list) else [data]
+        for bloque in bloques:
+            if not isinstance(bloque, dict):
+                continue
+            candidatos = bloque.get("@graph") if isinstance(bloque.get("@graph"), list) else [bloque]
+            for cand in candidatos:
+                if not isinstance(cand, dict):
+                    continue
+                tipo = cand.get("@type", "")
+                tipo_str = " ".join(tipo) if isinstance(tipo, list) else str(tipo)
+                if _JSON_LD_TIPOS_UTILES.search(tipo_str):
+                    encontrados.append(cand)
+    return encontrados[:5]
+
+
+def _resumen_json_ld(bloques: List[Dict[str, Any]]) -> str:
+    """Convierte los bloques JSON-LD encontrados en un resumen corto y
+    explícito para el modelo, marcado como dato de alta confianza."""
+    partes = []
+    for item in bloques:
+        oferta = item.get("offers")
+        if isinstance(oferta, list):
+            oferta = oferta[0] if oferta else {}
+        if not isinstance(oferta, dict):
+            oferta = {}
+        precio = oferta.get("price") or item.get("price")
+        moneda = oferta.get("priceCurrency") or item.get("priceCurrency") or "MXN"
+        nombre = _sameish_text(str(item.get("name", "")))[:200]
+        direccion = item.get("address")
+        if isinstance(direccion, dict):
+            direccion = ", ".join(str(v) for v in direccion.values() if isinstance(v, (str, int, float)))
+        area = item.get("floorSize") or item.get("area")
+        if isinstance(area, dict):
+            area = area.get("value")
+
+        campos = []
+        if nombre:
+            campos.append(f"nombre={nombre}")
+        if precio:
+            campos.append(f"precio={precio} {moneda}")
+        if area:
+            campos.append(f"superficie={area}")
+        if direccion:
+            campos.append(f"direccion={_sameish_text(str(direccion))[:200]}")
+        if campos:
+            partes.append("DATO ESTRUCTURADO JSON-LD (alta confianza): " + "; ".join(campos))
+    return "\n".join(partes)
+
+
+_PRECIO_MXN_RE = re.compile(r"\$\s?[\d][\d,\.]{4,}")
+
+
+def _advertencia_multi_listado(texto: str) -> str:
+    """Si el texto trae muchos precios distintos, probablemente es una
+    página de resultados/listado (varias propiedades revueltas) y no el
+    detalle de un solo anuncio — el modelo no debería asumir que el primer
+    precio que ve corresponde a la superficie del sujeto. Se marca con una
+    advertencia explícita en vez de dejar que el modelo lo adivine."""
+    precios_unicos = set(_PRECIO_MXN_RE.findall(texto or ""))
+    if len(precios_unicos) >= 5:
+        return (
+            "ADVERTENCIA AUTOMÁTICA: esta página trae "
+            f"{len(precios_unicos)} precios distintos — probablemente es un "
+            "listado de resultados con varias propiedades, no el detalle de "
+            "un solo anuncio. Si no puedes asociar con certeza UN precio a "
+            "UNA superficie de UNA sola propiedad, descarta esta fuente.\n\n"
+        )
+    return ""
+
+
+def _build_page_summary(html: str) -> str:
+    """Texto final que se manda al modelo por cada página: primero el dato
+    estructurado (si lo hay), luego la advertencia de multi-listado (si
+    aplica), y al final el texto visible de respaldo."""
+    json_ld = _resumen_json_ld(_extract_json_ld(html))
+    visible = _extract_visible_text(html)
+    advertencia = _advertencia_multi_listado(visible)
+    partes = [p for p in (json_ld, advertencia.strip()) if p]
+    resumen = "\n\n".join(partes)
+    if resumen:
+        return _sameish_text(resumen + "\n\n" + visible)[:MAX_TEXT_CHARS_PER_URL]
+    return visible
+
+
 async def _fetch_candidate_pages(candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -413,7 +532,7 @@ async def _fetch_candidate_pages(candidates: List[Dict[str, Any]]) -> List[Dict[
         ctype = (response.headers.get("content-type") or "").lower()
         if response.status_code >= 400 or "text/html" not in ctype:
             return {"ok": False, "status": response.status_code, "text": ""}
-        return {"ok": True, "status": response.status_code, "text": _extract_visible_text(response.text)}
+        return {"ok": True, "status": response.status_code, "text": _build_page_summary(response.text)}
 
     async def _try_firecrawl(url: str) -> Dict[str, Any]:
         async with sem_fc:
@@ -421,6 +540,11 @@ async def _fetch_candidate_pages(candidates: List[Dict[str, Any]]) -> List[Dict[
         if result.get("ok"):
             stats["firecrawl_calls"] += 1
             stats["firecrawl_credits"] += int(result.get("credits") or 0)
+            # Firecrawl entrega markdown, no HTML — no hay JSON-LD que sacar,
+            # pero sí vale la pena la misma advertencia de multi-listado.
+            advertencia = _advertencia_multi_listado(result.get("page_text", ""))
+            if advertencia:
+                result["page_text"] = advertencia + result["page_text"]
         return result
 
     async def one(item: Dict[str, Any]) -> Dict[str, Any]:
@@ -535,7 +659,7 @@ Objetivo: limpiar, clasificar y calcular una estimación de valor por método co
 Reglas duras:
 1. No inventes precios, superficies, colonias ni URLs.
 2. Si un anuncio no muestra precio y superficie suficientes, márcalo como descartado.
-3. Si detectas que una misma propiedad aparece duplicada, conserva una sola.
+3. Si detectas que una misma propiedad aparece duplicada —incluso en portales distintos, por misma dirección/precio/superficie casi idénticos—, conserva una sola.
 4. No uses fotos, teléfonos, nombres de asesores ni datos personales.
 5. Prioriza comparables de la misma colonia/fraccionamiento; después zonas adyacentes y similares.
 6. Para terrenos usa m² de terreno. Para casas/departamentos usa m² de construcción como base principal; si no hay construcción, descarta o márcalo como baja confianza.
@@ -543,6 +667,9 @@ Reglas duras:
 8. Penaliza comparables sospechosos: anuncio viejo, datos incompletos, precio/m² extremo, ubicación poco clara, submercado distinto.
 9. Si hay menos de 3 comparables útiles, entrega rango conservador y nivel_confianza='baja'.
 10. Esta salida es una estimación de valor, no avalúo certificado.
+11. Cada "texto_visible_limitado" puede traer, antes del texto de la página, una línea "DATO ESTRUCTURADO JSON-LD (alta confianza): ..." — es precio/superficie extraído del propio código de la página, mucho más confiable que el texto suelto de abajo. Si está presente, úsalo como fuente principal de ese comparable en vez de intentar leerlo del texto plano.
+12. Si una fuente trae "ADVERTENCIA AUTOMÁTICA: ... probablemente es un listado de resultados con varias propiedades...", esa página mezcla precios de varios anuncios distintos. NO le asignes un precio a una superficie a menos que el texto deje clarísimo que un precio específico corresponde a una superficie específica; en caso de duda, descártala.
+13. Vuelve a sumar/promediar tú mismo los precio_m2 de los comparables que marques incluido_en_promedio antes de reportar valor_por_m2 — no arrastres un cálculo mental impreciso; verifica la aritmética.
 
 Responde ÚNICAMENTE JSON válido con esta estructura:
 {{
@@ -682,11 +809,41 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
             comp for comp in resultado.get("comparables", [])
             if comp.get("incluido_en_promedio") and comp.get("precio_m2")
         ]
-        if comps and not resultado.get("precio_m2_base"):
-            resultado["precio_m2_base"] = _round_mxn(
-                sum(float(comp["precio_m2"]) for comp in comps) / len(comps),
-                100,
-            )
+        precios_m2_validos = []
+        for comp in comps:
+            try:
+                precios_m2_validos.append(float(comp["precio_m2"]))
+            except (TypeError, ValueError):
+                continue
+        promedio_codigo = (
+            sum(precios_m2_validos) / len(precios_m2_validos) if precios_m2_validos else None
+        )
+        if promedio_codigo and not resultado.get("precio_m2_base"):
+            resultado["precio_m2_base"] = _round_mxn(promedio_codigo, 100)
+
+        # Verificación aritmética: un LLM sumando/promediando muchos números
+        # en una sola respuesta es poco confiable. En vez de confiar a
+        # ciegas en el valor_por_m2 que reporta, se recalcula en código a
+        # partir de los propios comparables que el modelo marcó como
+        # incluidos; si el desvío es grande, se baja la confianza y se dice
+        # explícitamente por qué, en vez de entregar un número que ni el
+        # propio análisis del modelo respalda.
+        if promedio_codigo and resultado.get("valor_por_m2"):
+            try:
+                valor_m2_modelo = float(resultado["valor_por_m2"])
+                desvio = abs(valor_m2_modelo - promedio_codigo) / promedio_codigo
+                if desvio > 0.15:
+                    resultado["nivel_confianza"] = "baja"
+                    nota = (
+                        f"Verificación automática: el precio/m² reportado (${valor_m2_modelo:,.0f}) "
+                        f"difiere {desvio * 100:.0f}% del promedio recalculado en código a partir de "
+                        f"los comparables incluidos (${promedio_codigo:,.0f}/m²). Revisar manualmente "
+                        "antes de usarlo con un cliente."
+                    )
+                    resultado["advertencias"] = (str(resultado.get("advertencias") or "") + " " + nota).strip()
+            except (TypeError, ValueError, ZeroDivisionError):
+                pass
+
         superficie = (
             req.m2_terreno
             if req.tipo_inmueble == "terreno"
