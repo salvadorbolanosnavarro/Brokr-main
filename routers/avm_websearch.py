@@ -492,10 +492,51 @@ def _advertencia_multi_listado(texto: str) -> str:
             "ADVERTENCIA AUTOMÁTICA: esta página trae "
             f"{len(precios_unicos)} precios distintos — probablemente es un "
             "listado de resultados con varias propiedades, no el detalle de "
-            "un solo anuncio. Si no puedes asociar con certeza UN precio a "
-            "UNA superficie de UNA sola propiedad, descarta esta fuente.\n\n"
+            "un solo anuncio. No le asignes ninguno de estos precios a la "
+            "superficie del inmueble sujeto a menos que el texto deje "
+            "clarísimo que corresponden a una sola propiedad. Si esta misma "
+            "página trae un indicador agregado del portal (precio promedio/"
+            "medio de la zona, rango de precios, número de propiedades "
+            "activas), sí puedes usar ESE dato como comparable de baja "
+            "confianza.\n\n"
         )
     return ""
+
+
+def _parse_precio_mxn(raw: str) -> float | None:
+    """Convierte un texto tipo '$3,500,000' o '$3,500,000.00' a float. Solo
+    acepta el formato mexicano normal (comas de miles, punto opcional de
+    decimales) — un formato ambiguo se descarta en vez de arriesgar un
+    número diez veces más grande o más chico de lo real."""
+    s = raw.strip().lstrip("$").strip()
+    if re.fullmatch(r"[\d,]+(\.\d{1,2})?", s):
+        try:
+            return float(s.replace(",", ""))
+        except ValueError:
+            return None
+    return None
+
+
+def _estimacion_ultimo_recurso(paginas: List[Dict[str, Any]]) -> float | None:
+    """Red de seguridad final: si ni el modelo ni el resto del post-proceso
+    lograron un valor_estimado (a pesar de que el prompt ya le exige
+    sistemáticamente dar un número — ver reglas 13-14), se buscan precios
+    sueltos en todo el texto crudo recolectado y se usa la mediana como
+    aproximación muy tosca. Deliberadamente conservador: mejor una
+    referencia amplia y honesta que un "$0" o un error que no le sirve de
+    nada a un agente inmobiliario."""
+    precios = []
+    for pagina in paginas:
+        texto = pagina.get("page_text") or ""
+        for match in _PRECIO_MXN_RE.findall(texto):
+            valor = _parse_precio_mxn(match)
+            if valor and 200_000 <= valor <= 100_000_000:
+                precios.append(valor)
+    if not precios:
+        return None
+    precios.sort()
+    n = len(precios)
+    return precios[n // 2] if n % 2 else (precios[n // 2 - 1] + precios[n // 2]) / 2
 
 
 def _build_page_summary(html: str) -> str:
@@ -665,11 +706,12 @@ Reglas duras:
 6. Para terrenos usa m² de terreno. Para casas/departamentos usa m² de construcción como base principal; si no hay construcción, descarta o márcalo como baja confianza.
 7. Aplica factor negociación de -5% a precios de oferta en venta. En renta usa -3% si aplica.
 8. Penaliza comparables sospechosos: anuncio viejo, datos incompletos, precio/m² extremo, ubicación poco clara, submercado distinto.
-9. Si hay menos de 3 comparables útiles, entrega rango conservador y nivel_confianza='baja'.
-10. Esta salida es una estimación de valor, no avalúo certificado.
-11. Cada "texto_visible_limitado" puede traer, antes del texto de la página, una línea "DATO ESTRUCTURADO JSON-LD (alta confianza): ..." — es precio/superficie extraído del propio código de la página, mucho más confiable que el texto suelto de abajo. Si está presente, úsalo como fuente principal de ese comparable en vez de intentar leerlo del texto plano.
-12. Si una fuente trae "ADVERTENCIA AUTOMÁTICA: ... probablemente es un listado de resultados con varias propiedades...", esa página mezcla precios de varios anuncios distintos. NO le asignes un precio a una superficie a menos que el texto deje clarísimo que un precio específico corresponde a una superficie específica; en caso de duda, descártala.
-13. Vuelve a sumar/promediar tú mismo los precio_m2 de los comparables que marques incluido_en_promedio antes de reportar valor_por_m2 — no arrastres un cálculo mental impreciso; verifica la aritmética.
+9. Esta salida es una estimación de valor, no avalúo certificado.
+10. Cada "texto_visible_limitado" puede traer, antes del texto de la página, una línea "DATO ESTRUCTURADO JSON-LD (alta confianza): ..." — es precio/superficie extraído del propio código de la página, mucho más confiable que el texto suelto de abajo. Si está presente, úsalo como fuente principal de ese comparable en vez de intentar leerlo del texto plano.
+11. Si una fuente trae "ADVERTENCIA AUTOMÁTICA: ... probablemente es un listado de resultados con varias propiedades...", esa página mezcla precios de varios anuncios distintos: NO le asignes un precio a una superficie a menos que el texto deje clarísimo que un precio específico corresponde a una superficie específica. Pero esa misma página de listado casi siempre trae también un indicador agregado del portal (ej. "precio promedio/medio de casas en venta en X colonia: $Y", "rango de precios", "N propiedades activas") — ESE dato SÍ lo puedes usar como comparable de baja confianza (descripción: "Indicador estadístico de mercado — no es un anuncio individual"), en vez de descartar la página entera y quedarte sin nada.
+12. Vuelve a sumar/promediar tú mismo los precio_m2 de los comparables que marques incluido_en_promedio antes de reportar valor_por_m2 — no arrastres un cálculo mental impreciso; verifica la aritmética.
+13. NUNCA dejes valor_estimado en 0 ni respondas que "no fue posible" generar una estimación — eso no le sirve de nada a un agente inmobiliario. Siempre entrega un número, usando en orden lo mejor disponible: (a) comparables individuales de la colonia; (b) comparables de zonas adyacentes/similares; (c) el indicador estadístico agregado del portal (regla 11) para la colonia o ciudad; (d) si de plano no hay NINGÚN precio en toda la evidencia (ni individual ni agregado), da tu mejor estimación razonada a partir de lo que sí sepas del tipo de inmueble y la zona, dejándolo explícito en advertencias. Cuanto más débil la evidencia, más ancho el rango (valor_minimo/valor_maximo) y más baja la nivel_confianza — pero siempre con un valor_estimado numérico. Reserva nivel_confianza='baja' + un rango amplio para estos casos; jamás una respuesta vacía.
+14. Si menos de 3 comparables individuales son útiles, aplica igualmente la regla 13 (rango conservador, nivel_confianza='baja') en vez de negarte a estimar.
 
 Responde ÚNICAMENTE JSON válido con esta estructura:
 {{
@@ -859,5 +901,27 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
             resultado["valor_maximo"] = resultado.get("valor_maximo") or _round_mxn(valor * 1.08)
     except Exception:
         pass
+
+    # Red de seguridad final: el prompt ya le exige a Claude dar siempre un
+    # número (reglas 13-14), pero un modelo puede no cumplirlo. Si aun así
+    # llegamos aquí sin valor_estimado, es mejor una referencia amplia y
+    # honesta (mediana de precios sueltos en la evidencia cruda) que un "$0"
+    # o un error — eso último nunca le sirve de nada a un agente.
+    if not resultado.get("valor_estimado"):
+        ultimo_recurso = _estimacion_ultimo_recurso(paginas)
+        if ultimo_recurso:
+            valor = _round_mxn(ultimo_recurso)
+            resultado["valor_estimado"] = valor
+            resultado["valor_minimo"] = _round_mxn(valor * 0.7)
+            resultado["valor_maximo"] = _round_mxn(valor * 1.3)
+            resultado["nivel_confianza"] = "baja"
+            nota = (
+                "Estimación de último recurso: no se pudieron extraer comparables "
+                "confiables de la evidencia web; este monto es la mediana de los "
+                "precios detectados en las páginas consultadas, sin poder vincularlos "
+                "con certeza a la superficie del inmueble. Trátalo solo como una "
+                "referencia muy amplia y complementa con una revisión manual."
+            )
+            resultado["advertencias"] = (str(resultado.get("advertencias") or "") + " " + nota).strip()
 
     return resultado
