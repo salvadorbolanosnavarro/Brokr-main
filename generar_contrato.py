@@ -163,13 +163,20 @@ def clausula(doc, numero, titulo, texto):
     _apply_font(r, HEADING_FONT)
     r.font.size = Pt(BODY_PT + 0.5)
 
+    # numero puede llegar ya con ".-" (así lo mandan los llamadores de la
+    # promesa de compraventa) o sin él (arrendamiento); se normaliza aquí
+    # para nunca duplicarlo — antes salía "PRIMERA.-.- " en cada cláusula.
+    numero_limpio = numero.rstrip('.-').strip()
+
     body = doc.add_paragraph()
     body.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     body.paragraph_format.space_before = Pt(2)
     body.paragraph_format.space_after  = Pt(8)
-    body.paragraph_format.left_indent  = Cm(0.6)
-    body.paragraph_format.first_line_indent = Cm(0.4)
-    r2 = body.add_run(f'{numero}.- {texto}')
+    # Sin sangría: el cuerpo de la cláusula queda a ras del margen, igual
+    # que el resto del contrato — un left_indent + first_line_indent aquí
+    # hacía que cada cláusula se viera desalineada respecto a las
+    # declaraciones y al resto del documento.
+    r2 = body.add_run(f'{numero_limpio}.- {texto}')
     _apply_font(r2, BODY_FONT)
     r2.font.size = Pt(BODY_PT)
     return body
@@ -382,11 +389,20 @@ def generar_arrendamiento(datos, output_path):
         r2.bold = False; r2.font.name = 'Arial'; r2.font.size = Pt(10)
 
     def sub(texto):
-        par(texto, align=J, size=10, indent_left=1)
+        # Sin sangría: antes indentaba 1cm y dejaba el documento con una
+        # mezcla de párrafos a ras del margen y párrafos corridos, que se
+        # ve como un error de alineación más que como una lista intencional.
+        par(texto, align=J, size=10)
 
     # ══════════════════════════════════════════════
     # DOCUMENTO
     # ══════════════════════════════════════════════
+
+    # Título centrado, igual tratamiento que la promesa de compraventa —
+    # antes el arrendamiento arrancaba directo en el párrafo corrido, sin
+    # ningún título distinguible arriba.
+    heading(doc, "CONTRATO DE ARRENDAMIENTO")
+    doc.add_paragraph()
 
     # Fecha de firma al inicio
     par(fecha_firma, bold=True, align=C, size=11, space_before=0, space_after=10)
@@ -619,7 +635,7 @@ def generar_arrendamiento(datos, output_path):
         "aprovechamiento o disposición del objeto del presente convenio, siendo él mismo quien ejerce "
         "los actos establecidos en el inciso b) del precepto legal en cita.")
 
-    titulo("''DEVOLUCIÓN DEL INMUEBLE''")
+    titulo('"DEVOLUCIÓN DEL INMUEBLE"')
     clausula("DECIMOSEGUNDA",
         "Independientemente de la causa de rescisión del contrato o por su terminación, la parte "
         "arrendataria queda obligada a hacer la devolución del inmueble, de manera personal, "
@@ -663,7 +679,7 @@ def generar_arrendamiento(datos, output_path):
         "imputados al pago de los intereses moratorios, y por último, al pago de las rentas "
         "generadas y no cubiertas.")
 
-    titulo("''DERECHO DEL TANTO Y TRANSMISIÓN DE LA PROPIEDAD''")
+    titulo('"DERECHO DEL TANTO Y TRANSMISIÓN DE LA PROPIEDAD"')
     clausula("DECIMOSEXTA",
         "La parte arrendataria renuncia expresamente al derecho de preferencia o derecho del tanto, "
         "es decir, para la compra del inmueble.")
@@ -724,7 +740,7 @@ def generar_arrendamiento(datos, output_path):
         f"todos los gastos y costas judiciales y extrajudiciales a que dieran lugar por incumplimiento "
         f"del contrato en caso de controversia judicial.")
 
-    titulo("''TÉRMINOS''")
+    titulo('"TÉRMINOS"')
     for termino in [
         "Encabezados. Todos los encabezados de las cláusulas del presente contrato son para fines de "
         "conveniencia y no modifican, definen o limitan, de modo alguno, los términos o disposiciones "
