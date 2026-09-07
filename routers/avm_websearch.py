@@ -647,6 +647,92 @@ def _estimacion_ultimo_recurso(paginas: List[Dict[str, Any]]) -> float | None:
     return precios[n // 2] if n % 2 else (precios[n // 2 - 1] + precios[n // 2]) / 2
 
 
+def _num(v: Any) -> float:
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _precio_m2_de(comp: Dict[str, Any]):
+    """precio/m² de un comparable: prioriza el cálculo verificable
+    (precio ÷ superficie) sobre lo que haya reportado el modelo, y solo
+    usa el precio_m2 directo cuando no hay precio+superficie para
+    calcularlo — el caso normal de un indicador estadístico agregado, que
+    no corresponde a una sola propiedad y por eso no trae superficie.
+    Devuelve (precio_m2, corregido)."""
+    precio = _num(comp.get("precio"))
+    superficie = _num(comp.get("superficie_m2"))
+    calculado = (precio / superficie) if (precio > 0 and superficie > 0) else 0.0
+    if calculado > 0:
+        directo = _num(comp.get("precio_m2"))
+        corregido = directo > 0 and abs(directo - calculado) / calculado > 0.05
+        return calculado, corregido
+    return _num(comp.get("precio_m2")), False
+
+
+def _depurar_comparables(resultado: Dict[str, Any]) -> None:
+    """Filtro duro en código, independiente de si el modelo siguió sus
+    propias reglas al pie de la letra: un comparable sin ningún precio/m²
+    verificable (ni directo, ni calculable de precio + superficie) es
+    ruido — no importa qué tan real se vea el precio absoluto que trae, una
+    "casa" sin metros cuadrados no sirve para comparar nada — y uno con un
+    precio/m² muy alejado del resto probablemente sea un error de captura
+    o una promoción atípica. Ninguno de los dos debe presentársele al
+    cliente como si fuera un dato usable, así el modelo lo haya dejado
+    pasar en su propia respuesta."""
+    comparables = resultado.get("comparables") or []
+    descartados = list(resultado.get("comparables_descartados") or [])
+
+    def _descartar(comp, motivo):
+        comp["incluido_en_promedio"] = False
+        comp["motivo_inclusion_o_descarte"] = motivo
+        descartados.append({
+            "descripcion": comp.get("descripcion", ""),
+            "fuente": comp.get("fuente", ""),
+            "url": comp.get("url", ""),
+            "motivo": motivo,
+        })
+
+    validos = []
+    for comp in comparables:
+        pm2, corregido = _precio_m2_de(comp)
+        if pm2 <= 0:
+            _descartar(
+                comp,
+                "Descartado automáticamente: sin precio/m² verificable "
+                "(falta precio, superficie, o ambos).",
+            )
+            continue
+        if corregido:
+            comp["precio_m2"] = _round_mxn(pm2, 1)
+        comp["_pm2_calc"] = pm2
+        validos.append(comp)
+
+    if len(validos) >= 3:
+        precios_m2 = sorted(c["_pm2_calc"] for c in validos)
+        n = len(precios_m2)
+        mediana = precios_m2[n // 2] if n % 2 else (precios_m2[n // 2 - 1] + precios_m2[n // 2]) / 2
+        finales = []
+        for comp in validos:
+            pm2 = comp.pop("_pm2_calc")
+            if mediana and (pm2 < mediana * 0.4 or pm2 > mediana * 2.5):
+                _descartar(
+                    comp,
+                    f"Descartado automáticamente: precio/m² (${pm2:,.0f}) muy alejado de la "
+                    f"mediana de los demás comparables (${mediana:,.0f}/m²).",
+                )
+                continue
+            finales.append(comp)
+    else:
+        finales = validos
+        for comp in finales:
+            comp.pop("_pm2_calc", None)
+
+    resultado["comparables"] = finales
+    resultado["comparables_descartados"] = descartados
+
+
 _BLOQUEO_RE = re.compile(
     r"verifica que eres human|verificar que no eres un rob|"
     r"i'?m not a robot|are you a human|unusual traffic|"
@@ -992,6 +1078,11 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
     resultado["queries_utilizadas"] = busqueda["queries"]
     resultado["proveedores_busqueda_configurados"] = busqueda["providers_configured"]
     resultado["colonias_colindantes_verificadas"] = colonias_vecinas
+
+    try:
+        _depurar_comparables(resultado)
+    except Exception:
+        pass
 
     try:
         comps = [
