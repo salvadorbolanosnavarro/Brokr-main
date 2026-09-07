@@ -994,7 +994,9 @@ input:focus, select:focus, textarea:focus {
 
               <div className="opinion-valor-hero">
                 <div className="opinion-valor-label">Valor estimado</div>
-                <div className="opinion-valor-num">{fmtMXN2(resultado.valor_estimado)}</div>
+                {resultado.valor_estimado
+                  ? <div className="opinion-valor-num">{fmtMXN2(resultado.valor_estimado)}</div>
+                  : <div className="opinion-valor-num" style={{ fontSize: "1.3rem" }}>No fue posible calcular un monto — revisa el resumen y las recomendaciones abajo</div>}
               </div>
 
               <div className="opinion-section">
