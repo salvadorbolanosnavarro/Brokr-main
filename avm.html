@@ -882,7 +882,7 @@ input:focus, select:focus, textarea:focus {
             </div>
             {form.ciudad
               ? <div style={{ fontSize: 12, color: "var(--gray-400)", marginTop: -2 }}>
-                  📍 {form.ciudad}{form.estado ? `, ${form.estado}` : ""}
+                  Ubicación: {form.ciudad}{form.estado ? `, ${form.estado}` : ""}
                 </div>
               : form.colonia.trim().length >= 3 &&
                 <div style={{ fontSize: 12, color: "var(--warn)", marginTop: -2 }}>
