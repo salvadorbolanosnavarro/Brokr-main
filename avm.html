@@ -733,7 +733,7 @@ input:focus, select:focus, textarea:focus {
     function AvmIA() {
       const [form, setForm] = React.useState({
         tipo: "terreno", operacion: "venta",
-        colonia: "", ciudad: "", estado: "",
+        colonia: "", ciudad: "", estado: "", latitud: 0, longitud: 0,
         m2_terreno: "", m2_construccion: "",
         recamaras: "", banos: "", estacionamientos: "",
         condicion_terreno: "plano", comentarios: ""
@@ -757,6 +757,8 @@ input:focus, select:focus, textarea:focus {
           if (data.colonia)       setForm(p => ({ ...p, colonia: data.colonia }));
           if (data.ciudad)        setForm(p => ({ ...p, ciudad: data.ciudad }));
           if (data.estado)        setForm(p => ({ ...p, estado: data.estado }));
+          if (data.latitud)       setForm(p => ({ ...p, latitud: data.latitud }));
+          if (data.longitud)      setForm(p => ({ ...p, longitud: data.longitud }));
           if (data.m2_terreno)    setForm(p => ({ ...p, m2_terreno: String(data.m2_terreno) }));
           if (data.m2_construccion) setForm(p => ({ ...p, m2_construccion: String(data.m2_construccion) }));
           if (data.recamaras)     setForm(p => ({ ...p, recamaras: String(data.recamaras) }));
@@ -797,6 +799,8 @@ input:focus, select:focus, textarea:focus {
             condicion_terreno: form.condicion_terreno || "",
             ciudad: form.ciudad || "",
             estado: form.estado || "",
+            latitud: form.latitud || 0,
+            longitud: form.longitud || 0,
             comentarios: form.comentarios || ""
           };
           const r = await fetch(`${API}/api/avm-websearch`, {
@@ -875,8 +879,8 @@ input:focus, select:focus, textarea:focus {
               <F label="Colonia / Fraccionamiento *">
                 <ColoniaTextInput
                   value={form.colonia}
-                  onChange={(v) => setForm(p => ({ ...p, colonia: v, ciudad: "", estado: "" }))}
-                  onSelect={(s) => setForm(p => ({ ...p, colonia: s.nombre, ciudad: s.ciudad || "", estado: s.estado || "" }))}
+                  onChange={(v) => setForm(p => ({ ...p, colonia: v, ciudad: "", estado: "", latitud: 0, longitud: 0 }))}
+                  onSelect={(s) => setForm(p => ({ ...p, colonia: s.nombre, ciudad: s.ciudad || "", estado: s.estado || "", latitud: s.latitud || 0, longitud: s.longitud || 0 }))}
                 />
               </F>
             </div>
