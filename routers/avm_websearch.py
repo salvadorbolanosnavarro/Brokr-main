@@ -90,6 +90,17 @@ PREMIUM_FETCH_DOMAINS = {
     "propiedades.com",
     "metroscubicos.com",
     "mercadolibre.com.mx",
+    # Estos portales también bloquean el fetch directo con captcha/login
+    # con bastante frecuencia (confirmado en producción: un AVM real donde
+    # "todas las páginas devolvieron errores de acceso" y terminó en
+    # confianza baja sin necesidad, porque nunca se les dio la oportunidad
+    # de pasar por Firecrawl). easybroker.com se deja fuera a propósito:
+    # es la plataforma propia de Broquer, no tiene el mismo bloqueo y no
+    # vale la pena gastarle crédito de Firecrawl de entrada.
+    "vivanuncios.com.mx",
+    "icasas.mx",
+    "trovit.com.mx",
+    "nestoria.mx",
 }
 
 
@@ -636,6 +647,28 @@ def _estimacion_ultimo_recurso(paginas: List[Dict[str, Any]]) -> float | None:
     return precios[n // 2] if n % 2 else (precios[n // 2 - 1] + precios[n // 2]) / 2
 
 
+_BLOQUEO_RE = re.compile(
+    r"verifica que eres human|verificar que no eres un rob|"
+    r"i'?m not a robot|are you a human|unusual traffic|"
+    r"inicia sesi[oó]n para (ver|continuar)|debes iniciar sesi[oó]n|"
+    r"please enable javascript|enable cookies|access denied|"
+    r"attention required|checking your browser|"
+    r"solicitamos que verifiques|\bcaptcha\b",
+    re.IGNORECASE,
+)
+
+
+def _pagina_bloqueada(texto: str) -> bool:
+    """Detecta cuando un fetch respondió 200 pero en realidad es un muro de
+    captcha, login o verificación anti-bot — no un error HTTP, así que sin
+    esto se aceptaba como evidencia "válida" con texto basura en vez de
+    reintentarse por Firecrawl (que sí sabe evadir estos muros con proxy
+    rotativo). Este era el motivo real detrás de AVMs que terminaban en
+    confianza baja pese a tratarse de zonas con oferta real: las páginas
+    fetcheadas directo venían bloqueadas, no vacías de mercado."""
+    return bool(_BLOQUEO_RE.search(texto or ""))
+
+
 def _build_page_summary(html: str) -> str:
     """Texto final que se manda al modelo por cada página: primero el dato
     estructurado (si lo hay), luego la advertencia de multi-listado (si
@@ -699,11 +732,12 @@ async def _fetch_candidate_pages(candidates: List[Dict[str, Any]]) -> List[Dict[
                     return {**item, "fetch_status": "ok_firecrawl", "page_text": firecrawl["page_text"]}
                 try:
                     direct = await _try_httpx(url)
-                    if direct["ok"]:
+                    if direct["ok"] and not _pagina_bloqueada(direct["text"]):
                         return {**item, "fetch_status": "ok_httpx_fallback", "page_text": direct["text"]}
+                    motivo = "bloqueada" if direct["ok"] else f"http_{direct.get('status')}"
                     return {
                         **item,
-                        "fetch_status": f"firecrawl_{firecrawl.get('error','err')}__http_{direct.get('status')}",
+                        "fetch_status": f"firecrawl_{firecrawl.get('error','err')}__{motivo}",
                         "page_text": "",
                     }
                 except Exception as exc:
@@ -715,23 +749,32 @@ async def _fetch_candidate_pages(candidates: List[Dict[str, Any]]) -> List[Dict[
                     }
 
             direct = await _try_httpx(url)
-            if direct["ok"]:
+            bloqueada = direct["ok"] and _pagina_bloqueada(direct["text"])
+            if direct["ok"] and not bloqueada:
                 return {**item, "fetch_status": "ok", "page_text": direct["text"]}
 
             status = direct.get("status") or 0
-            if FIRECRAWL_API_KEY and (status in (403, 429) or status >= 500):
+            # Un 200 que en realidad es captcha/login se trata igual que un
+            # 403/429/5xx: se le da a Firecrawl la oportunidad de evadir el
+            # muro en vez de aceptar la página bloqueada como si fuera
+            # evidencia real (eso era lo que dejaba un AVM entero sin
+            # comparables verificables aunque sí hubiera oferta en la zona).
+            if FIRECRAWL_API_KEY and (bloqueada or status in (403, 429) or status >= 500):
                 firecrawl = await _try_firecrawl(url)
+                etiqueta = "bloqueo" if bloqueada else str(status)
                 if firecrawl.get("ok"):
                     return {
                         **item,
-                        "fetch_status": f"ok_firecrawl_retry_{status}",
+                        "fetch_status": f"ok_firecrawl_retry_{etiqueta}",
                         "page_text": firecrawl["page_text"],
                     }
                 return {
                     **item,
-                    "fetch_status": f"http_{status}__firecrawl_{firecrawl.get('error','err')}",
+                    "fetch_status": f"{'bloqueo' if bloqueada else 'http_' + str(status)}__firecrawl_{firecrawl.get('error','err')}",
                     "page_text": "",
                 }
+            if bloqueada:
+                return {**item, "fetch_status": "bloqueada_sin_firecrawl", "page_text": ""}
             return {**item, "fetch_status": f"http_{status}", "page_text": ""}
         except Exception as exc:
             return {**item, "fetch_status": "error", "fetch_error": str(exc)[:120], "page_text": ""}
@@ -810,6 +853,7 @@ Reglas duras:
 12. Vuelve a sumar/promediar tú mismo los precio_m2 de los comparables que marques incluido_en_promedio antes de reportar valor_por_m2 — no arrastres un cálculo mental impreciso; verifica la aritmética.
 13. NUNCA dejes valor_estimado en 0 ni respondas que "no fue posible" generar una estimación — eso no le sirve de nada a un agente inmobiliario. Siempre entrega un número, usando en orden lo mejor disponible: (a) comparables individuales de la colonia; (b) comparables de zonas adyacentes/similares; (c) el indicador estadístico agregado del portal (regla 11) para la colonia o ciudad; (d) si de plano no hay NINGÚN precio en toda la evidencia (ni individual ni agregado), da tu mejor estimación razonada a partir de lo que sí sepas del tipo de inmueble y la zona, dejándolo explícito en advertencias. Cuanto más débil la evidencia, más ancho el rango (valor_minimo/valor_maximo) y más baja la nivel_confianza — pero siempre con un valor_estimado numérico. Reserva nivel_confianza='baja' + un rango amplio para estos casos; jamás una respuesta vacía.
 14. Si menos de 3 comparables individuales son útiles, aplica igualmente la regla 13 (rango conservador, nivel_confianza='baja') en vez de negarte a estimar.
+15. Tono de "advertencias" y "razon_confianza": son para un agente inmobiliario que se lo va a enseñar a su cliente, no una advertencia legal. Nada de MAYÚSCULAS tipo alarma ni acumular varios avisos de "esto no es un avalúo certificado" — eso ya va aparte en el campo "metodologia" del sistema, no lo repitas aquí. Explica en 1-2 oraciones, en tono profesional y directo, POR QUÉ la confianza es la que es (ej. "los portales consultados bloquearon el acceso directo a varios anuncios, así que el rango se apoya más en el indicador de mercado que en anuncios individuales") — sin sonar catastrófico. Baja confianza con un rango amplio es una estimación honesta, no un fracaso.
 
 Responde ÚNICAMENTE JSON válido con esta estructura:
 {{
