@@ -671,56 +671,16 @@ input:focus, select:focus, textarea:focus {
       );
     }
 
-    // ─── CIUDAD INPUT con autocompletar (lista nacional) ─────────
-    const CIUDADES_MX = [
-      "Ciudad de México","Guadalajara","Monterrey","Puebla","Tijuana","León","Juárez","Zapopan",
-      "Mérida","San Luis Potosí","Querétaro","Aguascalientes","Hermosillo","Saltillo","Mexicali",
-      "Culiacán","Acapulco","Tlalnepantla","Naucalpan","Ecatepec","Chihuahua","Toluca","Morelia",
-      "Cancún","Playa del Carmen","Veracruz","Xalapa","Coatzacoalcos","Tampico","Reynosa","Matamoros",
-      "Nuevo Laredo","Torreón","Durango","Tepic","Mazatlán","Los Mochis","La Paz","Cabo San Lucas",
-      "Oaxaca","Tuxtla Gutiérrez","Tapachula","Villahermosa","Campeche","Pachuca","Cuernavaca",
-      "Cuautla","Tlaxcala","Colima","Zacatecas","Irapuato","Celaya","Guanajuato","San Miguel de Allende",
-      "Manzanillo","Puerto Vallarta","Ensenada","Rosarito","Chetumal","Ciudad del Carmen","Uruapan",
-      "Lázaro Cárdenas","Iguala","Chilpancingo","Salina Cruz","Tehuacán","Orizaba","Córdoba","Poza Rica"
-    ];
-    function CiudadInput({ value, onChange }) {
-      const [texto, setTexto] = useState(value || "");
-      const [abierto, setAbierto] = useState(false);
-      useEffect(() => { setTexto(value || ""); }, [value]);
-      const sugerencias = texto.length >= 2
-        ? CIUDADES_MX.filter(c => c.toLowerCase().includes(texto.toLowerCase())).slice(0, 8)
-        : [];
-      const onInput = (e) => {
-        const v = e.target.value;
-        setTexto(v);
-        onChange(v);
-        setAbierto(v.length >= 2);
-      };
-      const seleccionar = (c) => { setTexto(c); onChange(c); setAbierto(false); };
-      return (
-        <div className="autocomplete-wrap" onBlur={() => setTimeout(() => setAbierto(false), 150)}>
-          <input
-            type="text" value={texto}
-            onChange={onInput}
-            onFocus={() => setAbierto(texto.length >= 2)}
-            placeholder="Escribe la ciudad..."
-            style={{ width: "100%", padding: "10px 12px", background: "var(--paper-2)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10, color: "var(--ink)", outline: "none", fontFamily: "var(--font-sans)", fontSize: 14 }}
-          />
-          {abierto && sugerencias.length > 0 && (
-            <div className="autocomplete-dropdown">
-              {sugerencias.map((c, i) => (
-                <div key={i} className="autocomplete-item" onMouseDown={(e) => { e.preventDefault(); seleccionar(c); }}>
-                  <div className="ac-main">{c}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // ─── COLONIA INPUT con autocompletar (devuelve string) ───────
-    function ColoniaTextInput({ value, ciudad, onChange }) {
+    // ─── UBICACIÓN INPUT: colonia + ciudad + estado en una sola selección ──
+    // Antes había dos campos independientes (colonia con autocompletar, y
+    // ciudad como texto libre de una lista nacional sin relación con ningún
+    // estado). El estado ni siquiera se pedía — quedaba fijo en un default
+    // del backend. Resultado: combinaciones geográficamente imposibles como
+    // "Guadalajara, Michoacán". Ahora un solo campo busca la colonia en
+    // Google Places y cada sugerencia ya trae su ciudad y estado reales
+    // (ver routers/avm_places.py); al elegir una, los tres quedan fijados
+    // juntos y ya no se pueden desalinear.
+    function ColoniaTextInput({ value, onChange, onSelect }) {
       const [texto, setTexto] = useState(value || "");
       const [sugerencias, setSugerencias] = useState([]);
       const [abierto, setAbierto] = useState(false);
@@ -736,7 +696,7 @@ input:focus, select:focus, textarea:focus {
         timerRef.current = setTimeout(async () => {
           setBuscando(true);
           try {
-            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(v)}&ciudad=${encodeURIComponent(ciudad || "")}`);
+            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(v)}`);
             const d = await r.json();
             setSugerencias(d.colonias || []);
             setAbierto(true);
@@ -744,14 +704,14 @@ input:focus, select:focus, textarea:focus {
           finally { setBuscando(false); }
         }, 400);
       };
-      const seleccionar = (col) => { setTexto(col.nombre); onChange(col.nombre); setAbierto(false); };
+      const seleccionar = (col) => { setTexto(col.nombre); setAbierto(false); onSelect(col); };
       return (
         <div className="autocomplete-wrap" onBlur={() => setTimeout(() => setAbierto(false), 150)}>
           <input
             type="text" value={texto}
             onChange={onInput}
             onFocus={() => texto.length >= 3 && sugerencias.length > 0 && setAbierto(true)}
-            placeholder="Ej: Vistas Altozano, Chapultepec..."
+            placeholder="Ej: Vistas Altozano, Morelia..."
             style={{ width: "100%", padding: "10px 12px", background: "var(--paper-2)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10, color: "var(--ink)", outline: "none", fontFamily: "var(--font-sans)", fontSize: 14 }}
           />
           {buscando && <div style={{ fontSize: 11, color: "var(--gray-400)", marginTop: 4 }}>Buscando...</div>}
@@ -773,7 +733,7 @@ input:focus, select:focus, textarea:focus {
     function AvmIA() {
       const [form, setForm] = React.useState({
         tipo: "terreno", operacion: "venta",
-        colonia: "", ciudad: "",
+        colonia: "", ciudad: "", estado: "",
         m2_terreno: "", m2_construccion: "",
         recamaras: "", banos: "", estacionamientos: "",
         condicion_terreno: "plano", comentarios: ""
@@ -796,6 +756,7 @@ input:focus, select:focus, textarea:focus {
           if (data.tipo_inmueble) setForm(p => ({ ...p, tipo: data.tipo_inmueble }));
           if (data.colonia)       setForm(p => ({ ...p, colonia: data.colonia }));
           if (data.ciudad)        setForm(p => ({ ...p, ciudad: data.ciudad }));
+          if (data.estado)        setForm(p => ({ ...p, estado: data.estado }));
           if (data.m2_terreno)    setForm(p => ({ ...p, m2_terreno: String(data.m2_terreno) }));
           if (data.m2_construccion) setForm(p => ({ ...p, m2_construccion: String(data.m2_construccion) }));
           if (data.recamaras)     setForm(p => ({ ...p, recamaras: String(data.recamaras) }));
@@ -835,6 +796,7 @@ input:focus, select:focus, textarea:focus {
             estacionamientos: parseInt(form.estacionamientos) || 0,
             condicion_terreno: form.condicion_terreno || "",
             ciudad: form.ciudad || "",
+            estado: form.estado || "",
             comentarios: form.comentarios || ""
           };
           const r = await fetch(`${API}/api/avm-websearch`, {
@@ -911,15 +873,21 @@ input:focus, select:focus, textarea:focus {
             <div className="card-label">Ubicación</div>
             <div className="field-row">
               <F label="Colonia / Fraccionamiento *">
-                <ColoniaTextInput value={form.colonia} ciudad={form.ciudad}
-                  onChange={(v) => u("colonia", v)} />
+                <ColoniaTextInput
+                  value={form.colonia}
+                  onChange={(v) => setForm(p => ({ ...p, colonia: v, ciudad: "", estado: "" }))}
+                  onSelect={(s) => setForm(p => ({ ...p, colonia: s.nombre, ciudad: s.ciudad || "", estado: s.estado || "" }))}
+                />
               </F>
             </div>
-            <div className="field-row">
-              <F label="Ciudad">
-                <CiudadInput value={form.ciudad} onChange={(v) => u("ciudad", v)} />
-              </F>
-            </div>
+            {form.ciudad
+              ? <div style={{ fontSize: 12, color: "var(--gray-400)", marginTop: -2 }}>
+                  Ubicación: {form.ciudad}{form.estado ? `, ${form.estado}` : ""}
+                </div>
+              : form.colonia.trim().length >= 3 &&
+                <div style={{ fontSize: 12, color: "var(--warn)", marginTop: -2 }}>
+                  Elige una opción de la lista para ubicar ciudad y estado automáticamente.
+                </div>}
           </div>
 
           <div className="avm-card">
@@ -1036,6 +1004,7 @@ input:focus, select:focus, textarea:focus {
                   <div><div className="opinion-field-label">Operación</div><div className="opinion-field-value">{form.operacion === "venta" ? "Venta" : "Renta"}</div></div>
                   {form.colonia && <div><div className="opinion-field-label">Colonia</div><div className="opinion-field-value">{form.colonia}</div></div>}
                   {form.ciudad  && <div><div className="opinion-field-label">Ciudad</div><div className="opinion-field-value">{form.ciudad}</div></div>}
+                  {form.estado  && <div><div className="opinion-field-label">Estado</div><div className="opinion-field-value">{form.estado}</div></div>}
                   {parseFloat(form.m2_terreno) > 0  && <div><div className="opinion-field-label">Terreno</div><div className="opinion-field-value">{form.m2_terreno} m²</div></div>}
                   {parseFloat(form.m2_construccion) > 0 && <div><div className="opinion-field-label">Construcción</div><div className="opinion-field-value">{form.m2_construccion} m²</div></div>}
                 </div>
