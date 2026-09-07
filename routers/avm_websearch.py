@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime
 import json
+import math
 import re
 import time
 from typing import Any, Dict, List
@@ -13,7 +14,9 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from core.auth import get_user_id_from_token
+from core.cache import cache_get, cache_set
 from core.config import settings
+from core.easybroker import normalize as _normalize_colonia
 from core.http import fetch_public_http_result
 from core.legacy_main_config import legacy_main_settings
 from core.telemetry import _track_anthropic
@@ -23,6 +26,7 @@ from limites import exigir_cupo, exigir_sesion
 router = APIRouter()
 ANTHROPIC_API_KEY = settings.anthropic_api_key
 ANTHROPIC_BASE = settings.anthropic_base
+GOOGLE_PLACES_KEY = settings.google_places_key
 
 
 class AvmWebSearchRequest(BaseModel):
@@ -43,6 +47,12 @@ class AvmWebSearchRequest(BaseModel):
     ciudad: str = ""
     estado: str = ""
     comentarios: str = ""
+    # Coordenadas de la colonia elegida (vienen del mismo resultado de
+    # Google Places que ya trae ciudad/estado — ver routers/avm_places.py).
+    # Con esto se pueden descubrir las colonias colindantes reales en vez
+    # de depender de que el modelo "se acuerde" de la geografía de memoria.
+    latitud: float = 0
+    longitud: float = 0
 
 
 SEARCH_TIMEOUT = legacy_main_settings.avm_search_timeout
@@ -164,7 +174,7 @@ def _sameish_text(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "")).strip()
 
 
-def _build_search_queries(req: AvmWebSearchRequest) -> List[str]:
+def _build_search_queries(req: AvmWebSearchRequest, colonias_vecinas: List[str] = ()) -> List[str]:
     tipo = {
         "terreno": "terreno", "casa": "casa", "departamento": "departamento",
         "local": "local comercial", "oficina": "oficina", "bodega": "bodega"
@@ -185,7 +195,94 @@ def _build_search_queries(req: AvmWebSearchRequest) -> List[str]:
     ]
     if req.estado:
         queries.append(f'{tipo} {op} {lugar} "{req.estado}"')
+    # Colonias colindantes reales (descubiertas por geocodificación, no
+    # adivinadas por el modelo): una query genérica por cada una para
+    # ampliar la búsqueda sin disparar el número de queries tanto como el
+    # bloque site: de arriba.
+    for vecina in colonias_vecinas[:3]:
+        lugar_vecina = " ".join(f'"{v}"' for v in (vecina, req.ciudad) if v)
+        if lugar_vecina:
+            queries.append(f'{tipo} en {op} {lugar_vecina} precio m2')
     return queries
+
+
+def _offset_latlng(lat: float, lng: float, dx_km: float, dy_km: float):
+    """Desplaza un punto lat/lng por (dx_km, dy_km) con una aproximación
+    plana — de sobra para el radio de cientos de metros que interesa aquí,
+    no hace falta geodesia exacta."""
+    dlat = dy_km / 111.0
+    dlng = dx_km / (111.0 * math.cos(math.radians(lat)) or 1)
+    return lat + dlat, lng + dlng
+
+
+# 8 puntos a ~0.9km alrededor del centro de la colonia elegida: suficiente
+# para caer típicamente en la colonia contigua sin saltarse varias de un
+# salto (una colonia urbana normal mide más que eso de lado a lado).
+_VECINDAD_OFFSETS_KM = [
+    (0.9, 0), (-0.9, 0), (0, 0.9), (0, -0.9),
+    (0.65, 0.65), (-0.65, 0.65), (0.65, -0.65), (-0.65, -0.65),
+]
+
+
+async def _colonias_vecinas(lat: float, lng: float, colonia_actual: str) -> List[str]:
+    """Descubre los nombres reales de las colonias contiguas a un punto
+    geocodificando en reversa varios puntos a su alrededor — en vez de
+    depender de que el modelo "recuerde" la geografía de memoria (poco
+    confiable y no escala a cualquier ciudad de México). Se cachea 30 días
+    por coordenada: la geografía de una colonia no cambia de un día a otro.
+    """
+    if not GOOGLE_PLACES_KEY or not lat or not lng:
+        return []
+
+    cache_key = f"avm_vecinas_{round(lat, 4)}_{round(lng, 4)}"
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            tasks = [
+                client.get(
+                    "https://maps.googleapis.com/maps/api/geocode/json",
+                    params={
+                        "latlng": "{:.6f},{:.6f}".format(*_offset_latlng(lat, lng, dx, dy)),
+                        "language": "es",
+                        "key": GOOGLE_PLACES_KEY,
+                    },
+                )
+                for dx, dy in _VECINDAD_OFFSETS_KM
+            ]
+            respuestas = await asyncio.gather(*tasks, return_exceptions=True)
+    except Exception:
+        return []
+
+    vistas = {_normalize_colonia(colonia_actual)}
+    encontradas: List[str] = []
+    for resp in respuestas:
+        if isinstance(resp, Exception) or resp.status_code != 200:
+            continue
+        try:
+            resultados = resp.json().get("results") or []
+        except Exception:
+            continue
+        if not resultados:
+            continue
+        # El primer resultado de geocodificación inversa es el más
+        # específico — el que trae el nombre de colonia/barrio del punto.
+        for comp in resultados[0].get("address_components", []):
+            if not any(
+                t in comp.get("types", [])
+                for t in ("neighborhood", "sublocality", "sublocality_level_1")
+            ):
+                continue
+            nombre = comp.get("long_name", "")
+            clave = _normalize_colonia(nombre)
+            if nombre and clave not in vistas:
+                vistas.add(clave)
+                encontradas.append(nombre)
+
+    cache_set(cache_key, encontradas, ttl=86400 * 30)
+    return encontradas[:6]
 
 
 async def _search_google_cse(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
@@ -277,8 +374,8 @@ async def _search_tavily(client: httpx.AsyncClient, query: str) -> List[Dict[str
     return out
 
 
-async def _collect_search_candidates(req: AvmWebSearchRequest) -> Dict[str, Any]:
-    queries = _build_search_queries(req)
+async def _collect_search_candidates(req: AvmWebSearchRequest, colonias_vecinas: List[str] = ()) -> Dict[str, Any]:
+    queries = _build_search_queries(req, colonias_vecinas)
     providers_configured = {
         "google_cse": bool(legacy_main_settings.google_cse_api_key and legacy_main_settings.google_cse_id),
         "serpapi": bool(legacy_main_settings.serpapi_api_key),
@@ -675,6 +772,7 @@ async def _claude_extract_and_value(
     evidence: List[Dict[str, Any]],
     queries: List[str],
     user_id: str = None,
+    colonias_vecinas: List[str] = (),
 ) -> Dict[str, Any]:
     if not ANTHROPIC_API_KEY:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")
@@ -702,7 +800,7 @@ Reglas duras:
 2. Si un anuncio no muestra precio y superficie suficientes, márcalo como descartado.
 3. Si detectas que una misma propiedad aparece duplicada —incluso en portales distintos, por misma dirección/precio/superficie casi idénticos—, conserva una sola.
 4. No uses fotos, teléfonos, nombres de asesores ni datos personales.
-5. Prioriza comparables de la misma colonia/fraccionamiento; después zonas adyacentes y similares.
+5. Prioriza comparables de la misma colonia/fraccionamiento. Si no hay suficientes, usa "colonias_colindantes_verificadas" en el mensaje del usuario si viene con nombres — son geográficamente contiguas de verdad (calculadas por geocodificación, no adivinadas), así que un comparable encontrado ahí cuenta como "zona adyacente" real para la regla 8, no como "submercado distinto". Sin esa lista, usa tu propio criterio de zonas adyacentes y similares.
 6. Para terrenos usa m² de terreno. Para casas/departamentos usa m² de construcción como base principal; si no hay construcción, descarta o márcalo como baja confianza.
 7. Aplica factor negociación de -5% a precios de oferta en venta. En renta usa -3% si aplica.
 8. Penaliza comparables sospechosos: anuncio viejo, datos incompletos, precio/m² extremo, ubicación poco clara, submercado distinto.
@@ -753,6 +851,7 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
         "inmueble_sujeto": _subject_summary(req, tipo_label),
         "superficie_relevante_sujeto_m2": superficie_sujeto,
         "queries_utilizadas": queries,
+        "colonias_colindantes_verificadas": list(colonias_vecinas),
         "evidencia_web": evidence_compact,
         "instruccion_calculo": "Extrae comparables reales de la evidencia; calcula precio/m²; descarta duplicados/outliers; promedia solo incluidos; aplica ajustes; calcula valor estimado y rango.",
     }
@@ -807,7 +906,9 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
     }
     tipo_label = tipo_labels.get(req.tipo_inmueble, req.tipo_inmueble)
 
-    busqueda = await _collect_search_candidates(req)
+    colonias_vecinas = await _colonias_vecinas(req.latitud, req.longitud, req.colonia)
+
+    busqueda = await _collect_search_candidates(req, colonias_vecinas)
     candidatos = busqueda["results"]
     if not candidatos:
         raise HTTPException(
@@ -822,6 +923,7 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
         paginas,
         busqueda["queries"],
         user_id=user_id,
+        colonias_vecinas=colonias_vecinas,
     )
 
     resultado["tipo_inmueble"] = tipo_label
@@ -845,6 +947,7 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
     } for page in paginas]
     resultado["queries_utilizadas"] = busqueda["queries"]
     resultado["proveedores_busqueda_configurados"] = busqueda["providers_configured"]
+    resultado["colonias_colindantes_verificadas"] = colonias_vecinas
 
     try:
         comps = [
