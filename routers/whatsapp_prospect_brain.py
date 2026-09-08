@@ -12,7 +12,8 @@ async def _responder_conversacion_core(item: dict, numero: dict, user_id: str, *
                                        _propiedad_para_ficha, _texto_inmueble,
                                        _wa_send_document_link, _resolver_inmueble_id,
                                        sb_post, _fecha_hora_utc_iso, _construir_ics,
-                                       _wa_send_document, _alta_inmueble, log, _money):
+                                       _wa_send_document, _alta_inmueble, log, _money,
+                                       _guardar_nota_sistema=None):
     conv_rows = await sb_get("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}", "select": "*", "limit": "1"})
     conv = conv_rows[0] if conv_rows else {}
     contacto_rows = await sb_get("wa2_contactos", {"id": f"eq.{item['contacto_id']}", "select": "*", "limit": "1"})
@@ -55,6 +56,10 @@ async def _responder_conversacion_core(item: dict, numero: dict, user_id: str, *
     if any(p.lower() in item["texto"].lower() for p in palabras if p):
         await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
                        {"ai_enabled": False, "ia_modo": "off"})
+        if _guardar_nota_sistema:
+            await _guardar_nota_sistema(user_id, item["contacto_id"], item["conversacion_id"],
+                "⏸️ La IA se apagó en este chat: el prospecto pidió hablar con una persona. "
+                "Enciéndela de nuevo desde el control de IA cuando quieras.")
         await enviar_push(user_id, "Un prospecto pidió hablar contigo",
                           f"{contacto.get('nombre') or item['wa_id']}: {item['texto'][:100]}",
                           datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})
@@ -73,6 +78,11 @@ async def _responder_conversacion_core(item: dict, numero: dict, user_id: str, *
         # ahora le tocaba a él. Ahora se le avisa.
         await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
                        {"ai_enabled": False, "ia_modo": "off"})
+        if _guardar_nota_sistema:
+            await _guardar_nota_sistema(user_id, item["contacto_id"], item["conversacion_id"],
+                "⏸️ La IA se apagó en este chat: llegó al máximo de mensajes que puede mandar "
+                "en una sola conversación. Ya te toca seguirla tú, o enciéndela de nuevo desde "
+                "el control de IA.")
         await enviar_push(user_id, "Un prospecto te está esperando",
                           f"{contacto.get('nombre') or item['wa_id']} lleva rato platicando con la IA. "
                           "Ya te toca a ti seguir la conversación.",
@@ -108,6 +118,10 @@ async def _responder_conversacion_core(item: dict, numero: dict, user_id: str, *
         # esperando a un bot descompuesto es un prospecto perdido.
         await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
                        {"ai_enabled": False, "ia_modo": "off"})
+        if _guardar_nota_sistema:
+            await _guardar_nota_sistema(user_id, item["contacto_id"], item["conversacion_id"],
+                "⏸️ La IA se apagó en este chat: tuvo una falla técnica y no pudo generar una "
+                "respuesta. Contéstale tú, o enciéndela de nuevo desde el control de IA.")
         await enviar_push(user_id, "La IA no pudo contestar",
                           f"{contacto.get('nombre') or item['wa_id']} está esperando respuesta. "
                           "Entra a la conversación tú.",
@@ -274,6 +288,10 @@ async def _responder_conversacion_core(item: dict, numero: dict, user_id: str, *
             else:
                 await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
                                {"ai_enabled": False, "ia_modo": "off"})
+                if _guardar_nota_sistema:
+                    await _guardar_nota_sistema(user_id, item["contacto_id"], item["conversacion_id"],
+                        "⏸️ La IA se apagó en este chat: te mandaron un inmueble y no se pudo "
+                        "registrar. Entra a la conversación tú.")
                 await enviar_push(user_id, "No se pudo guardar un inmueble",
                                   f"{contacto.get('nombre') or item['wa_id']} te mandó una propiedad y "
                                   "no se pudo registrar. Entra a la conversación.",
@@ -282,6 +300,9 @@ async def _responder_conversacion_core(item: dict, numero: dict, user_id: str, *
         elif tipo == "pasar_a_humano":
             await sb_patch("wa2_conversaciones", {"id": f"eq.{item['conversacion_id']}"},
                            {"ai_enabled": False, "ia_modo": "off"})
-            await enviar_push(user_id, "Un prospecto necesita de ti",
-                              accion.get("motivo") or "La IA te pasó esta conversación.",
+            motivo = accion.get("motivo") or "La IA te pasó esta conversación."
+            if _guardar_nota_sistema:
+                await _guardar_nota_sistema(user_id, item["contacto_id"], item["conversacion_id"],
+                    f"⏸️ La IA te pasó este chat: {motivo}")
+            await enviar_push(user_id, "Un prospecto necesita de ti", motivo,
                               datos={"tipo": "whatsapp", "conversation_id": item["conversacion_id"]})

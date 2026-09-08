@@ -164,6 +164,7 @@ async def _pausar_por_respuesta_manual(conv: dict, numero: dict, entren: dict | 
         conv, numero, entren,
         _entrenamiento_de=_entrenamiento_de, _modo_conv=_modo_conv,
         datetime=datetime, timezone=timezone, timedelta=timedelta, sb_patch=sb_patch,
+        _guardar_nota_sistema=_guardar_nota_sistema,
     )
 
 
@@ -708,7 +709,9 @@ async def _get_o_crea_conversacion(user_id: str, numero_id: str, contacto_id: st
 
 
 
-from routers.whatsapp_message_state import _guardar_mensaje_core, _resolver_inmueble_id_core as _resolver_inmueble_id
+from routers.whatsapp_message_state import (
+    _guardar_mensaje_core, _nota_sistema_core, _resolver_inmueble_id_core as _resolver_inmueble_id,
+)
 
 async def _guardar_mensaje(user_id: str, contacto_id: str, conversacion_id: str, wamid: str | None,
                           direction: str, sender: str, body: str, media_url: str | None = None,
@@ -716,6 +719,12 @@ async def _guardar_mensaje(user_id: str, contacto_id: str, conversacion_id: str,
     return await _guardar_mensaje_core(
         user_id, contacto_id, conversacion_id, wamid, direction, sender, body, media_url, media_path,
         _now=_now, sb_post=sb_post, sb_get=sb_get, log=log, sb_patch=sb_patch,
+    )
+
+async def _guardar_nota_sistema(user_id: str, contacto_id: str, conversacion_id: str, texto: str) -> None:
+    return await _nota_sistema_core(
+        user_id, contacto_id, conversacion_id, texto,
+        _now=_now, sb_post=sb_post, log=log,
     )
 
 
@@ -820,6 +829,7 @@ async def _responder_conversacion(item: dict, numero: dict, user_id: str):
         _resolver_inmueble_id=_resolver_inmueble_id, sb_post=sb_post,
         _fecha_hora_utc_iso=_fecha_hora_utc_iso, _construir_ics=_construir_ics,
         _wa_send_document=_wa_send_document, _alta_inmueble=_alta_inmueble, log=log, _money=_money,
+        _guardar_nota_sistema=_guardar_nota_sistema,
     )
 
 

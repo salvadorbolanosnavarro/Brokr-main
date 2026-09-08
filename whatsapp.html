@@ -142,6 +142,9 @@
   .w2-day{ align-self:center; background:var(--bone); border:1px solid var(--line); color:var(--mute);
            font-size:var(--fs-caption); font-weight:700; padding:4px 12px; border-radius:var(--r-pill);
            margin:10px 0 12px; box-shadow:var(--shadow-xs); }
+  .w2-nota-sistema{ align-self:center; max-width:80%; text-align:center; background:var(--bone);
+           border:1px solid var(--line); color:var(--mute); font-size:var(--fs-xs); font-style:italic;
+           padding:6px 14px; border-radius:var(--r-pill); margin:6px 0 12px; box-shadow:var(--shadow-xs); }
   .w2-loadmore{ align-self:center; color:var(--mute); font-size:var(--fs-xs); padding:6px 0 12px; }
   .w2-loadmore--btn{ cursor:pointer; font-weight:700; color:var(--sky-blue); background:var(--bone);
                       border:1px solid var(--line); border-radius:var(--r-pill); padding:6px 14px; }
@@ -1141,7 +1144,8 @@ function w2RenderLista(){
       ? `<span class="w2-conv__unread ${sinLeer ? '' : 'w2-conv__unread--punto'}">${sinLeer ? (sinLeer > 99 ? '99+' : sinLeer) : ''}</span>`
       : (w2IaAproxOn(c) ? '<span class="w2-conv__ia" title="La IA contesta este chat"></span>' : '');
     let prev = c.preview_texto || ct.resumen || ct.busca || 'Sin mensajes aún';
-    if(c.preview_direction === 'out') prev = (c.preview_sender === 'ia' ? 'IA: ' : 'Tú: ') + prev;
+    if(c.preview_sender === 'sistema') /* nota interna: se muestra tal cual, sin prefijo */;
+    else if(c.preview_direction === 'out') prev = (c.preview_sender === 'ia' ? 'IA: ' : 'Tú: ') + prev;
     return `<div class="w2-conv ${activa?'is-active':''} ${pend?'is-pendiente':''}" onclick="w2AbrirConversacion('${c.id}')">
               <div class="w2-conv__ava ${w2AvaClase(nombre)}">${w2Esc(w2Iniciales(nombre))}</div>
               <div class="w2-conv__body">
@@ -1473,6 +1477,11 @@ function w2PintarMensajes(){
     const dia = w2EtiquetaDia(m.created_at);
     let grupo = false;
     if(dia !== diaPrevio){ html += `<div class="w2-day">${w2Esc(dia)}</div>`; diaPrevio = dia; grupo = true; }
+    if(m.sender === 'sistema'){
+      html += `<div class="w2-nota-sistema">${w2Esc(m.body)}</div>`;
+      remitentePrevio = 'sistema';
+      continue;
+    }
     const out = m.direction === 'out';
     const quien = out ? (m.sender === 'ia' ? 'ia' : 'agente') : 'in';
     if(quien !== remitentePrevio) grupo = true;

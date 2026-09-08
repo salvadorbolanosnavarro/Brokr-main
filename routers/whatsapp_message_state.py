@@ -29,6 +29,22 @@ async def _guardar_mensaje_core(user_id: str, contacto_id: str, conversacion_id:
     await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, cambios_conv)
 
 
+async def _nota_sistema_core(user_id: str, contacto_id: str, conversacion_id: str, texto: str, *,
+                             _now, sb_post, log) -> None:
+    """Deja una nota visible en el hilo cuando algo apaga o pausa la IA sola
+    (palabra de escalamiento, tope de mensajes, falla técnica, decisión del
+    propio modelo, respuesta manual...), para que el asesor entienda POR QUÉ
+    sin depender únicamente del push. Nunca se manda a WhatsApp — no lleva
+    wa_message_id — y no toca last_message_at/last_inbound_at para no alterar
+    el conteo de no leídos ni la lógica de "cliente nuevo"."""
+    guardado = await sb_post("wa2_mensajes", {
+        "user_id": user_id, "contacto_id": contacto_id, "conversacion_id": conversacion_id,
+        "direction": "out", "sender": "sistema", "body": texto, "created_at": _now(),
+    })
+    if not guardado:
+        log.warning("No se pudo guardar la nota de sistema en conv=%s", conversacion_id)
+
+
 def _resolver_inmueble_id_core(inmueble_txt: str, ultimas: list) -> str | None:
     """Si el prospecto ya vio 1 sola propiedad en esta charla, es esa. Si vio
     varias, se intenta encontrar cuál por el texto que puso la IA en 'inmueble'."""

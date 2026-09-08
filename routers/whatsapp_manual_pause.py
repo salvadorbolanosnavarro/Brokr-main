@@ -3,7 +3,8 @@ from __future__ import annotations
 
 async def _pausar_por_respuesta_manual_core(conv: dict, numero: dict, entren: dict | None = None, *,
                                              _entrenamiento_de, _modo_conv, datetime,
-                                             timezone, timedelta, sb_patch) -> dict:
+                                             timezone, timedelta, sb_patch,
+                                             _guardar_nota_sistema=None) -> dict:
     """El agente respondió a mano (desde Broquer o desde el WhatsApp de su
     celular). Según la configuración del número, la IA se hace a un lado en
     ese chat: para siempre, o por un rato (pausa temporal). En cualquier caso
@@ -31,4 +32,15 @@ async def _pausar_por_respuesta_manual_core(conv: dict, numero: dict, entren: di
         # comportamiento clásico para que JAMÁS contesten dos en un chat.
         await sb_patch("wa2_conversaciones", {"id": f"eq.{conv['id']}"}, {"ai_enabled": False})
     conv.update({k: v for k, v in cambios.items()})
+    # Nota visible en el hilo: sin esto, la única señal de que la IA se hizo
+    # a un lado era un push que el asesor podía no ver — y el chat se veía
+    # "apagado solo" sin explicación.
+    if info["ia_pausada"] and _guardar_nota_sistema is not None:
+        texto = ("⏸️ La IA quedó en pausa en este chat: alguien contestó a mano "
+                 "(desde Broquer o desde el celular conectado). Enciéndela de nuevo "
+                 "desde el control de IA de la conversación cuando quieras.") \
+            if info["para_siempre"] else \
+            ("⏸️ La IA hace una pausa temporal en este chat porque alguien contestó a "
+             "mano: vuelve sola en unos minutos, o enciéndela ya desde el control de IA.")
+        await _guardar_nota_sistema(numero["user_id"], conv.get("contacto_id"), conv["id"], texto)
     return info
