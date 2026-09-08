@@ -1652,11 +1652,15 @@ async function cBorrarSeleccionados() {
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.detail || 'No se pudo eliminar');
+    const borrados = d.eliminados != null ? d.eliminados : ids.length;
     cSel.clear();
     cCerrarConfirm();
     await cargarRemoto();
     renderActual();
     cActualizarBarra();
+    showToast(borrados < ids.length
+      ? borrados + ' de ' + ids.length + ' eliminados. El resto no era tuyo.'
+      : borrados + (borrados === 1 ? ' contacto eliminado' : ' contactos eliminados'));
   } catch (e) {
     alert(e.message || 'No se pudo eliminar');
   } finally {
@@ -1730,9 +1734,18 @@ function setSexo(s, btn) {
   if (btn) btn.classList.add('active');
 }
 
+// Evita perder cambios sin guardar por un clic accidental fuera del modal.
+let contactFormDirty = false;
 function abrirModal(id = null) {
   clearTimeout(_busqT);
   editandoId = id;
+  contactFormDirty = false;
+  const modalBox = document.querySelector('#modal-ov .sheet') || document.getElementById('modal-ov');
+  if (modalBox && !modalBox.dataset.dirtyBound) {
+    modalBox.addEventListener('input', () => { contactFormDirty = true; });
+    modalBox.addEventListener('change', () => { contactFormDirty = true; });
+    modalBox.dataset.dirtyBound = '1';
+  }
   if (id) {
     const c = cargar().find(x => x.id === id);
     if (!c) return;
@@ -1765,7 +1778,12 @@ function abrirModal(id = null) {
   setTimeout(() => document.getElementById('m-nombre').focus(), 100);
 }
 
-function cerrarModal() { document.getElementById('modal-ov').classList.remove('open'); editandoId = null; }
+function cerrarModal() {
+  if (contactFormDirty && !confirm('Tienes cambios sin guardar. ¿Descartarlos?')) return;
+  contactFormDirty = false;
+  document.getElementById('modal-ov').classList.remove('open');
+  editandoId = null;
+}
 
 function abrirMigracion() {
   document.getElementById('mig-ov').classList.add('open');
@@ -2118,6 +2136,7 @@ async function guardarContacto() {
   try {
     await upsertRemoto(datos);
     await cargarRemoto();
+    contactFormDirty = false; // ya se guardó — cerrar no debe pedir confirmación
     cerrarModal();
     renderActual();
     showToast(editandoId ? 'Contacto actualizado' : 'Contacto guardado');
@@ -2258,7 +2277,11 @@ async function setEtapa(v) {
   const nuevo = (prev === v) ? '' : v;   // volver a tocar la misma etapa la quita
   detContacto.etapa = nuevo;
   renderControles(detContacto);
-  try { await patchContacto(detContacto.id, { etapa: nuevo || null }); renderActual(); }
+  try {
+    await patchContacto(detContacto.id, { etapa: nuevo || null });
+    renderActual();
+    showToast(nuevo ? 'Etapa: ' + (ETAPAS.find(e => e.v === nuevo) || {}).l : 'Etapa quitada');
+  }
   catch (e) { detContacto.etapa = prev; renderControles(detContacto); showToast('No se pudo guardar la etapa'); }
 }
 
@@ -2268,7 +2291,11 @@ async function setProbabilidad(v) {
   const nuevo = (prev === v) ? '' : v;
   detContacto.probabilidad = nuevo;
   renderControles(detContacto);
-  try { await patchContacto(detContacto.id, { probabilidad: nuevo || null }); renderActual(); }
+  try {
+    await patchContacto(detContacto.id, { probabilidad: nuevo || null });
+    renderActual();
+    showToast(nuevo ? 'Probabilidad: ' + (PROBS.find(p => p.v === nuevo) || {}).l : 'Probabilidad quitada');
+  }
   catch (e) { detContacto.probabilidad = prev; renderControles(detContacto); showToast('No se pudo guardar la probabilidad'); }
 }
 
@@ -2346,6 +2373,7 @@ async function agregarNota() {
     await restPost('actividades', { tipo: 'nota', texto: texto, contacto_id: detContacto.id });
     inp.value = '';
     await cargarHistorial();
+    showToast('Nota agregada');
   } catch (e) {
     alert('No se pudo guardar la nota.\n\n' + (e.message || e));
   } finally {
@@ -2414,6 +2442,7 @@ async function eliminarVinculo(id) {
   try {
     await restDelete('contactos_propiedades', id);
     await cargarVinculos();
+    showToast('Vínculo eliminado');
   } catch (e) {
     alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
   }
@@ -2473,7 +2502,11 @@ async function crearTareaVinculada() {
   try {
     const creada = await restPost('tareas', {
       user_id: uid, titulo,
-      fecha_entrega: fecha ? fecha + 'T12:00:00' : null,
+      // OJO: nunca mandar "fecha+'T12:00:00'" pelón — la columna es timestamptz
+      // y Postgres lo toma como si YA fuera UTC, corriendo la hora real hasta
+      // 6h para atrás. new Date(...) interpreta el texto en la hora LOCAL del
+      // navegador, y toISOString() sí da el instante UTC correcto.
+      fecha_entrega: fecha ? new Date(fecha + 'T12:00:00').toISOString() : null,
       contacto_id: detContacto.id,
     });
     const nueva = Array.isArray(creada) ? creada[0] : creada;
@@ -2508,6 +2541,7 @@ async function eliminarVinculoTarea(id) {
   try {
     await restDelete('tareas_contactos', id);
     await cargarTareasVinculadas();
+    showToast('Vínculo eliminado');
   } catch (e) {
     alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
   }

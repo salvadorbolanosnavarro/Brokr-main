@@ -1634,11 +1634,21 @@ function filterProps() {
   updateSelectionUI();
 }
 
+// Evita perder cambios sin guardar por un clic accidental fuera del modal
+// (el formulario tiene 30+ campos — perderlo todo en un tap fuera es el
+// tipo exacto de sorpresa que no queremos darle al usuario).
+let propFormDirty = false;
 function openPropForm(id) {
   clearTimeout(_filtT);
   editingPropId = id;
   const form = g('prop-form');
   form.reset();
+  propFormDirty = false;
+  if (!form.dataset.dirtyBound) {
+    form.addEventListener('input', () => { propFormDirty = true; });
+    form.addEventListener('change', () => { propFormDirty = true; });
+    form.dataset.dirtyBound = '1';
+  }
   uploadedFotoUrls = [];
   g('fotos-preview').innerHTML = '';
   g('fotos-raw-hidden').value = '';
@@ -1738,7 +1748,11 @@ async function checkFbConnectionForForm() {
   } catch(_) { /* silencioso */ }
 }
 
-function closePropModal() { g('prop-modal').style.display = 'none'; }
+function closePropModal() {
+  if (propFormDirty && !confirm('Tienes cambios sin guardar. ¿Descartarlos?')) return;
+  propFormDirty = false;
+  g('prop-modal').style.display = 'none';
+}
 function pfToggleBolsa(on) {
   const row = g('pf-bolsa-row');
   if (row) row.style.display = on ? '' : 'none';
@@ -1839,7 +1853,9 @@ async function saveProp(e) {
     btn.innerHTML = 'Guardando…'; btn.disabled = true;
     const esNueva = !id;
     if (id) { await sbFetch('propiedades?id=eq.'+id, 'PATCH', data); } else { await sbFetch('propiedades', 'POST', data); }
+    propFormDirty = false; // ya se guardó — cerrar no debe pedir confirmación
     closePropModal(); await loadProps();
+    mostrarToast(esNueva ? 'Inmueble creado' : 'Inmueble actualizado');
 
     // Publicar en Facebook si es propiedad NUEVA, FB está conectado y el checkbox sigue marcado
     if (esNueva) {
@@ -2095,6 +2111,7 @@ async function deleteProp(id) {
     if (!r.ok) throw new Error(data.detail || 'No se pudo eliminar');
     if (!data.eliminadas) throw new Error('No tienes permiso para eliminar este inmueble.');
     await loadProps();
+    mostrarToast('Inmueble eliminado');
   }
   catch(e) { alert('Error: ' + e.message); }
 }
@@ -2630,6 +2647,7 @@ async function pdAgregarNota() {
     await sbFetch('actividades', 'POST', { user_id: uid, tipo: 'nota', texto: texto, propiedad_id: pid });
     inp.value = '';
     await pdCargarHistorial();
+    mostrarToast('Nota agregada');
   } catch (e) { alert('No se pudo guardar la nota.\n\n' + e.message); }
   finally { btn.disabled = false; }
 }
@@ -2707,6 +2725,7 @@ async function pdQuitarVinculo(vid) {
   try {
     await sbFetch('contactos_propiedades?id=eq.' + encodeURIComponent(vid), 'DELETE');
     await pdCargarInteresados();
+    mostrarToast('Vínculo eliminado');
   } catch (e) { alert('No se pudo quitar el vínculo.\n\n' + e.message); }
 }
 
@@ -2799,7 +2818,11 @@ async function pdAgregarTarea() {
   try {
     const creada = await sbFetch('tareas', 'POST', {
       user_id: uid, titulo: titulo, propiedad_id: pid,
-      fecha_entrega: fecha ? fecha + 'T12:00:00' : null,
+      // OJO: nunca mandar "fecha+'T12:00:00'" pelón — la columna es timestamptz
+      // y Postgres lo toma como si YA fuera UTC, corriendo la hora real hasta
+      // 6h para atrás. new Date(...) interpreta el texto en la hora LOCAL del
+      // navegador, y toISOString() sí da el instante UTC correcto.
+      fecha_entrega: fecha ? new Date(fecha + 'T12:00:00').toISOString() : null,
     });
     const nueva = Array.isArray(creada) ? creada[0] : creada;
     if (nueva && nueva.id) {
@@ -2808,6 +2831,7 @@ async function pdAgregarTarea() {
     inp.value = '';
     g('pd-tarea-fecha').value = '';
     await pdCargarTareas();
+    mostrarToast('Tarea creada');
   } catch (e) { alert('No se pudo crear la tarea.\n\n' + e.message); }
   finally { btn.disabled = false; }
 }
@@ -2829,6 +2853,7 @@ async function pdToggleTarea(tid) {
         propiedad_id: currentDetailId,
       }).catch(() => {});
     }
+    mostrarToast(completar ? 'Tarea completada' : 'Tarea reabierta');
   } catch (e) {
     t.completada = !completar;
     t.fecha_completada = null;
@@ -2849,6 +2874,7 @@ async function pdQuitarVinculoTarea(tid) {
       await sbFetch('tareas?id=eq.' + encodeURIComponent(tid), 'PATCH', { propiedad_id: null });
     }
     await pdCargarTareas();
+    mostrarToast('Vínculo eliminado');
   } catch (e) { alert('No se pudo quitar el vínculo.\n\n' + e.message); }
 }
 
