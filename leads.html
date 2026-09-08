@@ -1768,9 +1768,18 @@ function setSexo(s, btn) {
   if (btn) btn.classList.add('active');
 }
 
+// Evita perder cambios sin guardar por un clic accidental fuera del modal.
+let contactFormDirty = false;
 async function abrirModal(id = null) {
   clearTimeout(_busqT);
   editandoId = id;
+  contactFormDirty = false;
+  const modalBox = document.querySelector('#modal-ov .sheet') || document.getElementById('modal-ov');
+  if (modalBox && !modalBox.dataset.dirtyBound) {
+    modalBox.addEventListener('input', () => { contactFormDirty = true; });
+    modalBox.addEventListener('change', () => { contactFormDirty = true; });
+    modalBox.dataset.dirtyBound = '1';
+  }
   await poblarSelectPropiedadInteres();
   if (id) {
     const c = cargar().find(x => x.id === id);
@@ -1811,7 +1820,12 @@ async function abrirModal(id = null) {
   setTimeout(() => document.getElementById('m-nombre').focus(), 100);
 }
 
-function cerrarModal() { document.getElementById('modal-ov').classList.remove('open'); editandoId = null; }
+function cerrarModal() {
+  if (contactFormDirty && !confirm('Tienes cambios sin guardar. ¿Descartarlos?')) return;
+  contactFormDirty = false;
+  document.getElementById('modal-ov').classList.remove('open');
+  editandoId = null;
+}
 
 async function guardarContacto() {
   const nombre = gv('m-nombre');
@@ -1868,6 +1882,7 @@ async function guardarContacto() {
     await upsertRemoto(datos);
     await guardarPropiedadInteres(datos.id, propInteresId);
     await cargarRemoto();
+    contactFormDirty = false; // ya se guardó — cerrar no debe pedir confirmación
     cerrarModal();
     renderActual();
     showToast(editandoId ? 'Lead actualizado' : 'Lead guardado');
@@ -2020,6 +2035,7 @@ async function agregarNota() {
     await restPost('actividades', { tipo: 'nota', texto: texto, contacto_id: detContacto.id });
     inp.value = '';
     await cargarHistorial();
+    showToast('Nota agregada');
   } catch (e) {
     alert('No se pudo guardar la nota.\n\n' + (e.message || e));
   } finally {
@@ -2125,6 +2141,7 @@ async function eliminarVinculo(id) {
   try {
     await restDelete('contactos_propiedades', id);
     await cargarVinculos();
+    showToast('Vínculo eliminado');
   } catch (e) {
     alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
   }
@@ -2178,11 +2195,16 @@ async function agregarTarea() {
     await restPost('tareas', {
       titulo: titulo,
       contacto_id: detContacto.id,
-      fecha_entrega: fecha ? fecha + 'T12:00:00' : null,
+      // OJO: nunca mandar "fecha+'T12:00:00'" pelón — la columna es timestamptz
+      // y Postgres lo toma como si YA fuera UTC, corriendo la hora real hasta
+      // 6h para atrás. new Date(...) interpreta el texto en la hora LOCAL del
+      // navegador, y toISOString() sí da el instante UTC correcto.
+      fecha_entrega: fecha ? new Date(fecha + 'T12:00:00').toISOString() : null,
     });
     inp.value = '';
     document.getElementById('tarea-fecha').value = '';
     await cargarTareas();
+    showToast('Tarea creada');
   } catch (e) {
     alert('No se pudo crear la tarea.\n\n' + (e.message || e));
   } finally {
@@ -2207,6 +2229,7 @@ async function toggleTarea(id) {
         contacto_id: detContacto.id,
       }).catch(()=>{});
     }
+    showToast(completar ? 'Tarea completada' : 'Tarea reabierta');
   } catch (e) {
     t.completada = !completar;                 // revertir
     t.fecha_completada = null;
@@ -2221,6 +2244,7 @@ async function eliminarTarea(id) {
     await restDelete('tareas', id);
     _tareasMem = _tareasMem.filter(t => String(t.id) !== id);
     renderTareas();
+    showToast('Tarea eliminada');
   } catch (e) {
     alert('No se pudo eliminar la tarea.\n\n' + (e.message || e));
   }

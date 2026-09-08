@@ -358,7 +358,7 @@
     <div class="bk-modal__foot">
       <button class="bk-btn bk-btn--danger" onclick="tkEliminarDesdeModal()">Eliminar tarea</button>
       <button class="bk-btn bk-btn--ghost" onclick="tkCerrarEditar()">Cancelar</button>
-      <button class="bk-btn bk-btn--forest" onclick="tkGuardarEdicion()">Guardar</button>
+      <button class="bk-btn bk-btn--forest" id="tke-guardar-btn" onclick="tkGuardarEdicion()">Guardar</button>
     </div>
   </div>
 </div>
@@ -677,6 +677,7 @@ async function toggleTarea(id) {
         propiedad_id: t.propiedad_id || null,
       }).catch(() => {});
     }
+    showToast(completar ? 'Tarea completada' : 'Tarea reabierta');
   } catch (e) {
     t.completada = !completar;
     t.fecha_completada = null;
@@ -691,6 +692,7 @@ async function eliminarTarea(id) {
     await sbFetch('tareas?id=eq.' + encodeURIComponent(id), 'DELETE');
     tareas = tareas.filter(t => String(t.id) !== id);
     renderTareas();
+    showToast('Tarea eliminada');
   } catch (e) {
     alert('No se pudo eliminar la tarea.\n\n' + (e.message || e));
   }
@@ -769,6 +771,9 @@ async function tkGuardarEdicion() {
     fecha_entrega: fecha ? new Date(fecha + 'T' + hora + ':00').toISOString() : null,
     notas: g('tke-notas').value.trim() || null,
   };
+  const btn = g('tke-guardar-btn');
+  const prevTxt = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
   try {
     await sbFetch('tareas?id=eq.' + encodeURIComponent(TKE_ID), 'PATCH', cambios);
     const t = tareas.find(x => String(x.id) === TKE_ID);
@@ -778,6 +783,8 @@ async function tkGuardarEdicion() {
     showToast('Tarea actualizada');
   } catch (e) {
     alert('No se pudo guardar.\n\n' + (e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = prevTxt; }
   }
 }
 
@@ -791,11 +798,13 @@ async function tkAgregarContacto() {
   const cid = g('tke-agregar-contacto').value;
   if (!cid || !TKE_ID) return;
   const uid = await userId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
   try {
     await sbFetch('tareas_contactos', 'POST', { user_id: uid, tarea_id: TKE_ID, contacto_id: cid });
     (VINCULOS.contactos[TKE_ID] = VINCULOS.contactos[TKE_ID] || []).push(String(cid));
     tkPintarChips();
     renderTareas();
+    showToast('Contacto vinculado');
   } catch (e) {
     alert('No se pudo vincular el contacto.\n\n' + (e.message || e));
   }
@@ -808,6 +817,7 @@ async function tkQuitarContacto(cid) {
     VINCULOS.contactos[TKE_ID] = (VINCULOS.contactos[TKE_ID] || []).filter(x => x !== String(cid));
     tkPintarChips();
     renderTareas();
+    showToast('Vínculo eliminado');
   } catch (e) {
     alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
   }
@@ -817,11 +827,13 @@ async function tkAgregarPropiedad() {
   const pid = g('tke-agregar-propiedad').value;
   if (!pid || !TKE_ID) return;
   const uid = await userId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
   try {
     await sbFetch('tareas_propiedades', 'POST', { user_id: uid, tarea_id: TKE_ID, propiedad_id: pid });
     (VINCULOS.propiedades[TKE_ID] = VINCULOS.propiedades[TKE_ID] || []).push(String(pid));
     tkPintarChips();
     renderTareas();
+    showToast('Inmueble vinculado');
   } catch (e) {
     alert('No se pudo vincular el inmueble.\n\n' + (e.message || e));
   }
@@ -834,6 +846,7 @@ async function tkQuitarPropiedad(pid) {
     VINCULOS.propiedades[TKE_ID] = (VINCULOS.propiedades[TKE_ID] || []).filter(x => x !== String(pid));
     tkPintarChips();
     renderTareas();
+    showToast('Vínculo eliminado');
   } catch (e) {
     alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
   }
