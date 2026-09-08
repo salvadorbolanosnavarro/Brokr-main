@@ -195,11 +195,11 @@ const ARTICULOS = [
     subtitulo: 'A partir del 1 de octubre de 2026, Meta cobra los mensajes que se envían dentro de la ventana de 24 horas de una conversación de WhatsApp Business. Si tu número no tiene un método de pago cargado en tu Administrador comercial antes del 30 de septiembre, Meta puede dejar de entregar tus mensajes. Esto no lo cobra Broquer: es un cambio de Meta, y el trámite lo haces tú, en tu propia cuenta.',
     categoria: 'Legal / Cumplimiento',
     catKey: 'legal',
-    tags: ['WhatsApp', 'Meta', 'Cobro', 'Facturación', 'Cloud API', 'Business Manager', 'Coexistencia'],
+    tags: ['WhatsApp', 'Meta', 'Cobro', 'Facturación', 'Cloud API', 'Business Manager', 'Coexistencia', 'Precios'],
     autor: 'Broquer Research',
     fecha: '8 de septiembre de 2026',
-    lectura: '7 min',
-    resumen: 'Meta anunció que, desde el 1 de octubre de 2026, deja de dar gratis los mensajes de servicio y las plantillas de utilidad que se envían dentro de la ventana de 24 horas de una conversación en la WhatsApp Business Platform (Cloud API). Además, exige un método de pago vigente en cada cuenta de WhatsApp Business a más tardar el 30 de septiembre, o Meta deja de entregar mensajes desde el 1 de octubre. Aquí explicamos qué cambia exactamente, a quién le toca pagar, y el paso a paso para agregar tu tarjeta antes de la fecha límite.',
+    lectura: '10 min',
+    resumen: 'Meta anunció que, desde el 1 de octubre de 2026, deja de dar gratis los mensajes de servicio y las plantillas de utilidad que se envían dentro de la ventana de 24 horas de una conversación en la WhatsApp Business Platform (Cloud API). Además, exige un método de pago vigente en cada cuenta de WhatsApp Business a más tardar el 30 de septiembre, o Meta deja de entregar mensajes desde el 1 de octubre. Aquí explicamos las cuatro categorías de mensajes y sus ventanas, cuánto cuesta cada una en México con ejemplos en pesos, consejos para pagar menos (incluido cuándo conviene contestar desde tu celular en vez de la bandeja de Broquer), y el paso a paso para agregar tu tarjeta antes de la fecha límite.',
     fuentes: [
       { texto: 'Meta for Developers — Pricing on the WhatsApp Business Platform (documentación oficial)', url: 'https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing' },
       { texto: 'Meta for Developers — Upcoming pricing updates for Meta Business Agent, service and utility messages', url: 'https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing/non-template-messages' },
@@ -228,14 +228,46 @@ const ARTICULOS = [
   <p>Si tu número de WhatsApp está conectado a Broquer, tienes hasta el <strong>30 de septiembre de 2026</strong> para cargar un método de pago en tu propio Administrador comercial de Meta. Sin él, Meta puede dejar de entregar tus mensajes desde el <strong>1 de octubre</strong>. El trámite toma un par de minutos; abajo está el paso a paso.</p>
 </div>
 
+<h2>Primero, entiende las ventanas: así clasifica Meta cada mensaje</h2>
+<p>Para que el cambio del 1 de octubre tenga sentido, hay que entender cómo divide Meta los mensajes de la Cloud API. No es "un precio por mensaje" parejo: son <strong>cuatro categorías</strong>, y cada una se dispara distinto.</p>
+<ul>
+  <li><strong>Servicio (ventana de 24 horas).</strong> Se abre en automático en cuanto un prospecto te escribe por primera vez, y se renueva cada vez que él vuelve a escribir — dura 24 horas desde <em>su</em> último mensaje, no desde el tuyo. Mientras está abierta, puedes contestar lo que quieras, en texto libre, sin plantilla: son las respuestas normales de una conversación, ya sea que las escriba Recepción o tú desde la bandeja de Broquer.</li>
+  <li><strong>Utilidad (utility).</strong> Si la ventana de 24 horas ya se cerró (el prospecto no te ha vuelto a escribir) y necesitas retomar el contacto por un motivo transaccional y puntual —confirmar una cita, avisar que un documento está listo—, Meta exige una <strong>plantilla previamente aprobada</strong> de esta categoría. Es la más barata de las plantillas.</li>
+  <li><strong>Marketing.</strong> Misma lógica que utilidad —plantilla aprobada, fuera de la ventana— pero para contenido promocional: justo lo que manda el módulo de <strong>Campañas</strong> de Broquer. Es la categoría más cara con diferencia.</li>
+  <li><strong>Autenticación.</strong> Códigos de un solo uso (OTP). Broquer no la usa hoy; la mencionamos para que la reconozcas si la ves en tu tarifario de Meta.</li>
+</ul>
+<p>El punto que más conviene recordar: <strong>la ventana de servicio la abre el prospecto, no tú.</strong> Si tú le escribes primero y él nunca te ha contactado, o si ya pasaron 24 horas desde su último mensaje, eso no es "servicio" — es una plantilla de utilidad o de marketing, con su propio costo, así la ventana esté cerrada por un minuto o por un mes.</p>
+
 <h2>Qué cambia el 1 de octubre</h2>
-<p>Meta documenta el cambio en su página oficial de precios de la WhatsApp Business Platform (la Cloud API, que es por donde Broquer conecta tu número). Hasta ahora, los mensajes que se envían dentro de la <strong>ventana de 24 horas</strong> posterior al último mensaje del cliente —lo que Meta llama mensajes de servicio— eran gratuitos. A partir del <strong>1 de octubre de 2026</strong>, dejan de serlo: tanto los mensajes de servicio de formato libre (las respuestas normales, generadas por Recepción o escritas por ti a través de la Cloud API) como las plantillas de utilidad enviadas dentro de esa misma ventana pasan a cobrarse conforme al tarifario de Meta.</p>
-<p>Los montos exactos varían por país y Meta los publica —y puede volver a modificarlos— en su propia documentación. No los reproducimos aquí porque cambian con el tiempo y fuera de nuestro control; para la tarifa vigente en tu mercado, consulta directamente la página oficial de Meta que citamos al final de este artículo.</p>
+<p>Meta documenta el cambio en su página oficial de precios de la WhatsApp Business Platform (la Cloud API, que es por donde Broquer conecta tu número). Hasta ahora, los mensajes de <strong>servicio</strong> dentro de la ventana de 24 horas eran gratuitos sin límite. A partir del <strong>1 de octubre de 2026</strong>, dejan de serlo por completo: siguen gratis los primeros <strong>1,000 mensajes de servicio por número al mes</strong> —una cifra que reportan de manera consistente varias coberturas especializadas de la documentación de Meta—, y de ahí en adelante cada mensaje de servicio adicional se cobra a la misma tarifa que una plantilla de utilidad en ese país. Esto aplica igual a las respuestas que da Recepción y a las que tú escribas a través de la Cloud API (bandeja de Broquer).</p>
+
+<div class="bl-table-wrap">
+  <table class="bl-table">
+    <thead><tr><th>Categoría</th><th>Cuándo se usa</th><th class="num">Tarifa aprox. (USD)</th><th class="num">Tarifa aprox. (MXN)*</th></tr></thead>
+    <tbody>
+      <tr><td>Servicio, dentro de tu 1,000 gratis/mes</td><td>Recepción o tú contestando dentro de la ventana de 24h</td><td class="num">$0.00</td><td class="num">$0.00</td></tr>
+      <tr><td>Servicio, pasado ese primer 1,000</td><td>Mismo caso, ya agotada la cuota gratuita del mes</td><td class="num">~$0.0085</td><td class="num">~$0.14</td></tr>
+      <tr><td>Utilidad (fuera de ventana)</td><td>Recordatorio o confirmación transaccional</td><td class="num">~$0.0080</td><td class="num">~$0.14</td></tr>
+      <tr><td>Autenticación</td><td>Código de un solo uso (Broquer no la usa)</td><td class="num">~$0.0207</td><td class="num">~$0.35</td></tr>
+      <tr><td>Marketing (fuera de ventana)</td><td>Campaña promocional — módulo Campañas</td><td class="num">~$0.0436</td><td class="num">~$0.74</td></tr>
+    </tbody>
+  </table>
+</div>
+<p style="font-size:var(--fs-caption);color:var(--mute);">*Conversión de referencia a ~$17 MXN/USD (tipo de cambio FIX de Banxico a principios de septiembre de 2026); Meta factura en la moneda y con el tipo de cambio del día de entrega de cada mensaje. Estas cifras son ilustrativas y pueden cambiar: la tarifa vigente y exacta para tu cuenta siempre es la que publica Meta en su documentación oficial, enlazada al final de este artículo.</p>
 
 <div class="bl-callout info">
-  <div class="bl-callout__label">Lo que sigue gratis</div>
-  <p>Esto <strong>no aplica</strong> a los mensajes que tú mandas a mano desde la aplicación de WhatsApp Business de tu celular. Por la forma en que Broquer conecta tu número —la modalidad que Meta llama "coexistencia"— esos mensajes siguen siendo gratuitos y no generan ningún cobro de Meta. El cambio afecta únicamente a los mensajes que pasan por la Cloud API: los que contesta Recepción, y los que tú envíes conectado a Broquer dentro de la ventana de 24 horas.</p>
+  <div class="bl-callout__label">Lo que sigue gratis, siempre</div>
+  <p>Esto <strong>no aplica</strong> a los mensajes que tú mandas a mano desde la aplicación de WhatsApp Business de tu celular. Por la forma en que Broquer conecta tu número —la modalidad que Meta llama "coexistencia"— esos mensajes siguen siendo gratuitos, sin ventana y sin cuota mensual. El cambio afecta únicamente a los mensajes que pasan por la Cloud API: los que contesta Recepción, y los que tú envíes desde la bandeja de Broquer.</p>
 </div>
+
+<h2>Cuánto es esto en pesos, con ejemplos reales</h2>
+<p>Con las cifras de la tabla de arriba, así se ve el cambio para distintos tamaños de operación. Son ejemplos ilustrativos —tu tarifa exacta depende de tu país y de lo que Meta tenga publicado el día que se entrega cada mensaje— pero dan una idea realista de la magnitud.</p>
+<ul>
+  <li><strong>Agente independiente, volumen típico.</strong> ~600 conversaciones activas al mes por WhatsApp, con un promedio de 3 mensajes de servicio cada una (Recepción calificando + algo de seguimiento) = ~1,800 mensajes de servicio. Los primeros 1,000 del mes son gratis; quedan 800 a pagar: 800 × $0.0085 USD ≈ <strong>$6.80 USD, unos $116 MXN al mes.</strong></li>
+  <li><strong>Equipo con más volumen.</strong> ~3,000 conversaciones activas al mes, 4 mensajes de servicio en promedio cada una = 12,000 mensajes de servicio. Después de los 1,000 gratis, 11,000 a pagar: 11,000 × $0.0085 USD ≈ <strong>$93.50 USD, cerca de $1,590 MXN al mes.</strong></li>
+  <li><strong>Campaña de reactivación a contactos fríos.</strong> Envías una plantilla a 500 contactos que llevan más de 24 horas sin escribirte. Si es una plantilla de <strong>marketing</strong>: 500 × $0.0436 USD ≈ $21.80 USD, unos <strong>$370 MXN</strong>. Si el mismo aviso califica como <strong>utilidad</strong> (por ejemplo, un recordatorio ligado a algo que el contacto ya solicitó): 500 × $0.0080 USD ≈ $4 USD, unos <strong>$68 MXN</strong> — más de cinco veces más barato por usar la categoría correcta.</li>
+</ul>
+<p>La conclusión práctica: para la inmensa mayoría de agentes y equipos pequeños, el costo adicional que trae el cambio del 1 de octubre se mide en <strong>cientos de pesos al mes, no en miles</strong>. Lo verdaderamente urgente no es el monto — es no dejar pasar la fecha del método de pago, porque sin él Meta corta la entrega sin importar cuánto o qué tan poco fueras a gastar.</p>
 
 <h2>El requisito que no puedes dejar pasar: método de pago antes del 30 de septiembre</h2>
 <p>Para poder cobrar, Meta exige que cada cuenta de WhatsApp Business (WABA) tenga un <strong>método de pago vigente</strong> registrado directamente en el Administrador comercial de Meta. La fecha límite es el <strong>30 de septiembre de 2026</strong>. Si tu cuenta llega a esa fecha sin una tarjeta cargada, Meta puede <strong>dejar de entregar tus mensajes de servicio a partir del 1 de octubre</strong>: seguirías recibiendo lo que te escriban tus prospectos, pero tus respuestas —las de Recepción y las tuyas— podrían no llegarles.</p>
@@ -249,6 +281,15 @@ const ARTICULOS = [
   <li><strong>Confirma que quede activa</strong> antes del 30 de septiembre de 2026. Si administras varios números en Broquer, revisa que cada WABA involucrada tenga su propio método de pago vigente.</li>
 </ol>
 <p>El trámite es directamente con Meta: Broquer no interviene en él, no ve ni almacena los datos de la tarjeta que captures ahí, y no puede completarlo por ti.</p>
+
+<h2>Consejos para ahorrar sin complicarte la operación</h2>
+<ul>
+  <li><strong>Para un mensaje suelto y manual, usa tu celular, no la bandeja de Broquer.</strong> Si le vas a contestar algo tú mismo a un cliente conocido, mandar un "gracias" o resolver algo puntual, hazlo desde la app de WhatsApp Business de tu teléfono. Por la coexistencia, eso es y seguirá siendo gratis siempre, sin ventana y sin cuota — mientras que ese mismo mensaje escrito desde la bandeja de Broquer sí pasa por la Cloud API y cuenta contra tu 1,000 gratis del mes. Deja que la bandeja y Recepción se usen para lo que de verdad justifica el costo: calificar prospectos nuevos de forma automática.</li>
+  <li><strong>Contesta dentro de la ventana de 24 horas en vez de reabrir después con una plantilla.</strong> Un mensaje de servicio dentro de la ventana siempre sale más barato que una plantilla de utilidad o marketing fuera de ella. Si sabes que vas a necesitar dar seguimiento, hazlo mientras el prospecto sigue "activo" en esas 24 horas.</li>
+  <li><strong>Usa la categoría de plantilla correcta.</strong> Una confirmación de cita es "utilidad" (barata); no la mandes por error como "marketing" (varias veces más cara) — como se ve en el ejemplo de la campaña de reactivación de arriba, la diferencia es de más de 5 a 1.</li>
+  <li><strong>Revisa tu entrenamiento de Recepción para que no mande mensajes de más</strong> — confirmaciones redundantes, "¿sigues ahí?" repetidos. Cada mensaje de servicio de más, una vez agotada tu cuota gratuita mensual, se suma a la cuenta.</li>
+  <li><strong>Los primeros meses después del cambio, revisa el resumen de facturación en el Administrador de WhatsApp de vez en cuando.</strong> Te deja ver tu volumen real de mensajes de servicio antes de que te sorprenda un cargo, y ajustar cualquiera de los puntos de arriba con datos, no con supuestos.</li>
+</ul>
 
 <h2>Esto no lo cobra Broquer</h2>
 <p>Vale la pena decirlo sin rodeos: <strong>este cobro es de Meta, no de Broquer</strong>, y no está incluido en tu suscripción, de la misma forma en que nunca lo ha estado el costo de mensajería de la Cloud API. Tu número de WhatsApp Business le pertenece a tu propia cuenta empresarial de Meta —Broquer no provee números ni revende líneas—, así que la relación de cobro por estos mensajes es directamente entre tú y Meta. Broquer seguirá conectando y operando tu Recepción exactamente igual; lo único que cambia es que, del lado de Meta, algunos de esos mensajes empiezan a tener costo y necesitan una tarjeta vigente para seguir entregándose.</p>

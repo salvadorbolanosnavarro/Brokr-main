@@ -52,3 +52,28 @@ async def guardar_mensaje(
         if wamid:
             cambios_conv["last_inbound_wamid"] = wamid
     await sb_patch("wa2_conversaciones", {"id": f"eq.{conversacion_id}"}, cambios_conv)
+
+
+async def guardar_nota_sistema(
+    user_id: str,
+    contacto_id: str,
+    conversacion_id: str,
+    texto: str,
+) -> None:
+    """Deja una nota visible en el hilo cuando algo apaga o pausa la IA sola
+    (palabra de escalamiento, tope de mensajes, falla técnica, decisión del
+    propio modelo, respuesta manual...), para que el asesor entienda POR QUÉ
+    sin depender únicamente del push. Nunca se manda a WhatsApp — no lleva
+    wa_message_id — y no toca last_message_at/last_inbound_at para no alterar
+    el conteo de no leídos ni la lógica de "cliente nuevo"."""
+    guardado = await sb_post("wa2_mensajes", {
+        "user_id": user_id,
+        "contacto_id": contacto_id,
+        "conversacion_id": conversacion_id,
+        "direction": "out",
+        "sender": "sistema",
+        "body": texto,
+        "created_at": _now(),
+    })
+    if not guardado:
+        log.warning("No se pudo guardar la nota de sistema en conv=%s", conversacion_id)
