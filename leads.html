@@ -1337,12 +1337,19 @@ async function _userId() {
   } catch { return null; }
 }
 
-/* Trae todos los contactos del usuario logueado, ordenados por updated_at desc */
+/* Trae todos los contactos del usuario logueado, ordenados por updated_at desc,
+   y se queda solo con los marcados como potenciales.
+   OJO: antes este filtro (es_potencial=eq.true) se aplicaba del lado del
+   servidor, en la propia consulta REST. contactos.html, en cambio, siempre
+   trajo TODOS los contactos y filtró en el navegador. Un contacto marcado
+   como potencial desde Contactos podía no aparecer nunca aquí — ni
+   recargando — así que ahora Leads usa el mismo patrón ya comprobado de
+   Contactos: traer todo y filtrar en el cliente. */
 async function cargarRemoto() {
-  const r = await _sb().fetch('rest/v1/contactos?select=*&es_potencial=eq.true&order=updated_at.desc');
+  const r = await _sb().fetch('rest/v1/contactos?select=*&order=updated_at.desc');
   if (!r.ok) throw new Error('No se pudieron cargar los contactos (' + r.status + ')');
   const data = await r.json();
-  _contactosMem = Array.isArray(data) ? data : [];
+  _contactosMem = (Array.isArray(data) ? data : []).filter(c => c.es_potencial === true);
   try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
   return _contactosMem;
 }
@@ -2385,6 +2392,12 @@ function abrirWA(ev, tel) {
     const lista = document.getElementById(vistaActual === 'pipeline' ? 'kanban' : 'lista');
     if (lista && !_contactosMem.length) {
       lista.innerHTML = '<div class="empty" style="flex:1"><strong>No se pudieron cargar tus leads</strong><p>' + esc(e.message || 'Revisa tu conexión.') + '</p></div>';
+    } else {
+      // Ya había algo en caché (de una visita anterior) y se siguió mostrando
+      // eso — pero si la carga real falló, el usuario debe saberlo: de otro
+      // modo la pantalla se ve "cargada" mientras en realidad está congelada
+      // en datos viejos, sin ningún aviso.
+      showToast('No se pudo actualizar Leads. Mostrando datos guardados.');
     }
   }
 })();

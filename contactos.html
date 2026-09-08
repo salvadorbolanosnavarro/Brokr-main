@@ -1530,7 +1530,11 @@ async function cCargarPermiso() {
           const d = await rm.json();
           cMiembros = (d.miembros || []).filter(m => m.activo);
           cPintarFiltroAgente();
-          renderActual();  // repinta con los nombres de asignación ya resueltos
+          // Nota: NO se repinta aquí — quien llama a cCargarPermiso() ya
+          // repinta después de que esta función termina. Repintar aquí
+          // además causaba un tercer render en cada carga (cache → datos
+          // reales sin permisos resueltos → esto), y ese tercer render sí
+          // se veía: la lista "parpadeaba" justo después de cargar.
         }
       } catch {}
     }
@@ -2670,6 +2674,11 @@ function abrirWA(ev, tel) {
     const lista = document.getElementById('lista');
     if (lista && !_contactosMem.length) {
       lista.innerHTML = '<div class="empty"><strong>No se pudieron cargar tus contactos</strong><p>' + esc(e.message || 'Revisa tu conexión.') + '</p></div>';
+    } else {
+      // Ya había algo en caché de una visita anterior y se siguió mostrando
+      // eso — pero si la carga real falló, avisar: si no, la pantalla se ve
+      // "cargada" mientras en realidad quedó congelada en datos viejos.
+      showToast('No se pudo actualizar la lista. Mostrando datos guardados.');
     }
   }
 })();
