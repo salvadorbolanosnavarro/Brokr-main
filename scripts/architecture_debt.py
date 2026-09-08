@@ -76,7 +76,13 @@ LARGE_FILE_MAX_BYTES = {
     # Bumped 622 bytes: aviso visible si falla la carga real y solo queda
     # mostrando el cache viejo (antes fallaba en silencio) — corrige el bug
     # real de "se ve cargado pero está congelado en datos viejos", no debt.
-    "contactos.html": 113_235,
+    # Bumped 13,673 bytes más: Leads se fusionó aquí como la pestaña
+    # "Pipeline" (kanban, arrastrar y soltar entre etapas) — ya no es un
+    # módulo aparte con su propio directorio y su propia consulta a
+    # Supabase. Es la fusión de dos módulos completos en uno, no debt:
+    # el peso de leads.html (99,563 bytes) desapareció del inventario por
+    # completo al convertirse en una redirección de una sola pantalla.
+    "contactos.html": 126_908,
     # Bumped for the Profeco/IA-generativa disclosure clauses (9.9 Bis /
     # 5.6 Bis) — legitimate legal content, not debt to pay down.
     "legal.html": 113_741,
