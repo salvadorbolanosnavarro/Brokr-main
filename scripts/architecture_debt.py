@@ -63,7 +63,11 @@ LARGE_FILE_MAX_BYTES = {
     # Bumped 542 more bytes: w2CargarNumeros() silently treated any failed
     # GET /whatsapp2/numeros (e.g. an expired session, 401) as "no numbers
     # connected" — a real production bug fix, not debt.
-    "whatsapp.html": 129_378,
+    # Bumped 2,844 bytes: aviso discreto y descartable sobre el cambio de
+    # cobro de Meta a mensajes de WhatsApp del 1 de octubre de 2026 (banner
+    # + nota de sistema visible en el hilo cuando Recepción se pausa sola) —
+    # producto/legal real, no debt.
+    "whatsapp.html": 132_222,
     "routers/firmas.py": 119_193,
     # Bumped 80 bytes: se agregó la etapa "Futuro" al pipeline por defecto
     # (ETAPAS_DEFAULT) — un estatus nuevo para contactos/leads, no debt.
@@ -85,7 +89,11 @@ LARGE_FILE_MAX_BYTES = {
     "contactos.html": 126_908,
     # Bumped for the Profeco/IA-generativa disclosure clauses (9.9 Bis /
     # 5.6 Bis) — legitimate legal content, not debt to pay down.
-    "legal.html": 113_741,
+    # Bumped 1,985 bytes: Anexo de WhatsApp ampliado con el cambio de cobro
+    # de Meta a partir del 1 de octubre de 2026 y el requisito de método de
+    # pago en el WABA, deslindando a Broquer de la interrupción del
+    # servicio si el Usuario no lo configura a tiempo — legal real, no debt.
+    "legal.html": 115_726,
     # Nuevo en el inventario: el detalle de usuario de la Consola de admin
     # incorporó "Acceso completo fuera del equipo" y "Módulos habilitados
     # para esta cuenta" (PR #79), lo que cruzó admin.html el umbral de
