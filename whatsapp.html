@@ -290,6 +290,17 @@
     <button class="w2-numeros-link" onclick="w2ToggleNumerosPanel()">Administrar números</button>
   </div>
 
+  <div class="bk-alert bk-alert--warn" id="w2-meta-billing-alert" style="margin-bottom:var(--sp-4);align-items:flex-start;" hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+    <div style="flex:1;">
+      Meta empieza a cobrar los mensajes de WhatsApp dentro de la ventana de 24&nbsp;horas a partir del <strong>1 de octubre</strong>. Si tu número no tiene un método de pago en tu Administrador comercial de Meta antes del <strong>30 de septiembre</strong>, Meta puede dejar de entregar tus mensajes.
+      <a href="soporte.html#pago-meta-whatsapp" style="color:inherit;font-weight:700;text-decoration:underline;">Cómo agregarlo</a>
+      &nbsp;·&nbsp;
+      <a href="legal.html#whatsapp" style="color:inherit;font-weight:700;text-decoration:underline;">Detalle legal</a>
+    </div>
+    <button type="button" onclick="w2CerrarAvisoMetaCobro()" aria-label="Cerrar aviso" style="background:none;border:none;cursor:pointer;color:inherit;opacity:.6;font-size:18px;line-height:1;padding:0 0 0 var(--sp-2);">×</button>
+  </div>
+
   <div class="bk-card bk-card--pad" id="w2-numeros-card" hidden>
     <div class="bk-cluster" style="justify-content:space-between;">
       <span class="bk-eyebrow">Tus números conectados</span>
@@ -896,6 +907,27 @@ function w2ToggleNumerosPanel(){
   const card = document.getElementById('w2-numeros-card');
   card.hidden = !card.hidden;
 }
+
+function w2CerrarAvisoMetaCobro(){
+  try { localStorage.setItem('bk_wa_meta_billing_oct2026_cerrado', '1'); } catch(e){}
+  const el = document.getElementById('w2-meta-billing-alert');
+  if (el) el.hidden = true;
+}
+
+(function w2InitAvisoMetaCobro(){
+  // Aviso temporal sobre el nuevo cobro de Meta a mensajes de servicio,
+  // vigente a partir del 1 de octubre de 2026. Se puede quitar de aquí
+  // (y del bloque HTML correspondiente) una vez pasado ese cambio.
+  const HASTA = new Date('2026-10-15T00:00:00-06:00').getTime();
+  if (Date.now() > HASTA) return;
+  let cerrado = false;
+  try { cerrado = localStorage.getItem('bk_wa_meta_billing_oct2026_cerrado') === '1'; } catch(e){}
+  if (cerrado) return;
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('w2-meta-billing-alert');
+    if (el) el.hidden = false;
+  });
+})();
 
 function w2PintarPanelNumeros(){
   const cont = document.getElementById('w2-numeros-panel');

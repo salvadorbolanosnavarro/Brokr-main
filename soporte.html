@@ -338,6 +338,25 @@ body {
         <div class="faq-a">En <strong>Finanzas</strong> registras tus ingresos y gastos, los ligas a propiedades para ver la utilidad real de cada operación, y llevas tus cuentas (banco, efectivo, tarjeta). <strong>Todo es editable en cualquier momento</strong>: montos, fechas, categorías y ligas; los saldos se recalculan solos. Broq puede leer la foto de un ticket y proponerte el movimiento, y cuando marcas una propiedad como vendida o rentada con su comisión, Finanzas te propone registrarla como ingreso. El informe del periodo que elijas se descarga en PDF con la identidad de Broquer, y el detalle en CSV para tu contador. El módulo es informativo: no sustituye tu contabilidad fiscal ni a tu contador.</div>
       </div>
 
+      <div class="faq-item" id="pago-meta-whatsapp">
+        <button class="faq-q" onclick="toggle(this)">
+          A partir del 1 de octubre, ¿WhatsApp me va a cobrar? ¿Qué tengo que hacer?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">
+          Sí, pero el cobro es de <strong>Meta (el dueño de WhatsApp), no de Broquer</strong>, y no está incluido en tu suscripción. A partir del <strong>1 de octubre de 2026</strong>, Meta empieza a cobrar por los mensajes que se envían dentro de la ventana de 24 horas de una conversación —incluyendo las respuestas que da Recepción y las plantillas de utilidad usadas dentro de esa ventana— conforme a su propio tarifario, que varía por país y que Meta puede volver a cambiar cuando quiera. Los mensajes que tú mandas a mano desde la app de WhatsApp Business de tu celular <strong>siguen siendo gratis</strong>; esto solo aplica a lo que pasa por la Cloud API conectada a Broquer.<br><br>
+          Lo urgente: Meta exige que tu número tenga un <strong>método de pago cargado directamente en tu propio Administrador comercial de Meta</strong> a más tardar el <strong>30 de septiembre de 2026</strong>. Si no lo tienes para esa fecha, Meta puede dejar de entregar tus mensajes el 1 de octubre — sin que Broquer pueda hacer nada al respecto, porque esa cuenta de WhatsApp Business es tuya, no de Broquer.<br><br>
+          <strong>Cómo agregarlo (te toma 2 minutos):</strong>
+          <ol style="margin:8px 0 0 20px;padding:0;">
+            <li style="margin-bottom:6px;">Entra a <strong>business.facebook.com</strong> (Administrador comercial) con la misma cuenta de Facebook/Meta con la que conectaste tu número a Broquer.</li>
+            <li style="margin-bottom:6px;">Ve a <strong>Configuración del negocio → Pagos</strong> (o, dentro del <strong>Administrador de WhatsApp</strong>, entra a tu cuenta de WhatsApp Business y busca <strong>Facturación</strong>).</li>
+            <li style="margin-bottom:6px;">Agrega una tarjeta de crédito o débito válida.</li>
+            <li>Confirma que quede activa como método de pago de esa cuenta de WhatsApp Business antes del 30 de septiembre.</li>
+          </ol><br>
+          Broquer no participa en ese cobro, no ve ni guarda los datos de tu tarjeta ahí capturados, y esa gestión es responsabilidad tuya directamente frente a Meta. Puedes leer el detalle completo en nuestro <a href="blog.html?art=whatsapp-cobro-meta-octubre-2026">artículo del blog</a> y en el <a href="legal.html#whatsapp">Anexo de WhatsApp</a> de los Términos y Condiciones.
+        </div>
+      </div>
+
       <div class="faq-item">
         <button class="faq-q" onclick="toggle(this)">
           ¿Cómo controlo cuándo contesta la IA de WhatsApp?
@@ -473,6 +492,16 @@ function toggle(btn) {
   document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
   if (!isOpen) item.classList.add('open');
 }
+
+/* Abrir y desplazar a una pregunta si se llega con #id-de-la-pregunta */
+(function(){
+  const id = location.hash.replace('#', '');
+  if (!id) return;
+  const item = document.getElementById(id);
+  if (!item || !item.classList.contains('faq-item')) return;
+  item.classList.add('open');
+  item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+})();
 </script>
 </body>
 </html>
