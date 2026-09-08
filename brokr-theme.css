@@ -1124,11 +1124,13 @@ html {
      comprometido, cierra en verde (ganado) y descarta en gris
      (muerto). El color dice en que parte del embudo estas sin
      que tengas que leer la etiqueta. */
+  --etapa-futuro:     #D9A406;
   --etapa-nuevo:      #0AA6C8;
   --etapa-activo:     #0A5DE0;
   --etapa-contactado: #7A4DF0;
   --etapa-cerrado:    #12A150;
   --etapa-descartado: #8A93A9;
+  --etapa-futuro-soft:     rgba(217, 164, 6, 0.15);
   --etapa-nuevo-soft:      rgba(10, 166, 200, 0.13);
   --etapa-activo-soft:     rgba(10, 93, 224, 0.12);
   --etapa-contactado-soft: rgba(122, 77, 240, 0.12);
