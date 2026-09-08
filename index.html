@@ -309,7 +309,7 @@
     </a>
     <a class="bk-btn bk-btn--ghost" href="contactos.html">Contacto</a>
     <a class="bk-btn bk-btn--ghost" href="tareas.html">Tarea</a>
-    <a class="bk-btn bk-btn--ghost" href="leads.html">Registrar lead</a>
+    <a class="bk-btn bk-btn--ghost" href="contactos.html?tab=pipeline">Registrar lead</a>
   </div>
 
   <!-- KPIs del día -->
@@ -358,7 +358,7 @@
       <div class="dash-card-h">
         <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
         <h3>Pipeline</h3>
-        <a class="link" href="contactos.html">Detalle →</a>
+        <a class="link" href="contactos.html?tab=pipeline">Detalle →</a>
       </div>
       <div id="pipe-lista"></div>
       <div class="dash-vacio" id="pipe-vacio" hidden>Aún no tienes contactos en el embudo.</div>
@@ -746,8 +746,12 @@ window.addEventListener('brokr-shell-ready', async (e) => {
       ['contactado', 'Contactados', 'pipe-fill--contactado'],
       ['cerrado', 'Cerrados', 'pipe-fill--cerrado'],
     ];
+    // OJO: la columna real es "estatus" (la misma que usa el pipeline de
+    // Contactos) — "etapa" fue un nombre de columna que nunca existió salvo
+    // por un bug ya corregido, así que este conteo siempre daba cero/vacío.
+    // Se restringe a potenciales: es la definición real de "pipeline".
     const counts = await Promise.all(
-      ETAPAS.map(e => fxCount('contactos?select=id&etapa=eq.' + e[0])));
+      ETAPAS.map(e => fxCount('contactos?select=id&estatus=eq.' + e[0] + '&es_potencial=eq.true')));
     const max = Math.max(1, ...counts);
     if (!counts.some(n => n > 0)) { vacio.hidden = false; return; }
     lista.innerHTML = ETAPAS.map((e, i) =>

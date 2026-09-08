@@ -269,8 +269,9 @@
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',        group:'crm',         icon:'chart' },
     { key:'bolsa',        href:'bolsa.html',         label:'Bolsa inmobiliaria',  group:'crm',         icon:'apreton', hidden:true },
     // Seguimiento — hablar con el prospecto hasta que se convierte en cliente.
+    // Leads se fusionó con Contactos (pestaña Pipeline, contactos.html?tab=pipeline)
+    // — un lead ya no vive en un módulo aparte con su propio directorio.
     { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',            group:'seguimiento', icon:'whatsapp' },
-    { key:'leads',        href:'leads.html',         label:'Leads',               group:'seguimiento', icon:'send' },
     { key:'correo',       href:'correo.html',        label:'Correo',              group:'seguimiento', icon:'mail', hidden:true },
     // Documentos — en el orden real de la operación: se redacta, se firma, se reporta.
     { key:'contratos',    href:'contratos.html',     label:'Contratos',           group:'documentos',  icon:'document' },
@@ -295,10 +296,9 @@
   const CONTEXT_LABELS = {
     'home':         'Dashboard principal — menú de módulos',
     'props':        'Tus Inmuebles — catálogo de propiedades',
-    'contactos':    'Contactos — CRM de prospectos',
+    'contactos':    'Contactos — directorio y pipeline de prospectos (potenciales, aún sin cerrar)',
     'equipo':       'Equipo — miembros de la cuenta, roles y permisos',
     'tareas':       'Tareas — pendientes y actividad del CRM',
-    'leads':        'Leads — contactos marcados como potenciales, aún sin cerrar',
     'estadisticas': 'Estadísticas — captación, pipeline e inmuebles con más interés',
     'bolsa':        'Bolsa inmobiliaria — propiedades compartidas entre agentes Broquer con comisión compartida; publicar inmuebles propios y contactar al agente captador',
     'mi-sitio':     'Mi sitio — perfil público, plantilla y sitio web del agente',
@@ -1627,7 +1627,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         { n: 'Nuevo inmueble', href: 'propiedades.html' },
         { n: 'Nuevo contacto', href: 'contactos.html' },
         { n: 'Nueva tarea', href: 'tareas.html' },
-        { n: 'Registrar lead', href: 'leads.html' },
+        { n: 'Registrar lead', href: 'contactos.html?tab=pipeline' },
       ];
       const grupoLabel = k => (GRUPOS.find(g => g.key === k) || {}).label || '';
       const bg = document.createElement('div');
