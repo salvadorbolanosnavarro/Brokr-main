@@ -73,7 +73,10 @@ LARGE_FILE_MAX_BYTES = {
     # silenciosos, más una confirmación antes de descartar cambios sin
     # guardar al cerrar el modal con un clic fuera — mejora real de UX,
     # no debt.
-    "contactos.html": 112_613,
+    # Bumped 622 bytes: aviso visible si falla la carga real y solo queda
+    # mostrando el cache viejo (antes fallaba en silencio) — corrige el bug
+    # real de "se ve cargado pero está congelado en datos viejos", no debt.
+    "contactos.html": 113_235,
     # Bumped for the Profeco/IA-generativa disclosure clauses (9.9 Bis /
     # 5.6 Bis) — legitimate legal content, not debt to pay down.
     "legal.html": 113_741,
