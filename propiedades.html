@@ -1654,7 +1654,22 @@ function openPropForm(id) {
       } else if (k === 'amenidades') {
         // text[] viene como array; el campo del form es amenidades_raw (CSV)
         return;
-      } else { el.value = p[k]; }
+      } else {
+        el.value = p[k];
+        // Un <select> con un valor "legado" que no está entre sus <option>
+        // (p.ej. un tipo importado de EasyBroker sin mapear) se queda sin
+        // nada seleccionado: si el campo es required, el navegador bloquea
+        // el guardado en silencio y el usuario ve "no se guardan los
+        // cambios". Se agrega el valor real como opción para no perderlo
+        // ni impedir guardar.
+        if (el.tagName === 'SELECT' && String(p[k]) !== '' && el.value !== String(p[k])) {
+          const opt = document.createElement('option');
+          opt.value = String(p[k]);
+          opt.textContent = String(p[k]);
+          el.insertBefore(opt, el.firstChild);
+          el.value = String(p[k]);
+        }
+      }
     });
     // Llenar amenidades_raw a partir del array
     if (Array.isArray(p.amenidades) && form.elements['amenidades_raw']) {
@@ -1734,7 +1749,8 @@ function pfToggleBolsa(on) {
 async function saveProp(e) {
   e.preventDefault();
   const form = e.target; const fd = new FormData(form); const data = {};
-  fd.forEach((v,k) => { if (v !== '') data[k] = v; });
+  const camposForm = new Set();
+  fd.forEach((v,k) => { camposForm.add(k); if (v !== '') data[k] = v; });
   let fotosRaw;
   try { fotosRaw = JSON.parse(data.fotos_raw || '[]'); } catch(e) {
     // fallback: si por alguna razón llega CSV (URLs normales sin base64)
@@ -1793,6 +1809,20 @@ async function saveProp(e) {
   ['m2_construccion','m2_terreno','m2_superficie_no_cubierta','recamaras','banos','medio_bano','estacionamientos','anio_construccion'].forEach(k => { if (data[k]) data[k] = Number(data[k]); });
   data.updated_at = new Date().toISOString();
   const id = data.prop_id; delete data.prop_id;
+
+  // Si el campo llegó vacío al editar, no basta con omitirlo del PATCH:
+  // Postgrest deja el valor viejo intacto si la columna no viene en el
+  // body, así que un campo que el usuario borró a propósito (para dejarlo
+  // en blanco) nunca se limpiaba en la BD. Al editar, cualquier campo del
+  // formulario que no haya quedado ya resuelto arriba se manda como null
+  // explícito. Los *_raw/_sel son solo del formulario (no son columnas),
+  // así que se excluyen.
+  if (id) {
+    const NO_ES_COLUMNA = new Set(['fotos_raw', 'amenidades_raw', 'etiquetas_raw', 'comision_compartida_sel', 'prop_id']);
+    camposForm.forEach(k => {
+      if (!NO_ES_COLUMNA.has(k) && !(k in data)) data[k] = null;
+    });
+  }
 
   // Verificar sesión antes de guardar — sin user_id la BD rechazará el INSERT
   const userId = getCurrentUserId();

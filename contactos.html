@@ -616,6 +616,7 @@ html, body { background: var(--paper); }
 /* La etapa activa toma el color de SU etapa, no un navy generico igual
    para las cinco: el color dice en que parte del embudo esta el contacto. */
 .etapa-pill.is-on { background: var(--etapa-activo); color: var(--paper); border-color: var(--etapa-activo); }
+.etapa-pill--futuro.is-on     { background: var(--etapa-futuro);     border-color: var(--etapa-futuro); }
 .etapa-pill--nuevo.is-on      { background: var(--etapa-nuevo);      border-color: var(--etapa-nuevo); }
 .etapa-pill--activo.is-on     { background: var(--etapa-activo);     border-color: var(--etapa-activo); }
 .etapa-pill--contactado.is-on { background: var(--etapa-contactado); border-color: var(--etapa-contactado); }
@@ -628,6 +629,7 @@ html, body { background: var(--paper); }
   border-radius: 50%; margin-right: 7px; vertical-align: 1px;
   background: var(--etapa-activo);
 }
+.etapa-pill--futuro::before     { background: var(--etapa-futuro); }
 .etapa-pill--nuevo::before      { background: var(--etapa-nuevo); }
 .etapa-pill--contactado::before { background: var(--etapa-contactado); }
 .etapa-pill--cerrado::before    { background: var(--etapa-cerrado); }
@@ -2213,6 +2215,7 @@ function abrirDetalle(id) {
 }
 
 const ETAPAS = [
+  { v: 'futuro',     l: 'Futuro' },
   { v: 'nuevo',      l: 'Nuevo' },
   { v: 'activo',     l: 'Activo' },
   { v: 'contactado', l: 'Contactado' },

@@ -65,7 +65,9 @@ LARGE_FILE_MAX_BYTES = {
     # connected" — a real production bug fix, not debt.
     "whatsapp.html": 129_378,
     "routers/firmas.py": 119_193,
-    "estadisticas.html": 116_929,
+    # Bumped 80 bytes: se agregó la etapa "Futuro" al pipeline por defecto
+    # (ETAPAS_DEFAULT) — un estatus nuevo para contactos/leads, no debt.
+    "estadisticas.html": 117_009,
     "contactos.html": 111_788,
     # Bumped for the Profeco/IA-generativa disclosure clauses (9.9 Bis /
     # 5.6 Bis) — legitimate legal content, not debt to pay down.

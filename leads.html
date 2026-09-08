@@ -1453,6 +1453,7 @@ function rolBadge(tipo) {
    se usan estas por defecto. El valor guardado en contactos.estatus
    es la clave (nombre en minúsculas). */
 const ETAPAS_DEFAULT = [
+  { clave:'futuro',     nombre:'Futuro',     color:'var(--etapa-futuro)'     },
   { clave:'nuevo',      nombre:'Nuevo',      color:'var(--etapa-nuevo)'      },
   { clave:'activo',     nombre:'Activo',     color:'var(--etapa-activo)'     },
   { clave:'contactado', nombre:'Contactado', color:'var(--etapa-contactado)' },
@@ -1798,7 +1799,7 @@ async function abrirModal(id = null) {
     ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-descripcion-privada','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
     sv('m-mpio','MORELIA, MICHOACÁN');
     document.getElementById('m-tipo').value = 'comprador';
-    document.getElementById('m-estatus').value = ETAPAS[0] ? ETAPAS[0].clave : 'nuevo';
+    document.getElementById('m-estatus').value = (ETAPAS.find(e => e.clave === 'nuevo') || ETAPAS[0] || { clave: 'nuevo' }).clave;
     document.getElementById('m-probabilidad').value = '';
     document.getElementById('m-potencial').checked = true;
     document.getElementById('m-propiedad-interes').value = '';
