@@ -3174,8 +3174,8 @@ body[data-app="facebook-ads"]{--page-max:980px}
             </div>
           </div>
 
-          <!-- Facebook -->
-          <div class="bk-pd-menu-item" id="pdsec-fb">
+          <!-- Facebook (oculto: Facebook Ads no funciona actualmente) -->
+          <div class="bk-pd-menu-item" id="pdsec-fb" style="display:none">
             <button class="bk-pd-menu-trigger" onclick="togglePdSection('fb')">
               <span class="bk-pd-menu-trigger-left">
                 <span class="bk-pd-menu-icon">
