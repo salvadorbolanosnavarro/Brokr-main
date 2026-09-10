@@ -56,7 +56,15 @@ LARGE_FILE_MAX_BYTES = {
     "app-shell.js": 253_363,
     "whatsapp.py": 223_594,
     "contratos.html": 156_081,
-    "propiedades.html": 149_441,
+    # Bumped 5,747 bytes: los cambios de estatus, notas, comisión real y
+    # archivar se guardaban "en silencio" — Postgrest responde 200 con un
+    # arreglo vacío cuando un PATCH no toca ninguna fila (RLS o id ya no
+    # existe), y el código nunca lo revisaba, así que el cambio se perdía
+    # sin avisar y solo se notaba al recargar. Ahora todo PATCH a una fila
+    # existente verifica que sí volvió una fila. Junto con reordenar fotos
+    # arrastrando (o con los botones ‹ ›) al crear o editar un inmueble —
+    # corrección de bug real + funcionalidad de producto, no debt.
+    "propiedades.html": 155_188,
     # Bumped 1,844 bytes for the "Revisar webhook de la app" button in
     # Administrar números (fija el webhook de WhatsApp a nivel app) — a real
     # product change, not debt to pay down.
