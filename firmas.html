@@ -693,6 +693,27 @@
     caja.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
+  /* "Failed to fetch" es lo que avienta el navegador cuando la conexión
+     se cae antes de llegar al servidor (deploy en curso, wifi que parpadea,
+     etc.) — no es un error de la app. Para lecturas (GET) es seguro
+     reintentar un par de veces antes de rendirse; para acciones que
+     cambian algo, mejor avisar claro que dejar que el usuario dispare
+     lo mismo dos veces. */
+  async function _fetchConReintento(url, init, metodo) {
+    var intentos = metodo === 'GET' ? 3 : 1;
+    for (var i = 0; i < intentos; i++) {
+      try {
+        return await fetch(url, init);
+      } catch (e) {
+        if (i === intentos - 1) {
+          throw new Error('No se pudo conectar con el servidor. Revisa tu conexión ' +
+            'a internet e intenta de nuevo en un momento.');
+        }
+        await new Promise(function (res) { setTimeout(res, 1500); });
+      }
+    }
+  }
+
   async function api(path, opts) {
     opts = opts || {};
     var sb = window.brokrSb;
@@ -705,7 +726,9 @@
       headers['Content-Type'] = 'application/json';
       body = JSON.stringify(opts.json);
     }
-    var r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers, body: body });
+    var metodo = opts.method || 'GET';
+    var r = await _fetchConReintento(API_BASE + path,
+      { method: metodo, headers: headers, body: body }, metodo);
     var data = null;
     try { data = await r.json(); } catch (e) { data = null; }
     if (!r.ok) throw new Error((data && data.detail) || 'No se pudo completar la acción.');
