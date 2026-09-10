@@ -582,17 +582,44 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Foto upload */
+/* Foto upload — arrastrables para elegir el orden (la primera es la portada) */
 .foto-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-.foto-preview-item { position: relative; }
-.foto-preview-item img { width: 72px; height: 72px; object-fit: cover; border-radius: var(--r-sm); }
-.foto-preview-item button {
+.foto-preview-item { position: relative; cursor: grab; }
+.foto-preview-item.is-dragging { opacity: 0.35; }
+.foto-preview-item.is-dragover::after {
+  content: ''; position: absolute; inset: -4px;
+  border: 2px dashed var(--sky-blue); border-radius: var(--r-sm); pointer-events: none;
+}
+.foto-preview-item img { width: 72px; height: 72px; object-fit: cover; border-radius: var(--r-sm); display: block; }
+.foto-preview-item__badge {
+  position: absolute; bottom: -6px; left: -6px;
+  min-width: 18px; height: 18px; padding: 0 4px;
+  background: var(--ink); color: var(--paper); border: 2px solid var(--bone);
+  border-radius: var(--r-pill); font-size: 10px; font-weight: 700; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.foto-preview-item .foto-quitar {
   position: absolute; top: -6px; right: -6px;
   width: 22px; height: 22px;
   background: var(--sky-navy); color: var(--paper);
   border: 2px solid var(--bone); border-radius: 50%;
   font-size: var(--fs-caption); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
+}
+.foto-preview-item .foto-mover {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 18px; height: 26px; padding: 0;
+  background: rgba(20,20,20,.6); color: #fff; border: none;
+  font-size: 13px; line-height: 1; cursor: pointer;
+  opacity: 0; transition: opacity .12s;
+}
+.foto-preview-item:hover .foto-mover, .foto-preview-item:focus-within .foto-mover { opacity: 1; }
+.foto-preview-item .foto-mover--izq { left: 0; border-radius: var(--r-sm) 0 0 var(--r-sm); }
+.foto-preview-item .foto-mover--der { right: 0; border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+.foto-preview-item .foto-mover:disabled { opacity: 0 !important; pointer-events: none; }
+@media (max-width: 720px) {
+  /* Sin hover en touch: los botones de mover quedan siempre visibles */
+  .foto-preview-item .foto-mover { opacity: 1; }
 }
 
 /* Mobile tweaks */
@@ -1411,6 +1438,25 @@ async function sbFetch(path, method='GET', body=null) {
   return txt ? JSON.parse(txt) : [];
 }
 
+/* Un PATCH directo a Postgrest que no toca ninguna fila (el id ya no existe,
+   o — el caso real — una política de RLS lo bloquea calladita) responde
+   200 con un arreglo vacío. No es un error de red ni de servidor, así que
+   nunca llegaba a los catch: el botón decía "Guardado" y en realidad no
+   se guardó nada, algo que solo se notaba al recargar. Todo PATCH a una
+   fila que ya existe (inmueble, tarea, etc.) pasa por aquí para que esa
+   falla ya no sea muda. */
+async function sbPatchVerificado(tabla, id, cambios, mensajeSiFalla) {
+  const filas = await sbFetch(tabla + '?id=eq.' + encodeURIComponent(id), 'PATCH', cambios);
+  if (!Array.isArray(filas) || filas.length === 0) {
+    throw new Error(mensajeSiFalla ||
+      'El cambio no se guardó: no tienes permiso sobre este registro o ya no existe. Recarga la página.');
+  }
+  return filas[0];
+}
+function sbPatchInmueble(id, cambios, mensajeSiFalla) {
+  return sbPatchVerificado('propiedades', id, cambios, mensajeSiFalla);
+}
+
 /* ── Paginación ────────────────────────────── */
 const PAGE_SIZE = 24;
 let currentPage = 1;
@@ -1650,11 +1696,8 @@ function openPropForm(id) {
     form.dataset.dirtyBound = '1';
   }
   uploadedFotoUrls = [];
-  g('fotos-preview').innerHTML = '';
-  g('fotos-raw-hidden').value = '';
-  g('fotos-progress').textContent = '';
   if (id) {
-    const p = allProps.find(x => x.id === id);
+    const p = allProps.find(x => String(x.id) === String(id));
     if (!p) return;
     g('prop-modal-title').textContent = 'Editar inmueble';
     Object.keys(p).forEach(k => {
@@ -1703,21 +1746,14 @@ function openPropForm(id) {
     }
     form.elements['fotos_raw'].value = JSON.stringify(p.fotos||[]);
     form.elements['prop_id'].value = id;
-    if (p.fotos?.length) {
-      uploadedFotoUrls = [...p.fotos];
-      p.fotos.forEach((url, idx) => {
-        const div = document.createElement('div'); div.className = 'foto-preview-item';
-        div.innerHTML = `<img src="${url}" loading="lazy" decoding="async"/><button onclick="removeFoto(${idx},this.parentElement)"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
-        g('fotos-preview').appendChild(div);
-      });
-      g('fotos-progress').textContent = `${p.fotos.length} foto(s)`;
-    }
+    uploadedFotoUrls = p.fotos?.length ? [...p.fotos] : [];
   } else {
     g('prop-modal-title').textContent = 'Nuevo inmueble';
     form.elements['prop_id'].value = '';
     pfActualizarComision('');
     pfToggleBolsa(false);
   }
+  renderFotosPreview();
   // El checkbox de FB solo aplica a propiedades NUEVAS y solo si el usuario tiene FB conectado
   const fbRow = document.getElementById('fb-publish-row');
   if (fbRow) {
@@ -1852,7 +1888,7 @@ async function saveProp(e) {
   try {
     btn.innerHTML = 'Guardando…'; btn.disabled = true;
     const esNueva = !id;
-    if (id) { await sbFetch('propiedades?id=eq.'+id, 'PATCH', data); } else { await sbFetch('propiedades', 'POST', data); }
+    if (id) { await sbPatchInmueble(id, data); } else { await sbFetch('propiedades', 'POST', data); }
     propFormDirty = false; // ya se guardó — cerrar no debe pedir confirmación
     closePropModal(); await loadProps();
     mostrarToast(esNueva ? 'Inmueble creado' : 'Inmueble actualizado');
@@ -2068,7 +2104,7 @@ document.addEventListener('keydown', (e) => {
 // Guarda la propiedad en sessionStorage y redirige a ficha-manual
 // donde se va a precargar automáticamente.
 function crearFichaDesde(id) {
-  const p = allProps.find(x => x.id === id);
+  const p = allProps.find(x => String(x.id) === String(id));
   if (!p) { alert('Propiedad no encontrada'); return; }
   // Mapeo de campos: propiedades (esquema Brokr) → ficha-manual (form IDs)
   const prefill = {
@@ -2234,11 +2270,105 @@ function openLightbox(fotosJsonEncoded, startIdx) {
 }
 function closePropDetail() { g('prop-detail-modal').style.display = 'none'; currentDetailId = null; }
 
+/* ── Orden de las fotos ────────────────────────────────────────────
+   La primera foto de uploadedFotoUrls es la portada (la que se ve en
+   la tarjeta del listado), así que poder reordenarlas importa. Toda
+   la grilla se repinta desde el arreglo en cada cambio — así los
+   índices de cada botón siempre son los correctos, sin arrastrar
+   closures viejos. Funciona igual al crear un inmueble que al
+   editarlo después: es el mismo formulario. */
+function renderFotosPreview() {
+  const preview = g('fotos-preview'); if (!preview) return;
+  preview.innerHTML = uploadedFotoUrls.map((url, idx) => `
+    <div class="foto-preview-item" draggable="true" data-idx="${idx}">
+      <img src="${url}" loading="lazy" decoding="async" alt="Foto ${idx + 1}"/>
+      <span class="foto-preview-item__badge" title="${idx === 0 ? 'Foto de portada' : 'Posición ' + (idx + 1)}">${idx + 1}</span>
+      <button type="button" class="foto-mover foto-mover--izq" data-mover="-1" ${idx === 0 ? 'disabled' : ''} title="Mover antes">‹</button>
+      <button type="button" class="foto-mover foto-mover--der" data-mover="1" ${idx === uploadedFotoUrls.length - 1 ? 'disabled' : ''} title="Mover después">›</button>
+      <button type="button" class="foto-quitar" data-quitar title="Quitar foto">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>`).join('');
+  const n = uploadedFotoUrls.length;
+  g('fotos-progress').textContent = n
+    ? n + (n === 1 ? ' foto — la primera es la portada.' : ' fotos — arrastra para ordenar. La primera es la portada.')
+    : '';
+  g('fotos-raw-hidden').value = JSON.stringify(uploadedFotoUrls);
+}
+
+function moverFoto(idx, dir) {
+  const j = idx + dir;
+  if (j < 0 || j >= uploadedFotoUrls.length) return;
+  const tmp = uploadedFotoUrls[idx];
+  uploadedFotoUrls[idx] = uploadedFotoUrls[j];
+  uploadedFotoUrls[j] = tmp;
+  renderFotosPreview();
+}
+
+function quitarFoto(idx) {
+  uploadedFotoUrls.splice(idx, 1);
+  renderFotosPreview();
+}
+
+// Arrastrar y soltar para reordenar (mouse/trackpad). Los botones ‹ ›
+// cubren teclado, touch y cualquier caso donde arrastrar no sea cómodo.
+let _fotoDragIdx = null;
+function initFotoDragDrop() {
+  const preview = g('fotos-preview'); if (!preview || preview.dataset.dndBound) return;
+  preview.dataset.dndBound = '1';
+
+  preview.addEventListener('click', (e) => {
+    const item = e.target.closest('.foto-preview-item'); if (!item) return;
+    const idx = Number(item.dataset.idx);
+    const moverBtn = e.target.closest('[data-mover]');
+    if (moverBtn) { moverFoto(idx, Number(moverBtn.dataset.mover)); return; }
+    if (e.target.closest('[data-quitar]')) quitarFoto(idx);
+  });
+
+  preview.addEventListener('dragstart', (e) => {
+    const item = e.target.closest('.foto-preview-item'); if (!item) return;
+    _fotoDragIdx = Number(item.dataset.idx);
+    item.classList.add('is-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', String(_fotoDragIdx)); } catch (err) { /* Firefox exige setData */ }
+  });
+  preview.addEventListener('dragend', () => {
+    preview.querySelectorAll('.is-dragging,.is-dragover').forEach(el => el.classList.remove('is-dragging', 'is-dragover'));
+    _fotoDragIdx = null;
+  });
+  preview.addEventListener('dragover', (e) => {
+    if (_fotoDragIdx === null) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const item = e.target.closest('.foto-preview-item');
+    preview.querySelectorAll('.is-dragover').forEach(el => { if (el !== item) el.classList.remove('is-dragover'); });
+    if (item) item.classList.add('is-dragover');
+  });
+  preview.addEventListener('dragleave', (e) => {
+    const item = e.target.closest('.foto-preview-item');
+    if (item) item.classList.remove('is-dragover');
+  });
+  preview.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const item = e.target.closest('.foto-preview-item');
+    if (item) item.classList.remove('is-dragover');
+    if (!item || _fotoDragIdx === null) return;
+    const destIdx = Number(item.dataset.idx);
+    if (destIdx !== _fotoDragIdx) {
+      const [moved] = uploadedFotoUrls.splice(_fotoDragIdx, 1);
+      uploadedFotoUrls.splice(destIdx, 0, moved);
+      renderFotosPreview();
+    }
+    _fotoDragIdx = null;
+  });
+}
+
 function initFotoUpload() {
+  initFotoDragDrop();
   const input = g('fotos-upload'); if (!input) return;
   input.onchange = async (e) => {
     const files = Array.from(e.target.files); if (!files.length) return;
-    const progress = g('fotos-progress'); const preview = g('fotos-preview');
+    const progress = g('fotos-progress');
     const userToken = await getValidToken();
     if (!userToken) {
       progress.textContent = 'Tu sesión expiró. Vuelve a iniciar sesión.';
@@ -2261,17 +2391,12 @@ function initFotoUpload() {
         }
         const url = `${SB_URL}/storage/v1/object/public/fotos-propiedades/${name}`;
         uploadedFotoUrls.push(url);
-        const div = document.createElement('div'); div.className = 'foto-preview-item';
-        const idx = uploadedFotoUrls.length - 1;
-        div.innerHTML = `<img src="${url}" loading="lazy" decoding="async"/><button onclick="removeFoto(${idx},this.parentElement)"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>`;
-        preview.appendChild(div);
+        renderFotosPreview();
       } catch(err) { progress.textContent = `Error: ${err.message}`; return; }
     }
-    progress.textContent = `${uploadedFotoUrls.length} foto(s)`;
-    g('fotos-raw-hidden').value = JSON.stringify(uploadedFotoUrls);
+    input.value = ''; // permite volver a elegir el mismo archivo si hace falta
   };
 }
-function removeFoto(idx, el) { uploadedFotoUrls.splice(idx,1); el.remove(); g('fotos-raw-hidden').value = JSON.stringify(uploadedFotoUrls); }
 
 // ════════════════════════════════════════════════════════════════
 // IMPORTACIÓN MASIVA DESDE EASYBROKER
@@ -2437,14 +2562,14 @@ function pdSetTab(tab) {
 /* ── Estatus rápido desde el detalle (se registra en el historial) ── */
 async function pdCambiarEstatus(nuevo) {
   const id = currentDetailId; if (!id) return;
-  const p = allProps.find(x => x.id === id);
+  const p = allProps.find(x => String(x.id) === String(id));
   if (!p || p.estatus === nuevo) return;
   const previo = p.estatus;
   p.estatus = nuevo;   // optimista
   renderPage();
   try {
-    await sbFetch('propiedades?id=eq.' + encodeURIComponent(id), 'PATCH',
-      { estatus: nuevo, updated_at: new Date().toISOString() });
+    await sbPatchInmueble(id, { estatus: nuevo, updated_at: new Date().toISOString() },
+      'No se pudo cambiar el estatus: no tienes permiso sobre este inmueble o ya no existe.');
     const uid = getCurrentUserId();
     if (uid) {
       sbFetch('actividades', 'POST', {
@@ -2485,9 +2610,9 @@ async function guardarComisionReal() {
   const monto = Number(g('comision-real-input').value);
   if (!(monto >= 0)) { alert('Escribe un monto válido.'); return; }
   try {
-    await sbFetch('propiedades?id=eq.' + encodeURIComponent(id), 'PATCH',
-      { comision_real: monto, updated_at: new Date().toISOString() });
-    const p = allProps.find(x => x.id === id);
+    await sbPatchInmueble(id, { comision_real: monto, updated_at: new Date().toISOString() },
+      'No se pudo guardar la comisión: no tienes permiso sobre este inmueble o ya no existe.');
+    const p = allProps.find(x => String(x.id) === String(id));
     if (p) p.comision_real = monto;
     cerrarComisionModal();
     mostrarToast('Comisión registrada');
@@ -2499,7 +2624,7 @@ async function guardarComisionReal() {
 /* ── Duplicar inmueble ─────────────────────────────────────────── */
 async function duplicarProp() {
   const id = currentDetailId; if (!id) return;
-  const p = allProps.find(x => x.id === id); if (!p) return;
+  const p = allProps.find(x => String(x.id) === String(id)); if (!p) return;
   if (!confirm('¿Crear una copia de este inmueble?')) return;
   const uid = getCurrentUserId();
   if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); location.href = 'login.html'; return; }
@@ -2523,11 +2648,11 @@ async function duplicarProp() {
 /* ── Archivar / restaurar ──────────────────────────────────────── */
 async function archivarDesdeDetalle() {
   const id = currentDetailId; if (!id) return;
-  const p = allProps.find(x => x.id === id); if (!p) return;
+  const p = allProps.find(x => String(x.id) === String(id)); if (!p) return;
   const archivar = p.archivada !== true;
   try {
-    await sbFetch('propiedades?id=eq.' + encodeURIComponent(id), 'PATCH',
-      { archivada: archivar, updated_at: new Date().toISOString() });
+    await sbPatchInmueble(id, { archivada: archivar, updated_at: new Date().toISOString() },
+      'No se pudo archivar: no tienes permiso sobre este inmueble o ya no existe.');
     p.archivada = archivar;
     closePropDetail();
     filterProps();
@@ -2843,8 +2968,8 @@ async function pdToggleTarea(tid) {
   t.fecha_completada = completar ? new Date().toISOString() : null;
   pdRenderTareas();
   try {
-    await sbFetch('tareas?id=eq.' + encodeURIComponent(tid), 'PATCH',
-      { completada: completar, fecha_completada: t.fecha_completada });
+    await sbPatchVerificado('tareas', tid, { completada: completar, fecha_completada: t.fecha_completada },
+      'No se pudo actualizar la tarea: no tienes permiso sobre ella o ya no existe.');
     if (completar && currentDetailId) {
       const uid = getCurrentUserId();
       if (uid) sbFetch('actividades', 'POST', {
