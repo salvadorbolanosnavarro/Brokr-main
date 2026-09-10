@@ -2811,7 +2811,7 @@ async function crearTareaVinculada() {
   const titulo = (document.getElementById('tarea-nueva-titulo').value || '').trim();
   if (!titulo) return;
   const fecha = document.getElementById('tarea-nueva-fecha').value;
-  const uid = await userId();
+  const uid = await _userId();
   if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
   try {
     const creada = await restPost('tareas', {
@@ -2841,7 +2841,8 @@ async function vincularTareaExistente() {
   if (!detContacto) return;
   const tareaId = document.getElementById('vinculo-tarea').value;
   if (!tareaId) return;
-  const uid = await userId();
+  const uid = await _userId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
   try {
     await restPost('tareas_contactos', { user_id: uid, tarea_id: tareaId, contacto_id: detContacto.id });
     await cargarTareasVinculadas();
