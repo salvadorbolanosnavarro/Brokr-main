@@ -94,7 +94,13 @@ LARGE_FILE_MAX_BYTES = {
     # Supabase. Es la fusión de dos módulos completos en uno, no debt:
     # el peso de leads.html (99,563 bytes) desapareció del inventario por
     # completo al convertirse en una redirección de una sola pantalla.
-    "contactos.html": 126_908,
+    # Bumped 82 bytes: crearTareaVinculada() y vincularTareaExistente()
+    # llamaban a userId(), una función que nunca existió (el helper real es
+    # _userId()) — probablemente un resto de cuando esta pestaña se calcó de
+    # Propiedades. El ReferenceError ocurría antes del try/catch, así que
+    # tronaba en silencio: dar clic en "Crear" o "Vincular existente" en
+    # Tareas no hacía nada, sin error visible. Bug real, no debt.
+    "contactos.html": 126_990,
     # Bumped for the Profeco/IA-generativa disclosure clauses (9.9 Bis /
     # 5.6 Bis) — legitimate legal content, not debt to pay down.
     # Bumped 1,985 bytes: Anexo de WhatsApp ampliado con el cambio de cobro
