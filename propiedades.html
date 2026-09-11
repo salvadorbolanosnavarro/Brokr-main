@@ -1439,13 +1439,7 @@ async function sbFetch(path, method='GET', body=null) {
   return txt ? JSON.parse(txt) : [];
 }
 
-/* Un PATCH directo a Postgrest que no toca ninguna fila (el id ya no existe,
-   o — el caso real — una política de RLS lo bloquea calladita) responde
-   200 con un arreglo vacío. No es un error de red ni de servidor, así que
-   nunca llegaba a los catch: el botón decía "Guardado" y en realidad no
-   se guardó nada, algo que solo se notaba al recargar. Todo PATCH a una
-   fila que ya existe (inmueble, tarea, etc.) pasa por aquí para que esa
-   falla ya no sea muda. */
+/* PATCH que no toca filas (id inexistente o RLS) responde 200 + []: aquí se vuelve error. */
 async function sbPatchVerificado(tabla, id, cambios, mensajeSiFalla) {
   const filas = await sbFetch(tabla + '?id=eq.' + encodeURIComponent(id), 'PATCH', cambios);
   if (!Array.isArray(filas) || filas.length === 0) {
@@ -1454,13 +1448,7 @@ async function sbPatchVerificado(tabla, id, cambios, mensajeSiFalla) {
   }
   return filas[0];
 }
-// Editar un inmueble NO pasa por Postgrest directo (a diferencia del resto
-// de sbFetch/sbPatchVerificado): la política de RLS de "propiedades" solo
-// deja escribir a quien lo dio de alta, así que en una cuenta de Broquer
-// para Empresas cualquier agente que edita un inmueble de un compañero se
-// topaba con el "no tienes permiso" aunque sí lo pudiera ver y sí fuera de
-// su empresa. Este endpoint del backend valida "misma organización" con la
-// service key en vez de depender de esa RLS vieja.
+// Inmuebles: vía backend (valida misma organización), no Postgrest/RLS del dueño.
 async function sbPatchInmueble(id, cambios, mensajeSiFalla) {
   const token = await getValidToken();
   if (!token) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
@@ -1471,10 +1459,7 @@ async function sbPatchInmueble(id, cambios, mensajeSiFalla) {
   });
   if (!r.ok) {
     const err = await r.json().catch(() => ({}));
-    // 404 es "no encontré ese inmueble en tu organización" — ahí el mensaje
-    // que ya trae cada pantalla (más específico) sigue siendo mejor que el
-    // genérico del backend. Otros códigos (sesión vencida, cuenta sin
-    // organización) sí traen algo más útil que mostrar que cualquier default.
+    // En 404 gana el mensaje de la pantalla; en otros códigos, el del backend.
     throw new Error((r.status !== 404 && err.detail) || mensajeSiFalla || err.detail ||
       'El cambio no se guardó: no tienes permiso sobre este registro o ya no existe. Recarga la página.');
   }
