@@ -104,6 +104,68 @@ async def _borrar_token(token: str) -> None:
 # -----------------------------------------------------------------------------
 # El envío
 # -----------------------------------------------------------------------------
+async def _enviar_a_tokens(tokens: list[str], payload: dict) -> list[dict]:
+    """Manda el payload a cada token y regresa lo que Apple respondió por
+    cada uno — es el detalle que /push/prueba necesita para diagnosticar
+    (200 entregado, 400 BadDeviceToken → token de sandbox contra servidor
+    de producción o viceversa, 403 topic/llave mal, 410 token muerto)."""
+    jwt_tok = _apns_jwt()
+    if not jwt_tok:
+        return [{"token": t[-8:], "status": None, "detalle": "No se pudo firmar el JWT de APNs."} for t in tokens]
+
+    headers = {
+        "authorization": f"bearer {jwt_tok}",
+        "apns-topic": settings.apns_bundle_id,
+        "apns-push-type": "alert",
+        "apns-priority": "10",
+        "apns-expiration": str(int(time.time()) + 3600),
+    }
+
+    resultados = []
+    try:
+        # http2=True es obligatorio: APNs no acepta HTTP/1.1.
+        async with httpx.AsyncClient(http2=True, timeout=10) as c:
+            for tok in tokens:
+                try:
+                    r = await c.post(
+                        f"{APNS_HOST}/3/device/{tok}",
+                        headers=headers,
+                        content=json.dumps(payload),
+                    )
+                    resultados.append({"token": tok[-8:], "status": r.status_code, "detalle": r.text[:200]})
+                    if r.status_code == 410:
+                        log.info("APNs: token muerto, se limpia.")
+                        await _borrar_token(tok)
+                    elif r.status_code != 200:
+                        log.warning("APNs %s: %s", r.status_code, r.text[:200])
+                except Exception as e:
+                    log.warning("APNs: fallo al enviar: %s", e)
+                    resultados.append({"token": tok[-8:], "status": None, "detalle": str(e)})
+    except Exception as e:
+        log.error(
+            "APNs: no se pudo abrir conexión HTTP/2 "
+            "(¿falta instalar h2? revisa requirements.txt): %s",
+            e,
+        )
+        resultados = [{"token": t[-8:], "status": None, "detalle": "No se pudo conectar a APNs (¿falta h2?)."} for t in tokens]
+    return resultados
+
+
+def _armar_payload(titulo: str, cuerpo: str, datos: dict | None, badge: int | None) -> dict:
+    payload = {
+        "aps": {
+            "alert": {"title": titulo, "body": cuerpo},
+            "sound": "default",
+            "thread-id": "broquer-wa",
+        }
+    }
+    if badge is not None:
+        payload["aps"]["badge"] = int(badge)
+    if datos:
+        payload.update(datos)
+    return payload
+
+
 async def enviar_push(
     user_id: str,
     titulo: str,
@@ -116,61 +178,13 @@ async def enviar_push(
         log.info("APNs sin configurar (faltan variables) — no se envía push.")
         return False
 
-    jwt_tok = _apns_jwt()
-    if not jwt_tok:
-        return False
-
     tokens = await _tokens_del_agente(user_id)
     if not tokens:
         return False
 
-    payload = {
-        "aps": {
-            "alert": {"title": titulo, "body": cuerpo},
-            "sound": "default",
-            "thread-id": "broquer-wa",
-        }
-    }
-    if badge is not None:
-        payload["aps"]["badge"] = int(badge)
-    if datos:
-        payload.update(datos)
-
-    headers = {
-        "authorization": f"bearer {jwt_tok}",
-        "apns-topic": settings.apns_bundle_id,
-        "apns-push-type": "alert",
-        "apns-priority": "10",
-        "apns-expiration": str(int(time.time()) + 3600),
-    }
-
-    ok = False
-    try:
-        # http2=True es obligatorio: APNs no acepta HTTP/1.1.
-        async with httpx.AsyncClient(http2=True, timeout=10) as c:
-            for tok in tokens:
-                try:
-                    r = await c.post(
-                        f"{APNS_HOST}/3/device/{tok}",
-                        headers=headers,
-                        content=json.dumps(payload),
-                    )
-                    if r.status_code == 200:
-                        ok = True
-                    elif r.status_code == 410:
-                        log.info("APNs: token muerto, se limpia.")
-                        await _borrar_token(tok)
-                    else:
-                        log.warning("APNs %s: %s", r.status_code, r.text[:200])
-                except Exception as e:
-                    log.warning("APNs: fallo al enviar: %s", e)
-    except Exception as e:
-        log.error(
-            "APNs: no se pudo abrir conexión HTTP/2 "
-            "(¿falta instalar h2? revisa requirements.txt): %s",
-            e,
-        )
-    return ok
+    payload = _armar_payload(titulo, cuerpo, datos, badge)
+    resultados = await _enviar_a_tokens(tokens, payload)
+    return any(r["status"] == 200 for r in resultados)
 
 
 @router.get("/push/estado")
@@ -188,6 +202,37 @@ async def estado_push(request: Request) -> dict:
         "apns_configurado": push_configurado(),
         "apns_env": settings.apns_env,
         "tiene_token_guardado": len(tokens) > 0,
+    }
+
+
+@router.post("/push/prueba")
+async def prueba_push(request: Request) -> dict:
+    """Manda una notificación de verdad al iPhone del usuario y regresa
+    exactamente lo que respondió Apple por cada token guardado — para
+    distinguir, sin logs de Railway, entre: token de sandbox contra
+    servidor de producción (o al revés), token muerto, llave/topic mal
+    configurados, o que sí se entregó y el problema está en los ajustes
+    de notificaciones del propio iPhone."""
+    uid = await get_user_id_from_token(request)
+    if not uid:
+        raise HTTPException(401, "Sesión inválida.")
+    if not push_configurado():
+        raise HTTPException(409, "APNs no está configurado en el servidor (faltan variables de entorno).")
+    tokens = await _tokens_del_agente(uid)
+    if not tokens:
+        raise HTTPException(404, "No hay ningún token de iPhone guardado para este usuario.")
+
+    payload = _armar_payload(
+        "Prueba de Broquer",
+        "Si ves esto, las notificaciones sí funcionan.",
+        datos={"tipo": "prueba"},
+        badge=None,
+    )
+    resultados = await _enviar_a_tokens(tokens, payload)
+    return {
+        "apns_env": settings.apns_env,
+        "entregado_a_alguno": any(r["status"] == 200 for r in resultados),
+        "resultados": resultados,
     }
 
 
