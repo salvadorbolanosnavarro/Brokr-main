@@ -44,6 +44,15 @@
   // Guarda el token del dispositivo en la fila del agente.
   // OJO: el PATCH va filtrado por id. Sin filtro, PostgREST intentaría tocar
   // toda la tabla (RLS lo frena, pero es una llamada que no queremos hacer).
+  //
+  // OJO 2: un PATCH que no toca ninguna fila (por ejemplo si una política de
+  // RLS lo bloquea, o el id ya no coincide) responde 200/204 igual que uno
+  // que sí tocó una — con "Prefer: return=minimal" no hay forma de notar la
+  // diferencia. Antes, ese "éxito" falso se guardaba en localStorage y ya
+  // nunca se reintentaba: el iPhone quedaba sin token en la base para
+  // siempre y las notificaciones dejaban de llegar en silencio, sin ningún
+  // error visible. Ahora se pide la fila de vuelta (return=representation)
+  // y solo se marca "guardado" si de verdad regresó algo.
   function guardarToken(valor) {
     const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
     const u = usuarioActual();
@@ -57,11 +66,21 @@
         'apikey': SB_KEY,
         'Authorization': 'Bearer ' + tok,
         'Content-Type': 'application/json',
-        'Prefer': 'return=minimal',
+        'Prefer': 'return=representation',
       },
       body: JSON.stringify({ apns_token: valor }),
     })
-      .then(r => { if (r.ok) localStorage.setItem('apns_token_guardado', valor); })
+      .then(r => r.json().catch(() => null).then(filas => ({ r, filas })))
+      .then(({ r, filas }) => {
+        if (r.ok && Array.isArray(filas) && filas.length > 0) {
+          localStorage.setItem('apns_token_guardado', valor);
+        } else {
+          // No se guardó de verdad — se deja sin marcar para reintentar la
+          // próxima vez que abra la app (no hay dónde mostrarle un error
+          // al agente en este punto, es arranque silencioso en segundo plano).
+          console.error('[push] no se pudo guardar el token en usuarios (¿RLS?):', r.status);
+        }
+      })
       .catch(() => {});
   }
 

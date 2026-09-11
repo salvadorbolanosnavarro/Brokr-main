@@ -483,6 +483,11 @@ app.include_router(image_cleaner_router)
 from routers.reminders import router as reminders_router
 app.include_router(reminders_router)
 
+# Diagnóstico de notificaciones push (APNs) — no manda nada, solo dice si
+# el servidor está configurado y si el usuario tiene token guardado.
+from push import router as push_router
+app.include_router(push_router)
+
 # Generación de contrato DOCX estándar.
 from routers.contracts_basic import router as contracts_basic_router
 app.include_router(contracts_basic_router)

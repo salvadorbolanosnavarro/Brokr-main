@@ -15,11 +15,14 @@ import logging
 import time
 
 import httpx
+from fastapi import APIRouter, HTTPException, Request
 
+from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import get_rows, patch_rows
 
 log = logging.getLogger("broquer.push")
+router = APIRouter()
 
 APNS_HOST = (
     "https://api.sandbox.push.apple.com"
@@ -168,6 +171,24 @@ async def enviar_push(
             e,
         )
     return ok
+
+
+@router.get("/push/estado")
+async def estado_push(request: Request) -> dict:
+    """Diagnóstico rápido de por qué no llegan notificaciones, sin exponer
+    ningún secreto (solo booleanos): ¿el servidor tiene APNs configurado?
+    ¿este usuario ya tiene guardado el token de su iPhone? Con esto se
+    puede saber de qué lado está el problema sin meterse a los logs de
+    Railway ni a las variables de entorno."""
+    uid = await get_user_id_from_token(request)
+    if not uid:
+        raise HTTPException(401, "Sesión inválida.")
+    tokens = await _tokens_del_agente(uid)
+    return {
+        "apns_configurado": push_configurado(),
+        "apns_env": settings.apns_env,
+        "tiene_token_guardado": len(tokens) > 0,
+    }
 
 
 async def avisar_mensaje_whatsapp(
