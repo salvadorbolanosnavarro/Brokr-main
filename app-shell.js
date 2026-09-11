@@ -466,22 +466,29 @@
   display: flex; flex-direction: column; align-items: center; gap: 6px;
 }
 
-/* Ícono suelto de un módulo: en reposo solo se ve el ícono; al pasar el
-   mouse se ilumina, hace un saltito breve y su nombre sale como una
-   pastilla que crece por debajo — sin mover ni empujar a los demás
-   íconos, porque la pastilla va posicionada aparte (position:absolute),
-   igual que el tooltip de "Más". */
+/* Ícono suelto de un módulo: en reposo solo se ve el ícono. Al pasar el
+   mouse, el ícono desaparece (con un saltito breve antes de irse) y en
+   su lugar aparece su nombre — vertical, del mismo color que los
+   íconos, sin ningún recuadro ni fondo detrás: es el ícono mismo
+   transformándose en su nombre, no una etiqueta flotando encima. */
 .bk-sb-ico {
   position: relative;
   width: 48px; height: 46px; border-radius: var(--r);
   display: flex; align-items: center; justify-content: center;
-  color: rgba(255,255,255,0.72); background: transparent;
+  color: rgba(255,255,255,0.72);
   text-decoration: none !important;
-  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+  transition: color var(--dur) var(--ease);
 }
-.bk-sb-ico svg { width: 21px; height: 21px; }
-.bk-sb-ico:hover, .bk-sb-ico:focus-visible { background: var(--sb-hover); color: #FFFFFF; }
-.bk-sb-ico:hover svg, .bk-sb-ico:focus-visible svg { animation: bk-sb-ico-pop .42s var(--ease-out) both; }
+.bk-sb-ico svg { width: 21px; height: 21px; transition: opacity var(--dur) var(--ease); }
+.bk-sb-ico:hover, .bk-sb-ico:focus-visible { color: #FFFFFF; }
+.bk-sb-ico:hover svg, .bk-sb-ico:focus-visible svg {
+  opacity: 0;
+  animation: bk-sb-ico-pop .3s var(--ease-out);
+}
+/* Un ícono vecino tapado por el nombre largo de otro (ver
+   ajustarEtiquetaVertical): desaparece igual, sin el saltito — el
+   saltito es la reacción al mouse, esto solo le hace espacio al texto. */
+.bk-sb-ico--tapado svg { opacity: 0; }
 @keyframes bk-sb-ico-pop {
   0%   { transform: scale(1) rotate(0deg); }
   45%  { transform: scale(1.22) rotate(-10deg); }
@@ -489,33 +496,51 @@
 }
 .bk-sb-ico:focus { outline: none; }
 .bk-sb-ico:focus-visible { outline: 2px solid rgba(255,255,255,0.65); outline-offset: 2px; }
-.bk-sb-ico.is-active { background: #FFFFFF; color: var(--sky-navy); }
+.bk-sb-ico.is-active { background: #FFFFFF; color: var(--sky-navy); transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
 .bk-sb-ico.is-active::before {
   content: ''; position: absolute; left: -12px; top: 50%;
   transform: translateY(-50%);
   width: 4px; height: 24px; border-radius: 0 4px 4px 0;
   background: #FFFFFF;
+  transition: opacity var(--dur) var(--ease);
 }
-/* El nombre aparece VERTICAL, encima del propio sidebar (nunca se sale
-   hacia el contenido — ancho fijo = ancho del ícono, así que no hereda
-   ningún problema de estar tapado por lo que sea que haya detrás).
-   Tapa solo los íconos que le hagan falta: su alto sale del tamaño
-   natural del texto en writing-mode vertical (una palabra larga como
-   "Estadísticas" ocupa más renglones que "ISR"), nunca uno fijo. Se
-   centra sobre el ícono que se hoveréa y JS (ver ajustarEtiquetaVertical)
-   la recorta para que no se salga por arriba o por abajo del rail. */
+/* La pastilla blanca del módulo activo también se apaga al hover — si no,
+   el nombre (blanco) queda ilegible encima de su propio fondo blanco. */
+.bk-sb-ico.is-active:hover,
+.bk-sb-ico.is-active:focus-visible {
+  background: transparent; color: #FFFFFF;
+}
+.bk-sb-ico.is-active:hover::before,
+.bk-sb-ico.is-active:focus-visible::before {
+  opacity: 0;
+}
+/* Mismo problema si el módulo activo es uno de los TAPADOS por el
+   nombre largo de un vecino (no el que se está hovereando): su fondo
+   blanco se queda ahí aunque su ícono ya se apagó. */
+.bk-sb-ico--tapado.is-active { background: transparent; }
+.bk-sb-ico--tapado.is-active::before { opacity: 0; }
+/* El nombre: vertical de verdad — cada letra en su orientación normal,
+   apilada de arriba hacia abajo (text-orientation:upright, NO "mixed",
+   que hubiera rotado cada letra de lado y habría que ladear la cabeza
+   para leerlo). Blanco, sin fondo ni sombra — el mismo color que un
+   ícono encendido — porque el efecto es que el ícono SE CONVIRTIÓ en su
+   nombre, no que le apareció una etiqueta encima.
+   Encima del propio sidebar, nunca hacia el contenido (ancho fijo = el
+   del ícono). Tapa solo los íconos que le hagan falta: su alto sale del
+   tamaño natural del texto (una palabra larga como "Estadísticas" ocupa
+   más renglones que "ISR"), nunca uno fijo. Se centra sobre el ícono que
+   se hoveréa y JS (ver ajustarEtiquetaVertical) la recorta para que no
+   se salga por arriba o por abajo del rail, y apaga los íconos vecinos
+   que tapa. */
 .bk-sb-ico__label {
   position: absolute; left: 0; width: 48px;
   top: 50%; transform: translateY(-50%);
   display: flex; align-items: center; justify-content: center;
-  padding: 14px 0;
-  border-radius: var(--r);
-  background: var(--sky-navy); color: #FFFFFF;
-  writing-mode: vertical-rl; text-orientation: mixed;
-  font-size: 15px; font-weight: 800; letter-spacing: 0.03em;
+  color: #FFFFFF;
+  writing-mode: vertical-rl; text-orientation: upright;
+  font-size: 16px; font-weight: 800; letter-spacing: 0.02em; line-height: 1.3;
   white-space: nowrap;
-  opacity: 0; pointer-events: none; z-index: 80;
-  box-shadow: var(--shadow-lg);
+  opacity: 0; pointer-events: none; z-index: 2;
   transition: opacity var(--dur) var(--ease);
 }
 .bk-sb-ico:hover .bk-sb-ico__label,
@@ -1678,23 +1703,49 @@ body[data-app="facebook-ads"]{--page-max:980px}
     function ajustarEtiquetaVertical(ico) {
       const label = ico.querySelector('.bk-sb-ico__label');
       if (!label || !railEl) return;
-      const railRect = railEl.getBoundingClientRect();
+      const sueltos = railEl.querySelectorAll('.bk-sb-ico');
+      if (!sueltos.length) return;
+      // Los límites son el primer y el último ÍCONO SUELTO, no el rail
+      // completo — "Más" también vive dentro de #bk-rail, pero se queda
+      // exactamente como estaba (no entra al sistema de apagado/nombre),
+      // así que un nombre largo nunca debe alcanzar a taparlo.
+      const limiteArriba = sueltos[0].getBoundingClientRect().top;
+      const limiteAbajo = sueltos[sueltos.length - 1].getBoundingClientRect().bottom;
       const icoRect = ico.getBoundingClientRect();
       const alto = label.offsetHeight;
       // `label` es position:absolute dentro de `ico` (su ícono), así que
       // "top" se mide desde la esquina del ÍCONO, no del rail — hay que
       // calcular la posición deseada en coordenadas de PANTALLA (centrada
-      // en el ícono, recortada a los bordes del rail) y solo al final
+      // en el ícono, recortada a esos límites) y solo al final
       // convertirla a "cuánto le falta al ícono para llegar ahí".
       let topPantalla = icoRect.top + icoRect.height / 2 - alto / 2;
-      topPantalla = Math.max(railRect.top, Math.min(topPantalla, railRect.bottom - alto));
+      topPantalla = Math.max(limiteArriba, Math.min(topPantalla, limiteAbajo - alto));
       label.style.top = (topPantalla - icoRect.top) + 'px';
       label.style.transform = 'none';
+      // El propio ícono ya desaparece solo por :hover — aquí solo hace
+      // falta apagar a los VECINOS que el nombre alcanza a tapar. Por
+      // CUALQUIER traslape (no solo si su centro cae adentro): el nombre
+      // no mide un múltiplo exacto de renglón, así que un traslape a
+      // medias dejaría a un ícono a medio desvanecer, con la letra
+      // encimada sobre el pedazo de ícono que no se apagó.
+      const abajoPantalla = topPantalla + alto;
+      sueltos.forEach(otro => {
+        if (otro === ico) { otro.classList.remove('bk-sb-ico--tapado'); return; }
+        const r = otro.getBoundingClientRect();
+        const traslape = r.bottom > topPantalla && r.top < abajoPantalla;
+        otro.classList.toggle('bk-sb-ico--tapado', traslape);
+      });
+    }
+    function limpiarTapados() {
+      if (!railEl) return;
+      railEl.querySelectorAll('.bk-sb-ico--tapado').forEach(el => el.classList.remove('bk-sb-ico--tapado'));
     }
     if (railEl) {
       railEl.querySelectorAll('.bk-sb-ico').forEach(ico => {
         ico.addEventListener('mouseenter', () => ajustarEtiquetaVertical(ico));
         ico.addEventListener('focus', () => ajustarEtiquetaVertical(ico));
+        ico.addEventListener('mouseleave', limpiarTapados);
+        ico.addEventListener('blur', limpiarTapados);
       });
     }
 

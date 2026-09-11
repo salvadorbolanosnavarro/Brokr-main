@@ -68,7 +68,12 @@ LARGE_FILE_MAX_BYTES = {
     # encima del propio sidebar (writing-mode), tapando solo los íconos
     # vecinos que le hagan falta según lo largo de la palabra — pedido
     # explícito del usuario en vez de la pastilla horizontal anterior.
-    "app-shell.js": 257_225,
+    # Bumped 2,789 bytes: quitado el recuadro/fondo de esa etiqueta (texto
+    # del mismo color que los íconos, sin caja) y los íconos que tapa
+    # ahora desaparecen de verdad (no solo se cubren) — incluida la
+    # pastilla blanca del módulo activo, que si no dejaba el nombre
+    # blanco ilegible encima de su propio fondo blanco.
+    "app-shell.js": 260_014,
     "whatsapp.py": 223_594,
     "contratos.html": 156_081,
     # Bumped 5,747 bytes: los cambios de estatus, notas, comisión real y
