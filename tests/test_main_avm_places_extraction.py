@@ -15,7 +15,15 @@ class MainAvmPlacesExtractionTests(unittest.TestCase):
         self.assertIn('return {"colonias": [], "error": "GOOGLE_PLACES_KEY no configurada"}', router)
         self.assertIn('httpx.AsyncClient(timeout=15)', router)
         self.assertIn('"locationbias": "circle:50000@19.7059504,-101.1949825"', router)
-        self.assertIn('["sublocality", "sublocality_level_1", "neighborhood"]', router)
+        self.assertIn('"types": "(regions)"', router)
+        self.assertIn(
+            '_TIPOS_DEMASIADO_AMPLIOS = {\n'
+            '    "locality", "administrative_area_level_1", "administrative_area_level_2",\n'
+            '    "country", "postal_code",\n'
+            '}',
+            router,
+        )
+        self.assertIn('if any(t in tipos for t in _TIPOS_DEMASIADO_AMPLIOS):', router)
         self.assertIn('httpx.AsyncClient(timeout=10)', router)
         self.assertIn('resultado = {"colonias": colonias[:6]}', router)
         self.assertIn('cache_set(cache_key, resultado, ttl=86400)', router)
