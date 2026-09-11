@@ -317,13 +317,38 @@ async function addWatermark(dataUrl, contentType) {
   return canvas.toDataURL(outType, 0.92);
 }
 
+// El backend siempre entrega la imagen editada como JPEG o PNG — nunca en
+// el formato original, ni siquiera si se subió un HEIC de iPhone, porque
+// eso ningún navegador ni casi ninguna app lo pueden abrir (ver
+// routers/image_cleaner.py). El nombre del archivo descargado tiene que
+// reflejar eso: si se le dejaba la extensión del archivo ORIGINAL
+// (".heic"/".HEIC"), el resultado quedaba con bytes de JPEG pero nombre de
+// HEIC — Fotos, Windows, o cualquier app que decida el formato por la
+// extensión en vez de por el contenido real, lo trataban mal o lo rechazaban.
+function extensionEditada(contentType) {
+  return (contentType || '').includes('png') ? 'png' : 'jpg';
+}
+function nombreArchivoEditado(nombreOriginal, contentType) {
+  const base = nombreOriginal.substring(0, nombreOriginal.lastIndexOf('.')) || nombreOriginal;
+  return base + '_editada.' + extensionEditada(contentType);
+}
+
 // ── Drag & drop ──────────────────────────────────────────────────────────────
+// Muchos navegadores de escritorio (Chrome/Edge en Windows, por ejemplo) no
+// reconocen HEIC/HEIF y mandan file.type vacío para esos archivos — aunque
+// esta misma pantalla anuncia "JPG, PNG, WEBP, HEIC" como aceptados, un
+// HEIC arrastrado se descartaba en silencio (sin ningún aviso) porque
+// f.type.startsWith('image/') daba false. Se completa con la extensión,
+// igual que ya hace el backend cuando el content-type viene mal etiquetado.
+function pareceImagen(f) {
+  return f.type.startsWith('image/') || /\.(heic|heif|jpe?g|png|webp)$/i.test(f.name || '');
+}
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop', e => {
   e.preventDefault();
   dropZone.classList.remove('drag-over');
-  addFiles(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')));
+  addFiles(Array.from(e.dataTransfer.files).filter(pareceImagen));
 });
 fileInput.addEventListener('change', () => {
   addFiles(Array.from(fileInput.files));
@@ -634,10 +659,7 @@ async function downloadOne(i) {
   // iOS y en varios WebViews de apps, pero no guarda nada — Broq terminaba
   // avisando una descarga que nunca pasó. El helper decide: escritorio
   // descarga directa, móvil usa el share sheet nativo o un enlace real.
-  const orig = files[i].name;
-  const ext = orig.split('.').pop();
-  const base = orig.substring(0, orig.lastIndexOf('.')) || orig;
-  const filename = base + '_editada.' + ext;
+  const filename = nombreArchivoEditado(files[i].name, res.content_type);
   if (window.broquerDeliverBlob) {
     try {
       const blob = await (await fetch(finalUrl)).blob();
@@ -667,10 +689,7 @@ async function buildResultFile(i) {
     try { finalUrl = await addWatermark(rawUrl, res.content_type); }
     catch (e) { console.error('Watermark error:', e); }
   }
-  const orig = files[i].name;
-  const ext = orig.split('.').pop();
-  const base = orig.substring(0, orig.lastIndexOf('.')) || orig;
-  const filename = base + '_editada.' + ext;
+  const filename = nombreArchivoEditado(files[i].name, res.content_type);
   const blob = await (await fetch(finalUrl)).blob();
   try { return new File([blob], filename, { type: res.content_type }); }
   catch (e) { return null; }
@@ -783,7 +802,7 @@ function useInFicha() {
   const imagesToUse = results
     .map((res, i) => res && res.cleaned_b64
       ? { url: 'data:' + res.content_type + ';base64,' + res.cleaned_b64,
-          name: (() => { const n = files[i].name; const e = n.split('.').pop(); const b = n.substring(0, n.lastIndexOf('.')) || n; return b + '_editada.' + e; })() }
+          name: nombreArchivoEditado(files[i].name, res.content_type) }
       : null)
     .filter(Boolean);
 
@@ -813,7 +832,7 @@ function collectEditedImages() {
   return results
     .map((res, i) => res && res.cleaned_b64
       ? { url: 'data:' + res.content_type + ';base64,' + res.cleaned_b64,
-          name: (() => { const n = files[i].name; const e = n.split('.').pop(); const b = n.substring(0, n.lastIndexOf('.')) || n; return b + '_editada.' + e; })() }
+          name: nombreArchivoEditado(files[i].name, res.content_type) }
       : null)
     .filter(Boolean);
 }
