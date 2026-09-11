@@ -53,12 +53,35 @@ def _extraer_ubicacion(address_components):
     return (ciudad or ciudad_fallback), estado
 
 
+# Con "types": "geocode" Google compite colonias contra domicilios completos
+# (calle + número) por los mismos ~5 lugares de la respuesta de Autocomplete
+# — el límite de resultados lo pone Google, no nosotros. Para un texto como
+# "Cha" en Morelia, direcciones de la calle "Chapultepec" le ganaban el lugar
+# a la colonia "Chapultepec" en sí. "(regions)" es la colección que Google
+# documenta para restringir Autocomplete a locality/sublocality/postal_code/
+# administrative_area — nunca a domicilios ni negocios — así los ~5 lugares
+# que regresa ya son casi puras colonias, municipios y CPs candidatos.
+#
+# Aun con eso, Google no siempre etiqueta un fraccionamiento mexicano como
+# "sublocality"/"neighborhood": muchos (sobre todo los privados, chicos o
+# poco documentados) llegan como "administrative_area_level_3/4" o nomás
+# "political" sin nada más específico. El filtro viejo exigía una lista
+# corta de tipos exactos y tiraba todo lo demás — de ahí colonias obvias que
+# nunca aparecían aunque Google sí las hubiera regresado. Ahora se acepta
+# cualquier resultado que NO sea claramente ciudad/municipio/estado/país/CP,
+# en vez de exigir que sí sea explícitamente colonia.
+_TIPOS_DEMASIADO_AMPLIOS = {
+    "locality", "administrative_area_level_1", "administrative_area_level_2",
+    "country", "postal_code",
+}
+
+
 @router.get("/api/colonias")
 async def buscar_colonias(texto: str):
     if len(texto) < 3:
         return {"colonias": []}
 
-    cache_key = f"colonias_g4_{texto}".lower()
+    cache_key = f"colonias_g5_{texto}".lower()
     cached = cache_get(cache_key)
     if cached:
         return cached
@@ -72,7 +95,7 @@ async def buscar_colonias(texto: str):
                 "https://maps.googleapis.com/maps/api/place/autocomplete/json",
                 params={
                     "input": texto,
-                    "types": "geocode",
+                    "types": "(regions)",
                     "language": "es",
                     "components": "country:mx",
                     "locationbias": "circle:50000@19.7059504,-101.1949825",
@@ -88,7 +111,7 @@ async def buscar_colonias(texto: str):
         descripcion = pred.get("description", "")
         tipos = pred.get("types", [])
 
-        if not any(t in tipos for t in ["sublocality", "sublocality_level_1", "neighborhood"]):
+        if any(t in tipos for t in _TIPOS_DEMASIADO_AMPLIOS):
             continue
 
         nombre = pred.get("structured_formatting", {}).get("main_text", "").strip()
