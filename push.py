@@ -44,7 +44,7 @@ def push_configurado() -> bool:
 # Token de autorización de Apple (JWT ES256). Apple lo acepta hasta 1 hora;
 # lo renovamos cada 45 min. Uno solo sirve para todos los envíos.
 # -----------------------------------------------------------------------------
-_jwt_cache = {"token": None, "iat": 0}
+_jwt_cache = {"token": None, "iat": 0, "error": None}
 
 
 def _apns_jwt() -> str | None:
@@ -64,8 +64,15 @@ def _apns_jwt() -> str | None:
             tok = tok.decode()
         _jwt_cache["token"] = tok
         _jwt_cache["iat"] = ahora
+        _jwt_cache["error"] = None
         return tok
     except Exception as e:
+        # Guardamos el error real (no solo un genérico) para que /push/prueba
+        # pueda mostrarlo sin necesitar los logs de Railway — normalmente es
+        # la llave .p8 mal pegada en la variable de entorno (le faltan los
+        # saltos de línea reales, o el texto no es el contenido completo del
+        # archivo que da Apple).
+        _jwt_cache["error"] = f"{type(e).__name__}: {e}"
         log.error("APNs: no se pudo firmar el token (revisa APNS_KEY_P8): %s", e)
         return None
 
@@ -111,7 +118,10 @@ async def _enviar_a_tokens(tokens: list[str], payload: dict) -> list[dict]:
     de producción o viceversa, 403 topic/llave mal, 410 token muerto)."""
     jwt_tok = _apns_jwt()
     if not jwt_tok:
-        return [{"token": t[-8:], "status": None, "detalle": "No se pudo firmar el JWT de APNs."} for t in tokens]
+        detalle = "No se pudo firmar el JWT de APNs" + (
+            f": {_jwt_cache['error']}" if _jwt_cache["error"] else " (razón desconocida)."
+        )
+        return [{"token": t[-8:], "status": None, "detalle": detalle} for t in tokens]
 
     headers = {
         "authorization": f"bearer {jwt_tok}",
