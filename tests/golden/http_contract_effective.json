@@ -1,5 +1,5 @@
 {
-  "count": 253,
+  "count": 254,
   "operations": [
     {
       "body": false,
@@ -2059,6 +2059,15 @@
       "method": "GET",
       "params": [],
       "path": "/push/estado",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [],
+      "path": "/push/prueba",
       "responses": [
         "200"
       ]
