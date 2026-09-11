@@ -49,14 +49,30 @@ async def _revisar_recordatorios():
                 fecha = fecha.replace(tzinfo=timezone.utc)
         except Exception:
             continue
-        if fecha < ahora:
-            continue
         minutos_antes = t.get("recordatorio_minutos_antes") or 60
         disparo = fecha - timedelta(minutes=minutos_antes)
         if disparo > ahora:
+            continue  # aún no es hora de avisar
+        # OJO: antes había un "if fecha < ahora: continue" ANTES de calcular
+        # disparo. Eso descartaba para siempre cualquier tarea cuya fecha
+        # límite ya hubiera pasado al momento de este chequeo — que es
+        # exactamente lo que pasa con una tarea creada para "dentro de muy
+        # poco" (ej. a las 12:25 guardada a las 12:24): el ciclo corre cada
+        # 5 minutos, así que para cuando revisa ya puede ser 12:26 y la
+        # tarea se saltaba en silencio, sin push y sin quedar marcada, sin
+        # ningún error visible en ningún lado. Ahora solo se descarta si ya
+        # pasó DEMASIADO tiempo (el servidor estuvo caído, por ejemplo) para
+        # no mandar un alud de avisos viejos.
+        if ahora - fecha > timedelta(hours=6):
             continue
 
-        cuerpo = f"{t['titulo']} — en {minutos_antes} minutos" if minutos_antes >= 15 else f"{t['titulo']} — está por comenzar"
+        restantes = int((fecha - ahora).total_seconds() // 60)
+        if restantes > 1:
+            cuerpo = f"{t['titulo']} — en {restantes} minutos"
+        elif restantes >= -1:
+            cuerpo = f"{t['titulo']} — está por comenzar"
+        else:
+            cuerpo = f"{t['titulo']} — ya venció"
         try:
             await enviar_push(
                 t["user_id"],

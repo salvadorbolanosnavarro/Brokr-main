@@ -770,6 +770,11 @@ async function tkGuardarEdicion() {
     // "fecha+T+hora" pelón que Postgres confundiría con UTC.
     fecha_entrega: fecha ? new Date(fecha + 'T' + hora + ':00').toISOString() : null,
     notas: g('tke-notas').value.trim() || null,
+    // Si se cambia la fecha/hora hay que resetear el aviso: si ya se había
+    // mandado el recordatorio (o el servidor ya lo había descartado por
+    // vencido) y no se limpia esta bandera, la tarea reprogramada se queda
+    // muda para siempre — nunca vuelve a avisar aunque tenga fecha nueva.
+    recordatorio_enviado: false,
   };
   const btn = g('tke-guardar-btn');
   const prevTxt = btn ? btn.textContent : '';
