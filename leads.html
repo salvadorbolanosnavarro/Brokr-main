@@ -9,9 +9,9 @@
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-/* Leads se fusionó con Contactos: esta página solo redirige a la pestaña
-   Pipeline de contactos.html, para no romper enlaces guardados, el menú
-   de otros módulos o marcadores viejos. */
+/* Leads ahora es Clientes, un módulo propio otra vez (antes vivía como la
+   pestaña Pipeline de Contactos). Esta página solo redirige, para no
+   romper enlaces guardados, el menú de otros módulos o marcadores viejos. */
 .redir-wrap {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   min-height: 60vh; gap: 14px; text-align: center; padding: 40px 24px;
@@ -20,16 +20,16 @@
 .redir-wrap a { color: var(--ink); font-weight: 600; }
 </style>
 </head>
-<body data-app="contactos">
+<body data-app="clientes">
 <div class="redir-wrap">
-  <p>Leads ahora vive dentro de Contactos, en la pestaña Pipeline.</p>
-  <p>Redirigiendo… si no avanza, <a href="contactos.html?tab=pipeline" id="redir-link">entra aquí</a>.</p>
+  <p>Leads ahora se llama Clientes.</p>
+  <p>Redirigiendo… si no avanza, <a href="clientes.html" id="redir-link">entra aquí</a>.</p>
 </div>
 <script>
 (function () {
   var params = new URLSearchParams(window.location.search);
   var id = params.get('id') || params.get('contacto');
-  var destino = 'contactos.html?tab=pipeline' + (id ? '&id=' + encodeURIComponent(id) : '');
+  var destino = 'clientes.html' + (id ? '?id=' + encodeURIComponent(id) : '');
   var link = document.getElementById('redir-link');
   if (link) link.href = destino;
   window.location.replace(destino);

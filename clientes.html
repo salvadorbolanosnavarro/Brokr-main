@@ -5,13 +5,22 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Directorio · Broquer</title>
+<title>Clientes · Broquer</title>
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 html, body { background: var(--paper); }
 
+/* ══════════════════════════════════════════════════════════════════
+   CLIENTES — el pipeline de venta (antes "Leads", después la pestaña
+   Pipeline dentro de Contactos). Vive separado de Directorio a propósito:
+   mismo sistema visual (Canon), pero con su propio acento (navy en vez
+   del verde de Directorio) en los controles principales, para que se
+   aprenda a distinguir de un vistazo cuál pantalla es cuál. El tablero
+   kanban en sí ya es estructuralmente distinto a una lista — esa es la
+   diferencia más fuerte.
+   ══════════════════════════════════════════════════════════════════ */
 
 /* Top bar */
 .page-head {
@@ -22,18 +31,9 @@ html, body { background: var(--paper); }
 }
 @media (max-width: 720px) { .page-head { padding: 12px 16px 0; } }
 
-.page-head__crumbs {
-  font-family: var(--font-mono);
-  font-size: var(--fs-label-3); letter-spacing: 0.02em;
-   color: var(--mute);
-  margin-bottom: 12px;
-}
-.page-head__crumbs a { color: var(--mute); }
-.page-head__crumbs a:hover { color: var(--ink); }
-
 .page-head__row {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 .page-head h1 {
   font-family: var(--font-display);
@@ -51,6 +51,7 @@ html, body { background: var(--paper); }
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
 }
+.cl-sub { font-size: var(--fs-sm); color: var(--mute); margin: 0 0 16px; max-width: 60ch; }
 
 .head-search {
   display: flex; align-items: center; gap: 10px;
@@ -83,34 +84,7 @@ html, body { background: var(--paper); }
 }
 .filtro-select:focus { border-color: var(--ink); }
 
-.tabs {
-  display: flex; gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 0;
-}
-.tabs::-webkit-scrollbar { display: none; }
-.ftab {
-  flex-shrink: 0;
-  border: none; background: none;
-  padding: 12px 14px;
-  font-family: inherit;
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  color: var(--mute);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  letter-spacing: -0.005em;
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
-}
-.ftab.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
-.ftab:hover { color: var(--ink); }
-
-/* Chip de estatus (etapa del pipeline de Clientes) — mismo lenguaje que
-   los badges de inmuebles. Un contacto de Directorio que ya es potencial
-   muestra aquí su etapa, aunque el tablero completo viva en Clientes. */
+/* Chip de estatus/etapa — mismo lenguaje que los badges de inmuebles */
 .est-chip {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: var(--fs-label-3); font-weight: 600;
@@ -124,103 +98,92 @@ html, body { background: var(--paper); }
 }
 .est-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
-/* List */
-.list { padding: 16px 36px 120px; display: flex; flex-direction: column; gap: 0; }
-@media (max-width: 720px) { .list { padding: 8px 16px 120px; } }
-
-.contact-card {
-  background: var(--bone);
+/* ── Kanban ────────────────────────────────────────────────────── */
+.kanban {
+  display: flex; gap: 14px;
+  padding: 16px 36px 120px;
+  overflow-x: auto;
+  align-items: flex-start;
+  scroll-snap-type: x proximity;
+}
+@media (max-width: 720px) { .kanban { padding: 8px 16px 120px; gap: 10px; } }
+.kb-col {
+  flex: 0 0 292px;
+  max-width: 292px;
+  background: var(--paper-2);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  padding: 14px 16px;
-  display: flex; align-items: center; gap: 14px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  max-height: calc(100vh - 280px);
+  min-height: 180px;
+  scroll-snap-align: start;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+@media (max-width: 720px) { .kb-col { flex-basis: 260px; max-width: 260px; max-height: none; } }
+.kb-col.drag-over { border-color: var(--sky-navy); background: var(--navy-soft); }
+.kb-col__head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 16px 10px;
+  flex-shrink: 0;
+}
+.kb-col__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.kb-col__rule { height: 3px; border-radius: 0; flex-shrink: 0; }
+.kb-col__name {
+  font-size: var(--fs-sm); font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  flex: 1;
+}
+.kb-col__count {
+  font-size: var(--fs-xs); color: var(--mute);
+  font-variant-numeric: tabular-nums;
+}
+.kb-col__body {
+  padding: 4px 10px 12px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 8px;
+  flex: 1;
+}
+.kb-card {
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 12px 13px;
   cursor: pointer;
-  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
-  margin-bottom: 8px;
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.contact-card:hover { border-color: var(--line-2); transform: translateY(-1px); }
-.contact-card:active { transform: scale(.99); }
-.contact-card.picker-mode { border-color: var(--forest-soft); }
-.contact-card.picker-mode:hover { border-color: var(--forest); background: var(--forest-soft); }
-.contact-check {
-  flex: 0 0 auto; width: 22px; height: 22px; margin-right: 4px;
-  border: 1.5px solid var(--line-2); border-radius: var(--r-sm);
-  background: var(--paper); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: background .12s ease, border-color .12s ease;
-}
-.contact-check:hover { border-color: var(--ink); }
-.contact-check svg { width: 13px; height: 13px; color: white; opacity: 0; transition: opacity .12s ease; }
-.contact-card.is-selected { border-color: var(--ink); background: var(--paper-2); }
-.contact-card.is-selected .contact-check { background: var(--ink); border-color: var(--ink); }
-.contact-card.is-selected .contact-check svg { opacity: 1; }
-
-.contacts-select-all {
-  display: none; align-items: center; gap: 8px; cursor: pointer;
-  padding: 7px 12px; border: 1px solid var(--line); border-radius: var(--r-pill);
-  font-size: var(--fs-sm); color: var(--ink); background: var(--paper); white-space: nowrap;
-}
-.contacts-select-all.is-shown { display: flex; }
-.contacts-select-all:hover { border-color: var(--ink); }
-.contacts-select-all .check-box {
-  width: 17px; height: 17px; border: 1.5px solid var(--line-2);
-  border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center;
-}
-.contacts-select-all .check-box svg { width: 11px; height: 11px; color: white; opacity: 0; }
-.contacts-select-all.is-active .check-box { background: var(--ink); border-color: var(--ink); }
-.contacts-select-all.is-active .check-box svg { opacity: 1; }
-
-.cbulk-bar {
-  position: fixed; bottom: 26px; left: 50%; z-index: 9998;
-  transform: translateX(-50%) translateY(140%);
-  transition: transform .22s var(--ease);
-  display: flex; align-items: center; gap: 14px;
-  padding: 10px 12px 10px 20px; border-radius: var(--r-pill);
-  background: var(--ink); color: white; box-shadow: var(--shadow-xl);
-  font-size: var(--fs-sm); font-family: var(--font);
-}
-.cbulk-bar.is-visible { transform: translateX(-50%) translateY(0); }
-.cbulk-bar__sep { width: 1px; height: 18px; background: rgba(255,255,255,.2); }
-.cbulk-bar__btn {
-  display: flex; align-items: center; gap: 6px; border: none; cursor: pointer;
-  padding: 8px 15px; border-radius: var(--r-pill);
-  font-size: var(--fs-sm); font-weight: 600; font-family: var(--font);
-}
-.cbulk-bar__btn--danger { background: var(--danger); color: white; }
-.cbulk-bar__btn--ghost { background: transparent; color: rgba(255,255,255,.85); }
-.cbulk-bar__btn--ghost:hover { background: rgba(255,255,255,.1); color: white; }
-
-.cdel-overlay {
-  position: fixed; inset: 0; background: rgba(20,28,48,.55); z-index: 9999;
-  display: none; align-items: center; justify-content: center;
-  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
-}
-.cdel-overlay.is-open { display: flex; }
-.cdel-box {
-  background: var(--bone); border-radius: var(--r-lg);
-  width: min(400px, 92vw); padding: 26px 24px 20px;
-  box-shadow: var(--shadow-xl); text-align: center; font-family: var(--font);
-}
-.cdel-title { font-size: var(--fs-h3); font-weight: 700; color: var(--ink); margin-bottom: 8px; }
-.cdel-msg { font-size: var(--fs-sm); color: var(--mute); line-height: 1.6; margin-bottom: 20px; }
-.cdel-actions { display: flex; gap: 10px; justify-content: center; }
-.cdel-btn {
-  height: 38px; padding: 0 20px; border: none; border-radius: var(--r-pill);
-  font-size: var(--fs-sm); font-weight: 600; font-family: var(--font); cursor: pointer;
-}
-.cdel-btn--cancel { background: var(--paper-2); color: var(--ink); }
-.cdel-btn--del { background: var(--danger); color: white; }
-.cdel-btn:disabled { opacity: .6; cursor: default; }
-
-.avatar {
-  width: 44px; height: 44px;
+.kb-card:hover { border-color: var(--line-2); transform: translateY(-1px); box-shadow: var(--sh-1, 0 1px 3px rgba(0,0,0,.07)); }
+.kb-card.dragging { opacity: .45; }
+.kb-card__top { display: flex; align-items: center; gap: 10px; }
+.kb-card__av {
+  width: 32px; height: 32px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: var(--fs-sm); font-weight: 600;
+  font-size: var(--fs-caption); font-weight: 600;
   color: var(--paper);
   flex-shrink: 0;
-  letter-spacing: -0.01em;
 }
-/* Paleta de avatar restringida a la familia navy+azul+gris (hermanos). */
+.kb-card__name {
+  font-size: var(--fs-sm); font-weight: 500; color: var(--ink);
+  letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1; min-width: 0;
+}
+.kb-card__meta {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 8px; flex-wrap: wrap;
+}
+.kb-card__sub { font-size: var(--fs-caption); color: var(--mute); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb-empty {
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r);
+  padding: 18px 12px;
+  text-align: center;
+  font-size: var(--fs-caption); color: var(--mute);
+}
+
+/* Avatares (mismo lenguaje navy+azul+gris que Directorio) */
 .av-1 { background: var(--sky-navy); }
 .av-2 { background: var(--forest); }
 .av-3 { background: var(--ink-3); }
@@ -230,32 +193,16 @@ html, body { background: var(--paper); }
 .av-7 { background: var(--ink-2); }
 .av-8 { background: var(--ink); }
 
-.contact-info { flex: 1; min-width: 0; }
-.contact-name {
-  font-size: var(--fs-sm); font-weight: 500;
-  color: var(--ink);
-  letter-spacing: -0.01em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.contact-meta {
-  display: flex; align-items: center; gap: 8px;
-  margin-top: 3px;
-  flex-wrap: wrap;
-}
 .role-badge {
   font-family: var(--font-mono);
   font-size: var(--fs-label-3); font-weight: 500;
-   letter-spacing: 0.02em;
+  letter-spacing: 0.02em;
   padding: 2px 8px;
   border-radius: var(--r-pill);
   white-space: nowrap;
   background: var(--paper-2);
   color: var(--ink-2);
 }
-.contact-sub { font-size: var(--fs-xs); color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
-
-/* Roles: familia navy+azul+neutro (sin arcoíris). Azul = parte transaccional,
-   navy = contraparte/profesional formal, gris = resto. */
 .rb-arrendador { background: var(--forest-soft); color: var(--forest); }
 .rb-arrendatario { background: var(--navy-soft); color: var(--sky-navy); }
 .rb-comprador { background: var(--forest-soft); color: var(--forest); }
@@ -275,39 +222,11 @@ html, body { background: var(--paper); }
   white-space: nowrap;
 }
 
-.quick-acts { display: flex; gap: 6px; flex-shrink: 0; }
-.qa {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-  background: var(--paper);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  color: var(--ink-2);
-  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
-  text-decoration: none;
-  font-size: var(--fs-sm);
-}
-.qa:hover { border-color: var(--forest); color: var(--forest); }
-.qa-wa:hover { border-color: var(--brand-whatsapp); background: var(--brand-whatsapp-soft); }
-
 /* Empty */
 .empty { text-align: center; padding: 64px 24px; color: var(--mute); }
 .empty svg { margin-bottom: 16px; opacity: .25; }
 .empty strong { display: block; font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700; color: var(--ink); margin-bottom: 8px; letter-spacing: -0.02em; }
 .empty p { font-size: var(--fs-sm); line-height: 1.55; max-width: 320px; margin: 0 auto; }
-
-/* Picker banner */
-.picker-banner {
-  display: none;
-  background: var(--ink); color: var(--paper);
-  padding: 10px 20px;
-  text-align: center;
-  font-size: var(--fs-xs); font-weight: 500;
-  letter-spacing: -0.005em;
-  position: sticky; top: 0; z-index: 30;
-}
-.picker-banner.show { display: block; }
 
 /* Toast */
 .toast {
@@ -392,13 +311,13 @@ html, body { background: var(--paper); }
   font-family: var(--font-mono);
   font-size: var(--fs-label-3);
   font-weight: 500;
-  
   letter-spacing: 0.02em;
   color: var(--mute);
   margin: 22px 0 12px;
   display: flex; align-items: center; gap: 10px;
 }
 .sec-lbl:first-child { margin-top: 0; }
+.sec-lbl::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 
 .potencial-check {
   display: flex; align-items: flex-start; gap: 10px;
@@ -410,7 +329,7 @@ html, body { background: var(--paper); }
 }
 .potencial-check input[type="checkbox"] {
   width: 18px; height: 18px; margin-top: 1px; flex-shrink: 0;
-  accent-color: var(--forest);
+  accent-color: var(--sky-navy);
   cursor: pointer;
 }
 .potencial-check span { font-size: var(--fs-sm); color: var(--ink); line-height: 1.4; }
@@ -431,8 +350,6 @@ html, body { background: var(--paper); }
   background: var(--warn-soft); border-color: transparent; color: var(--warn);
 }
 .pot-dot { color: var(--warn); font-size: 0.85em; }
-
-.sec-lbl::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 
 .f { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
 .f label {
@@ -484,7 +401,7 @@ html, body { background: var(--paper); }
   letter-spacing: -0.005em;
   transition: opacity var(--dur) var(--ease), background var(--dur) var(--ease);
 }
-.btn-primary { flex: 1; background: var(--forest); color: var(--paper); }
+.btn-primary { flex: 1; background: var(--sky-navy); color: var(--paper); }
 .btn-primary:hover { opacity: .9; }
 .btn-del {
   background: var(--paper);
@@ -562,13 +479,13 @@ html, body { background: var(--paper); }
   font-family: var(--font-mono);
   font-size: var(--fs-label-3); font-weight: 500;
   color: var(--mute);
-   letter-spacing: 0.02em;
+  letter-spacing: 0.02em;
   flex-shrink: 0;
   padding-top: 2px;
 }
 .det-val { font-size: var(--fs-sm); color: var(--ink); text-align: right; line-height: 1.5; letter-spacing: -0.005em; }
 .det-val a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
-.det-val a:hover { text-decoration-color: var(--forest); }
+.det-val a:hover { text-decoration-color: var(--sky-navy); }
 .det-acts {
   display: flex; gap: 8px;
   padding: 14px 24px;
@@ -598,7 +515,6 @@ html, body { background: var(--paper); }
 .det-btn:hover { border-color: var(--ink); }
 .det-btn.navy { background: var(--sky-navy); color: var(--paper); border-color: var(--ink); }
 
-/* ── Detalle a pantalla completa ── */
 #detail-ov { align-items: stretch; padding: 0; }
 #detail-ov .sheet {
   max-width: 900px; width: 100%;
@@ -609,7 +525,7 @@ html, body { background: var(--paper); }
   #detail-ov .sheet { border-radius: 0; max-height: 100dvh; }
 }
 
-/* ── Banda de etapa (pipeline) y probabilidad ── */
+/* ── Etapa y probabilidad ── */
 .det-controls {
   display: flex; flex-wrap: wrap; gap: 22px;
   padding: 2px 24px 16px;
@@ -629,8 +545,6 @@ html, body { background: var(--paper); }
   letter-spacing: -0.005em; cursor: pointer; transition: all .15s ease;
 }
 .etapa-pill:hover { border-color: var(--line-3); }
-/* La etapa activa toma el color de SU etapa, no un navy generico igual
-   para las cinco: el color dice en que parte del embudo esta el contacto. */
 .etapa-pill.is-on { background: var(--etapa-activo); color: var(--paper); border-color: var(--etapa-activo); }
 .etapa-pill--futuro.is-on     { background: var(--etapa-futuro);     border-color: var(--etapa-futuro); }
 .etapa-pill--nuevo.is-on      { background: var(--etapa-nuevo);      border-color: var(--etapa-nuevo); }
@@ -638,8 +552,6 @@ html, body { background: var(--paper); }
 .etapa-pill--contactado.is-on { background: var(--etapa-contactado); border-color: var(--etapa-contactado); }
 .etapa-pill--cerrado.is-on    { background: var(--etapa-cerrado);    border-color: var(--etapa-cerrado); }
 .etapa-pill--descartado.is-on { background: var(--etapa-descartado); border-color: var(--etapa-descartado); }
-/* En reposo, un punto del color de la etapa: el embudo se lee completo
-   sin tener que seleccionar nada. */
 .etapa-pill::before {
   content: ''; display: inline-block; width: 7px; height: 7px;
   border-radius: 50%; margin-right: 7px; vertical-align: 1px;
@@ -683,8 +595,8 @@ html, body { background: var(--paper); }
 .op-ico {
   width: 32px; height: 32px;
   border-radius: 50%;
-  background: var(--forest-soft);
-  color: var(--forest);
+  background: var(--navy-soft);
+  color: var(--sky-navy);
   display: flex; align-items: center; justify-content: center;
   font-size: var(--fs-sm);
   flex-shrink: 0;
@@ -693,9 +605,7 @@ html, body { background: var(--paper); }
 .op-date { font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; font-family: var(--font-mono); letter-spacing: 0.04em; }
 
 /* Composer (notas / tareas) */
-.composer {
-  display: flex; gap: 8px; margin-bottom: 16px;
-}
+.composer { display: flex; gap: 8px; margin-bottom: 16px; }
 .composer input[type="text"] {
   flex: 1;
   background: var(--bone);
@@ -720,7 +630,7 @@ html, body { background: var(--paper); }
 .composer input:focus { border-color: var(--ink); }
 .composer button {
   border: none;
-  background: var(--forest); color: var(--paper);
+  background: var(--sky-navy); color: var(--paper);
   border-radius: var(--r);
   padding: 0 16px;
   font-family: inherit; font-size: var(--fs-sm); font-weight: 600;
@@ -746,13 +656,12 @@ html, body { background: var(--paper); }
   background: var(--paper-2);
   color: var(--ink-3);
 }
-.act-ico.nota { background: var(--forest-soft); color: var(--forest); }
+.act-ico.nota { background: var(--navy-soft); color: var(--sky-navy); }
 .act-ico.estatus { background: var(--warn-soft); color: var(--warn); }
 .act-ico.tarea { background: var(--success-soft); color: var(--success); }
 .act-txt { font-size: var(--fs-sm); color: var(--ink); line-height: 1.5; flex: 1; min-width: 0; overflow-wrap: break-word; }
 .act-date { font-size: var(--fs-caption); color: var(--mute); margin-top: 3px; }
 
-/* Botón de quitar (reusado en vínculos de propiedades) */
 .task-del {
   border: none; background: none;
   color: var(--mute); cursor: pointer;
@@ -785,7 +694,7 @@ html, body { background: var(--paper); }
   letter-spacing: 0.02em;
   padding: 3px 9px;
   border-radius: var(--r-pill);
-  background: var(--forest-soft); color: var(--forest);
+  background: var(--navy-soft); color: var(--sky-navy);
   flex-shrink: 0;
 }
 .vinculo-form { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -801,7 +710,7 @@ html, body { background: var(--paper); }
 .vinculo-form select:first-child { flex: 1; min-width: 160px; }
 .vinculo-form button {
   border: none;
-  background: var(--forest); color: var(--paper);
+  background: var(--sky-navy); color: var(--paper);
   border-radius: var(--r);
   padding: 0 16px;
   font-family: inherit; font-size: var(--fs-sm); font-weight: 600;
@@ -811,45 +720,9 @@ html, body { background: var(--paper); }
 
 .mini-empty { text-align: center; padding: 26px 12px; color: var(--mute); font-size: var(--fs-sm); }
 
-/* Bottom nav */
-.bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--bone);
-  border-top: 1px solid var(--line);
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
-  z-index: 60;
-  display: flex;
-  justify-content: space-around;
-}
-.bn-item {
-  flex: 1;
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 8px 4px;
-  font-size: var(--fs-caption);
-  color: var(--mute);
-  text-decoration: none;
-  font-weight: 500;
-}
-.bn-item.is-active { color: var(--ink); }
-
-/* Floating "new" button */
-.fab {
-  position: fixed; right: 20px; bottom: 90px;
-  z-index: 50;
-  width: 56px; height: 56px;
-  border-radius: 50%;
-  background: var(--forest); color: var(--paper);
-  border: none;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  box-shadow: var(--sh-2);
-  transition: transform var(--dur) var(--ease);
-}
-.fab:hover { transform: scale(1.05); }
-@media (min-width: 880px) { .fab { display: none; } }
-
+/* Botón "+" — acento propio de Clientes */
 .add-btn {
-  background: var(--forest); color: var(--paper);
+  background: var(--sky-navy); color: var(--paper);
   border: none;
   border-radius: var(--r-pill);
   height: 38px; padding: 0 16px;
@@ -861,59 +734,22 @@ html, body { background: var(--paper); }
 }
 .add-btn:hover { opacity: .9; }
 @media (max-width: 720px) { .add-btn { display: none; } }
-/* Import dropdown — built into the Importar button */
-.import-btn {
-  background: var(--bone); color: var(--ink);
-  border: 1px solid var(--line);
-  border-radius: var(--r-pill);
-  height: 38px; padding: 0 16px;
-  font-family: inherit;
-  font-size: var(--fs-sm); font-weight: 600;
-  cursor: pointer;
-  display: flex; align-items: center; gap: 6px;
-  letter-spacing: -0.005em;
-  position: relative;
-}
-.import-btn:hover { border-color: var(--line-2); background: var(--paper-2); }
-@media (max-width: 720px) { .import-btn { padding: 0 12px; height: 34px; } }
 
-
-/* Progress sheet */
-.import-progress-wrap { padding: 20px 24px; }
-
-/* Selector de migracion */
-.mig-opts { display: flex; flex-direction: column; gap: 10px; }
-.mig-opt {
-  display: flex; align-items: flex-start; gap: 14px; width: 100%;
-  padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg);
-  background: var(--paper); cursor: pointer; text-align: left;
-  font-family: inherit; transition: border-color .15s, background .15s;
-}
-.mig-opt:hover { border-color: var(--line-2); background: var(--paper-2); }
-.mig-opt-ico {
-  flex: 0 0 auto; width: 38px; height: 38px; border-radius: var(--r-md);
+/* Floating "new" button — acento propio de Clientes */
+.fab {
+  position: fixed; right: 20px; bottom: 24px;
+  z-index: 50;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--sky-navy); color: var(--paper);
+  border: none;
   display: flex; align-items: center; justify-content: center;
-  background: var(--accent-soft); color: var(--accent);
+  cursor: pointer;
+  box-shadow: var(--sh-2);
+  transition: transform var(--dur) var(--ease);
 }
-.mig-opt-tit { font-weight: 600; font-size: var(--fs-md); color: var(--ink); margin: 0 0 3px; }
-.mig-opt-des { font-size: var(--fs-sm); color: var(--mute); line-height: 1.45; margin: 0; }
-.progress-bar-wrap {
-  height: 5px; border-radius: var(--r-xs);
-  background: var(--bone); margin: 10px 0 5px; overflow: hidden;
-}
-.progress-bar-fill {
-  height: 100%; border-radius: var(--r-xs);
-  background: var(--forest); transition: width .3s ease; width: 0%;
-}
-.import-log {
-  font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--mute);
-  max-height: 160px; overflow-y: auto; margin-top: 10px;
-  display: flex; flex-direction: column; gap: 2px;
-}
-.import-log-line.ok { color: var(--forest); }
-.import-log-line.skip { color: var(--mute); }
-.import-log-line.err { color: var(--danger); }
-
+.fab:hover { transform: scale(1.05); }
+@media (min-width: 880px) { .fab { display: none; } }
 </style>
 
 <style id="sidebar-composition-normalization">
@@ -931,141 +767,46 @@ html, body { background: var(--paper); }
   letter-spacing: -0.02em !important;
 }
 .head-search { max-width:none !important; }
-.list { max-width:var(--page-max) !important; margin:0 auto !important; }
+.kanban { max-width:var(--page-max) !important; margin:0 auto !important; }
 @media (max-width:720px) {
   .page-head { padding:var(--sp-4) var(--pad-x) 0 !important; }
   .page-head h1 { font-size:var(--fs-h3) !important; }
 }
 </style>
 </head>
-<body data-app="contactos">
-
-
-<div class="picker-banner" id="picker-banner">
-  Seleccionando contacto · toca el que quieres usar
-</div>
+<body data-app="clientes">
 
 <header class="page-head">
   <div class="page-head__row">
-    <h1>Directorio</h1>
+    <h1>Clientes</h1>
     <span class="page-head__count" id="count-badge" style="display:none">0</span>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="import-btn" id="btn-import-eb" onclick="abrirMigracion()">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
-        Migrar de EasyBroker
-      </button>
-      <button class="add-btn" id="add-btn-top" onclick="abrirModal()">
-        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
-        <span id="add-btn-top-label">Nuevo contacto</span>
-      </button>
-    </div>
+    <button class="add-btn" id="add-btn-top" onclick="abrirModal()">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+      <span>Nuevo cliente</span>
+    </button>
   </div>
-  <div class="filters-row" id="directorio-filters">
+  <p class="cl-sub">Tu pipeline de venta: quién va en cada etapa, de un vistazo.</p>
+  <div class="filters-row">
     <div class="head-search" style="margin-bottom:0;flex:1">
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--mute);"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
       <input type="search" id="search-input" placeholder="Buscar por nombre, teléfono o correo…" oninput="busquedaDebounced()"/>
     </div>
-    <div class="contacts-select-all" id="c-select-all" onclick="cToggleSelectAll()">
-      <div class="check-box">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-      </div>
-      <span id="c-select-all-label">Seleccionar todo</span>
-    </div>
-  </div>
-  <div class="tabs" id="directorio-ftabs">
-    <button class="ftab active" onclick="setFiltro('todos',this)">Todos</button>
-    <button class="ftab" onclick="setFiltro('arrendador',this)">Propietarios</button>
-    <button class="ftab" onclick="setFiltro('arrendatario',this)">Inquilinos</button>
-    <button class="ftab" onclick="setFiltro('comprador',this)">Compradores</button>
-    <button class="ftab" onclick="setFiltro('vendedor',this)">Vendedores</button>
-    <button class="ftab" onclick="setFiltro('colega',this)">Colegas</button>
-    <button class="ftab" onclick="setFiltro('notario',this)">Notarios</button>
-    <button class="ftab" onclick="setFiltro('otro',this)">Otros</button>
     <select class="filtro-select" id="c-filtro-agente" style="display:none" onchange="cCambioFiltroAgente(this.value)"></select>
   </div>
 </header>
 
-<div class="list" id="lista"></div>
+<div class="kanban" id="kanban"></div>
 
-<!-- ── Barra flotante de selección múltiple ─────────────────── -->
-<div class="cbulk-bar" id="c-bulk-bar">
-  <span id="c-bulk-count">0 seleccionados</span>
-  <span class="cbulk-bar__sep"></span>
-  <button class="cbulk-bar__btn cbulk-bar__btn--danger" onclick="cConfirmarBorrar()">
-    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9M18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79h14.456"/></svg>
-    Eliminar
-  </button>
-  <button class="cbulk-bar__btn cbulk-bar__btn--ghost" onclick="cDeseleccionarTodo()">Cancelar</button>
-</div>
-
-<!-- ── Confirmación de borrado ──────────────────────────────── -->
-<div class="cdel-overlay" id="c-del-overlay" onclick="if(event.target===this)cCerrarConfirm()">
-  <div class="cdel-box">
-    <div class="cdel-title" id="c-del-title">¿Eliminar contactos?</div>
-    <div class="cdel-msg" id="c-del-msg"></div>
-    <div class="cdel-actions">
-      <button class="cdel-btn cdel-btn--cancel" onclick="cCerrarConfirm()">Cancelar</button>
-      <button class="cdel-btn cdel-btn--del" id="c-del-btn" onclick="cBorrarSeleccionados()">Eliminar</button>
-    </div>
-  </div>
-</div>
-
-<button class="fab" id="fab-nuevo" onclick="abrirModal()" aria-label="Nuevo contacto">
+<button class="fab" id="fab-nuevo" onclick="abrirModal()" aria-label="Nuevo cliente">
   <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
 </button>
 
-<!-- MIGRACION: selector -->
-<div class="overlay" id="mig-ov" onclick="if(event.target===this)cerrarMigracion()">
-  <div class="sheet">
-    <div class="handle"></div>
-    <div class="sheet-header">
-      <div class="sheet-title">Migrar de EasyBroker</div>
-    </div>
-    <div class="sheet-body">
-      <div class="mig-opts">
-        <button class="mig-opt" onclick="migracionCompleta()">
-          <span class="mig-opt-ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></span>
-          <span>
-            <p class="mig-opt-tit">Migración completa</p>
-            <p class="mig-opt-des">Trae de una vez tus propiedades con su código, tus contactos con notas y etiquetas, y el historial de leads ligado a cada inmueble. Usa tu API key de EasyBroker.</p>
-          </span>
-        </button>
-        <button class="mig-opt" onclick="document.getElementById('mig-file').click()">
-          <span class="mig-opt-ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 9l5-5 5 5M12 4v12"/></svg></span>
-          <span>
-            <p class="mig-opt-tit">Subir archivo exportado</p>
-            <p class="mig-opt-des">Sube el Excel o CSV que exportaste de la sección Contactos de EasyBroker. Detecta las columnas solas, conserva las fechas reales y liga los códigos de propiedad.</p>
-          </span>
-        </button>
-      </div>
-      <input type="file" id="mig-file" accept=".csv,.xlsx,.xls" style="display:none" onchange="subirArchivoContactos(this)">
-    </div>
-  </div>
-</div>
-
 <!-- ADD/EDIT MODAL -->
-<div class="overlay" id="import-ov" onclick="if(event.target===this&&document.getElementById('import-close').style.display!=='none')cerrarImport()">
-  <div class="sheet">
-    <div class="handle"></div>
-    <div class="sheet-header">
-      <div class="sheet-title" id="import-title">Importar de EasyBroker</div>
-    </div>
-    <div class="sheet-body">
-      <div class="import-progress-wrap">
-        <p id="import-msg" style="color:var(--mute);font-size:var(--fs-sm);line-height:1.5;margin:0 0 6px"></p>
-        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="import-fill"></div></div>
-        <div id="import-summary" style="display:none;flex-direction:column;gap:4px;font-size:var(--fs-sm);margin-top:14px"></div>
-        <button class="btn-primary" id="import-close" onclick="cerrarImport()" style="display:none;margin-top:16px">Entendido</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div class="overlay" id="modal-ov" onclick="if(event.target===this)cerrarModal()">
   <div class="sheet">
     <div class="handle"></div>
     <div class="sheet-header">
-      <div class="sheet-title" id="modal-title">Nuevo contacto</div>
+      <div class="sheet-title" id="modal-title">Nuevo cliente</div>
       <button class="close-btn" onclick="cerrarModal()" aria-label="Cerrar"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg></button>
     </div>
     <div class="sheet-body">
@@ -1127,7 +868,7 @@ html, body { background: var(--paper); }
       <div class="frow">
         <label class="potencial-check">
           <input type="checkbox" id="m-potencial"/>
-          <span>Marcar como potencial <span style="color:var(--mute);font-weight:400">(aparece en Clientes)</span></span>
+          <span>Es un cliente potencial <span style="color:var(--mute);font-weight:400">(aparece en tu pipeline)</span></span>
         </label>
       </div>
 
@@ -1149,7 +890,7 @@ html, body { background: var(--paper); }
 
       <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--line);display:flex;gap:10px">
         <button class="btn-del" id="btn-del" onclick="confirmarEliminar()" style="display:none">Eliminar</button>
-        <button class="btn-primary" onclick="guardarContacto()">Guardar contacto</button>
+        <button class="btn-primary" onclick="guardarContacto()">Guardar cliente</button>
       </div>
       <div style="height:8px"></div>
     </div>
@@ -1220,7 +961,7 @@ html, body { background: var(--paper); }
       </div>
       <div id="dtab-tareas" hidden>
         <div class="vinculo-form">
-          <input type="text" id="tarea-nueva-titulo" placeholder="Nueva tarea para este contacto…" onkeydown="if(event.key==='Enter')crearTareaVinculada()"/>
+          <input type="text" id="tarea-nueva-titulo" placeholder="Nueva tarea para este cliente…" onkeydown="if(event.key==='Enter')crearTareaVinculada()"/>
           <input type="date" id="tarea-nueva-fecha"/>
           <button onclick="crearTareaVinculada()">Crear</button>
         </div>
@@ -1249,24 +990,7 @@ html, body { background: var(--paper); }
 let sexoActual = 'M';
 let editandoId = null;
 let detContacto = null;
-let filtroActual = 'todos';
 let detTabActual = 'info';
-
-const params = new URLSearchParams(location.search);
-const IS_PICKER = params.get('picker') === '1';
-const PICKER_TIPO = params.get('tipo') || '';
-
-if (IS_PICKER) {
-  document.getElementById('picker-banner').classList.add('show');
-  document.getElementById('add-btn-top').style.display = 'none';
-  if (PICKER_TIPO) {
-    const tabMap = {arrendador:'Propietarios',arrendatario:'Inquilinos',comprador:'Compradores',vendedor:'Vendedores',colega:'Colegas',notario:'Notarios'};
-    filtroActual = PICKER_TIPO;
-    document.querySelectorAll('.ftab').forEach(b => {
-      b.classList.toggle('active', b.textContent === (tabMap[PICKER_TIPO]||'Todos'));
-    });
-  }
-}
 
 function gv(id) { return (document.getElementById(id)?.value || '').trim(); }
 function sv(id, v) { const el = document.getElementById(id); if (el) el.value = v || ''; }
@@ -1279,15 +1003,11 @@ function esc(s) {
 /* ── Conexión a Supabase ─────────────────────────────────────────
    Usamos el helper window.brokrSb expuesto por app-shell.js.
    Ese helper renueva el token automáticamente si está por expirar. */
-const LS_CACHE = 'brokr_contactos_cache';   // solo cache offline, NO fuente de verdad
-let _contactosMem = [];
-let _userIdCache = null;
-
-/* Espera a que app-shell.js termine de cargar y exponga window.brokrSb */
 function _sb() {
   if (!window.brokrSb) throw new Error('La app aún se está cargando. Intenta de nuevo en un segundo.');
   return window.brokrSb;
 }
+let _userIdCache = null;
 async function _userId() {
   if (_userIdCache) return _userIdCache;
   const sb = _sb();
@@ -1304,10 +1024,13 @@ async function _userId() {
   } catch { return null; }
 }
 
+const LS_CACHE = 'brokr_clientes_cache';   // solo cache offline, NO fuente de verdad
+let _contactosMem = [];
+
 /* Trae todos los contactos del usuario logueado, ordenados por updated_at desc */
 async function cargarRemoto() {
   const r = await _sb().fetch('rest/v1/contactos?select=*&order=updated_at.desc');
-  if (!r.ok) throw new Error('No se pudieron cargar los contactos (' + r.status + ')');
+  if (!r.ok) throw new Error('No se pudieron cargar los clientes (' + r.status + ')');
   const data = await r.json();
   _contactosMem = Array.isArray(data) ? data : [];
   try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
@@ -1384,14 +1107,6 @@ async function restPost(tabla, payload) {
   }
   return r.json();
 }
-async function restPatch(tabla, id, cambios) {
-  const r = await _sb().fetch('rest/v1/' + tabla + '?id=eq.' + encodeURIComponent(id), {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-    body: JSON.stringify(cambios),
-  });
-  if (!r.ok && r.status !== 204) throw new Error('Supabase: ' + r.status);
-}
 async function restDelete(tabla, id) {
   const r = await _sb().fetch('rest/v1/' + tabla + '?id=eq.' + encodeURIComponent(id), {
     method: 'DELETE',
@@ -1409,23 +1124,19 @@ const ROLES = {
   notario:            { lbl:'Notario', cls:'rb-notario' },
   otro:               { lbl:'Otro', cls:'rb-otro' },
 };
-
 function rolBadge(tipo) {
   const r = ROLES[tipo] || ROLES.otro;
   return `<span class="role-badge ${r.cls}">${r.lbl}</span>`;
 }
-
 function avColor(nombre) {
   let h = 0;
   for (let i = 0; i < nombre.length; i++) h = (h * 31 + nombre.charCodeAt(i)) | 0;
   return `av-${(Math.abs(h) % 8) + 1}`;
 }
-
 function initials(nombre) {
   const p = nombre.trim().split(/\s+/);
   return p.length >= 2 ? (p[0][0] + p[1][0]).toUpperCase() : nombre.slice(0,2).toUpperCase();
 }
-
 function domicilio(c) {
   const parts = [];
   if (c.calle) parts.push(c.calle + (c.num_ext ? ' No. ' + c.num_ext : '') + (c.num_int ? ' Int. ' + c.num_int : ''));
@@ -1456,16 +1167,15 @@ function fechaHora(iso) {
   } catch { return ''; }
 }
 
-/* ── Filtro de la lista ───────────────────────────────────────────── */
+/* ── Filtro del tablero: solo potenciales, por nombre/tel/correo y agente ── */
 function contactosFiltrados() {
-  const todos = cargar();
+  const todos = cargar().filter(c => c.es_potencial === true);
   const q = gv('search-input').toLowerCase();
   return todos.filter(c => {
-    const okTipo = filtroActual === 'todos' || c.tipo === filtroActual;
     const okQ = !q || [c.nombre, c.telefono, c.email, c.empresa].some(v => (v||'').toLowerCase().includes(q));
     const okAgente = cFiltroAgente === 'todos'
       || (cFiltroAgente === 'nadie' ? !c.asignado_a : c.asignado_a === cFiltroAgente);
-    return okTipo && okQ && okAgente;
+    return okQ && okAgente;
   });
 }
 
@@ -1476,15 +1186,11 @@ function busquedaDebounced() {
 }
 
 function renderActual() {
-  const todos = cargar();
+  const total = cargar().filter(c => c.es_potencial === true).length;
   const badge = document.getElementById('count-badge');
-  badge.textContent = todos.length;
-  badge.style.display = todos.length ? '' : 'none';
-  // Soltar de la selección lo que ya no existe (borrados, filtros)
-  const vivos = new Set(todos.map(c => String(c.id)));
-  for (const id of Array.from(cSel)) if (!vivos.has(id)) cSel.delete(id);
-  renderLista();
-  cActualizarBarra();
+  badge.textContent = total;
+  badge.style.display = total ? '' : 'none';
+  renderPipeline();
 }
 
 function pintarDetPotencial(activo) {
@@ -1505,7 +1211,7 @@ async function toggleDetPotencial() {
   try {
     await patchRemoto(c.id, { es_potencial: nuevo });
     try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
-    showToast(nuevo ? 'Marcado como potencial' : 'Quitado de potenciales');
+    showToast(nuevo ? 'Sigue en tu pipeline' : 'Quitado de Clientes');
   } catch (e) {
     c.es_potencial = !nuevo;
     detContacto.es_potencial = !nuevo;
@@ -1517,8 +1223,6 @@ async function toggleDetPotencial() {
 
 /* ── Selección múltiple y borrado ────────────────────────────────── */
 const C_API = 'https://api.broquer.app';
-let cSel = new Set();          // ids de contactos seleccionados
-let cPuedeEliminar = false;    // arranca en false: si la consulta falla, no se muestra nada
 
 let cEsEmpresa = false;      // la cuenta es Broquer para Empresas
 let cEsAdminOrg = false;     // quien navega es owner/admin de la empresa
@@ -1537,7 +1241,6 @@ async function cCargarPermiso() {
     const org = await r.json();
     cEsEmpresa = org.es_empresa === true;
     cEsAdminOrg = org.es_admin === true;
-    cPuedeEliminar = !org.es_empresa || org.es_admin === true;
     // En empresas, cargamos el equipo para el selector y filtro de agente
     if (cEsEmpresa) {
       try {
@@ -1546,19 +1249,10 @@ async function cCargarPermiso() {
           const d = await rm.json();
           cMiembros = (d.miembros || []).filter(m => m.activo);
           cPintarFiltroAgente();
-          // Nota: NO se repinta aquí — quien llama a cCargarPermiso() ya
-          // repinta después de que esta función termina. Repintar aquí
-          // además causaba un tercer render en cada carga (cache → datos
-          // reales sin permisos resueltos → esto), y ese tercer render sí
-          // se veía: la lista "parpadeaba" justo después de cargar.
         }
       } catch {}
     }
-  } catch (e) {
-    cPuedeEliminar = false;
-  }
-  const ctrl = document.getElementById('c-select-all');
-  if (ctrl) ctrl.classList.toggle('is-shown', cPuedeEliminar && !IS_PICKER);
+  } catch {}
 }
 
 /* ── Asignación de agente (Broquer para Empresas) ─────────────────── */
@@ -1593,161 +1287,6 @@ async function cAsignarAgente(contactoId, agenteId) {
   }
 }
 
-function cCardClick(id) {
-  if (!cPuedeEliminar || IS_PICKER) { abrirDetalle(id); return; }
-  if (cSel.size > 0) cToggleSel(id);
-  else abrirDetalle(id);
-}
-
-function cToggleSel(id) {
-  if (!cPuedeEliminar) return;
-  if (cSel.has(id)) cSel.delete(id);
-  else cSel.add(id);
-  renderLista();
-  cActualizarBarra();
-}
-
-function cToggleSelectAll() {
-  if (!cPuedeEliminar) return;
-  const ids = contactosFiltrados().map(c => String(c.id));
-  const todosMarcados = ids.length > 0 && ids.every(id => cSel.has(id));
-  if (todosMarcados) ids.forEach(id => cSel.delete(id));
-  else ids.forEach(id => cSel.add(id));
-  renderLista();
-  cActualizarBarra();
-}
-
-function cDeseleccionarTodo() {
-  cSel.clear();
-  renderLista();
-  cActualizarBarra();
-}
-
-function cActualizarBarra() {
-  const bar = document.getElementById('c-bulk-bar');
-  const cnt = document.getElementById('c-bulk-count');
-  if (bar && cnt) {
-    cnt.textContent = cSel.size + (cSel.size === 1 ? ' seleccionado' : ' seleccionados');
-    bar.classList.toggle('is-visible', cSel.size > 0);
-  }
-  const ctrl = document.getElementById('c-select-all');
-  const lbl = document.getElementById('c-select-all-label');
-  if (ctrl && lbl) {
-    const ids = contactosFiltrados().map(c => String(c.id));
-    const todosMarcados = ids.length > 0 && ids.every(id => cSel.has(id));
-    ctrl.classList.toggle('is-active', todosMarcados);
-    lbl.textContent = todosMarcados ? 'Quitar selección' : 'Seleccionar todo';
-  }
-}
-
-function cConfirmarBorrar() {
-  if (!cPuedeEliminar || cSel.size === 0) return;
-  const n = cSel.size;
-  document.getElementById('c-del-title').textContent =
-    '¿Eliminar ' + n + (n === 1 ? ' contacto?' : ' contactos?');
-  document.getElementById('c-del-msg').innerHTML =
-    'Esta acción no se puede deshacer. Se perderán sus notas, etiquetas y todo su historial dentro de Broquer.<br><br><strong>Eliminar de Broquer no elimina de EasyBroker.</strong>';
-  document.getElementById('c-del-btn').textContent = 'Eliminar ' + n;
-  document.getElementById('c-del-overlay').classList.add('is-open');
-}
-
-function cCerrarConfirm() {
-  document.getElementById('c-del-overlay').classList.remove('is-open');
-}
-
-async function cBorrarSeleccionados() {
-  const ids = Array.from(cSel);
-  if (!ids.length) return;
-  const btn = document.getElementById('c-del-btn');
-  const etiqueta = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Eliminando…';
-  try {
-    const tok = await _sb().ensureToken();
-    if (!tok) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
-    const r = await fetch(C_API + '/contactos/eliminar-masivo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
-      body: JSON.stringify({ ids: ids })
-    });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.detail || 'No se pudo eliminar');
-    const borrados = d.eliminados != null ? d.eliminados : ids.length;
-    cSel.clear();
-    cCerrarConfirm();
-    await cargarRemoto();
-    renderActual();
-    cActualizarBarra();
-    showToast(borrados < ids.length
-      ? borrados + ' de ' + ids.length + ' eliminados. El resto no era tuyo.'
-      : borrados + (borrados === 1 ? ' contacto eliminado' : ' contactos eliminados'));
-  } catch (e) {
-    alert(e.message || 'No se pudo eliminar');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = etiqueta;
-  }
-}
-
-// Tecla Escape: cerrar el modal o cancelar la selección
-document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape') return;
-  const ov = document.getElementById('c-del-overlay');
-  if (ov && ov.classList.contains('is-open')) cCerrarConfirm();
-  else if (cSel.size > 0) cDeseleccionarTodo();
-});
-
-/* ── Vista Lista ─────────────────────────────────────────────────── */
-function renderLista() {
-  const filtrados = contactosFiltrados();
-  const lista = document.getElementById('lista');
-  const q = gv('search-input');
-  if (!filtrados.length) {
-    lista.innerHTML = `<div class="empty">
-      <svg width="56" height="56" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      <strong>${(q || filtroActual !== 'todos') ? 'Sin resultados' : 'Aún no hay contactos'}</strong>
-      <p>${(q || filtroActual !== 'todos') ? 'Prueba con otros términos o cambia el filtro.' : 'Agrega tu primer contacto con el botón Nuevo.'}</p>
-    </div>`;
-    return;
-  }
-  lista.innerHTML = filtrados.map(c => {
-    const sub = c.telefono || c.email || c.empresa || '';
-    const pickerCls = IS_PICKER ? ' picker-mode' : '';
-    const selCls = cSel.has(String(c.id)) ? ' is-selected' : '';
-    const clickFn = IS_PICKER ? 'seleccionarContacto(this.dataset.id)' : 'cCardClick(this.dataset.id)';
-    const check = (cPuedeEliminar && !IS_PICKER)
-      ? `<div class="contact-check" onclick="event.stopPropagation();cToggleSel('${esc(c.id)}')">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-        </div>` : '';
-    return `<div class="contact-card${pickerCls}${selCls}" data-id="${esc(c.id)}" onclick="${clickFn}">
-      ${check}
-      <div class="avatar ${avColor(c.nombre||'')}">${esc(initials(c.nombre||'??'))}</div>
-      <div class="contact-info">
-        <div class="contact-name">${esc(c.nombre)}${c.es_potencial ? ' <span class="pot-dot" title="Potencial"><svg width="11" height="11" style="vertical-align:-1px" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg></span>' : ''}</div>
-        <div class="contact-meta">${rolBadge(c.tipo)}${c.es_potencial ? estatusChip(c.estatus) : ''}<span class="contact-sub">${esc(sub)}</span>${(cEsEmpresa && c.asignado_a) ? `<span class="contact-sub" style="color:var(--accent)">· ${esc(cNombreAgente(c.asignado_a))}</span>` : ''}</div>
-      </div>
-      ${!IS_PICKER ? `<div class="quick-acts" onclick="event.stopPropagation()">
-        ${(c.telefono||c.wa) ? `<a class="qa qa-wa" href="#" onclick="return abrirWA(event,'${esc(c.wa||c.telefono)}')" title="WhatsApp"><svg width="16" height="16" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="var(--brand-whatsapp)" d="M16 0C7.163 0 0 7.163 0 16c0 2.823.736 5.474 2.029 7.776L0 32l8.42-2.207A15.9 15.9 0 0016 32c8.837 0 16-7.163 16-16S24.837 0 16 0z"/><path fill="#FFF" d="M23.45 19.2c-.39-.196-2.31-1.142-2.668-1.273-.358-.13-.618-.196-.878.196-.26.39-1.008 1.272-1.236 1.532-.228.26-.456.293-.846.098-.39-.196-1.65-.61-3.143-1.94-1.162-1.037-1.948-2.318-2.176-2.708-.228-.39-.024-.6.171-.795.176-.175.39-.456.586-.683.196-.228.26-.39.39-.65.13-.26.065-.488-.033-.683-.098-.196-.878-2.117-1.203-2.9-.317-.762-.64-.66-.879-.672-.227-.012-.487-.014-.747-.014-.26 0-.683.098-1.04.488-.358.39-1.366 1.336-1.366 3.257 0 1.92 1.398 3.778 1.594 4.038.195.26 2.752 4.203 6.667 5.893.93.402 1.657.642 2.223.821.934.297 1.785.255 2.457.155.75-.112 2.31-.945 2.636-1.857.325-.911.325-1.692.228-1.857-.098-.165-.358-.26-.748-.456z"/></svg></a>` : ''}
-        ${c.telefono ? `<a class="qa" href="tel:${esc(c.telefono)}" title="Llamar"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg></a>` : ''}
-      </div>` : '<div style="color:var(--forest);font-size: var(--fs-xs);font-weight:600;font-family:var(--font-mono);letter-spacing:.06em">SELECCIONAR →</div>'}
-    </div>`;
-  }).join('');
-}
-
-function seleccionarContacto(id) {
-  const c = cargar().find(x => x.id === id);
-  if (!c) return;
-  window.parent.postMessage({ tipo: 'brokr_contacto_seleccionado', contacto: c }, '*');
-  if (window.opener) window.opener.postMessage({ tipo: 'brokr_contacto_seleccionado', contacto: c }, '*');
-}
-
-function setFiltro(tipo, btn) {
-  filtroActual = tipo;
-  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderActual();
-}
-
 function setSexo(s, btn) {
   sexoActual = s;
   document.querySelectorAll('.sexo-opt').forEach(b => b.classList.remove('active'));
@@ -1757,7 +1296,6 @@ function setSexo(s, btn) {
 // Evita perder cambios sin guardar por un clic accidental fuera del modal.
 let contactFormDirty = false;
 function abrirModal(id = null) {
-  clearTimeout(_busqT);
   editandoId = id;
   contactFormDirty = false;
   const modalBox = document.querySelector('#modal-ov .sheet') || document.getElementById('modal-ov');
@@ -1769,7 +1307,7 @@ function abrirModal(id = null) {
   if (id) {
     const c = cargar().find(x => x.id === id);
     if (!c) return;
-    document.getElementById('modal-title').textContent = 'Editar contacto';
+    document.getElementById('modal-title').textContent = 'Editar cliente';
     sv('m-nombre', c.nombre); sv('m-tel', c.telefono); sv('m-wa', c.wa || c.whatsapp);
     sv('m-email', c.email); sv('m-empresa', c.empresa);
     sv('m-calle', c.calle); sv('m-numext', c.num_ext); sv('m-numint', c.num_int);
@@ -1785,11 +1323,13 @@ function abrirModal(id = null) {
     document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === sx));
     document.getElementById('btn-del').style.display = 'block';
   } else {
-    document.getElementById('modal-title').textContent = 'Nuevo contacto';
+    // "Nuevo cliente" nace ya marcado como potencial — es lo que lo hace
+    // aparecer en este tablero. Se puede destildar si de plano no aplica.
+    document.getElementById('modal-title').textContent = 'Nuevo cliente';
     ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-descripcion-privada','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
     sv('m-mpio','MORELIA, MICHOACÁN');
     document.getElementById('m-tipo').value = 'arrendador';
-    document.getElementById('m-potencial').checked = false;
+    document.getElementById('m-potencial').checked = true;
     sexoActual = 'M';
     document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === 'M'));
     document.getElementById('btn-del').style.display = 'none';
@@ -1803,308 +1343,6 @@ function cerrarModal() {
   contactFormDirty = false;
   document.getElementById('modal-ov').classList.remove('open');
   editandoId = null;
-}
-
-function abrirMigracion() {
-  document.getElementById('mig-ov').classList.add('open');
-}
-function cerrarMigracion() {
-  document.getElementById('mig-ov').classList.remove('open');
-}
-
-/* Fetch que reintenta cuando la conexión se cae a medio camino
-   (Failed to fetch): el servidor puede estar reiniciándose por un deploy
-   o por la carga de la copia de fotos. Los imports deduplican, así que
-   reintentar es seguro. Espera 6 s entre intentos. */
-async function _fetchReintento(url, opts, intentos) {
-  intentos = intentos || 3;
-  for (let i = 0; i < intentos; i++) {
-    try {
-      return await fetch(url, opts);
-    } catch (e) {
-      if (i === intentos - 1) throw new Error('No hubo conexión con el servidor tras varios intentos. Revisa tu internet y vuelve a intentar: lo ya importado no se pierde ni se duplica.');
-      await new Promise(res => setTimeout(res, 6000));
-    }
-  }
-}
-
-/* Prepara y muestra el overlay de progreso. Regresa los elementos. */
-function _prepProgreso(titulo, mensaje) {
-  cerrarMigracion();
-  const ov      = document.getElementById('import-ov');
-  const titleEl = document.getElementById('import-title');
-  const msgEl   = document.getElementById('import-msg');
-  const fillEl  = document.getElementById('import-fill');
-  const sumEl   = document.getElementById('import-summary');
-  const btnEl   = document.getElementById('import-close');
-  titleEl.textContent = titulo;
-  msgEl.textContent   = mensaje;
-  fillEl.style.width = '5%';
-  fillEl.style.background = '';
-  sumEl.style.display = 'none';
-  sumEl.innerHTML = '';
-  btnEl.style.display = 'none';
-  ov.classList.add('open');
-  return { titleEl, msgEl, fillEl, sumEl, btnEl };
-}
-
-function _errorProgreso(el, e) {
-  el.fillEl.style.width = '100%';
-  el.fillEl.style.background = 'var(--danger)';
-  el.titleEl.textContent = 'No se pudo completar';
-  el.msgEl.textContent   = e.message || 'Error desconocido';
-  el.btnEl.style.display = 'inline-block';
-}
-
-/* Migración completa: propiedades → contactos → historial de leads.
-   Encadena los tres endpoints que ya existen, en el orden correcto para
-   que el historial encuentre las propiedades por su código EB. */
-async function migracionCompleta() {
-  let token;
-  try { token = await _sb().ensureToken(); }
-  catch (e) { alert('La app aún se está cargando. Intenta de nuevo en un segundo.'); return; }
-  if (!token) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
-
-  const el = _prepProgreso('Migración completa',
-    'Arrancando la migración en el servidor.');
-  const auth = { Authorization: 'Bearer ' + token };
-
-  /* El trabajo corre en el SERVIDOR: aquí solo se consulta el avance cada
-     3 segundos. Aguanta cortes de internet e incluso recargar la página
-     (al volver a abrir Migración completa retoma el avance en curso). */
-  el.sumEl.style.display = 'flex';
-  const puestas = {};
-  const linea = (clave, html) => {
-    if (puestas[clave]) return;
-    puestas[clave] = true;
-    el.sumEl.innerHTML += '<div>' + html + '</div>';
-  };
-  const MENSAJES = {
-    1: 'Paso 1 de 3 — Importando tus propiedades con su código de EasyBroker. Puede tardar varios minutos si tienes muchas.',
-    2: 'Paso 2 de 3 — Importando tus contactos con teléfonos, correos, etiquetas, fuente y notas.',
-    3: 'Paso 3 de 3 — Reconstruyendo el historial de leads y ligándolo a cada propiedad por su código.'
-  };
-
-  let p = 4;
-  const tick = setInterval(() => { p = Math.min(96, p + 0.6); el.fillEl.style.width = p + '%'; }, 900);
-
-  try {
-    let r0 = await _fetchReintento('https://api.broquer.app/easybroker/migracion/iniciar', { method: 'POST', headers: auth });
-    if (r0.status === 401) {
-      /* Token vencido tras un rato sin usar la pestaña: refrescar y reintentar. */
-      token = (await _sb().refreshNow().catch(() => null)) || token;
-      auth.Authorization = 'Bearer ' + token;
-      r0 = await _fetchReintento('https://api.broquer.app/easybroker/migracion/iniciar', { method: 'POST', headers: auth });
-    }
-    const d0 = await r0.json();
-    if (!r0.ok) throw new Error(d0.detail || ('Error ' + r0.status + ' al iniciar la migración'));
-    if (d0.en_curso) el.msgEl.textContent = 'Ya había una migración corriendo en el servidor: retomando su avance.';
-
-    let fallosSeguidos = 0;
-    let est = null;
-    for (;;) {
-      await new Promise(res => setTimeout(res, 3000));
-      let r;
-      try {
-        r = await fetch('https://api.broquer.app/easybroker/migracion/estado', { headers: auth });
-      } catch (e) {
-        if (++fallosSeguidos > 60) throw new Error('Se perdió la conexión con el servidor. La migración sigue corriendo allá: vuelve a abrir Migración completa para retomar el avance.');
-        continue;
-      }
-      if (r.status === 401) {
-        /* La sesión caduca a la hora: refrescar el token y seguir sondeando.
-           La migración en el servidor no depende de esta sesión. */
-        token = (await _sb().refreshNow().catch(() => null)) || token;
-        auth.Authorization = 'Bearer ' + token;
-        if (++fallosSeguidos > 60) throw new Error('Tu sesión no se pudo refrescar. La migración sigue corriendo en el servidor: recarga la página, inicia sesión y vuelve a abrir Migración completa para retomar el avance.');
-        continue;
-      }
-      if (!r.ok) {
-        if (++fallosSeguidos > 60) throw new Error('El servidor no respondió el avance. La migración sigue corriendo allá: vuelve a abrir Migración completa para retomar el avance.');
-        continue;
-      }
-      fallosSeguidos = 0;
-      est = await r.json();
-      if (!est.existe) { el.msgEl.textContent = 'Arrancando la migración en el servidor.'; continue; }
-
-      if (!est.terminado) {
-        el.msgEl.textContent = (MENSAJES[est.paso] || 'Migrando.')
-          + (est.detalle ? ' (' + est.detalle + ')' : '');
-      }
-      const d1 = est.propiedades, d2 = est.contactos, d3 = est.historial;
-      if (d1) {
-        linea('p', 'Propiedades: <b>' + (d1.importadas || 0) + '</b> nuevas, <b>' + (d1.actualizadas || 0) + '</b> ya estaban y se actualizaron.');
-        p = Math.max(p, 34);
-      }
-      if (d2) {
-        linea('c', 'Contactos: <b>' + (d2.importados || 0) + '</b> nuevos, <b>' + (d2.actualizados || 0) + '</b> ya estaban y se completaron.');
-        p = Math.max(p, 67);
-      }
-      if (d3) {
-        linea('h', 'Historial: <b>' + (d3.creados || 0) + '</b> leads nuevos, <b>' + ((d3.ya_estaban || 0) + (d3.marcados || 0)) + '</b> ya estaban, <b>' + (d3.vinculos || 0) + '</b> intereses ligados a propiedades.');
-      }
-      if (est.terminado) break;
-    }
-
-    clearInterval(tick);
-    if (est.error) throw new Error(est.error);
-
-    el.fillEl.style.width = '100%';
-    const d1 = est.propiedades || {}, d2 = est.contactos || {}, d3 = est.historial || {};
-    const nada = !((d1.importadas || 0) || (d2.importados || 0) || (d3.creados || 0));
-    el.titleEl.textContent = 'Migración lista';
-    el.msgEl.textContent   = nada
-      ? 'Todo lo de EasyBroker ya estaba en Broquer: no había nada nuevo que traer.'
-      : 'Tu operación de EasyBroker ya vive en Broquer.';
-    el.btnEl.style.display = 'inline-block';
-
-    if ((d1.importadas || 0) || (d1.actualizadas || 0)) {
-      linea('f', '<span style="color:var(--mute)">Las fotos se están copiando a Broquer en segundo plano.</span>');
-      _copiarFotosEnTandas(token);
-    }
-
-    await cargarRemoto();
-    renderActual();
-  } catch (e) {
-    clearInterval(tick);
-    _errorProgreso(el, e);
-    if (el.sumEl.innerHTML) el.sumEl.style.display = 'flex';
-  }
-}
-
-/* Copia las fotos a Broquer en tandas con cursor, en segundo plano.
-   Si una tanda falla, espera y reintenta; termina cuando ya no quedan. */
-async function _copiarFotosEnTandas(token) {
-  let cursor = null;
-  for (let tanda = 0; tanda < 300; tanda++) {
-    try {
-      const r = await fetch('https://api.broquer.app/easybroker/migrar-fotos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-        body: JSON.stringify(cursor ? { cursor: cursor } : {})
-      });
-      if (!r.ok) { await new Promise(res => setTimeout(res, 8000)); continue; }
-      const d = await r.json();
-      if (!d || !d.hay_mas) break;
-      cursor = d.cursor || cursor;
-      await new Promise(res => setTimeout(res, 1200));
-    } catch (e) {
-      await new Promise(res => setTimeout(res, 8000));
-    }
-  }
-}
-
-/* Sube el Excel o CSV exportado de la sección Contactos de EasyBroker. */
-async function subirArchivoContactos(input) {
-  const archivo = input.files && input.files[0];
-  input.value = '';
-  if (!archivo) return;
-
-  let token;
-  try { token = await _sb().ensureToken(); }
-  catch (e) { alert('La app aún se está cargando. Intenta de nuevo en un segundo.'); return; }
-  if (!token) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
-
-  const el = _prepProgreso('Importando tu archivo',
-    'Leyendo ' + archivo.name + '. Detecta las columnas solas, conserva las fechas reales y liga los códigos de propiedad. No cierres esta ventana.');
-  let p = 10;
-  const tick = setInterval(() => { p = Math.min(90, p + 3); el.fillEl.style.width = p + '%'; }, 700);
-
-  try {
-    const fd = new FormData();
-    fd.append('file', archivo);
-    const r = await fetch('https://api.broquer.app/contactos/importar-archivo', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + token },
-      body: fd
-    });
-    const d = await r.json();
-    clearInterval(tick);
-    if (!r.ok) throw new Error(d.detail || ('Error ' + r.status));
-
-    el.fillEl.style.width = '100%';
-    el.titleEl.textContent = 'Archivo importado';
-    el.msgEl.textContent   = 'Tus contactos del archivo ya están en Broquer.';
-    el.sumEl.style.display = 'flex';
-    el.sumEl.innerHTML =
-      '<div><b>' + (d.importados || 0) + '</b> nuevos</div>' +
-      '<div><b>' + (d.actualizados || 0) + '</b> actualizados</div>' +
-      '<div><b>' + (d.vinculos || 0) + '</b> intereses ligados a propiedades por su código</div>' +
-      '<div><b>' + (d.filas || 0) + '</b> filas leídas del archivo</div>' +
-      ((d.errores || 0) > 0 ? '<div style="color:var(--danger)"><b>' + d.errores + '</b> con error</div>' : '');
-    el.btnEl.style.display = 'inline-block';
-
-    await cargarRemoto();
-    renderActual();
-  } catch (e) {
-    clearInterval(tick);
-    _errorProgreso(el, e);
-  }
-}
-
-async function importarContactosEB() {
-  let token;
-  try { token = await _sb().ensureToken(); }
-  catch (e) { alert('La app aún se está cargando. Intenta de nuevo en un segundo.'); return; }
-  if (!token) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
-
-  const ov      = document.getElementById('import-ov');
-  const titleEl = document.getElementById('import-title');
-  const msgEl   = document.getElementById('import-msg');
-  const fillEl  = document.getElementById('import-fill');
-  const sumEl   = document.getElementById('import-summary');
-  const btnEl   = document.getElementById('import-close');
-
-  titleEl.textContent = 'Importando de EasyBroker';
-  msgEl.textContent   = 'Trayendo tus contactos con teléfonos, correos, empresa, etiquetas, fuente y probabilidad. Puede tardar un poco si tienes muchos. No cierres esta ventana.';
-  fillEl.style.width = '15%';
-  fillEl.style.background = '';
-  sumEl.style.display = 'none';
-  btnEl.style.display = 'none';
-  ov.classList.add('open');
-
-  // Avance suave hacia 90% mientras esperamos la respuesta.
-  let p = 15;
-  const tick = setInterval(() => { p = Math.min(90, p + 3); fillEl.style.width = p + '%'; }, 700);
-
-  try {
-    const r = await fetch('https://api.broquer.app/contactos/importar-eb', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + token }
-    });
-    const d = await r.json();
-    clearInterval(tick);
-    if (!r.ok) throw new Error(d.detail || ('Error ' + r.status));
-
-    fillEl.style.width = '100%';
-    titleEl.textContent = 'Importación lista';
-    msgEl.textContent   = 'Tus contactos ya están en Broquer.';
-    sumEl.style.display = 'flex';
-    sumEl.innerHTML =
-      '<div><b>' + (d.importados || 0) + '</b> nuevos</div>' +
-      '<div><b>' + (d.actualizados || 0) + '</b> actualizados</div>' +
-      '<div><b>' + (d.total || 0) + '</b> encontrados en EasyBroker</div>' +
-      ((d.errores || 0) > 0 ? '<div style="color:var(--danger)"><b>' + d.errores + '</b> con error</div>' : '');
-    btnEl.style.display = 'inline-block';
-
-    await cargarRemoto();
-    renderActual();
-  } catch (e) {
-    clearInterval(tick);
-    fillEl.style.width = '100%';
-    fillEl.style.background = 'var(--danger)';
-    titleEl.textContent = 'No se pudo importar';
-    msgEl.textContent   = e.message || 'Error desconocido';
-    btnEl.style.display = 'inline-block';
-  }
-}
-
-function cerrarImport() {
-  document.getElementById('import-ov').classList.remove('open');
-  setTimeout(() => {
-    const f = document.getElementById('import-fill');
-    if (f) { f.style.width = '0%'; f.style.background = ''; }
-  }, 300);
 }
 
 async function guardarContacto() {
@@ -2139,7 +1377,6 @@ async function guardarContacto() {
 
   if (editandoId) {
     datos.id = editandoId;
-    // Conservar operaciones existentes
     const previo = _contactosMem.find(c => c.id === editandoId);
     if (previo && previo.operaciones) datos.operaciones = previo.operaciones;
   } else {
@@ -2148,7 +1385,6 @@ async function guardarContacto() {
     datos.operaciones = [];
   }
 
-  // Bloquear botón mientras guarda
   const btn = document.querySelector('#modal-ov .btn-primary');
   const prevTxt = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
@@ -2156,12 +1392,12 @@ async function guardarContacto() {
   try {
     await upsertRemoto(datos);
     await cargarRemoto();
-    contactFormDirty = false; // ya se guardó — cerrar no debe pedir confirmación
+    contactFormDirty = false;
     cerrarModal();
     renderActual();
-    showToast(editandoId ? 'Contacto actualizado' : 'Contacto guardado');
+    showToast(editandoId ? 'Cliente actualizado' : 'Cliente guardado');
   } catch (e) {
-    alert('No se pudo guardar el contacto.\n\n' + (e.message || e));
+    alert('No se pudo guardar el cliente.\n\n' + (e.message || e));
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = prevTxt; }
   }
@@ -2169,16 +1405,16 @@ async function guardarContacto() {
 
 async function confirmarEliminar() {
   if (!editandoId) return;
-  if (!confirm('¿Eliminar este contacto? Esta acción no se puede deshacer.')) return;
+  if (!confirm('¿Eliminar este cliente? Esta acción no se puede deshacer.')) return;
   try {
     await eliminarRemoto(editandoId);
     await cargarRemoto();
     cerrarModal();
     cerrarDetalle();
     renderActual();
-    showToast('Contacto eliminado');
+    showToast('Cliente eliminado');
   } catch (e) {
-    alert('No se pudo eliminar el contacto.\n\n' + (e.message || e));
+    alert('No se pudo eliminar el cliente.\n\n' + (e.message || e));
   }
 }
 
@@ -2190,15 +1426,13 @@ function setDetTab(tab) {
     document.getElementById('dtab-btn-' + t).classList.toggle('active', t === tab);
   });
   if (!detContacto) return;
-  if (tab === 'hist')   cargarHistorial();
-  if (tab === 'props')  cargarVinculos();
+  if (tab === 'hist') cargarHistorial();
+  if (tab === 'props') cargarVinculos();
   if (tab === 'tareas') cargarTareasVinculadas();
 }
 
 function abrirDetalle(id) {
-  clearTimeout(_busqT);
-  id = String(id || '');
-  const c = cargar().find(x => String(x.id) === id);
+  const c = cargar().find(x => String(x.id) === String(id));
   if (!c) return;
   detContacto = c;
   const av = document.getElementById('det-av');
@@ -2207,7 +1441,6 @@ function abrirDetalle(id) {
   document.getElementById('det-nombre').textContent = c.nombre;
   document.getElementById('det-badge').innerHTML = rolBadge(c.tipo);
   document.getElementById('det-empresa').textContent = c.empresa || '';
-  // Asignación de agente: selector para el admin, solo lectura para agentes
   const asgWrap = document.getElementById('det-asignado-wrap');
   if (cEsEmpresa && cMiembros.length) {
     asgWrap.style.display = 'flex';
@@ -2256,12 +1489,7 @@ function abrirDetalle(id) {
 /* ── Etapas del pipeline ─────────────────────────────────────────
    Si el usuario no tiene etapas personalizadas en pipeline_etapas, se
    usan estas por defecto. El valor guardado en contactos.estatus es la
-   clave (nombre en minúsculas).
-   OJO: este pipeline vivía antes en un módulo aparte (Leads) que leía y
-   escribía la columna "estatus". Las pills de aquí escribían, por un
-   bug, una columna distinta ("etapa") que nadie más leía — así que
-   cambiar la etapa de un contacto aquí nunca se reflejaba en el
-   pipeline. Ya unificado: todo lee y escribe "estatus". */
+   clave (nombre en minúsculas). */
 const ETAPAS_DEFAULT = [
   { clave:'futuro',     nombre:'Futuro',     color:'var(--etapa-futuro)'     },
   { clave:'nuevo',      nombre:'Nuevo',      color:'var(--etapa-nuevo)'      },
@@ -2308,8 +1536,6 @@ function renderControles(c) {
     const on = etapa === e.clave;
     const conocida = ETAPA_CLASES.has(e.clave);
     const cls = conocida ? ` etapa-pill--${e.clave}` : '';
-    // Etapa personalizada (pipeline_etapas) sin clase CSS propia: se colorea
-    // con su color guardado en vez de depender de un modificador fijo.
     const style = (on && !conocida) ? ` style="background:${e.color};border-color:${e.color};color:var(--paper)"` : '';
     return `<button type="button" class="etapa-pill${cls} ${on ? 'is-on' : ''}" onclick="setEtapa('${esc(e.clave)}')"${style}>${esc(e.nombre)}</button>`;
   }).join('');
@@ -2464,7 +1690,6 @@ async function cargarVinculos() {
   ]);
   if (!detContacto || detContacto.id !== cid) return;
 
-  // Poblar selector con propiedades no vinculadas aún
   const yaVinculadas = new Set(vinculos.map(v => String(v.propiedad_id)));
   const sel = document.getElementById('vinculo-prop');
   const disponibles = props.filter(p => !yaVinculadas.has(String(p.id)));
@@ -2509,7 +1734,7 @@ async function eliminarVinculo(id) {
   }
 }
 
-/* ── Tab Tareas — igual patrón que Propiedades, contra tareas_contactos ── */
+/* ── Tab Tareas — mismo patrón que Propiedades/Directorio ─────────── */
 let _tareasMin = null;
 async function cargarTareasMin() {
   if (_tareasMin) return _tareasMin;
@@ -2524,65 +1749,41 @@ async function cargarTareasVinculadas() {
   const feed = document.getElementById('tareas-feed');
   feed.innerHTML = '<div class="mini-empty">Cargando…</div>';
   const cid = detContacto.id;
-
-  const [todas, vinculos] = await Promise.all([
-    cargarTareasMin(),
-    restGet('tareas_contactos?select=*&contacto_id=eq.' + encodeURIComponent(cid) + '&order=created_at.desc').catch(() => []),
-  ]);
+  let legacy = [], vinculos = [];
+  try {
+    [legacy, vinculos] = await Promise.all([
+      restGet('tareas?select=*&contacto_id=eq.' + encodeURIComponent(cid) + '&order=created_at.desc'),
+      restGet('tareas_contactos?select=*&contacto_id=eq.' + encodeURIComponent(cid) + '&order=created_at.desc').catch(() => []),
+    ]);
+  } catch { legacy = []; vinculos = []; }
   if (!detContacto || detContacto.id !== cid) return;
 
-  const yaVinculadas = new Set(vinculos.map(v => String(v.tarea_id)));
+  _tareasVinculos = vinculos;
+  const idsYaVistos = new Set(legacy.map(t => String(t.id)));
+  const idsPorVinculo = vinculos.map(v => String(v.tarea_id)).filter(id => !idsYaVistos.has(id));
+  let extra = [];
+  if (idsPorVinculo.length) {
+    try { extra = await restGet('tareas?select=*&id=in.(' + idsPorVinculo.join(',') + ')'); } catch { extra = []; }
+  }
+  _tareas = [...legacy, ...extra].sort((a, b) => {
+    if (!!a.completada !== !!b.completada) return a.completada ? 1 : -1;
+    return new Date(a.fecha_entrega || '9999-12-31') - new Date(b.fecha_entrega || '9999-12-31');
+  });
+
+  const yaLigadas = new Set(_tareas.map(t => String(t.id)));
+  let todas = [];
+  try { todas = await cargarTareasMin(); } catch { todas = []; }
+  const disponibles = todas.filter(t => !yaLigadas.has(String(t.id)) && !t.completada);
   const sel = document.getElementById('vinculo-tarea');
-  const disponibles = todas.filter(t => !yaVinculadas.has(String(t.id)) && !t.completada);
   sel.innerHTML = disponibles.length
     ? '<option value="">Elige una tarea…</option>' + disponibles.map(t => `<option value="${esc(String(t.id))}">${esc(t.titulo)}</option>`).join('')
     : '<option value="">' + (todas.length ? 'Todas ya vinculadas' : 'No tienes tareas') + '</option>';
 
-  const porId = Object.fromEntries(todas.map(t => [String(t.id), t]));
-  feed.innerHTML = vinculos.length
-    ? vinculos.map(v => {
-        const t = porId[String(v.tarea_id)] || {};
-        return `<div class="prop-link-item">
-          <div class="prop-link-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
-          <a class="prop-link-title" href="tareas.html">${esc(t.titulo || 'Tarea')}${t.completada ? ' (completada)' : ''}</a>
-          <span class="rel-chip">${t.fecha_entrega ? new Date(t.fecha_entrega).toLocaleDateString('es-MX', {day:'2-digit',month:'short'}) : 'Sin fecha'}</span>
-          <button class="task-del" title="Quitar vínculo" onclick="eliminarVinculoTarea('${esc(String(v.id))}')">×</button>
-        </div>`;
-      }).join('')
-    : '<div class="mini-empty">Sin tareas vinculadas. Crea o vincula una arriba.</div>';
-  document.getElementById('dtab-n-tareas').textContent = vinculos.length;
+  renderTareas();
 }
 
-async function crearTareaVinculada() {
-  if (!detContacto) return;
-  const titulo = (document.getElementById('tarea-nueva-titulo').value || '').trim();
-  if (!titulo) return;
-  const fecha = document.getElementById('tarea-nueva-fecha').value;
-  const uid = await _userId();
-  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
-  try {
-    const creada = await restPost('tareas', {
-      user_id: uid, titulo,
-      // OJO: nunca mandar "fecha+'T12:00:00'" pelón — la columna es timestamptz
-      // y Postgres lo toma como si YA fuera UTC, corriendo la hora real hasta
-      // 6h para atrás. new Date(...) interpreta el texto en la hora LOCAL del
-      // navegador, y toISOString() sí da el instante UTC correcto.
-      fecha_entrega: fecha ? new Date(fecha + 'T12:00:00').toISOString() : null,
-      contacto_id: detContacto.id,
-    });
-    const nueva = Array.isArray(creada) ? creada[0] : creada;
-    if (nueva && nueva.id) {
-      await restPost('tareas_contactos', { user_id: uid, tarea_id: nueva.id, contacto_id: detContacto.id });
-    }
-    _tareasMin = null; // se creó una tarea nueva, refresca el catálogo
-    document.getElementById('tarea-nueva-titulo').value = '';
-    document.getElementById('tarea-nueva-fecha').value = '';
-    await cargarTareasVinculadas();
-    showToast('Tarea creada y vinculada');
-  } catch (e) {
-    alert('No se pudo crear la tarea.\n\n' + (e.message || e));
-  }
-}
+let _tareasVinculos = [];
+let _tareas = [];
 
 async function vincularTareaExistente() {
   if (!detContacto) return;
@@ -2599,17 +1800,113 @@ async function vincularTareaExistente() {
   }
 }
 
-async function eliminarVinculoTarea(id) {
+function renderTareas() {
+  const feed = document.getElementById('tareas-feed');
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  feed.innerHTML = _tareas.length
+    ? _tareas.map(t => {
+        const due = t.fecha_entrega ? new Date(t.fecha_entrega) : null;
+        const vencida = due && !t.completada && due < hoy;
+        return `<div class="act-item">
+          <button class="task-del" onclick="toggleTarea('${esc(String(t.id))}')" title="${t.completada ? 'Reabrir' : 'Completar'}" style="border:1px solid var(--line);border-radius:50%;width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:${t.completada ? 'var(--success)' : 'var(--mute)'}">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </button>
+          <div style="flex:1;min-width:0">
+            <div class="act-txt" style="${t.completada ? 'text-decoration:line-through;color:var(--mute)' : ''}">${esc(t.titulo)}</div>
+            ${due ? `<div class="act-date" style="${vencida ? 'color:var(--danger)' : ''}">${vencida ? 'Vencida · ' : ''}${fechaCorta(t.fecha_entrega)}</div>` : ''}
+          </div>
+          <button class="task-del" title="Quitar vínculo con este cliente" onclick="quitarVinculoTarea('${esc(String(t.id))}')">×</button>
+        </div>`;
+      }).join('')
+    : '<div class="mini-empty">Sin tareas. Agrega la primera arriba.</div>';
+  document.getElementById('dtab-n-tareas').textContent = _tareas.filter(t => !t.completada).length;
+}
+
+async function crearTareaVinculada() {
+  if (!detContacto) return;
+  const inp = document.getElementById('tarea-nueva-titulo');
+  const titulo = (inp.value || '').trim();
+  if (!titulo) { inp.focus(); return; }
+  const uid = await _userId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  const fecha = document.getElementById('tarea-nueva-fecha').value;
   try {
-    await restDelete('tareas_contactos', id);
+    const creada = await restPost('tareas', {
+      user_id: uid, titulo: titulo, contacto_id: detContacto.id,
+      // OJO: nunca mandar "fecha+'T12:00:00'" pelón — la columna es timestamptz
+      // y Postgres lo toma como si YA fuera UTC. new Date(...) interpreta el
+      // texto en la hora LOCAL del navegador, y toISOString() sí da el
+      // instante UTC correcto.
+      fecha_entrega: fecha ? new Date(fecha + 'T12:00:00').toISOString() : null,
+    });
+    const nueva = Array.isArray(creada) ? creada[0] : creada;
+    if (nueva && nueva.id) {
+      await restPost('tareas_contactos', { user_id: uid, tarea_id: nueva.id, contacto_id: detContacto.id }).catch(() => {});
+    }
+    inp.value = '';
+    document.getElementById('tarea-nueva-fecha').value = '';
+    await cargarTareasVinculadas();
+    showToast('Tarea creada');
+  } catch (e) {
+    alert('No se pudo crear la tarea.\n\n' + (e.message || e));
+  }
+}
+
+async function toggleTarea(tid) {
+  const t = _tareas.find(x => String(x.id) === tid); if (!t) return;
+  const completar = !t.completada;
+  t.completada = completar;
+  t.fecha_completada = completar ? new Date().toISOString() : null;
+  renderTareas();
+  try {
+    // Un PATCH que no toca ninguna fila (RLS, o la tarea ya no existe)
+    // responde 200 con un arreglo vacío en vez de un error — se verifica
+    // aquí para no fingir éxito, igual que en propiedades.html.
+    const r = await _sb().fetch('rest/v1/tareas?id=eq.' + encodeURIComponent(tid), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      body: JSON.stringify({ completada: completar, fecha_completada: t.fecha_completada }),
+    });
+    const data = await r.json().catch(() => []);
+    if (!r.ok || !Array.isArray(data) || data.length === 0) {
+      throw new Error('No tienes permiso sobre esta tarea o ya no existe.');
+    }
+    if (completar) {
+      const uid = await _userId();
+      if (uid) restPost('actividades', {
+        user_id: uid, tipo: 'tarea_completada',
+        texto: 'Tarea completada: ' + t.titulo,
+        contacto_id: detContacto ? detContacto.id : null,
+      }).catch(() => {});
+    }
+    showToast(completar ? 'Tarea completada' : 'Tarea reabierta');
+  } catch (e) {
+    t.completada = !completar;
+    t.fecha_completada = null;
+    renderTareas();
+    alert('No se pudo actualizar la tarea.\n\n' + (e.message || e));
+  }
+}
+
+async function quitarVinculoTarea(tid) {
+  if (!detContacto) return;
+  try {
+    const vinculo = _tareasVinculos.find(v => String(v.tarea_id) === tid);
+    if (vinculo) await restDelete('tareas_contactos', vinculo.id);
+    const t = _tareas.find(x => String(x.id) === tid);
+    if (t && String(t.contacto_id) === String(detContacto.id)) {
+      await _sb().fetch('rest/v1/tareas?id=eq.' + encodeURIComponent(tid), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ contacto_id: null }),
+      });
+    }
     await cargarTareasVinculadas();
     showToast('Vínculo eliminado');
   } catch (e) {
     alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
   }
 }
-
-function cerrarDetalle() { document.getElementById('detail-ov').classList.remove('open'); detContacto = null; }
 
 function editarDesdeDetalle() {
   if (!detContacto) return;
@@ -2621,15 +1918,116 @@ function editarDesdeDetalle() {
 async function eliminarDesdeDetalle() {
   if (!detContacto) return;
   const c = detContacto;
-  if (!confirm(`¿Eliminar a ${c.nombre || 'este contacto'}? Esta acción no se puede deshacer.`)) return;
+  if (!confirm(`¿Eliminar a ${c.nombre || 'este cliente'}? Esta acción no se puede deshacer.`)) return;
   try {
     await eliminarRemoto(c.id);
     await cargarRemoto();
     cerrarDetalle();
     renderActual();
-    showToast('Contacto eliminado');
+    showToast('Cliente eliminado');
   } catch (e) {
-    alert('No se pudo eliminar el contacto.\n\n' + (e.message || e));
+    alert('No se pudo eliminar el cliente.\n\n' + (e.message || e));
+  }
+}
+
+function cerrarDetalle() { document.getElementById('detail-ov').classList.remove('open'); detContacto = null; }
+
+/* ── Pipeline (Kanban) ─────────────────────────────────────────── */
+function renderPipeline() {
+  const kb = document.getElementById('kanban');
+  const filtrados = contactosFiltrados();
+
+  if (!filtrados.length) {
+    kb.innerHTML = `<div class="empty" style="flex:1">
+      <svg width="56" height="56" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      <strong>Aún no hay clientes en tu pipeline</strong>
+      <p>Marca un contacto como potencial desde Directorio, o agrega uno nuevo aquí.</p>
+    </div>`;
+    return;
+  }
+
+  kb.innerHTML = ETAPAS.map(e => {
+    const cards = filtrados.filter(c => String(c.estatus || 'nuevo').toLowerCase() === e.clave);
+    const cardsHtml = cards.length
+      ? cards.map(c => kbCard(c)).join('')
+      : `<div class="kb-empty">Arrastra aquí</div>`;
+    return `<div class="kb-col" data-etapa="${esc(e.clave)}"
+      ondragover="kbDragOver(event, this)" ondragleave="kbDragLeave(this)" ondrop="kbDrop(event, this)">
+      <div class="kb-col__rule" style="background:${e.color}"></div>
+      <div class="kb-col__head">
+        <span class="kb-col__dot" style="background:${e.color}"></span>
+        <span class="kb-col__name">${esc(e.nombre)}</span>
+        <span class="kb-col__count">${cards.length}</span>
+      </div>
+      <div class="kb-col__body">${cardsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function kbCard(c) {
+  const sub = c.telefono || c.email || c.empresa || '';
+  const tags = Array.isArray(c.etiquetas) ? c.etiquetas.slice(0,2) : [];
+  return `<div class="kb-card" draggable="true" data-id="${esc(c.id)}"
+    ondragstart="kbDragStart(event, this)" ondragend="this.classList.remove('dragging')"
+    onclick="abrirDetalle(this.dataset.id)">
+    <div class="kb-card__top">
+      <div class="kb-card__av ${avColor(c.nombre||'')}">${esc(initials(c.nombre||'??'))}</div>
+      <div class="kb-card__name">${esc(c.nombre)}</div>
+    </div>
+    <div class="kb-card__meta">
+      ${rolBadge(c.tipo)}
+      ${c.fuente ? `<span class="tag-chip">${esc(c.fuente)}</span>` : ''}
+      ${tags.map(t => `<span class="tag-chip">${esc(t)}</span>`).join('')}
+    </div>
+    ${sub ? `<div class="kb-card__sub" style="margin-top:6px">${esc(sub)}</div>` : ''}
+  </div>`;
+}
+
+let _dragId = null;
+function kbDragStart(ev, el) {
+  _dragId = el.dataset.id;
+  el.classList.add('dragging');
+  try { ev.dataTransfer.setData('text/plain', _dragId); ev.dataTransfer.effectAllowed = 'move'; } catch {}
+}
+function kbDragOver(ev, col) {
+  ev.preventDefault();
+  try { ev.dataTransfer.dropEffect = 'move'; } catch {}
+  col.classList.add('drag-over');
+}
+function kbDragLeave(col) { col.classList.remove('drag-over'); }
+async function kbDrop(ev, col) {
+  ev.preventDefault();
+  col.classList.remove('drag-over');
+  const id = _dragId || (function(){ try { return ev.dataTransfer.getData('text/plain'); } catch { return null; } })();
+  _dragId = null;
+  if (!id) return;
+  const etapa = col.dataset.etapa;
+  await cambiarEstatus(id, etapa);
+}
+
+/* Cambia la etapa de un cliente (arrastrar en el tablero, o desde el
+   detalle vía setEtapa — ambos caminos terminan aquí en patchContacto). */
+async function cambiarEstatus(id, etapa) {
+  const c = _contactosMem.find(x => String(x.id) === String(id));
+  if (!c || String(c.estatus||'nuevo').toLowerCase() === etapa) return;
+  const previo = c.estatus;
+  c.estatus = etapa; // optimista
+  renderActual();
+  if (detContacto && String(detContacto.id) === String(id)) {
+    detContacto.estatus = etapa;
+    renderControles(detContacto);
+  }
+  try {
+    await patchContacto(id, { estatus: etapa });
+    showToast('Movido a ' + etapaInfo(etapa).nombre);
+  } catch (e) {
+    c.estatus = previo;
+    renderActual();
+    if (detContacto && String(detContacto.id) === String(id)) {
+      detContacto.estatus = previo;
+      renderControles(detContacto);
+    }
+    alert('No se pudo mover el cliente.\n\n' + (e.message || e));
   }
 }
 
@@ -2649,9 +2047,9 @@ window.addEventListener('message', async (e) => {
   }
 });
 
-/* Carga inicial: primero pintamos cache local (si existe) para respuesta instantánea,
-   luego refrescamos desde Supabase. Si no hay cache, mostramos un placeholder.
-   Esperamos a que app-shell.js haya cargado y expuesto window.brokrSb. */
+/* Carga inicial: primero pintamos cache local (si existe) para respuesta
+   instantánea, luego refrescamos desde Supabase. Esperamos a que
+   app-shell.js haya cargado y expuesto window.brokrSb. */
 async function _waitForShell(maxMs) {
   const start = Date.now();
   while (!window.brokrSb && Date.now() - start < (maxMs || 5000)) {
@@ -2660,13 +2058,11 @@ async function _waitForShell(maxMs) {
   return !!window.brokrSb;
 }
 
-
 /* ═══ WhatsApp inteligente ══════════════════════════════════════════════
    Si el usuario tiene un número conectado al módulo de WhatsApp de
    Broquer, el botón abre el chat DENTRO de Broquer (whatsapp.html?tel=).
-   Si no tiene número conectado, abre WhatsApp normal (wa.me), igual que
-   antes. El estado se verifica una vez por sesión y se cachea. ═══════ */
-let _waModulo = null;   // null = aún no verificado
+   Si no, abre WhatsApp normal (wa.me). El estado se cachea por sesión. */
+let _waModulo = null;
 async function _waVerificarModulo() {
   try {
     const cacheado = sessionStorage.getItem('brokr_wa_modulo');
@@ -2697,32 +2093,26 @@ function abrirWA(ev, tel) {
 }
 
 (async function init() {
-  _waVerificarModulo();  // en segundo plano; no bloquea el arranque
+  _waVerificarModulo();
 
-  // 1) Cache offline para respuesta instantánea
   try {
     const cache = JSON.parse(localStorage.getItem(LS_CACHE) || '[]');
     if (Array.isArray(cache) && cache.length) {
       _contactosMem = cache;
       renderActual();
     } else {
-      const cont = document.getElementById('lista');
-      if (cont) cont.innerHTML = '<div class="empty" style="flex:1"><strong>Cargando contactos…</strong></div>';
+      document.getElementById('kanban').innerHTML = '<div class="empty" style="flex:1"><strong>Cargando clientes…</strong></div>';
     }
   } catch {}
 
-  // 2) Esperar al shell
   const ok = await _waitForShell(5000);
   if (!ok) {
-    const cont = document.getElementById('lista');
-    if (cont && !_contactosMem.length) {
-      cont.innerHTML = '<div class="empty" style="flex:1"><strong>Error al iniciar la app</strong><p>Recarga la página.</p></div>';
+    if (!_contactosMem.length) {
+      document.getElementById('kanban').innerHTML = '<div class="empty" style="flex:1"><strong>Error al iniciar la app</strong><p>Recarga la página.</p></div>';
     }
     return;
   }
 
-  // 3) Contactos + etapas (para el chip de estatus y el selector de la
-  // ficha; el tablero del pipeline en sí vive en clientes.html)
   try {
     await Promise.all([cargarRemoto(), cargarEtapas()]);
     await cCargarPermiso();
@@ -2731,14 +2121,10 @@ function abrirWA(ev, tel) {
     const openId = params.get('id') || params.get('contacto');
     if (openId && _contactosMem.some(c => String(c.id) === String(openId))) abrirDetalle(openId);
   } catch (e) {
-    const cont = document.getElementById('lista');
-    if (cont && !_contactosMem.length) {
-      cont.innerHTML = '<div class="empty" style="flex:1"><strong>No se pudieron cargar tus contactos</strong><p>' + esc(e.message || 'Revisa tu conexión.') + '</p></div>';
+    if (!_contactosMem.length) {
+      document.getElementById('kanban').innerHTML = '<div class="empty" style="flex:1"><strong>No se pudieron cargar tus clientes</strong><p>' + esc(e.message || 'Revisa tu conexión.') + '</p></div>';
     } else {
-      // Ya había algo en caché de una visita anterior y se siguió mostrando
-      // eso — pero si la carga real falló, avisar: si no, la pantalla se ve
-      // "cargada" mientras en realidad quedó congelada en datos viejos.
-      showToast('No se pudo actualizar la lista. Mostrando datos guardados.');
+      showToast('No se pudo actualizar el tablero. Mostrando datos guardados.');
     }
   }
 })();

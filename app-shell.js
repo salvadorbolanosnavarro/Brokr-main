@@ -7,8 +7,9 @@
      <body data-app="isr">         ← clave del módulo activo
         … contenido del módulo …
      <script src="app-shell.js" defer></script>
-   Claves válidas: home, props, contactos, contratos, avm, valor, ficha,
-                   ficha-manual, isr, image-cleaner, facebook-ads, guia, admin
+   Claves válidas: home, props, contactos, clientes, contratos, avm, valor,
+                   ficha, ficha-manual, isr, image-cleaner, facebook-ads,
+                   guia, admin
    ════════════════════════════════════════════════════════════════════ */
 (function () {
   if (window.__brokrShellLoaded) return;
@@ -264,13 +265,12 @@
   const MODS = [
     // CRM — el inventario y la gente.
     { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',       group:'crm',         icon:'building' },
-    { key:'contactos',    href:'contactos.html',     label:'Contactos',           group:'crm',         icon:'users' },
+    { key:'contactos',    href:'contactos.html',     label:'Directorio',         group:'crm',         icon:'users' },
+    { key:'clientes',     href:'clientes.html',      label:'Clientes',           group:'crm',         icon:'handshake' },
     { key:'tareas',       href:'tareas.html',        label:'Tareas',              group:'crm',         icon:'check' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',        group:'crm',         icon:'chart' },
     { key:'bolsa',        href:'bolsa.html',         label:'Bolsa inmobiliaria',  group:'crm',         icon:'apreton', hidden:true },
     // Seguimiento — hablar con el prospecto hasta que se convierte en cliente.
-    // Leads se fusionó con Contactos (pestaña Pipeline, contactos.html?tab=pipeline)
-    // — un lead ya no vive en un módulo aparte con su propio directorio.
     { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',            group:'seguimiento', icon:'whatsapp' },
     { key:'correo',       href:'correo.html',        label:'Correo',              group:'seguimiento', icon:'mail', hidden:true },
     // Documentos — en el orden real de la operación: se redacta, se firma, se reporta.
@@ -296,7 +296,8 @@
   const CONTEXT_LABELS = {
     'home':         'Dashboard principal — menú de módulos',
     'props':        'Tus Inmuebles — catálogo de propiedades',
-    'contactos':    'Contactos — directorio y pipeline de prospectos (potenciales, aún sin cerrar)',
+    'contactos':    'Directorio — todos tus contactos, sin importar su rol o etapa',
+    'clientes':     'Clientes — tu pipeline de venta en kanban: prospectos potenciales por etapa',
     'equipo':       'Equipo — miembros de la cuenta, roles y permisos',
     'tareas':       'Tareas — pendientes y actividad del CRM',
     'estadisticas': 'Estadísticas — captación, pipeline e inmuebles con más interés',
@@ -1627,7 +1628,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         { n: 'Nuevo inmueble', href: 'propiedades.html' },
         { n: 'Nuevo contacto', href: 'contactos.html' },
         { n: 'Nueva tarea', href: 'tareas.html' },
-        { n: 'Registrar lead', href: 'contactos.html?tab=pipeline' },
+        { n: 'Nuevo cliente', href: 'clientes.html' },
       ];
       const grupoLabel = k => (GRUPOS.find(g => g.key === k) || {}).label || '';
       const bg = document.createElement('div');

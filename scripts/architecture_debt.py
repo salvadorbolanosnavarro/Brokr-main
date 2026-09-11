@@ -88,19 +88,21 @@ LARGE_FILE_MAX_BYTES = {
     # Bumped 622 bytes: aviso visible si falla la carga real y solo queda
     # mostrando el cache viejo (antes fallaba en silencio) — corrige el bug
     # real de "se ve cargado pero está congelado en datos viejos", no debt.
-    # Bumped 13,673 bytes más: Leads se fusionó aquí como la pestaña
-    # "Pipeline" (kanban, arrastrar y soltar entre etapas) — ya no es un
-    # módulo aparte con su propio directorio y su propia consulta a
-    # Supabase. Es la fusión de dos módulos completos en uno, no debt:
-    # el peso de leads.html (99,563 bytes) desapareció del inventario por
-    # completo al convertirse en una redirección de una sola pantalla.
+    # (Historia: Leads se fusionó aquí en 2026 como la pestaña "Pipeline" —
+    # ver el comentario arriba de leads.html en LARGE_FILE_MAX_BYTES para
+    # esa etapa. Se deshizo la fusión a pedido del usuario: la confundía con
+    # Directorio. El kanban y todo lo exclusivo de él (ETAPAS_DEFAULT,
+    # renderPipeline/kbCard/kbDrag*, cambiarEstatus, contactosPotenciales)
+    # salió a clientes.html, un módulo propio otra vez con su propia
+    # identidad visual — así que el techo baja, no es deuda pagada, es la
+    # reversión del merge.)
     # Bumped 82 bytes: crearTareaVinculada() y vincularTareaExistente()
     # llamaban a userId(), una función que nunca existió (el helper real es
     # _userId()) — probablemente un resto de cuando esta pestaña se calcó de
     # Propiedades. El ReferenceError ocurría antes del try/catch, así que
     # tronaba en silencio: dar clic en "Crear" o "Vincular existente" en
     # Tareas no hacía nada, sin error visible. Bug real, no debt.
-    "contactos.html": 126_990,
+    "contactos.html": 116_619,
     # Bumped for the Profeco/IA-generativa disclosure clauses (9.9 Bis /
     # 5.6 Bis) — legitimate legal content, not debt to pay down.
     # Bumped 1,985 bytes: Anexo de WhatsApp ampliado con el cambio de cobro
