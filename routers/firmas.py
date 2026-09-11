@@ -49,6 +49,7 @@
 #   app.include_router(firmas_router)
 # ──────────────────────────────────────────────────────────────────────────
 
+import asyncio
 import re
 import io
 import json
@@ -2228,11 +2229,21 @@ async def _paginas_a_imagen(doc: dict) -> List[dict]:
         import pypdf
         lector = pypdf.PdfReader(io.BytesIO(pdf))
 
-        for archivo in sorted(_glob.glob(os.path.join(carpeta, "hoja-*.png"))):
+        # OJO: esto antes subía e insertaba una hoja a la vez, en fila —
+        # para un contrato de 6 páginas son 6 subidas de storage seguidas
+        # (hasta 90s de margen cada una) más su inserción a la base. Ese
+        # tiempo se suma completo antes de poder responder, y algo en medio
+        # (Cloudflare, el navegador) puede cortar la conexión antes de que
+        # termine — al usuario le llega "no se pudo conectar con el
+        # servidor" y no es su internet: es que la primera vez que se abre
+        # "Mostrar hojas" en un documento nuevo, el servidor tarda de más
+        # generando las imágenes. Subir todas las hojas EN PARALELO reduce
+        # el tiempo total al de la más lenta, no a la suma de todas.
+        async def _subir_pagina(archivo: str) -> Optional[dict]:
             try:
                 num = int(re.search(r"hoja-0*(\d+)\.png$", archivo).group(1))
             except Exception:
-                continue
+                return None
             with open(archivo, "rb") as f:
                 png = f.read()
 
@@ -2247,8 +2258,12 @@ async def _paginas_a_imagen(doc: dict) -> List[dict]:
                 "pagina": num, "ruta": ruta,
                 "ancho_pt": ancho_pt, "alto_pt": alto_pt,
             }, prefer="return=representation,resolution=merge-duplicates")
-            salida.append(filas[0] if filas else {
-                "pagina": num, "ruta": ruta, "ancho_pt": ancho_pt, "alto_pt": alto_pt})
+            return filas[0] if filas else {
+                "pagina": num, "ruta": ruta, "ancho_pt": ancho_pt, "alto_pt": alto_pt}
+
+        archivos = sorted(_glob.glob(os.path.join(carpeta, "hoja-*.png")))
+        resultados = await asyncio.gather(*[_subir_pagina(a) for a in archivos])
+        salida = [r for r in resultados if r]
     finally:
         shutil.rmtree(carpeta, ignore_errors=True)
 
