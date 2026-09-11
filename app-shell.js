@@ -479,9 +479,7 @@
   text-decoration: none !important;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-/* z-index por encima de la pastilla del nombre (80): si no, la pastilla
-   (que sí necesita ganarle al contenido de la página) tapa al ícono. */
-.bk-sb-ico svg { width: 21px; height: 21px; position: relative; z-index: 81; }
+.bk-sb-ico svg { width: 21px; height: 21px; }
 .bk-sb-ico:hover, .bk-sb-ico:focus-visible { background: var(--sb-hover); color: #FFFFFF; }
 .bk-sb-ico:hover svg, .bk-sb-ico:focus-visible svg { animation: bk-sb-ico-pop .42s var(--ease-out) both; }
 @keyframes bk-sb-ico-pop {
@@ -498,33 +496,30 @@
   width: 4px; height: 24px; border-radius: 0 4px 4px 0;
   background: #FFFFFF;
 }
-/* La pastilla del nombre: existe siempre a su ancho final, pero recortada
-   con clip-path a solo la franja del ícono (invisible ahí porque el
-   ícono real va encima). Al hover el recorte se abre revelando el texto
-   — el efecto es que el ícono mismo se alarga, aunque técnicamente es un
-   elemento aparte para no mover el resto del rail. clip-path (no width/
-   padding) para no forzar layout en cada frame de la transición.
-   OJO: el fondo tiene que ser SÓLIDO (igual que --sky-navy del tooltip de
-   "Más"), no --sb-hover — esa es translúcida (rgba blanco), pensada para
-   aclarar el azul del sidebar, y la pastilla sobresale hacia el área
-   blanca del contenido: ahí una capa translúcida se vuelve casi
-   invisible y el texto blanco encima deja de leerse. */
+/* El nombre aparece VERTICAL, encima del propio sidebar (nunca se sale
+   hacia el contenido — ancho fijo = ancho del ícono, así que no hereda
+   ningún problema de estar tapado por lo que sea que haya detrás).
+   Tapa solo los íconos que le hagan falta: su alto sale del tamaño
+   natural del texto en writing-mode vertical (una palabra larga como
+   "Estadísticas" ocupa más renglones que "ISR"), nunca uno fijo. Se
+   centra sobre el ícono que se hoveréa y JS (ver ajustarEtiquetaVertical)
+   la recorta para que no se salga por arriba o por abajo del rail. */
 .bk-sb-ico__label {
-  position: absolute; left: 0; top: 0; height: 46px; width: 220px;
-  display: flex; align-items: center;
-  padding: 0 16px 0 48px;
+  position: absolute; left: 0; width: 48px;
+  top: 50%; transform: translateY(-50%);
+  display: flex; align-items: center; justify-content: center;
+  padding: 14px 0;
   border-radius: var(--r);
   background: var(--sky-navy); color: #FFFFFF;
-  font-size: 12.5px; font-weight: 700; letter-spacing: -0.01em;
-  white-space: nowrap; overflow: hidden;
+  writing-mode: vertical-rl; text-orientation: mixed;
+  font-size: 15px; font-weight: 800; letter-spacing: 0.03em;
+  white-space: nowrap;
   opacity: 0; pointer-events: none; z-index: 80;
   box-shadow: var(--shadow-lg);
-  clip-path: inset(0 172px 0 0 round var(--r));
-  transition: clip-path var(--dur-slow) var(--ease-out), opacity var(--dur-fast) var(--ease);
+  transition: opacity var(--dur) var(--ease);
 }
 .bk-sb-ico:hover .bk-sb-ico__label,
 .bk-sb-ico:focus-visible .bk-sb-ico__label {
-  clip-path: inset(0 0 0 0 round var(--r));
   opacity: 1;
 }
 
@@ -1500,9 +1495,10 @@ body[data-app="facebook-ads"]{--page-max:980px}
   /* ── Rail ──
      Cada módulo es su propio ícono, suelto en el rail — nada de menús que
      esconden nada. En reposo solo se ven íconos; al pasar el mouse, el
-     ícono se ilumina y el nombre sale como una pastilla que crece desde
-     abajo del ícono, sin mover ni empujar a los demás (la pastilla va
-     posicionada aparte, igual que el tooltip de "Más").
+     ícono se ilumina y su nombre aparece VERTICAL encima del propio
+     sidebar, centrado en ese ícono y tapando solo los íconos vecinos que
+     le hagan falta según lo largo de la palabra (ver ajustarEtiquetaVertical
+     más abajo, que además lo recorta cerca de las orillas del rail).
      "Más" es la única excepción: sigue siendo un botón que abre su propio
      flyout (Blog, Ayuda, Mi perfil, Admin) — no es trabajo del día a día,
      así que no necesita estar suelto como el resto. */
@@ -1673,6 +1669,34 @@ body[data-app="facebook-ads"]{--page-max:980px}
     document.addEventListener('keydown', (ev) => {
       if (ev.key === 'Escape' && flyoutAbierto) cerrarTodo();
     });
+
+    // ── Nombre vertical de los íconos sueltos del rail ──
+    // El nombre se centra sobre el ícono que se hoveréa, pero si eso lo
+    // saca por arriba o por abajo del rail (un ícono cerca de una orilla
+    // con un nombre largo, ej. "Tus Inmuebles" hasta arriba del todo) se
+    // recorta para que nunca se salga de la vista.
+    function ajustarEtiquetaVertical(ico) {
+      const label = ico.querySelector('.bk-sb-ico__label');
+      if (!label || !railEl) return;
+      const railRect = railEl.getBoundingClientRect();
+      const icoRect = ico.getBoundingClientRect();
+      const alto = label.offsetHeight;
+      // `label` es position:absolute dentro de `ico` (su ícono), así que
+      // "top" se mide desde la esquina del ÍCONO, no del rail — hay que
+      // calcular la posición deseada en coordenadas de PANTALLA (centrada
+      // en el ícono, recortada a los bordes del rail) y solo al final
+      // convertirla a "cuánto le falta al ícono para llegar ahí".
+      let topPantalla = icoRect.top + icoRect.height / 2 - alto / 2;
+      topPantalla = Math.max(railRect.top, Math.min(topPantalla, railRect.bottom - alto));
+      label.style.top = (topPantalla - icoRect.top) + 'px';
+      label.style.transform = 'none';
+    }
+    if (railEl) {
+      railEl.querySelectorAll('.bk-sb-ico').forEach(ico => {
+        ico.addEventListener('mouseenter', () => ajustarEtiquetaVertical(ico));
+        ico.addEventListener('focus', () => ajustarEtiquetaVertical(ico));
+      });
+    }
 
     // ── Paleta de comandos (⌘K) — global en toda la app ──
     // Se arma desde MODS (la fuente de verdad): módulo nuevo en el shell =

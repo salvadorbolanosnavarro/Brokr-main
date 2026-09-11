@@ -64,7 +64,11 @@ LARGE_FILE_MAX_BYTES = {
     # muerto de un acordeón anterior (.bk-sb-block/.bk-sb-group/etc., nunca
     # usado por el JS) — rediseño de producto pedido por el usuario, no
     # deuda nueva.
-    "app-shell.js": 256_080,
+    # Bumped 1,145 bytes: el nombre del ícono ahora aparece vertical,
+    # encima del propio sidebar (writing-mode), tapando solo los íconos
+    # vecinos que le hagan falta según lo largo de la palabra — pedido
+    # explícito del usuario en vez de la pastilla horizontal anterior.
+    "app-shell.js": 257_225,
     "whatsapp.py": 223_594,
     "contratos.html": 156_081,
     # Bumped 5,747 bytes: los cambios de estatus, notas, comisión real y
