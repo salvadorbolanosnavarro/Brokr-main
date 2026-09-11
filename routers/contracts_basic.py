@@ -1,6 +1,7 @@
 """Standard DOCX contract generation with optional AI-drafted clauses."""
 from __future__ import annotations
 
+import asyncio
 import json as _json
 import os
 from pathlib import Path
@@ -89,8 +90,13 @@ async def generar_contrato(req: ContratoRequest, request: Request):
     output_path = json_path.replace(".json", ".docx")
 
     try:
+        # asyncio.to_thread: subprocess.run es síncrono y esta app corre en
+        # un solo hilo de eventos (uvicorn sin workers extra) — llamarlo
+        # directo aquí congelaría TODA la app mientras el script corre, no
+        # solo esta petición.
         script = os.fspath(_ROOT / "generar_contrato.py")
-        result = subprocess.run(
+        result = await asyncio.to_thread(
+            subprocess.run,
             ["python3", script, req.tipo, json_path, output_path],
             capture_output=True,
             text=True,

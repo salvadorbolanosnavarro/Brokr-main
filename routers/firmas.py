@@ -774,8 +774,12 @@ async def _desde_contrato_bg(job_id: str, uid: str, tipo: str, datos: dict,
                 ruta_json = f.name
             ruta_docx = ruta_json.replace(".json", ".docx")
 
-            r = subprocess.run(["python3", script, tipo, ruta_json, ruta_docx],
-                               capture_output=True, text=True, timeout=45)
+            # Mismo motivo que en _paginas_a_imagen: subprocess.run síncrono
+            # dentro de una función async congela todo el hilo de eventos,
+            # no solo esta tarea. asyncio.to_thread lo saca del camino.
+            r = await asyncio.to_thread(
+                subprocess.run, ["python3", script, tipo, ruta_json, ruta_docx],
+                capture_output=True, text=True, timeout=45)
             if r.returncode != 0 or not os.path.exists(ruta_docx):
                 log.error("[firma-bg] generar_contrato falló: %s", (r.stderr or "")[:400])
                 raise RuntimeError("Faltan datos para armar el contrato. Revisa el formulario y vuelve a intentar.")
@@ -2216,7 +2220,18 @@ async def _paginas_a_imagen(doc: dict) -> List[dict]:
         with open(entrada, "wb") as f:
             f.write(pdf)
 
-        r = subprocess.run(
+        # asyncio.to_thread, NUNCA subprocess.run pelón: este proceso corre
+        # en un solo hilo de eventos (uvicorn sin workers extra). Un
+        # subprocess.run síncrono aquí congela ESE HILO completo mientras
+        # pdftoppm trabaja — y con él, TODA la app: cualquier otra petición
+        # (de este agente o de cualquier otro) se queda esperando, y si el
+        # chequeo de salud de la plataforma no logra responder a tiempo,
+        # puede reiniciar el contenedor a la mitad — cortando la conexión
+        # en seco, que es justo el "no se pudo conectar con el servidor"
+        # que se ve del lado del navegador. Pasarlo a un hilo aparte deja
+        # el hilo de eventos libre mientras pdftoppm corre.
+        r = await asyncio.to_thread(
+            subprocess.run,
             ["pdftoppm", "-png", "-r", str(DPI_VISTA), entrada,
              os.path.join(carpeta, "hoja")],
             capture_output=True, timeout=120)
