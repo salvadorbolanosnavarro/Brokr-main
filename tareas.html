@@ -910,9 +910,22 @@ async function cargarActividad() {
     : '<div class="tk-empty"><h3>Sin actividad todavía</h3><p>Aquí aparecerán tus notas, cambios de etapa y tareas completadas.</p></div>';
 }
 
+/* ── Enlace directo desde una notificación push de recordatorio ──
+   (ver capacitor-bridge.js): tareas.html?id=<tarea_id> abre esa tarea
+   directo en el modal de editar, en vez de dejar al agente que la busque
+   a mano en la lista. */
+function abrirDesdeURL() {
+  const id = new URLSearchParams(location.search).get('id');
+  if (id && tareas.some(t => String(t.id) === id)) tkAbrirEditar(id);
+}
+
 /* ── Init: espera al shell (mismo patrón que propiedades) ────── */
-if (window.__brokrShellLoaded) { cargarTodo(); }
-else { window.addEventListener('brokr-shell-ready', cargarTodo, { once: true }); }
+async function _iniciarTareas() {
+  await cargarTodo();
+  abrirDesdeURL();
+}
+if (window.__brokrShellLoaded) { _iniciarTareas(); }
+else { window.addEventListener('brokr-shell-ready', _iniciarTareas, { once: true }); }
 </script>
 
 </body>

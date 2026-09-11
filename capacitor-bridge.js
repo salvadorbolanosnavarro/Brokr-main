@@ -105,19 +105,34 @@
           try { window.dispatchEvent(new CustomEvent('brokr-chats-leidos')); } catch (_) {}
         });
 
-        // El agente TOCÓ la notificación: lo llevamos al chat exacto.
+        // El agente TOCÓ la notificación: lo llevamos a donde corresponde
+        // según el "tipo" que push.py mandó en los datos del aviso — antes
+        // CUALQUIER notificación que no fuera de WhatsApp (ej. un
+        // recordatorio de tarea) caía al mismo "else" y abría WhatsApp,
+        // sin importar de qué se trataba. Bug real: tocar el recordatorio
+        // de una tarea llevaba al chat en vez de a la tarea.
+        //
         // Chats dejó de ser bandeja.html: ahora es la pestaña por defecto de
         // whatsapp.html. El '?c=<id>' sigue igual y '#chats' fuerza la pestaña
         // aunque el agente hubiera dejado abierta la de Ajustes.
         PushNotifications.addListener('pushNotificationActionPerformed', ev => {
           try {
             const d = (ev && ev.notification && ev.notification.data) || {};
-            if (d.tipo === 'whatsapp' && d.conversation_id) {
-              location.href = 'whatsapp.html?c=' + encodeURIComponent(d.conversation_id) + '#chats';
+            if (d.tipo === 'whatsapp') {
+              location.href = d.conversation_id
+                ? 'whatsapp.html?c=' + encodeURIComponent(d.conversation_id) + '#chats'
+                : 'whatsapp.html#chats';
+            } else if (d.tipo === 'tarea') {
+              location.href = d.tarea_id
+                ? 'tareas.html?id=' + encodeURIComponent(d.tarea_id)
+                : 'tareas.html';
             } else {
-              location.href = 'whatsapp.html#chats';
+              // "prueba" (notificación de diagnóstico) o cualquier tipo
+              // futuro que aún no tenga destino propio: al inicio, nunca
+              // a WhatsApp por default.
+              location.href = 'index.html';
             }
-          } catch (_) { location.href = 'whatsapp.html#chats'; }
+          } catch (_) { location.href = 'index.html'; }
         });
       }
 
