@@ -251,7 +251,16 @@
 
      WhatsApp queda en 'Seguimiento', pero el botón de Chats de la barra
      inferior se queda tal cual: eso no es una entrada de menú duplicada, es
-     un atajo al chat, que es lo que el agente abre veinte veces al día. */
+     un atajo al chat, que es lo que el agente abre veinte veces al día.
+
+     Actualización: en el RAIL DE ESCRITORIO los grupos de trabajo diario
+     (crm, seguimiento, documentos, numeros, marketing) dejaron de ser
+     menús — cada módulo va suelto como su propio ícono (ver buildRailIcon
+     más abajo), porque un menú que hay que abrir para ver qué hay adentro
+     es justo lo que se quería evitar la primera vez. GRUPOS sigue vivo
+     para: 1) la hoja de módulos en móvil (que sí agrupa, por espacio de
+     pantalla), 2) "Más", que conserva su flyout porque no es trabajo del
+     día a día, y 3) las etiquetas de grupo en la paleta de comandos. */
   const GRUPOS = [
     { key:'crm',         label:'CRM',         icon:'funnel' },
     { key:'seguimiento', label:'Seguimiento', icon:'send' },
@@ -266,7 +275,7 @@
     // CRM — el inventario y la gente.
     { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',       group:'crm',         icon:'building' },
     { key:'contactos',    href:'contactos.html',     label:'Directorio',         group:'crm',         icon:'users' },
-    { key:'clientes',     href:'clientes.html',      label:'Clientes',           group:'crm',         icon:'handshake' },
+    { key:'clientes',     href:'clientes.html',      label:'Clientes',           group:'crm',         icon:'apreton' },
     { key:'tareas',       href:'tareas.html',        label:'Tareas',              group:'crm',         icon:'check' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',        group:'crm',         icon:'chart' },
     { key:'bolsa',        href:'bolsa.html',         label:'Bolsa inmobiliaria',  group:'crm',         icon:'apreton', hidden:true },
@@ -446,16 +455,79 @@
 }
 .bk-sidebar__brand a:hover img { opacity: 1; }
 
-/* ── Rail de íconos + panel del grupo activo ─────────────────────
-   El acordeón no escala con muchos módulos: expandir un grupo
-   escondía todo lo demás. Ahora los grupos viven en un rail fijo
-   siempre visible y el panel muestra los módulos del grupo activo.
-   Cambiar de grupo NO navega: solo cambia el panel. */
+/* ── Rail de íconos ───────────────────────────────────────────────
+   Cada módulo va suelto, como su propio ícono — nada de menús que
+   esconden nada. "Más" es la única excepción: sigue siendo un botón
+   que abre su propio flyout (ver buildRailItem), porque no es trabajo
+   del día a día. */
 .bk-sb-cols { flex: 1; display: flex; justify-content: center; min-height: 0; }
 .bk-rail {
   flex: 0 0 56px;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
 }
+
+/* Ícono suelto de un módulo: en reposo solo se ve el ícono; al pasar el
+   mouse se ilumina, hace un saltito breve y su nombre sale como una
+   pastilla que crece por debajo — sin mover ni empujar a los demás
+   íconos, porque la pastilla va posicionada aparte (position:absolute),
+   igual que el tooltip de "Más". */
+.bk-sb-ico {
+  position: relative;
+  width: 48px; height: 46px; border-radius: var(--r);
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.72); background: transparent;
+  text-decoration: none !important;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+/* z-index por encima de la pastilla del nombre (80): si no, la pastilla
+   (que sí necesita ganarle al contenido de la página) tapa al ícono. */
+.bk-sb-ico svg { width: 21px; height: 21px; position: relative; z-index: 81; }
+.bk-sb-ico:hover, .bk-sb-ico:focus-visible { background: var(--sb-hover); color: #FFFFFF; }
+.bk-sb-ico:hover svg, .bk-sb-ico:focus-visible svg { animation: bk-sb-ico-pop .42s var(--ease-out) both; }
+@keyframes bk-sb-ico-pop {
+  0%   { transform: scale(1) rotate(0deg); }
+  45%  { transform: scale(1.22) rotate(-10deg); }
+  100% { transform: scale(1.08) rotate(0deg); }
+}
+.bk-sb-ico:focus { outline: none; }
+.bk-sb-ico:focus-visible { outline: 2px solid rgba(255,255,255,0.65); outline-offset: 2px; }
+.bk-sb-ico.is-active { background: #FFFFFF; color: var(--sky-navy); }
+.bk-sb-ico.is-active::before {
+  content: ''; position: absolute; left: -12px; top: 50%;
+  transform: translateY(-50%);
+  width: 4px; height: 24px; border-radius: 0 4px 4px 0;
+  background: #FFFFFF;
+}
+/* La pastilla del nombre: existe siempre a su ancho final, pero recortada
+   con clip-path a solo la franja del ícono (invisible ahí porque el
+   ícono real va encima). Al hover el recorte se abre revelando el texto
+   — el efecto es que el ícono mismo se alarga, aunque técnicamente es un
+   elemento aparte para no mover el resto del rail. clip-path (no width/
+   padding) para no forzar layout en cada frame de la transición.
+   OJO: el fondo tiene que ser SÓLIDO (igual que --sky-navy del tooltip de
+   "Más"), no --sb-hover — esa es translúcida (rgba blanco), pensada para
+   aclarar el azul del sidebar, y la pastilla sobresale hacia el área
+   blanca del contenido: ahí una capa translúcida se vuelve casi
+   invisible y el texto blanco encima deja de leerse. */
+.bk-sb-ico__label {
+  position: absolute; left: 0; top: 0; height: 46px; width: 220px;
+  display: flex; align-items: center;
+  padding: 0 16px 0 48px;
+  border-radius: var(--r);
+  background: var(--sky-navy); color: #FFFFFF;
+  font-size: 12.5px; font-weight: 700; letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden;
+  opacity: 0; pointer-events: none; z-index: 80;
+  box-shadow: var(--shadow-lg);
+  clip-path: inset(0 172px 0 0 round var(--r));
+  transition: clip-path var(--dur-slow) var(--ease-out), opacity var(--dur-fast) var(--ease);
+}
+.bk-sb-ico:hover .bk-sb-ico__label,
+.bk-sb-ico:focus-visible .bk-sb-ico__label {
+  clip-path: inset(0 0 0 0 round var(--r));
+  opacity: 1;
+}
+
 .bk-rail__item {
   position: relative;
   width: 48px; height: 46px; border-radius: var(--r);
@@ -496,7 +568,6 @@
   box-shadow: var(--shadow-lg);
 }
 .bk-rail__item:hover .bk-rail__tip { opacity: 1; transform: translateY(-50%) scale(1); }
-.bk-rail__spring { flex: 1; }
 
 /* ── Flyout del grupo ─────────────────────────────────────────────
    El rail es todo el menú. Clic en un grupo abre este flyout flotante
@@ -573,27 +644,6 @@
 .bk-cmdk__item.is-sel, .bk-cmdk__item:hover { background: var(--paper-2); }
 .bk-cmdk__empty { padding: 26px; text-align: center; color: var(--mute); font-size: 14px; }
 
-/* Bloque: la unidad que agrupa módulos sin usar una línea */
-.bk-sb-block {
-  background: var(--sb-panel);
-  border-radius: var(--r-lg);
-  padding: 6px;
-  margin-bottom: 12px;
-  display: flex; flex-direction: column; gap: 5px;
-  animation: bk-sb-rise 0.55s var(--ease-out) backwards;
-}
-/* Cada bloque sube con un pequeño desfase, como los KPIs del inicio */
-.bk-sidebar .bk-sb-block:nth-child(2) { animation-delay: 0.05s; }
-.bk-sidebar .bk-sb-block:nth-child(3) { animation-delay: 0.10s; }
-.bk-sidebar .bk-sb-block:nth-child(4) { animation-delay: 0.15s; }
-.bk-sidebar .bk-sb-block:nth-child(5) { animation-delay: 0.20s; }
-.bk-sidebar .bk-sb-block:nth-child(6) { animation-delay: 0.25s; }
-.bk-sidebar .bk-sb-block:nth-child(7) { animation-delay: 0.30s; }
-@keyframes bk-sb-rise { from { opacity: 0; transform: translateY(10px); } }
-/* El bloque "Más" (Mi perfil, Blog, Ayuda) se va hasta abajo:
-   el aire hace la separación, no una raya. */
-.bk-sb-block--cuenta { margin-top: auto; margin-bottom: 0; }
-
 .bk-sb-link {
   position: relative;
   display: flex !important; align-items: center; gap: 12px;
@@ -639,22 +689,10 @@
   background: linear-gradient(180deg, #FFFFFF, var(--sky-blue-on-dark));
 }
 
-.bk-sb-group { display: flex; flex-direction: column; gap: 5px; }
-.bk-sb-trigger { width: 100%; border: 0; background: transparent; font-family: inherit; text-align: left; }
-.bk-sb-trigger .bk-sb-chevron { margin-left: auto; opacity: .8; transition: transform var(--dur) var(--ease); }
-.bk-sb-group.is-open .bk-sb-chevron { transform: rotate(180deg); }
-.bk-sb-submenu { display: none; flex-direction: column; gap: 5px; padding: 2px 0 2px 22px; }
-.bk-sb-group.is-open .bk-sb-submenu { display: flex; animation: bk-sb-sub-in 0.28s var(--ease-out); }
-@keyframes bk-sb-sub-in { from { opacity: 0; transform: translateY(-5px); } }
-.bk-sb-submenu .bk-sb-link { height: 40px; padding: 0 10px; }
-.bk-sidebar .bk-sb-submenu .bk-sb-link:hover { transform: translateX(3px); }
-.bk-sidebar .bk-sb-submenu .bk-sb-link.is-active::before { left: -6px; height: 16px; }
-/* El indicador de "Más" es su propio "+": abierto, gira y se vuelve "×" */
-.bk-sb-group--mas.is-open .bk-sb-plus { transform: rotate(45deg); }
-
 @media (prefers-reduced-motion: reduce) {
-  .bk-sidebar::after, .bk-sb-block, .bk-sb-group.is-open .bk-sb-submenu { animation: none; }
-  .bk-sidebar .bk-sb-submenu .bk-sb-link:hover { transform: none; }
+  .bk-sidebar::after { animation: none; }
+  .bk-sb-ico:hover svg, .bk-sb-ico:focus-visible svg { animation: none; }
+  .bk-sb-ico__label { transition: none; }
 }
 
 /* Content area */
@@ -1459,10 +1497,21 @@ body[data-app="facebook-ads"]{--page-max:980px}
   function buildSidebarLink(m, active) {
     return `<a href="${m.href}" class="bk-sb-link${m.key === active ? ' is-active' : ''}">${svg(m.icon)} ${m.label}</a>`;
   }
-  /* ── Rail + panel ──
-     El rail lleva los grupos siempre visibles; el panel pinta los módulos
-     del grupo activo. Cambiar de grupo NO navega, solo cambia el panel.
-     "Más" incluye Mi perfil (abre el drawer, no navega). */
+  /* ── Rail ──
+     Cada módulo es su propio ícono, suelto en el rail — nada de menús que
+     esconden nada. En reposo solo se ven íconos; al pasar el mouse, el
+     ícono se ilumina y el nombre sale como una pastilla que crece desde
+     abajo del ícono, sin mover ni empujar a los demás (la pastilla va
+     posicionada aparte, igual que el tooltip de "Más").
+     "Más" es la única excepción: sigue siendo un botón que abre su propio
+     flyout (Blog, Ayuda, Mi perfil, Admin) — no es trabajo del día a día,
+     así que no necesita estar suelto como el resto. */
+  function buildRailIcon(m, active) {
+    const on = m.key === active;
+    return `<a href="${m.href}" class="bk-sb-ico${on ? ' is-active' : ''}" aria-label="${m.label}">
+      ${svg(m.icon)}<span class="bk-sb-ico__label">${m.label}</span>
+    </a>`;
+  }
   function buildRailItem(grupo, items, grupoActivo) {
     if (!items.length && grupo.key !== 'mas') return '';
     const on = grupo.key === grupoActivo;
@@ -1549,6 +1598,10 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // "Equipo" vive en el drawer de perfil, no en el sidebar.
     const visible = m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && !modulosOff.has(m.key);
     const porGrupo = k => MODS.filter(m => m.group === k && visible(m));
+    // Todo lo que no sea "Más" va suelto en el rail, en el orden en que ya
+    // están declarados los módulos (que es el orden por momento de la
+    // operación, ver el comentario arriba de MODS).
+    const modsSueltos = MODS.filter(m => m.group !== 'mas' && visible(m));
 
     const shell = document.createElement('div');
     shell.className = 'bk-shell-root';
@@ -1558,8 +1611,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
           <a href="index.html" aria-label="Ir al inicio Broquer"><img src="isotipo-black.png" alt="Broquer"/></a>
         </div>
         <div class="bk-sb-cols">
-          <nav class="bk-rail" id="bk-rail" aria-label="Grupos de módulos">
-            ${GRUPOS.map(g => buildRailItem(g, porGrupo(g.key), activeMod.group)).join('')}
+          <nav class="bk-rail" id="bk-rail" aria-label="Módulos">
+            ${modsSueltos.map(m => buildRailIcon(m, activeKey)).join('')}
+            ${buildRailItem(GRUPOS.find(g => g.key === 'mas'), porGrupo('mas'), activeMod.group)}
           </nav>
         </div>
       </aside>

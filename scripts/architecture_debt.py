@@ -57,7 +57,14 @@ LARGE_FILE_MAX_BYTES = {
     # tapándolo) + el reacomodo de overlays abiertos que dependen de él —
     # corrige modales cuyo botón de guardar quedaba oculto detrás del
     # teclado (había que voltear el teléfono para alcanzarlo), bug real.
-    "app-shell.js": 253_390,
+    # Bumped 2,690 bytes: se deshicieron los menús del rail de escritorio
+    # (crm/seguimiento/documentos/números/marketing) — cada módulo ahora es
+    # su propio ícono suelto, con nombre revelado al pasar el mouse; "Más"
+    # es la única excepción que conserva su flyout. De paso se quitó CSS
+    # muerto de un acordeón anterior (.bk-sb-block/.bk-sb-group/etc., nunca
+    # usado por el JS) — rediseño de producto pedido por el usuario, no
+    # deuda nueva.
+    "app-shell.js": 256_080,
     "whatsapp.py": 223_594,
     "contratos.html": 156_081,
     # Bumped 5,747 bytes: los cambios de estatus, notas, comisión real y
@@ -82,7 +89,10 @@ LARGE_FILE_MAX_BYTES = {
     # cobro de Meta a mensajes de WhatsApp del 1 de octubre de 2026 (banner
     # + nota de sistema visible en el hilo cuando Recepción se pausa sola) —
     # producto/legal real, no debt.
-    "whatsapp.html": 132_222,
+    # Bumped 74 bytes: el ícono de "eliminar conversación" ahora es el
+    # mismo bote de basura canónico que usa el resto de la app (antes traía
+    # su propio dibujo distinto), pedido explícito de consistencia visual.
+    "whatsapp.html": 132_296,
     "routers/firmas.py": 119_193,
     # Bumped 80 bytes: se agregó la etapa "Futuro" al pipeline por defecto
     # (ETAPAS_DEFAULT) — un estatus nuevo para contactos/leads, no debt.
