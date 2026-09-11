@@ -4731,3 +4731,51 @@ body[data-app="facebook-ads"]{--page-max:980px}
     }
   }, { passive: true });
 })();
+
+/* ── El teclado de iPhone no encoge el alto de la página (WKWebView) ──
+   En Safari/el WebView de la app, cuando aparece el teclado en pantalla,
+   100vh y 100dvh NO cambian — solo cambia window.visualViewport. Cualquier
+   modal fijo que calcule su alto con 100dvh queda mal: su botón de
+   "Guardar" puede terminar tapado por el teclado, sin poder hacerle
+   scroll para alcanzarlo (el único "arreglo" era voltear el teléfono a
+   horizontal). Aquí se publica el alto real visible como la variable CSS
+   --vvh para que los modales lo usen en vez de 100dvh, y además se
+   reacomodan los overlays abiertos para que queden dentro de esa área
+   visible de verdad (si no, uno centrado seguiría calculando su centro
+   contra el alto completo, con teclado y todo, y se saldría por abajo). */
+(function () {
+  // Selector genérico: cualquier overlay/modal/hoja de este repo, sin
+  // importar el nombre exacto de su clase (cada módulo inventó la suya:
+  // .bk-overlay, .overlay, .ac-ov, .prop-modal-overlay, .eb-import-overlay…).
+  var SEL = '[class*="overlay" i], [class*="modal" i], [id*="overlay" i], [id*="modal" i], [id="detail-ov"]';
+
+  function actualizar() {
+    var vv = window.visualViewport;
+    var alto = (vv && vv.height) || window.innerHeight;
+    var arriba = (vv && vv.offsetTop) || 0;
+    document.documentElement.style.setProperty('--vvh', alto + 'px');
+
+    var candidatos;
+    try { candidatos = document.querySelectorAll(SEL); } catch (_) { return; }
+    candidatos.forEach(function (el) {
+      var cs = window.getComputedStyle(el);
+      if (cs.position !== 'fixed') return;
+      if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return;
+      var r = el.getBoundingClientRect();
+      // Solo tocar overlays de pantalla completa (alto y ancho grandes) —
+      // así no se mete con badges, tooltips o botones flotantes fijos.
+      if (r.width < window.innerWidth * 0.6 || r.height < window.innerHeight * 0.6) return;
+      el.style.top = arriba + 'px';
+      el.style.height = alto + 'px';
+      el.style.bottom = 'auto';
+    });
+  }
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', actualizar);
+    window.visualViewport.addEventListener('scroll', actualizar);
+  }
+  window.addEventListener('resize', actualizar);
+  window.addEventListener('orientationchange', actualizar);
+  actualizar();
+})();

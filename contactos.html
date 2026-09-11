@@ -341,7 +341,8 @@ html, body { background: var(--paper); }
   border-radius: var(--r-lg) var(--r-lg) 0 0;
   width: 100%;
   max-width: 720px;
-  max-height: 92vh;
+  /* --vvh (app-shell.js): alto real visible sin el teclado de iOS tapándolo. */
+  max-height: calc(var(--vvh, 100vh) * 0.92);
   display: flex; flex-direction: column;
   animation: slideUp .3s var(--ease);
 }
@@ -351,7 +352,7 @@ html, body { background: var(--paper); }
 }
 @media (min-width: 640px) {
   .overlay { align-items: center; padding: 24px; }
-  .sheet { border-radius: var(--r-xl); max-height: 86vh; }
+  .sheet { border-radius: var(--r-xl); max-height: calc(var(--vvh, 100vh) * 0.86); }
   @keyframes slideUp { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
 }
 .handle {
@@ -602,11 +603,11 @@ html, body { background: var(--paper); }
 #detail-ov { align-items: stretch; padding: 0; }
 #detail-ov .sheet {
   max-width: 900px; width: 100%;
-  height: 100dvh; max-height: 100dvh;
+  height: var(--vvh, 100dvh); max-height: var(--vvh, 100dvh);
   margin: 0 auto; border-radius: 0; animation: none;
 }
 @media (min-width: 640px) {
-  #detail-ov .sheet { border-radius: 0; max-height: 100dvh; }
+  #detail-ov .sheet { border-radius: 0; max-height: var(--vvh, 100dvh); }
 }
 
 /* ── Banda de etapa (pipeline) y probabilidad ── */

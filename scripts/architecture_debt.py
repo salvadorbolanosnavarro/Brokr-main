@@ -53,7 +53,11 @@ LARGE_FILE_MAX_BYTES = {
     # Bumped 13 bytes for `hidden:true` on the 'bolsa' MODS entry — hides
     # Bolsa inmobiliaria from the sidebar/search, a real product change,
     # not debt to pay down.
-    "app-shell.js": 253_363,
+    # Bumped 27 bytes: --vvh (alto real visible en iOS sin el teclado
+    # tapándolo) + el reacomodo de overlays abiertos que dependen de él —
+    # corrige modales cuyo botón de guardar quedaba oculto detrás del
+    # teclado (había que voltear el teléfono para alcanzarlo), bug real.
+    "app-shell.js": 253_390,
     "whatsapp.py": 223_594,
     "contratos.html": 156_081,
     # Bumped 5,747 bytes: los cambios de estatus, notas, comisión real y
@@ -64,7 +68,10 @@ LARGE_FILE_MAX_BYTES = {
     # existente verifica que sí volvió una fila. Junto con reordenar fotos
     # arrastrando (o con los botones ‹ ›) al crear o editar un inmueble —
     # corrección de bug real + funcionalidad de producto, no debt.
-    "propiedades.html": 155_188,
+    # Bumped 134 bytes: max-height del modal usa --vvh (alto real visible)
+    # en vez de vh fijo — el teclado de iOS no encoge vh/dvh, así que el
+    # botón de guardar podía quedar tapado. Bug real, no debt.
+    "propiedades.html": 155_322,
     # Bumped 1,844 bytes for the "Revisar webhook de la app" button in
     # Administrar números (fija el webhook de WhatsApp a nivel app) — a real
     # product change, not debt to pay down.
@@ -102,7 +109,9 @@ LARGE_FILE_MAX_BYTES = {
     # Propiedades. El ReferenceError ocurría antes del try/catch, así que
     # tronaba en silencio: dar clic en "Crear" o "Vincular existente" en
     # Tareas no hacía nada, sin error visible. Bug real, no debt.
-    "contactos.html": 116_619,
+    # Bumped 170 bytes: .sheet/#detail-ov usan --vvh (alto real visible)
+    # en vez de vh/dvh fijos — mismo arreglo de teclado que arriba.
+    "contactos.html": 116_789,
     # Bumped for the Profeco/IA-generativa disclosure clauses (9.9 Bis /
     # 5.6 Bis) — legitimate legal content, not debt to pay down.
     # Bumped 1,985 bytes: Anexo de WhatsApp ampliado con el cambio de cobro

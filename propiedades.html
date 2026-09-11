@@ -419,11 +419,12 @@
   border: 1px solid var(--line);
   border-radius: var(--r-xl) var(--r-xl) 0 0;
   width: 100%; max-width: 640px;
-  max-height: 92vh; overflow-y: auto;
+  /* --vvh (app-shell.js): alto real visible sin el teclado de iOS tapándolo. */
+  max-height: calc(var(--vvh, 100vh) * 0.92); overflow-y: auto;
   animation: slideUp .3s var(--ease);
 }
 @media (min-width: 760px) {
-  .prop-modal-box { border-radius: var(--r-xl); max-height: 88vh; }
+  .prop-modal-box { border-radius: var(--r-xl); max-height: calc(var(--vvh, 100vh) * 0.88); }
 }
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }

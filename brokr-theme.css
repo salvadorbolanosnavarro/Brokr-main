@@ -769,7 +769,9 @@ html {
 .bk-modal {
   z-index: var(--z-modal);
   width: min(560px, 100%);
-  max-height: calc(100dvh - 2 * var(--sp-8));
+  /* --vvh (app-shell.js) es el alto real visible, sin el teclado de iOS
+     tapándolo — 100dvh no lo cuenta y deja el pie del modal oculto. */
+  max-height: calc(var(--vvh, 100dvh) - 2 * var(--sp-8));
   background: var(--bone);
   border: 1px solid var(--line-2);
   border-radius: var(--r-modal);
@@ -794,7 +796,7 @@ html {
   .bk-overlay--sheet { align-items: flex-end; padding: 0; }
   .bk-overlay--sheet .bk-modal { width: 100%; max-width: 100%; border-radius: var(--r-modal) var(--r-modal) 0 0; transform: translateY(100%); }
   .bk-overlay--sheet.is-open .bk-modal { transform: none; }
-  .bk-overlay--full .bk-modal { width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  .bk-overlay--full .bk-modal { width: 100%; max-width: 100%; height: var(--vvh, 100dvh); max-height: var(--vvh, 100dvh); border-radius: 0; }
 }
 
 /* ════════════════════════════════════════════════════════════
