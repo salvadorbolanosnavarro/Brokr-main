@@ -1,5 +1,5 @@
 {
-  "count": 254,
+  "count": 255,
   "operations": [
     {
       "body": false,
@@ -2052,6 +2052,18 @@
       "path": "/propiedades/eliminar-masivo",
       "responses": [
         "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "PATCH",
+      "params": [
+        "path:prop_id!"
+      ],
+      "path": "/propiedades/{prop_id}",
+      "responses": [
+        "200",
+        "422"
       ]
     },
     {

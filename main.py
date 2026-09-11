@@ -605,6 +605,11 @@ from routers.chat_claude_prompt import SHAARK_SYSTEM_PROMPT
 from routers.bulk_delete import router as bulk_delete_router
 app.include_router(bulk_delete_router)
 
+# Editar un inmueble: cualquier miembro activo de la organización, no solo
+# quien lo dio de alta (ver routers/propiedades_actualizar.py).
+from routers.propiedades_actualizar import router as propiedades_actualizar_router
+app.include_router(propiedades_actualizar_router)
+
 app.include_router(admin_usage_router)
 app.include_router(account_delete_router)
 app.include_router(avm_legacy_router)
