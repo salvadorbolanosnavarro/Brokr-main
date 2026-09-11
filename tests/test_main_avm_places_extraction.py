@@ -1,5 +1,7 @@
 """Permanent guards for Google Places AVM colonia lookup."""
+import asyncio
 from pathlib import Path
+from unittest import mock
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +30,13 @@ class MainAvmPlacesExtractionTests(unittest.TestCase):
         self.assertIn('cache_set(cache_key, resultado, ttl=86400)', router)
         self.assertIn('from routers.avm_places import router as avm_places_router', main)
         self.assertNotIn('@app.get("/api/colonias")', main)
+        # El inventario propio de EasyBroker se consulta junto con Google —
+        # ver test_combinar_inventario_* de abajo para el comportamiento.
+        self.assertIn(
+            'from core.easybroker import EB_API_KEY, construir_mapa_colonias, normalize as eb_normalize',
+            router,
+        )
+        self.assertIn('inventario, locales, nacionales = await asyncio.gather(', router)
         compile(router, "routers/avm_places.py", "exec")
         compile(main, "main.py", "exec")
 
@@ -69,6 +78,57 @@ class MainAvmPlacesExtractionTests(unittest.TestCase):
         out = m._combinar_candidatos(locales, nacionales, max_candidatos=8)
         self.assertEqual(len(out), 8)
         self.assertEqual([p["place_id"] for p in out[:5]], ["0", "1", "2", "3", "4"])
+
+    def test_coincide_inventario_escritura_parcial_y_desambiguacion_por_ciudad(self):
+        m = self._cargar_router()
+        # Mientras se teclea: el texto es más corto que la colonia.
+        self.assertTrue(m._coincide_inventario("monte", "jesus del monte"))
+        # El usuario agrega la ciudad a propósito para desambiguar de una
+        # tocaya en otro estado: la colonia es más corta que lo escrito.
+        self.assertTrue(m._coincide_inventario("jesus del monte morelia", "jesus del monte"))
+        self.assertFalse(m._coincide_inventario("chapultepec", "jesus del monte"))
+
+    def _limpiar_cache_inventario(self, m):
+        from core.cache import _CACHE
+        _CACHE.pop(f"colonias_inventario_{m.eb_normalize(m._CIUDAD_NEGOCIO)}", None)
+
+    def test_colonias_de_inventario_sin_api_key_no_intenta_nada(self):
+        m = self._cargar_router()
+        self._limpiar_cache_inventario(m)
+        fake_mapa = mock.AsyncMock(side_effect=AssertionError("no debía llamarse sin EB_API_KEY"))
+        with mock.patch.object(m, "EB_API_KEY", ""), mock.patch.object(m, "construir_mapa_colonias", fake_mapa):
+            out = asyncio.run(m._colonias_de_inventario("altozano"))
+        self.assertEqual(out, [])
+
+    def test_colonias_de_inventario_encuentra_altozano_y_colonia_mas_ciudad(self):
+        m = self._cargar_router()
+        self._limpiar_cache_inventario(m)
+        mapa = {"Altozano": 12, "Jesus del Monte": 5, "Chapultepec": 3}
+
+        async def fake_mapa(ciudad):
+            self.assertEqual(ciudad, "Morelia")
+            return mapa
+
+        with mock.patch.object(m, "EB_API_KEY", "test-key"), mock.patch.object(m, "construir_mapa_colonias", fake_mapa):
+            self.assertEqual(asyncio.run(m._colonias_de_inventario("altozano")), ["Altozano"])
+            # El mapa ya quedó en caché — esta segunda búsqueda no necesita
+            # volver a "llamar a EasyBroker" (fake_mapa reafirma la ciudad
+            # solo si se invoca; el resultado debe seguir siendo correcto).
+            self.assertEqual(
+                asyncio.run(m._colonias_de_inventario("jesus del monte morelia")),
+                ["Jesus del Monte"],
+            )
+
+    def test_colonias_de_inventario_ordena_por_frecuencia(self):
+        m = self._cargar_router()
+        self._limpiar_cache_inventario(m)
+
+        async def fake_mapa(ciudad):
+            return {"Norte": 2, "Norte Alto": 9}
+
+        with mock.patch.object(m, "EB_API_KEY", "test-key"), mock.patch.object(m, "construir_mapa_colonias", fake_mapa):
+            out = asyncio.run(m._colonias_de_inventario("norte"))
+        self.assertEqual(out, ["Norte Alto", "Norte"])
 
 
 if __name__ == "__main__":

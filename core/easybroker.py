@@ -59,6 +59,49 @@ def normalize(s: str) -> str:
     return s
 
 
+async def construir_mapa_colonias(ciudad: str) -> dict[str, int]:
+    """Recorre el inventario de EasyBroker y arma un mapa {colonia: conteo}
+    con las colonias que YA aparecen en el domicilio de alguna propiedad de
+    esa ciudad (mismo criterio que usa el autocompletar de /colonias).
+
+    Por qué esto encuentra colonias que Google Places no encuentra o
+    clasifica raro (el caso "Altozano" del AVM): esto no depende de cómo
+    Google indexe el lugar — si un agente ya vendió o rentó algo ahí, esa
+    colonia existe con certeza, con el nombre exacto que la agencia usa.
+    Tampoco tiene el problema de tocayos de otra ciudad: el mapa solo
+    contiene colonias que ya aparecieron en domicilios de ESA ciudad.
+    """
+    colonias_map: dict[str, int] = {}
+    if not EB_API_KEY:
+        return colonias_map
+
+    page = 1
+    async with httpx.AsyncClient(timeout=30) as client:
+        while page <= 80:
+            r = await client.get(
+                f"{EB_BASE}/properties",
+                headers=eb_headers(),
+                params={"limit": 50, "page": page},
+            )
+            if r.status_code != 200:
+                break
+            data = r.json()
+            props = data.get("content", [])
+            if not props:
+                break
+            for p in props:
+                loc = p.get("location", "")
+                if not loc or normalize(ciudad) not in normalize(loc):
+                    continue
+                col = extract_colonia(loc)
+                if col and len(col) > 2:
+                    colonias_map[col] = colonias_map.get(col, 0) + 1
+            if not data.get("pagination", {}).get("next_page"):
+                break
+            page += 1
+    return colonias_map
+
+
 async def _eb_get_reintentos(
     client: httpx.AsyncClient,
     url: str,

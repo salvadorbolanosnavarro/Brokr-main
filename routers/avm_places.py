@@ -18,6 +18,7 @@ from fastapi import APIRouter
 
 from core.cache import cache_get, cache_set
 from core.config import settings
+from core.easybroker import EB_API_KEY, construir_mapa_colonias, normalize as eb_normalize
 
 
 router = APIRouter()
@@ -32,6 +33,11 @@ DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json"
 # cercano queda a ~100 km, así que un "strictbounds" con este radio no se
 # confunde con colonias homónimas de otras entidades.
 _LOCATIONBIAS = "circle:50000@19.7059504,-101.1949825"
+
+# Mismo alcance que el círculo de arriba: donde opera el negocio.
+_CIUDAD_NEGOCIO = "Morelia"
+_ESTADO_NEGOCIO = "Michoacán"
+_MAX_INVENTARIO = 4
 
 # Google devuelve el nombre oficial largo de varios estados (el que usan
 # leyes y actas de nacimiento), pero nadie busca inmuebles así. Normaliza
@@ -63,6 +69,47 @@ def _extraer_ubicacion(address_components):
         elif "administrative_area_level_1" in tipos:
             estado = ESTADO_NOMBRE_CORTO.get(nombre, nombre)
     return (ciudad or ciudad_fallback), estado
+
+
+# Por qué además del Autocomplete de Google se consulta el inventario propio:
+#   Google clasifica los lugares como puede — a veces bien, a veces como un
+#   negocio, a veces ni siquiera los tiene bien ubicados. El inventario de
+#   EasyBroker de la propia agencia es la fuente más confiable que existe
+#   para "¿esta colonia existe en Morelia?": si alguien ya vendió o rentó
+#   ahí, existe, con el nombre exacto que sus agentes ya usan (mismo criterio
+#   que /colonias, ver core.easybroker.construir_mapa_colonias). Estas
+#   coincidencias se muestran primero, con una etiqueta "ya en tu
+#   inventario" para que el usuario confíe en ellas de un vistazo.
+def _coincide_inventario(texto_norm: str, colonia_norm: str) -> bool:
+    """True si el texto escrito y una colonia del inventario se refieren al
+    mismo lugar, en cualquier dirección: "monte" está contenido en "jesus
+    del monte" (escritura parcial, mientras se teclea) y "jesus del monte"
+    está contenido en "jesus del monte morelia" (cuando el usuario agrega la
+    ciudad a propósito para desambiguar de una tocaya en otra ciudad).
+    """
+    return texto_norm in colonia_norm or colonia_norm in texto_norm
+
+
+async def _colonias_de_inventario(texto: str) -> list[str]:
+    """Colonias del inventario propio (ver core.easybroker) que coinciden
+    con lo escrito, más frecuentes primero. [] si no hay EasyBroker
+    conectado — nunca lanza, esto es un plus, no algo de lo que dependa la
+    búsqueda.
+    """
+    if not EB_API_KEY:
+        return []
+    cache_key = f"colonias_inventario_{eb_normalize(_CIUDAD_NEGOCIO)}"
+    colonias_map = cache_get(cache_key)
+    if colonias_map is None:
+        try:
+            colonias_map = await construir_mapa_colonias(_CIUDAD_NEGOCIO)
+        except Exception:
+            return []
+        cache_set(cache_key, colonias_map)
+    texto_norm = eb_normalize(texto)
+    coincidencias = [col for col in colonias_map if _coincide_inventario(texto_norm, eb_normalize(col))]
+    coincidencias.sort(key=lambda col: -colonias_map[col])
+    return coincidencias[:_MAX_INVENTARIO]
 
 
 # Por qué NO se restringe "types" en la búsqueda:
@@ -146,7 +193,7 @@ async def buscar_colonias(texto: str):
     if len(texto) < 3:
         return {"colonias": []}
 
-    cache_key = f"colonias_g6_{texto}".lower()
+    cache_key = f"colonias_g7_{texto}".lower()
     cached = cache_get(cache_key)
     if cached:
         return cached
@@ -154,23 +201,48 @@ async def buscar_colonias(texto: str):
     if not GOOGLE_PLACES_KEY:
         return {"colonias": [], "error": "GOOGLE_PLACES_KEY no configurada"}
 
-    # Dos llamadas en paralelo: una estricta a la zona de Morelia (garantiza
-    # que lo local aparezca) y otra con sesgo suave a nivel nacional (para
-    # cuando el inmueble está en otra ciudad). Se combinan sin duplicar,
-    # con lo local primero.
+    # Tres fuentes en paralelo: el inventario propio (garantiza colonias que
+    # la agencia ya conoce de primera mano, con su nombre exacto — el caso
+    # "Altozano"), Autocomplete estricto a Morelia (garantiza lo local aunque
+    # todavía no esté en el inventario) y Autocomplete nacional de respaldo
+    # (para inmuebles en otras ciudades).
     async with httpx.AsyncClient(timeout=15) as client:
-        locales, nacionales = await asyncio.gather(
+        inventario, locales, nacionales = await asyncio.gather(
+            _colonias_de_inventario(texto),
             _autocomplete(client, texto, strictbounds=True),
             _autocomplete(client, texto, strictbounds=False),
         )
 
     candidatos = _combinar_candidatos(locales, nacionales)
 
-    colonias = []
+    colonias: list[dict] = []
+    por_nombre: dict[str, dict] = {}
+    for nombre_inv in inventario:
+        fila = {
+            "nombre": nombre_inv,
+            "display": f"{nombre_inv} · ya en tu inventario, {_CIUDAD_NEGOCIO}",
+            "ciudad": _CIUDAD_NEGOCIO,
+            "estado": _ESTADO_NEGOCIO,
+            "latitud": 0.0,
+            "longitud": 0.0,
+            "place_id": "",
+        }
+        colonias.append(fila)
+        por_nombre[eb_normalize(nombre_inv)] = fila
+
     for pred in candidatos:
         descripcion = pred.get("description", "")
         nombre = pred.get("structured_formatting", {}).get("main_text", "").strip()
         place_id = pred.get("place_id", "")
+        if not nombre:
+            continue
+
+        # Si el inventario ya puso esta misma colonia y ya tiene
+        # coordenadas (de un candidato de Google anterior), no hace falta
+        # pedirle Details a Google otra vez para lo mismo.
+        existente = por_nombre.get(eb_normalize(nombre))
+        if existente and existente["latitud"]:
+            continue
 
         lat, lon = 0.0, 0.0
         ciudad, estado = "", ""
@@ -194,16 +266,26 @@ async def buscar_colonias(texto: str):
             except Exception:
                 pass
 
-        if nombre:
-            colonias.append({
-                "nombre": nombre,
-                "display": descripcion,
-                "ciudad": ciudad,
-                "estado": estado,
-                "latitud": lat,
-                "longitud": lon,
-                "place_id": place_id,
-            })
+        if existente:
+            # Ya estaba por el inventario, sin coordenadas — se completa con
+            # lo de Google en vez de mostrarlo dos veces en la lista.
+            existente["latitud"] = lat
+            existente["longitud"] = lon
+            existente["ciudad"] = existente["ciudad"] or ciudad
+            existente["estado"] = existente["estado"] or estado
+            continue
+
+        fila = {
+            "nombre": nombre,
+            "display": descripcion,
+            "ciudad": ciudad,
+            "estado": estado,
+            "latitud": lat,
+            "longitud": lon,
+            "place_id": place_id,
+        }
+        colonias.append(fila)
+        por_nombre[eb_normalize(nombre)] = fila
 
     resultado = {"colonias": colonias[:6]}
     cache_set(cache_key, resultado, ttl=86400)
