@@ -43,6 +43,15 @@
 }
 @media (max-width: 720px) { .dash-scroll { padding: 12px 14px 40px; } }
 
+/* ── Banner "sin conexión" — discreto, arriba de todo lo demás ── */
+.dash-offline {
+  display: flex; align-items: center; gap: var(--sp-2);
+  background: var(--warn-soft); color: var(--warn);
+  border-radius: var(--r-sm); padding: 8px 14px;
+  font-size: var(--fs-xs); font-weight: 600;
+  margin-bottom: var(--sp-3);
+}
+
 /* ── Cabecera: saludo + buscar + personalizar ── */
 .dash-top {
   display: flex; align-items: flex-start; gap: var(--sp-4);
@@ -270,7 +279,10 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
   flex: 0 0 auto; width: 44px; height: 38px; border-radius: var(--r-sm);
   background: var(--data-1-soft); color: var(--data-1);
   display: inline-flex; align-items: center; justify-content: center;
+  overflow: hidden; /* recorta la foto de portada al tamaño fijo de la caja */
 }
+.prop-item__pi--foto { background: var(--paper-2); }
+.prop-item__pi--foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .prop-item__main { flex: 1 1 auto; min-width: 0; }
 .prop-item__n {
   font-size: var(--fs-sm); font-weight: 600;
@@ -283,6 +295,7 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
 }
 
 .dash-vacio { padding: var(--sp-4) 0; color: var(--mute); font-size: var(--fs-sm); }
+.dash-vacio__cta { display: block; width: max-content; margin-top: var(--sp-3); }
 
 /* ── Sheet "Poner al día" ──
    El look (tarjeta pegada abajo, ⠿ de agarre, ítems) copia al bk-sheet
@@ -392,6 +405,10 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
 
 <div class="dash-scroll">
 
+  <div class="dash-offline" id="dash-offline" role="status" hidden>
+    Sin conexión · datos de <span id="dash-offline-hora"></span>
+  </div>
+
   <!-- Cabecera: saludo con lo que urge + búsqueda + personalizar -->
   <header class="dash-top">
     <div class="dash-greet">
@@ -484,7 +501,10 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
         <a class="link" href="clientes.html">Detalle →</a>
       </div>
       <div id="pipe-lista"></div>
-      <div class="dash-vacio" id="pipe-vacio" hidden>Aún no tienes contactos en el embudo.</div>
+      <div class="dash-vacio" id="pipe-vacio" hidden>
+        Aún no tienes contactos en el embudo.
+        <a class="bk-btn bk-btn--ghost dash-vacio__cta" href="clientes.html">Agregar cliente</a>
+      </div>
     </section>
 
     <section class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="inmuebles" aria-labelledby="h-inmuebles">
@@ -494,7 +514,10 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
         <a class="link" href="propiedades.html">Ver →</a>
       </div>
       <div id="props-lista"></div>
-      <div class="dash-vacio" id="props-vacio" hidden>Agrega tu primer inmueble para verlo aquí.</div>
+      <div class="dash-vacio" id="props-vacio" hidden>
+        Agrega tu primer inmueble para verlo aquí.
+        <a class="bk-btn bk-btn--ghost dash-vacio__cta" href="propiedades.html">Agregar inmueble</a>
+      </div>
     </section>
   </div>
 
@@ -567,6 +590,45 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
     var inv = localStorage.getItem('inv_pendiente');
     if (inv) { window.location.replace('unirse.html?inv=' + encodeURIComponent(inv)); }
   } catch(_){}
+})();
+
+/* ── Service worker: ya existía (sw.js: network-first con fallback a
+   caché, push notifications) pero nunca se registraba en NINGÚN lado —
+   0 service workers activos con manifest.json ya listo. Un asesor en un
+   fraccionamiento sin señal abría la app y no veía nada. Se registra
+   aquí (el scope de un service worker es del origen completo, no
+   depende de qué página hizo el registro). */
+(function () {
+  if (!('serviceWorker' in navigator)) return;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+})();
+
+/* ── Banner "sin conexión" ── se apoya en la última vez que esta
+   pantalla cargó datos con éxito (guardada en localStorage por el
+   handler de brokr-shell-ready), para poder decir "datos de las X:XX"
+   en vez de solo "sin conexión" a secas. */
+(function () {
+  const banner = document.getElementById('dash-offline');
+  const horaEl = document.getElementById('dash-offline-hora');
+  if (!banner) return;
+  function horaUltimaCarga() {
+    try {
+      const iso = localStorage.getItem('brokr_ultima_carga');
+      if (iso) return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+    } catch (_) {}
+    return null;
+  }
+  function actualizar() {
+    if (navigator.onLine) { banner.hidden = true; return; }
+    const hora = horaUltimaCarga();
+    if (horaEl) horaEl.textContent = hora || 'esta sesión';
+    banner.hidden = false;
+  }
+  window.addEventListener('online', actualizar);
+  window.addEventListener('offline', actualizar);
+  actualizar();
 })();
 </script>
 
@@ -744,6 +806,17 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
   });
 })();
 
+/* ── "Últimos inmuebles": ícono genérico de respaldo si no hay foto o
+   falla la carga. Global (no dentro del closure de brokr-shell-ready):
+   un onerror="" inline se ejecuta como código de scope global sin
+   importar en qué closure se haya insertado el <img>, así que la
+   función que llama tiene que poder encontrarse ahí. */
+const ICONO_CASA_GENERICO = '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg>';
+window.brokrSinFotoInmueble = function (img) {
+  const span = img && img.parentElement;
+  if (span) span.innerHTML = ICONO_CASA_GENERICO;
+};
+
 /* ── Datos reales cuando el shell termina la autenticación ── */
 window.addEventListener('brokr-shell-ready', async (e) => {
   const profile = e.detail?.profile;
@@ -760,7 +833,10 @@ window.addEventListener('brokr-shell-ready', async (e) => {
   const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
   const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
   const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const pesos = n => Number(n || 0).toLocaleString('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 });
+  // "$2,977,000" es ambiguo en México (¿pesos? ¿dólares?). Se agrega el
+  // código de moneda explícito — Intl ya formatea en es-MX, pero
+  // style:'currency' solo pone el símbolo "$", no el código ISO.
+  const pesos = n => Number(n || 0).toLocaleString('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }) + ' MXN';
 
   /* Cuenta exacta con HEAD + Prefer: count=exact (no descarga registros). */
   async function fxCount(path) {
@@ -818,6 +894,11 @@ window.addEventListener('brokr-shell-ready', async (e) => {
   cargarLeads();
   cargarPipeline();
   cargarInmuebles();
+  // Para el banner "sin conexión · datos de las X:XX" — se asume que esta
+  // tanda de cargas tuvo éxito (si no había red, el propio service worker
+  // ya habría servido algo desde caché o las funciones fxCount/fxRest
+  // habrían regresado vacío en silencio, como ya hacían antes de esto).
+  try { localStorage.setItem('brokr_ultima_carga', new Date().toISOString()); } catch(_){}
 
   /* ── KPIs del día ── */
   async function cargarKpis(tVencidas) {
@@ -1129,18 +1210,29 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     }), 150);
   }
 
-  /* ── Últimos inmuebles ── */
+  /* ── Últimos inmuebles ──
+     Antes solo había un ícono genérico de casita — lo único visual que
+     puede tener esta pantalla es la foto de portada, así que se usa.
+     La caja tiene tamaño fijo (44×38, ver CSS) para no generar salto de
+     layout (CLS) mientras carga; sin foto, o si falla, se cae al mismo
+     ícono de siempre (ICONO_CASA_GENERICO / brokrSinFotoInmueble, arriba
+     del todo del script — tienen que ser globales para que el onerror
+     inline del <img> los encuentre). */
   async function cargarInmuebles() {
     const lista = document.getElementById('props-lista');
     const vacio = document.getElementById('props-vacio');
-    const filas = await fxRest('propiedades?select=id,titulo,precio,operacion&order=created_at.desc&limit=3');
+    const filas = await fxRest('propiedades?select=id,titulo,precio,operacion,fotos&order=created_at.desc&limit=3');
     if (!Array.isArray(filas) || !filas.length) { vacio.hidden = false; return; }
     lista.innerHTML = filas.map(p => {
       const op = p.operacion === 'renta' ? 'Renta' : (p.operacion === 'venta' ? 'Venta' : '');
       const precio = (p.precio != null && p.precio !== '' && !isNaN(Number(p.precio)))
         ? pesos(p.precio) : '';
+      const portada = Array.isArray(p.fotos) && p.fotos.length ? p.fotos[0] : '';
+      const miniatura = portada
+        ? '<img src="' + esc(portada) + '" alt="" loading="lazy" decoding="async" onerror="brokrSinFotoInmueble(this)"/>'
+        : ICONO_CASA_GENERICO;
       return '<a class="prop-item" href="propiedades.html">' +
-        '<span class="prop-item__pi"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg></span>' +
+        '<span class="prop-item__pi' + (portada ? ' prop-item__pi--foto' : '') + '">' + miniatura + '</span>' +
         '<span class="prop-item__main">' +
           '<span class="prop-item__n">' + esc(p.titulo || 'Propiedad') + '</span>' +
           (op ? '<span class="prop-item__s">' + op + '</span>' : '') +
