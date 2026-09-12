@@ -294,7 +294,7 @@
       <label class="dash-panel__opt"><input type="checkbox" data-w="qa" checked/> Accesos rápidos</label>
       <label class="dash-panel__opt"><input type="checkbox" data-w="kpis" checked/> KPIs del día</label>
       <label class="dash-panel__opt"><input type="checkbox" data-w="atencion" checked/> Requiere tu atención</label>
-      <label class="dash-panel__opt"><input type="checkbox" data-w="leads" checked/> Leads sin responder</label>
+      <label class="dash-panel__opt" id="dash-opt-leads"><input type="checkbox" data-w="leads" checked/> Leads sin responder</label>
       <label class="dash-panel__opt"><input type="checkbox" data-w="pipeline" checked/> Clientes</label>
       <label class="dash-panel__opt"><input type="checkbox" data-w="inmuebles" checked/> Últimos inmuebles</label>
       <div class="bk-hint" style="margin-top:var(--sp-2);">Arrastra las tarjetas desde ⠿ para reacomodarlas: su tamaño se ajusta a la columna donde las sueltes.</div>
@@ -352,6 +352,7 @@
         <a class="link" href="whatsapp.html">Ver →</a>
       </div>
       <div id="leads-lista"></div>
+      <div class="dash-vacio" id="leads-vacio" hidden>No tienes leads sin responder ahora mismo.</div>
     </div>
 
     <div class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="pipeline">
@@ -596,14 +597,29 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     } catch (err) { return []; }
   }
 
-  cargarKpis();
-  cargarAtencion();
+  /* ── Vencidas: UNA sola fuente para las tres pantallas ──
+     Antes el subtítulo del saludo y el badge del KPI sacaban su número de
+     esta misma cuenta, pero la tarjeta "Requiere tu atención" mostraba
+     filas.length de una query DISTINTA (vencidas + hoy, cortada a 8) —
+     así que si había, digamos, 10 vencidas y 8 entre vencidas+hoy, el
+     usuario veía "10 vencidas" arriba y "8" en la tarjeta, sin ninguna
+     relación entre los dos números. Ahora se cuenta una sola vez aquí y
+     se reparte a cargarKpis/cargarAtencion como parámetro. */
+  const hoyInicioGlobal = new Date(); hoyInicioGlobal.setHours(0,0,0,0);
+  const tVencidasProm = fxCount(
+    'tareas?select=id&completada=eq.false&fecha_entrega=not.is.null&fecha_entrega=lt.' +
+    encodeURIComponent(hoyInicioGlobal.toISOString()));
+
+  tVencidasProm.then(tVencidas => {
+    cargarKpis(tVencidas);
+    cargarAtencion(tVencidas);
+  });
   cargarLeads();
   cargarPipeline();
   cargarInmuebles();
 
   /* ── KPIs del día ── */
-  async function cargarKpis() {
+  async function cargarKpis(tVencidas) {
     const iso = d => d.toISOString();
     const hoy = new Date(); hoy.setHours(0,0,0,0);
     const manana = new Date(hoy.getTime() + 86400000);
@@ -617,10 +633,9 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     } catch(_){}
 
     const fHoy = '&fecha_entrega=gte.' + encodeURIComponent(iso(hoy)) + '&fecha_entrega=lt.' + encodeURIComponent(iso(manana));
-    const [tHoy, tHoyDone, tVencidas, pros, cierres] = await Promise.all([
+    const [tHoy, tHoyDone, pros, cierres] = await Promise.all([
       fxCount('tareas?select=id' + fHoy),
       fxCount('tareas?select=id&completada=eq.true' + fHoy),
-      fxCount('tareas?select=id&completada=eq.false&fecha_entrega=lt.' + encodeURIComponent(iso(hoy))),
       fxCount('contactos?select=id&created_at=gte.' + encodeURIComponent(iso(lunes))),
       fxCount('contratos?select=id&created_at=gte.' + encodeURIComponent(iso(mes1))),
     ]);
@@ -655,8 +670,12 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     }
   }
 
-  /* ── Requiere tu atención: vencidas + tareas de hoy, resolubles aquí ── */
-  async function cargarAtencion() {
+  /* ── Requiere tu atención: vencidas + tareas de hoy, resolubles aquí ──
+     El badge de esta tarjeta usa tVencidas (la MISMA cuenta del subtítulo
+     y del KPI) — nunca filas.length, que solo refleja cuántas filas trajo
+     esta query en particular (vencidas + hoy, cortada a 8) y por eso podía
+     mostrar un número distinto al de arriba sin ninguna relación entre sí. */
+  async function cargarAtencion(tVencidas) {
     const lista = document.getElementById('aten-lista');
     const vacio = document.getElementById('aten-vacio');
     const count = document.getElementById('aten-count');
@@ -667,7 +686,17 @@ window.addEventListener('brokr-shell-ready', async (e) => {
       '&order=fecha_entrega.asc&limit=8');
     if (!Array.isArray(filas) || !filas.length) { vacio.hidden = false; return; }
     const ahora = new Date();
-    if (count) { count.textContent = String(filas.length); count.hidden = false; }
+    const vencidasEnLista = filas.filter(t => new Date(t.fecha_entrega) < ahora).length;
+    if (count) {
+      if (tVencidas > 0) {
+        count.textContent = vencidasEnLista < tVencidas
+          ? (vencidasEnLista + ' de ' + tVencidas + ' vencidas')
+          : (tVencidas + (tVencidas === 1 ? ' vencida' : ' vencidas'));
+        count.hidden = false;
+      } else {
+        count.hidden = true;
+      }
+    }
     lista.innerHTML = filas.map(t => {
       const d = new Date(t.fecha_entrega);
       const vencida = d < ahora;
@@ -698,28 +727,46 @@ window.addEventListener('brokr-shell-ready', async (e) => {
             await window.brokrSb.rest('tareas?id=eq.' + encodeURIComponent(id),
               { method: 'PATCH', body: { completada: true, fecha_completada: new Date().toISOString() } });
           }
-          cargarKpis();
+          // Marcar una vencida como hecha cambia tVencidas — se recalcula
+          // una sola vez y se reparte de nuevo a los tres lugares.
+          const tVencidasFresco = await fxCount(
+            'tareas?select=id&completada=eq.false&fecha_entrega=not.is.null&fecha_entrega=lt.' +
+            encodeURIComponent(hoyInicioGlobal.toISOString()));
+          cargarKpis(tVencidasFresco);
+          cargarAtencion(tVencidasFresco);
         } catch (err) { item.classList.remove('is-done'); }
       });
     });
   }
 
   /* ── Leads sin responder (chats de WhatsApp con no leídos) ──
-     Si el usuario no tiene WhatsApp conectado, la tarjeta no aparece. */
+     Antes: la tarjeta arrancaba oculta (hidden) y solo se mostraba si
+     había conversaciones sin leer — así que una cuenta sin WhatsApp
+     conectado la dejaba en el DOM para siempre, vacía, y aun así aparecía
+     activada (con su checkbox marcado) en el sheet de personalización:
+     un widget fantasma que el usuario podía "prender/apagar" sin que
+     tuviera ningún efecto visible. Ahora: sin WhatsApp conectado, se
+     quita del DOM y de la lista de personalización — no se monta a
+     medias. Con WhatsApp conectado pero cero leads sin responder, se
+     muestra con su propio estado vacío (nunca en blanco). */
   async function cargarLeads() {
     const card = document.getElementById('leads-card');
     const lista = document.getElementById('leads-lista');
+    const vacio = document.getElementById('leads-vacio');
+    const opt = document.getElementById('dash-opt-leads');
+    const quitarDelTodo = () => { card.remove(); if (opt) opt.remove(); };
     try {
       const tok = window.brokrSb ? await window.brokrSb.ensureToken() : null;
-      if (!tok) return;
+      if (!tok) { quitarDelTodo(); return; }
       const r = await fetch('https://api.broquer.app/whatsapp2/conversaciones',
         { headers: { Authorization: 'Bearer ' + tok } });
-      if (!r.ok) return;
+      if (!r.ok) { quitarDelTodo(); return; }
       const d = await r.json();
       const convs = (d.conversaciones || [])
         .filter(c => Number(c.unread_count) > 0 || c.no_leida)
         .slice(0, 4);
-      if (!convs.length) return;
+      card.hidden = false;
+      if (!convs.length) { vacio.hidden = false; return; }
       lista.innerHTML = convs.map(c => {
         const nombre = (c.wa2_contactos && c.wa2_contactos.nombre) || c.wa_id || 'Prospecto';
         const ini = String(nombre).trim().split(/\s+/).map(p => p[0]).slice(0,2).join('').toUpperCase() || 'P';
@@ -732,8 +779,7 @@ window.addEventListener('brokr-shell-ready', async (e) => {
           '</span>' +
           '<span class="bk-badge bk-badge--success">Responder</span></a>';
       }).join('');
-      card.hidden = false;
-    } catch (err) { /* sin WhatsApp: la tarjeta simplemente no aparece */ }
+    } catch (err) { quitarDelTodo(); }
   }
 
   /* ── Pipeline: contactos por etapa ── */

@@ -32,19 +32,29 @@
     s.src = 'https://js.sentry-cdn.com/266e3bda223d2a0a211074bde709f4e8.min.js';
     s.crossOrigin = 'anonymous';
     s.onload = function () {
-      if (!window.Sentry) return;
-      // Etiqueta el módulo activo (ej. "isr", "avm") para filtrar en Sentry por página
-      const mod = (document.body && document.body.dataset.app)
-        ? document.body.dataset.app
-        : (location.pathname.split('/').pop() || 'index').replace('.html', '');
-      Sentry.setTag('modulo', mod);
-      // Si el usuario ya tiene sesión, adjunta su correo al reporte
-      try {
-        const u = JSON.parse(
-          localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'
-        );
-        if (u && u.email) Sentry.setUser({ email: u.email, id: u.id || undefined });
-      } catch (_) {}
+      if (!window.Sentry || typeof Sentry.onLoad !== 'function') return;
+      // El Loader Script de Sentry expone de inmediato un shim chiquito
+      // (onLoad/forceLoad y poco más) mientras baja el SDK completo en
+      // segundo plano — "onload" de este <script> solo significa que ESE
+      // shim ya existe, no que setTag/setUser ya estén disponibles. Llamarlos
+      // aquí directo tiraba "Sentry.setTag is not a function" en cada carga.
+      // Sentry.onLoad() sí es parte del shim y encola el callback hasta que
+      // el SDK real termine de cargar — es el patrón que Sentry documenta
+      // para el Loader Script.
+      Sentry.onLoad(function () {
+        // Etiqueta el módulo activo (ej. "isr", "avm") para filtrar en Sentry por página
+        const mod = (document.body && document.body.dataset.app)
+          ? document.body.dataset.app
+          : (location.pathname.split('/').pop() || 'index').replace('.html', '');
+        Sentry.setTag('modulo', mod);
+        // Si el usuario ya tiene sesión, adjunta su correo al reporte
+        try {
+          const u = JSON.parse(
+            localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'
+          );
+          if (u && u.email) Sentry.setUser({ email: u.email, id: u.id || undefined });
+        } catch (_) {}
+      });
     };
     document.head.appendChild(s);
   })();
