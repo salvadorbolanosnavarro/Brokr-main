@@ -608,10 +608,18 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
   });
 })();
 
-/* ── Banner "sin conexión" ── se apoya en la última vez que esta
-   pantalla cargó datos con éxito (guardada en localStorage por el
-   handler de brokr-shell-ready), para poder decir "datos de las X:XX"
-   en vez de solo "sin conexión" a secas. */
+/* ── Banner "sin conexión" ── NO se enciende con navigator.onLine a
+   secas: esa bandera solo dice si el sistema operativo tiene una interfaz
+   de red activa, no si Internet responde de verdad, y en iPadOS/Safari
+   puede reportar `false` por unos segundos (p.ej. al cambiar de wifi a
+   datos) sin que ninguna petición real haya fallado — así fue como el
+   aviso apareció encima de datos frescos y recién cargados: un falso
+   "sin conexión" del navegador, no una falla real.
+   Ahora la única fuente que lo enciende es una petición real que de
+   verdad no se pudo completar (window.brokrReportarConexion(false),
+   llamado desde fxCount/fxRest), y CUALQUIER petición que sí obtuvo
+   respuesta del servidor —exitosa o no— lo apaga y usa esa hora como
+   "datos de las X:XX". */
 (function () {
   const banner = document.getElementById('dash-offline');
   const horaEl = document.getElementById('dash-offline-hora');
@@ -623,15 +631,17 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
     } catch (_) {}
     return null;
   }
-  function actualizar() {
-    if (navigator.onLine) { banner.hidden = true; return; }
+  function ocultar() { banner.hidden = true; }
+  function mostrar() {
     const hora = horaUltimaCarga();
     if (horaEl) horaEl.textContent = hora || 'esta sesión';
     banner.hidden = false;
   }
-  window.addEventListener('online', actualizar);
-  window.addEventListener('offline', actualizar);
-  actualizar();
+  window.addEventListener('online', ocultar);
+  window.brokrReportarConexion = function (ok) {
+    if (ok) { ocultar(); return; }
+    if (!navigator.onLine) mostrar();
+  };
 })();
 </script>
 
@@ -841,7 +851,11 @@ window.addEventListener('brokr-shell-ready', async (e) => {
   // style:'currency' solo pone el símbolo "$", no el código ISO.
   const pesos = n => Number(n || 0).toLocaleString('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }) + ' MXN';
 
-  /* Cuenta exacta con HEAD + Prefer: count=exact (no descarga registros). */
+  /* Cuenta exacta con HEAD + Prefer: count=exact (no descarga registros).
+     Cada intento avisa a window.brokrReportarConexion si la red respondió
+     de verdad (aunque la respuesta sea un error HTTP) o si de plano no se
+     pudo ni completar la petición — es la única señal real que enciende o
+     apaga el banner "sin conexión", nunca navigator.onLine a secas. */
   async function fxCount(path) {
     try {
       const opts = { method: 'HEAD', headers: { Prefer: 'count=exact', Range: '0-0' } };
@@ -853,20 +867,32 @@ window.addEventListener('brokr-shell-ready', async (e) => {
         r = await fetch(SB_URL + '/rest/v1/' + path, {
           ...opts, headers: { ...opts.headers, apikey: SB_KEY, Authorization: 'Bearer ' + tok } });
       }
+      if (window.brokrReportarConexion) window.brokrReportarConexion(true);
       if (!r.ok && r.status !== 206) return 0;
       const cr = r.headers.get('Content-Range') || '';
       return Number(cr.split('/').pop()) || 0;
-    } catch (err) { return 0; }
+    } catch (err) {
+      if (window.brokrReportarConexion) window.brokrReportarConexion(false);
+      return 0;
+    }
   }
   async function fxRest(path) {
     try {
-      if (window.brokrSb && window.brokrSb.rest) return await window.brokrSb.rest(path, { method: 'GET' });
+      if (window.brokrSb && window.brokrSb.rest) {
+        const d = await window.brokrSb.rest(path, { method: 'GET' });
+        if (window.brokrReportarConexion) window.brokrReportarConexion(true);
+        return d;
+      }
       const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
       if (!tok) return [];
       const r = await fetch(SB_URL + '/rest/v1/' + path,
         { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tok } });
+      if (window.brokrReportarConexion) window.brokrReportarConexion(true);
       return r.ok ? await r.json() : [];
-    } catch (err) { return []; }
+    } catch (err) {
+      if (window.brokrReportarConexion) window.brokrReportarConexion(false);
+      return [];
+    }
   }
 
   /* ── Vencidas: UNA sola fuente para las tres pantallas ──
