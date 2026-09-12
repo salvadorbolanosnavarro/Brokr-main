@@ -32,18 +32,17 @@
 	<array>
 		<string>armv7</string>
 	</array>
+	<!-- Broquer siempre en vertical, en iPhone y en iPad — igual que
+	     EasyBroker. Sin esto, girar el teléfono rota la app a horizontal
+	     y las pantallas (pensadas para vertical) se ven cortadas o con
+	     recuadros fuera de lugar. -->
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
