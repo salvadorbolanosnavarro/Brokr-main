@@ -21,8 +21,8 @@
    del agente, una frase y el logotipo; debajo, las 3 cifras que de
    verdad importan para el negocio; debajo de eso, todos los módulos
    seguidos uno del otro en tarjetas grandes de un solo color, sin
-   categorías — "Más" (Blog/Ayuda/Admin) queda condensado en una sola
-   tarjeta con su propio menú. El rail/topbar/mobile-head compartidos
+   categorías. La foto de perfil abre su propio menú (Mi perfil/Ayuda/
+   Admin), igual que en el rail lateral. El rail/topbar/mobile-head compartidos
    (app-shell.js) se ocultan SOLO en esta pantalla — el resto de la app
    no cambia. */
 
@@ -76,8 +76,9 @@ body[data-app="home"] .bk-topbar {
   background: var(--sb-bg);
   box-shadow: var(--sb-glow);
 }
+.home-avatar-wrap { position: relative; flex: 0 0 auto; }
 .home-avatar {
-  flex: 0 0 auto; width: 44px; height: 44px; border-radius: var(--r-pill);
+  width: 44px; height: 44px; border-radius: var(--r-pill);
   border: none; padding: 0; cursor: pointer; overflow: hidden;
   background: #FFFFFF; color: var(--sky-navy);
   display: flex; align-items: center; justify-content: center;
@@ -87,6 +88,26 @@ body[data-app="home"] .bk-topbar {
 .home-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .home-avatar:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .home-avatar:focus-visible { outline: none; box-shadow: var(--focus); }
+/* Menú de la foto de perfil: Mi perfil / Ayuda / Admin (solo si aplica) —
+   igual que el flyout "Más" del rail lateral, pero desde el avatar. Sin
+   `display` propio: [hidden] lo oculta con la regla del propio
+   navegador, sin el bug de display-vs-[hidden] que ya mordió a esta
+   pantalla dos veces (ver .dash-offline arriba). */
+.home-avatar-menu {
+  position: absolute; top: 100%; left: 0;
+  margin-top: 8px; z-index: 20; min-width: 190px;
+  background: var(--bone); border: 1px solid var(--line-2);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
+  padding: 8px;
+}
+.home-avatar-menu a {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: 10px 12px; border-radius: var(--r-sm);
+  font-size: var(--fs-sm); font-weight: 600; color: var(--ink);
+  text-decoration: none;
+}
+.home-avatar-menu a:hover { background: var(--paper-2); }
+.home-avatar-menu a svg { width: 18px; height: 18px; color: var(--data-1); flex: 0 0 auto; }
 .home-phrase {
   flex: 1 1 auto; min-width: 0;
   text-align: center;
@@ -164,29 +185,6 @@ a.home-card, button.home-card { cursor: pointer; }
 .home-card__ic svg { width: 26px; height: 26px; }
 .home-card__label { font-size: var(--fs-sm); font-weight: 700; line-height: 1.25; }
 
-/* "Más": una sola tarjeta (se ve igual que las demás) que abre un menú
-   angosto con lo que antes eran 2-3 tarjetas sueltas — Blog, Ayuda y,
-   solo para administradores, Admin. */
-.home-more { position: relative; }
-.home-more-menu {
-  /* Sin `display` propio: [hidden] lo oculta con la regla del propio
-     navegador, sin el bug de display-vs-[hidden] que ya mordió a esta
-     pantalla una vez (ver .dash-offline arriba). */
-  position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
-  margin-top: 8px; z-index: 20; min-width: 190px;
-  background: var(--bone); border: 1px solid var(--line-2);
-  border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
-  padding: 8px;
-}
-.home-more-menu a {
-  display: flex; align-items: center; gap: var(--sp-3);
-  padding: 10px 12px; border-radius: var(--r-sm);
-  font-size: var(--fs-sm); font-weight: 600; color: var(--ink);
-  text-decoration: none;
-}
-.home-more-menu a:hover { background: var(--paper-2); }
-.home-more-menu a svg { width: 18px; height: 18px; color: var(--data-1); flex: 0 0 auto; }
-
 @media (prefers-reduced-motion: reduce) {
   .home-avatar, .home-card, .home-phrase { transition: none; }
   .home-card:hover { transform: none; }
@@ -222,9 +220,20 @@ a.home-card, button.home-card { cursor: pointer; }
     Sin conexión · datos de <span id="dash-offline-hora"></span>
   </div>
 
-  <!-- Barra superior: perfil del agente · frase rotativa · logotipo -->
+  <!-- Barra superior: perfil del agente · frase rotativa · logotipo ──
+       La foto abre un menú (Mi perfil/Ayuda/Admin), igual que el flyout
+       "Más" del rail lateral — "Mi perfil" es el drawer que ya existe
+       en toda la app (window.openProfileDrawer, definido en
+       app-shell.js), NO mi-sitio.html (ese es el sitio público del
+       agente, un módulo aparte). -->
   <header class="home-top">
-    <button class="home-avatar" id="home-avatar" type="button" aria-label="Ver tu perfil">?</button>
+    <div class="home-avatar-wrap">
+      <button class="home-avatar" id="home-avatar" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="home-avatar-menu">?</button>
+      <div class="home-avatar-menu" id="home-avatar-menu" role="menu" hidden>
+        <a href="javascript:void(0)" role="menuitem" onclick="if(window.openProfileDrawer)window.openProfileDrawer();"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>Mi perfil</a>
+        <a href="guia-agente.html" role="menuitem"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg>Ayuda</a>
+      </div>
+    </div>
     <p class="home-phrase" id="home-phrase" aria-live="polite"></p>
     <img class="home-logo" src="logo-broquer.png" alt="Broquer"/>
   </header>
@@ -266,20 +275,7 @@ a.home-card, button.home-card { cursor: pointer; }
       <a class="home-card" href="ficha-manual.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75l2.25-2.25 1.5 1.5 2.25-2.25 2.25 2.25M8.25 15h7.5M5.625 3H8.25M5.625 3c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></span><span class="home-card__label">Ficha técnica</span></a>
       <a class="home-card" href="video.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="2.25" y="6" width="13.5" height="12" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-2.83a.75.75 0 011.13.64v7.38a.75.75 0 01-1.13.64l-4.72-2.83"/></svg></span><span class="home-card__label">Video</span></a>
       <a class="home-card" href="mi-sitio.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18"/></svg></span><span class="home-card__label">Mi sitio</span></a>
-
-      <!-- "Más": una sola tarjeta que abre un menú con Blog, Ayuda y,
-           solo para administradores, Admin — en vez de 2-3 tarjetas
-           sueltas de cosas que no son trabajo del día a día. -->
-      <div class="home-more">
-        <button class="home-card" type="button" id="home-more-btn" aria-haspopup="true" aria-expanded="false" aria-controls="home-more-menu">
-          <span class="home-card__ic"><svg width="26" height="26" fill="currentColor" viewBox="0 0 24 24" stroke="none"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></span>
-          <span class="home-card__label">Más</span>
-        </button>
-        <div class="home-more-menu" id="home-more-menu" role="menu" hidden>
-          <a href="blog.html" role="menuitem"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5l6.74-6.76zM16 8L2 22M17.5 15H9"/></svg>Blog</a>
-          <a href="guia-agente.html" role="menuitem"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg>Ayuda</a>
-        </div>
-      </div>
+      <a class="home-card" href="blog.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5l6.74-6.76zM16 8L2 22M17.5 15H9"/></svg></span><span class="home-card__label">Blog</span></a>
     </div>
   </nav>
 
@@ -522,7 +518,7 @@ window.addEventListener('brokr-shell-ready', async (e) => {
   /* ── Avatar: foto real si existe, iniciales de respaldo si no ──
      Reemplaza el contenido del botón (nunca alterna un `hidden`) para no
      repetir el bug de display-vs-[hidden] que ya mordió a esta pantalla
-     una vez con el banner de conexión. */
+     dos veces. El clic lo maneja el IIFE de más abajo (abre el menú). */
   const avatarBtn = document.getElementById('home-avatar');
   const nombre = (profile?.profile?.nombre || '').trim();
   const iniciales = nombre
@@ -530,8 +526,7 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     : '';
   if (avatarBtn) {
     avatarBtn.textContent = iniciales || '?';
-    if (nombre) avatarBtn.setAttribute('aria-label', 'Ver el perfil de ' + nombre);
-    avatarBtn.addEventListener('click', () => { location.href = 'mi-sitio.html'; });
+    avatarBtn.setAttribute('aria-label', nombre ? 'Menú de ' + nombre : 'Menú de cuenta');
   }
   try {
     const uid = profile?.user?.id;
@@ -544,10 +539,13 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     }
   } catch (_) {}
 
-  /* ── Admin: el único módulo condicional, se agrega al menú de "Más"
-     en vez de alternar `hidden` — mismo motivo que el avatar arriba. */
+  /* ── Admin: el único módulo condicional, se agrega al menú de la foto
+     de perfil en vez de alternar `hidden` — mismo motivo que el avatar
+     arriba. Solo para quien de verdad es administrador (profile.isAdmin,
+     calculado en app-shell.js a partir de usuarios.rol === 'admin'):
+     nadie más ve este enlace. */
   if (profile?.isAdmin) {
-    const menu = document.getElementById('home-more-menu');
+    const menu = document.getElementById('home-avatar-menu');
     if (menu) {
       menu.insertAdjacentHTML('beforeend',
         '<a href="admin.html" role="menuitem"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a6.759 6.759 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Admin</a>');
@@ -557,12 +555,12 @@ window.addEventListener('brokr-shell-ready', async (e) => {
   try { localStorage.setItem('brokr_ultima_carga', new Date().toISOString()); } catch(_){}
 });
 
-/* ── Menú de "Más": abre/cierra al clic, Escape y clic afuera lo
-   cierran. Sin alternar `display` en CSS — el propio [hidden] basta,
-   ya que .home-more-menu no fija `display` propio. */
+/* ── Menú de la foto de perfil: abre/cierra al clic, Escape y clic
+   afuera lo cierran. Sin alternar `display` en CSS — el propio [hidden]
+   basta, ya que .home-avatar-menu no fija `display` propio. */
 (function () {
-  const btn = document.getElementById('home-more-btn');
-  const menu = document.getElementById('home-more-menu');
+  const btn = document.getElementById('home-avatar');
+  const menu = document.getElementById('home-avatar-menu');
   if (!btn || !menu) return;
   function abrir() {
     menu.hidden = false;
