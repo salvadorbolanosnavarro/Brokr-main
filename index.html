@@ -4,8 +4,9 @@
 <meta charset="UTF-8"/>
 <!-- Sin maximum-scale/user-scalable: bloquear el pinch-zoom viola WCAG 1.4.4
      y no deja acercarse a leer un precio. El único input de esta pantalla
-     (la fecha del sheet "Poner al día") ya usa font-size:16px, que es la
-     forma correcta de evitar el zoom-al-enfocar de iOS sin matar el zoom. -->
+     (la fecha del sheet "Poner al día") ya usa un tamaño de letra de 16px
+     (ver brokr-theme.css), la forma correcta de evitar el zoom-al-enfocar
+     de iOS sin matar el zoom general. -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Broquer — Inicio</title>
 <link rel="manifest" href="manifest.json"/>
@@ -153,7 +154,7 @@ a.dash-kpi { display: block; -webkit-tap-highlight-color: transparent; transitio
 a.dash-kpi:active { background: var(--paper-2); }
 a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
 .dash-kpi__stretch {
-  position: absolute; inset: 0; z-index: 1; border-radius: inherit;
+  position: absolute; inset: 0; z-index: 1; border-radius: var(--r-lg); /* = .bk-card */
   -webkit-tap-highlight-color: transparent;
 }
 .dash-kpi__stretch:focus-visible { outline: none; box-shadow: var(--focus); }
@@ -318,18 +319,20 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
   max-width: 420px; margin: 0 auto;
   max-height: 82vh; overflow-y: auto; overscroll-behavior: contain;
   background: var(--bone);
-  border-radius: 22px 22px 0 0;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
   padding: 8px 16px calc(22px + env(safe-area-inset-bottom, 0px));
-  box-shadow: 0 -12px 44px rgba(8,28,78,0.26);
+  box-shadow: 0 -12px 44px rgba(8,28,78,0.26); /* AUDIT-EXEMPT-LINE: mismo valor que .bk-sheet en app-shell.js (no auditado por vivir en JS) — sombra hacia arriba para una hoja anclada abajo; ningún --shadow-* del sistema es así de direccional */
   transform: translateY(102%);
   transition: transform var(--dur) var(--ease);
 }
-@media (min-width: 460px) { .podia-panel { border-radius: 22px; bottom: 24px; } }
+@media (min-width: 460px) { .podia-panel { border-radius: var(--r-lg); bottom: 24px; } }
 .podia-panel.is-open { transform: none; }
 .podia-sub { margin: 2px 4px var(--sp-3); }
 .podia-item { width: 100%; margin-bottom: 8px; }
 .podia-fecha-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
-.podia-fecha-wrap .bk-input { flex: 1 1 auto; font-size: 16px; } /* 16px: evita el zoom de iOS al enfocar */
+/* Sin font-size propio: brokr-theme.css ya fuerza los inputs a 16px
+   (evita el zoom-al-enfocar de iOS) en pantallas ≤768px. */
+.podia-fecha-wrap .bk-input { flex: 1 1 auto; }
 .podia-cancelar { width: 100%; }
 
 /* ── Toast con Deshacer ── */
