@@ -73,7 +73,12 @@ LARGE_FILE_MAX_BYTES = {
     # ahora desaparecen de verdad (no solo se cubren) — incluida la
     # pastilla blanca del módulo activo, que si no dejaba el nombre
     # blanco ilegible encima de su propio fondo blanco.
-    "app-shell.js": 260_014,
+    # Bumped 676 bytes: Sentry.setTag/setUser se movieron dentro de
+    # Sentry.onLoad() — el shim del Loader Script no garantiza esos
+    # métodos en el "onload" del <script>, solo onLoad/forceLoad, y por
+    # eso tiraba "Sentry.setTag is not a function" en cada carga. Bug
+    # real corregido con una explicación de por qué, no deuda nueva.
+    "app-shell.js": 260_690,
     "whatsapp.py": 223_594,
     "contratos.html": 156_081,
     # Bumped 5,747 bytes: los cambios de estatus, notas, comisión real y
