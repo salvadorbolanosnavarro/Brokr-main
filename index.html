@@ -121,7 +121,28 @@
   margin-top: var(--sp-2); font-variant-numeric: tabular-nums;
 }
 .dash-kpi .val small { font-size: var(--fs-sm); color: var(--mute); font-weight: 600; }
-.dash-kpi .badge-top { position: absolute; top: var(--sp-4); right: var(--sp-4); }
+.dash-kpi .badge-top { position: absolute; top: var(--sp-4); right: var(--sp-4); z-index: 2; }
+.dash-kpi .sub { font-size: var(--fs-xs); color: var(--mute); margin-top: 2px; }
+
+/* Las 4 tarjetas KPI son destinos, no solo lectura: cada una navega a su
+   lista ya filtrada. "Pendientes hoy" necesita DOS destinos (la tarjeta
+   completa y el badge de vencidas por separado), y <a> dentro de <a> no
+   es válido HTML — así que ahí el <a> de la tarjeta es un "stretched
+   link" (cubre toda la tarjeta por debajo) y el badge es su propio <a>
+   posicionado encima, con más z-index, para que capture su propio tap. */
+a.dash-kpi, .dash-kpi__stretch { text-decoration: none; color: inherit; }
+a.dash-kpi { display: block; -webkit-tap-highlight-color: transparent; transition: background var(--dur) var(--ease); }
+a.dash-kpi:active { background: var(--paper-2); }
+a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
+.dash-kpi__stretch {
+  position: absolute; inset: 0; z-index: 1; border-radius: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.dash-kpi__stretch:focus-visible { outline: none; box-shadow: var(--focus); }
+@supports selector(:has(a)) {
+  .dash-kpi:has(.dash-kpi__stretch:active) { background: var(--paper-2); }
+}
+.badge-top:focus-visible { outline: none; box-shadow: var(--focus); }
 
 /* ── Grid principal ── */
 .dash-grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: var(--sp-5); align-items: start; }
@@ -145,8 +166,25 @@
   color: var(--sky-blue); text-decoration: none;
 }
 .dash-card-h .link:hover { text-decoration: underline; }
+.dash-card-h button.link {
+  border: none; background: none; font: inherit; cursor: pointer; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.dash-card-h button.link + .link { margin-left: var(--sp-3); }
 
 /* ── Requiere tu atención ── */
+.aten-grupo__h {
+  font-size: var(--fs-xs); font-weight: 800; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--mute);
+  margin: var(--sp-3) 0 var(--sp-1);
+}
+.aten-grupo__h:first-child { margin-top: 0; }
+.link.aten-vermas {
+  display: block; text-align: center; margin-top: var(--sp-2);
+  padding: 10px 0; font-size: var(--fs-sm); font-weight: 600;
+  color: var(--sky-blue); text-decoration: none;
+}
+.link.aten-vermas:hover { text-decoration: underline; }
 .aten-item {
   display: flex; align-items: center; gap: var(--sp-3);
   padding: var(--sp-3) 0; border-top: 1px solid var(--line);
@@ -237,6 +275,59 @@
 
 .dash-vacio { padding: var(--sp-4) 0; color: var(--mute); font-size: var(--fs-sm); }
 
+/* ── Sheet "Poner al día" ──
+   El look (tarjeta pegada abajo, ⠿ de agarre, ítems) copia al bk-sheet
+   del shell (bk-sheet__grip/__eyebrow/__item sí se reutilizan), pero el
+   CONTENEDOR es propio: bk-sheet/bk-sheet-back traen
+   "@media (min-width:881px){display:none}" porque esa hoja es solo la
+   navegación móvil — "Poner al día" tiene que funcionar en cualquier
+   ancho. index.html controla todo su ciclo de vida (abrir/cerrar,
+   Escape, foco, bloqueo de scroll de fondo). */
+.podia-back {
+  position: fixed; inset: 0; z-index: 95;
+  background: rgba(8,28,78,0.38);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--dur) var(--ease);
+}
+.podia-back.is-open { opacity: 1; pointer-events: auto; }
+.podia-panel {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 96;
+  max-width: 420px; margin: 0 auto;
+  max-height: 82vh; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--bone);
+  border-radius: 22px 22px 0 0;
+  padding: 8px 16px calc(22px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -12px 44px rgba(8,28,78,0.26);
+  transform: translateY(102%);
+  transition: transform var(--dur) var(--ease);
+}
+@media (min-width: 460px) { .podia-panel { border-radius: 22px; bottom: 24px; } }
+.podia-panel.is-open { transform: none; }
+.podia-sub { margin: 2px 4px var(--sp-3); }
+.podia-item { width: 100%; margin-bottom: 8px; }
+.podia-fecha-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
+.podia-fecha-wrap .bk-input { flex: 1 1 auto; font-size: 16px; } /* 16px: evita el zoom de iOS al enfocar */
+.podia-cancelar { width: 100%; }
+
+/* ── Toast con Deshacer ── */
+.dash-toast {
+  position: fixed; left: 50%; bottom: max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+  transform: translate(-50%, 12px);
+  background: var(--ink-2); color: #fff; padding: 12px 10px 12px 18px;
+  border-radius: var(--r-pill); display: flex; align-items: center; gap: var(--sp-3);
+  font-size: var(--fs-sm); font-family: var(--font-sans);
+  box-shadow: var(--shadow-lg); z-index: 99999; opacity: 0; pointer-events: none;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  max-width: calc(100vw - 32px);
+}
+.dash-toast.is-open { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.dash-toast__btn {
+  background: none; border: none; color: #fff; text-decoration: underline;
+  font-weight: 700; font-size: var(--fs-sm); font-family: inherit; cursor: pointer;
+  padding: 6px 8px; -webkit-tap-highlight-color: transparent; flex: 0 0 auto;
+}
+
 /* Insignia Meta Tech Provider: pie de página. Viaja con el
    contenido — solo se ve al llegar al final del index, nunca
    flota sobre él. Centrada, discreta, intocable. */
@@ -312,25 +403,27 @@
     <a class="bk-btn bk-btn--ghost" href="clientes.html">Nuevo cliente</a>
   </div>
 
-  <!-- KPIs del día -->
+  <!-- KPIs del día: cada tarjeta navega a su lista ya filtrada -->
   <div class="dash-kpis" data-widget="kpis">
     <div class="bk-card bk-card--pad bk-card--raise dash-kpi">
+      <a class="dash-kpi__stretch" href="tareas.html?filtro=hoy" aria-label="Ver pendientes de hoy"></a>
       <div class="lab"><span class="ic ic--pend"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg></span>Pendientes hoy</div>
       <div class="val" id="kpi-pend">—</div>
-      <span class="bk-badge bk-badge--danger badge-top" id="kpi-pend-badge" hidden></span>
+      <a class="bk-badge bk-badge--danger badge-top" id="kpi-pend-badge" href="tareas.html?filtro=vencidas" aria-label="Ver tareas vencidas" hidden></a>
     </div>
-    <div class="bk-card bk-card--pad bk-card--raise dash-kpi">
+    <a class="bk-card bk-card--pad bk-card--raise dash-kpi" href="clientes.html?filtro=prospectos" aria-label="Ver prospectos">
       <div class="lab"><span class="ic ic--pros"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path stroke-linecap="round" d="M2 20a7 7 0 0114 0M17 8h5M19.5 5.5v5"/></svg></span>Prospectos</div>
       <div class="val" id="kpi-pros">—</div>
-    </div>
-    <div class="bk-card bk-card--pad bk-card--raise dash-kpi">
+    </a>
+    <a class="bk-card bk-card--pad bk-card--raise dash-kpi" href="clientes.html?filtro=cierres&periodo=mes" aria-label="Ver cierres del mes">
       <div class="lab"><span class="ic ic--cierre"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg></span>Cierres del mes</div>
       <div class="val" id="kpi-cierre">—</div>
-    </div>
-    <div class="bk-card bk-card--pad bk-card--raise dash-kpi">
+    </a>
+    <a class="bk-card bk-card--pad bk-card--raise dash-kpi" href="estadisticas.html" aria-label="Ver estadísticas — avance del día">
       <div class="lab"><span class="ic ic--avance"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 14l3-3 3 3 5-6"/></svg></span>Avance del día</div>
       <div class="val" id="kpi-avance">—</div>
-    </div>
+      <div class="sub">Pendientes, prospectos y cierres vs. tu meta</div>
+    </a>
   </div>
 
   <div class="dash-grid" id="dash-grid">
@@ -339,9 +432,11 @@
         <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
         <h3>Requiere tu atención</h3>
         <span class="bk-badge bk-badge--danger" id="aten-count" hidden></span>
+        <button class="link aten-poner-al-dia-btn" type="button" id="aten-poner-al-dia" hidden>Poner al día</button>
         <a class="link" href="tareas.html">Ver todas →</a>
       </div>
       <div id="aten-lista"></div>
+      <a class="link aten-vermas" id="aten-vermas" href="tareas.html" hidden>Ver las otras <span id="aten-vermas-n"></span> →</a>
       <div class="dash-vacio" id="aten-vacio" hidden>Todo al día. Sin pendientes vencidos ni tareas para hoy.</div>
     </div>
 
@@ -379,6 +474,31 @@
   <!-- Pie: insignia Meta Tech Provider -->
   <div class="dash-meta" aria-label="Meta Tech Provider">
     <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
+  </div>
+
+  <!-- Sheet: Poner al día (mover/resolver todas las vencidas de una vez) -->
+  <div class="podia-back" id="podia-back" hidden></div>
+  <div class="podia-panel" id="podia-sheet" role="dialog" aria-modal="true" aria-labelledby="podia-titulo" hidden>
+    <div class="bk-sheet__grip"></div>
+    <div class="bk-sheet__eyebrow" id="podia-titulo">Poner al día</div>
+    <p class="bk-hint podia-sub" id="podia-sub"></p>
+    <button class="bk-sheet__item podia-item" type="button" id="podia-manana">
+      <span class="bk-sheet__ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+      <span>Mover todas a mañana</span>
+    </button>
+    <button class="bk-sheet__item podia-item" type="button" id="podia-fecha-btn">
+      <span class="bk-sheet__ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18M8 15h.01M12 15h.01M16 15h.01"/></svg></span>
+      <span>Mover todas a una fecha</span>
+    </button>
+    <div class="podia-fecha-wrap" id="podia-fecha-wrap" hidden>
+      <input class="bk-input" type="date" id="podia-fecha-input"/>
+      <button class="bk-btn bk-btn--forest" type="button" id="podia-fecha-confirmar">Mover</button>
+    </div>
+    <button class="bk-sheet__item podia-item" type="button" id="podia-hechas">
+      <span class="bk-sheet__ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg></span>
+      <span>Marcar todas como hechas</span>
+    </button>
+    <button class="bk-btn bk-btn--ghost podia-cancelar" type="button" id="podia-cerrar">Cancelar</button>
   </div>
 
 </div>
@@ -606,14 +726,22 @@ window.addEventListener('brokr-shell-ready', async (e) => {
      relación entre los dos números. Ahora se cuenta una sola vez aquí y
      se reparte a cargarKpis/cargarAtencion como parámetro. */
   const hoyInicioGlobal = new Date(); hoyInicioGlobal.setHours(0,0,0,0);
-  const tVencidasProm = fxCount(
-    'tareas?select=id&completada=eq.false&fecha_entrega=not.is.null&fecha_entrega=lt.' +
-    encodeURIComponent(hoyInicioGlobal.toISOString()));
+  function contarVencidas() {
+    return fxCount(
+      'tareas?select=id&completada=eq.false&fecha_entrega=not.is.null&fecha_entrega=lt.' +
+      encodeURIComponent(hoyInicioGlobal.toISOString()));
+  }
+  // Refresca los tres lugares que dependen de tVencidas a la vez —
+  // se llama después de cualquier acción que pueda cambiar el número
+  // (marcar una hecha, o "Poner al día").
+  async function refrescarVencidas() {
+    const t = await contarVencidas();
+    cargarKpis(t);
+    cargarAtencion(t);
+    return t;
+  }
 
-  tVencidasProm.then(tVencidas => {
-    cargarKpis(tVencidas);
-    cargarAtencion(tVencidas);
-  });
+  refrescarVencidas();
   cargarLeads();
   cargarPipeline();
   cargarInmuebles();
@@ -670,53 +798,137 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     }
   }
 
-  /* ── Requiere tu atención: vencidas + tareas de hoy, resolubles aquí ──
-     El badge de esta tarjeta usa tVencidas (la MISMA cuenta del subtítulo
-     y del KPI) — nunca filas.length, que solo refleja cuántas filas trajo
-     esta query en particular (vencidas + hoy, cortada a 8) y por eso podía
-     mostrar un número distinto al de arriba sin ninguna relación entre sí. */
+  /* ── Requiere tu atención: vencidas + hoy + esta semana, agrupadas ──
+     El badge usa tVencidas (la MISMA cuenta del subtítulo y del KPI) —
+     nunca cuántas filas se alcanzan a pintar, que es un número aparte y
+     ahora vive en "Ver las otras N →". Máximo 3 filas visibles, agrupadas
+     por encabezado y ordenadas por fecha ascendente; el resto solo se
+     cuenta, no se pinta (así la home no se vuelve un scroll infinito). */
+  function finDeSemana(desde) {
+    const f = new Date(desde);
+    f.setDate(f.getDate() + ((7 - f.getDay()) % 7));
+    f.setHours(23,59,59,999);
+    return f;
+  }
+  function limpiarTituloTarea(t) {
+    // "Quita el precio del título": una tarea creada desde WhatsApp puede
+    // traer el precio del inmueble pegado al final ("... - $2,977,000 MXN").
+    // Nunca toca títulos escritos a mano que no calcen con ese patrón.
+    return String(t || 'Tarea')
+      .replace(/\s*[-–—]\s*\$\s*[\d.,]+\s*(MXN|USD)?\s*$/i, '')
+      .trim() || 'Tarea';
+  }
+  function fmtRelativo(fecha, ahora) {
+    const d0 = new Date(fecha); d0.setHours(0,0,0,0);
+    const h0 = new Date(ahora); h0.setHours(0,0,0,0);
+    const dias = Math.round((h0 - d0) / 86400000);
+    if (dias > 0) return 'Vencida hace ' + dias + (dias === 1 ? ' día' : ' días');
+    if (dias === 0) return 'Hoy · ' + fecha.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+    if (dias === -1) return 'Mañana';
+    return 'En ' + Math.abs(dias) + ' días';
+  }
+  // "Nunca una inicial suelta": si el contacto vinculado no tiene nombre
+  // real (vacío o de una sola letra), se prefiere su teléfono, y si
+  // tampoco hay teléfono, un rótulo explícito en vez de adivinar.
+  function nombreContacto(c) {
+    if (!c) return '';
+    const n = (c.nombre || '').trim();
+    if (n.length >= 2) return n;
+    if (c.telefono) return String(c.telefono);
+    return 'Contacto sin nombre';
+  }
+
   async function cargarAtencion(tVencidas) {
     const lista = document.getElementById('aten-lista');
     const vacio = document.getElementById('aten-vacio');
     const count = document.getElementById('aten-count');
+    const vermas = document.getElementById('aten-vermas');
+    const vermasN = document.getElementById('aten-vermas-n');
+    const btnPonerAlDia = document.getElementById('aten-poner-al-dia');
+
+    if (count) { count.hidden = tVencidas <= 0; if (tVencidas > 0) count.textContent = tVencidas + (tVencidas === 1 ? ' vencida' : ' vencidas'); }
+    if (btnPonerAlDia) btnPonerAlDia.hidden = tVencidas <= 0;
+
     const hoyFin = new Date(); hoyFin.setHours(23,59,59,999);
-    const filas = await fxRest(
-      'tareas?select=id,titulo,fecha_entrega&completada=eq.false&fecha_entrega=not.is.null' +
-      '&fecha_entrega=lte.' + encodeURIComponent(hoyFin.toISOString()) +
-      '&order=fecha_entrega.asc&limit=8');
-    if (!Array.isArray(filas) || !filas.length) { vacio.hidden = false; return; }
+    const finSemana = finDeSemana(hoyInicioGlobal);
+    const filtro = 'completada=eq.false&fecha_entrega=not.is.null&fecha_entrega=lte.' + encodeURIComponent(finSemana.toISOString());
+    const [filas, totalReal] = await Promise.all([
+      fxRest('tareas?select=id,titulo,fecha_entrega,contacto_id,propiedad_id&' + filtro + '&order=fecha_entrega.asc&limit=30'),
+      fxCount('tareas?select=id&' + filtro),
+    ]);
+    if (!Array.isArray(filas) || !filas.length) { vacio.hidden = false; lista.innerHTML = ''; vermas.hidden = true; return; }
+    vacio.hidden = true;
+
+    // Enriquecer con el contacto/inmueble vinculado — el título libre de
+    // la tarea no es confiable para reconstruir "acción + nombre" (lo
+    // escribe cada quien a su manera), pero el vínculo estructurado sí.
+    const idsContacto = [...new Set(filas.map(t => t.contacto_id).filter(Boolean))];
+    const idsProp = [...new Set(filas.map(t => t.propiedad_id).filter(Boolean))];
+    const [contactosRows, propsRows] = await Promise.all([
+      idsContacto.length ? fxRest('contactos?select=id,nombre,telefono&id=in.(' + idsContacto.map(id => encodeURIComponent(id)).join(',') + ')') : [],
+      idsProp.length ? fxRest('propiedades?select=id,titulo,clave_interna&id=in.(' + idsProp.map(id => encodeURIComponent(id)).join(',') + ')') : [],
+    ]);
+    const contactoIdx = {}; (Array.isArray(contactosRows) ? contactosRows : []).forEach(c => contactoIdx[String(c.id)] = c);
+    const propIdx = {}; (Array.isArray(propsRows) ? propsRows : []).forEach(p => propIdx[String(p.id)] = p);
+
     const ahora = new Date();
-    const vencidasEnLista = filas.filter(t => new Date(t.fecha_entrega) < ahora).length;
-    if (count) {
-      if (tVencidas > 0) {
-        count.textContent = vencidasEnLista < tVencidas
-          ? (vencidasEnLista + ' de ' + tVencidas + ' vencidas')
-          : (tVencidas + (tVencidas === 1 ? ' vencida' : ' vencidas'));
-        count.hidden = false;
-      } else {
-        count.hidden = true;
-      }
-    }
-    lista.innerHTML = filas.map(t => {
+    const grupos = [
+      { titulo: 'Vencidas', items: [] },
+      { titulo: 'Hoy', items: [] },
+      { titulo: 'Esta semana', items: [] },
+    ];
+    filas.forEach(t => {
       const d = new Date(t.fecha_entrega);
-      const vencida = d < ahora;
-      const fmt = d.toLocaleDateString('es-MX', { day:'2-digit', month:'short' }) + ' · ' +
-        d.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+      (d < hoyInicioGlobal ? grupos[0] : d <= hoyFin ? grupos[1] : grupos[2]).items.push(t);
+    });
+
+    const MAX_VISIBLE = 3;
+    let mostrados = 0;
+    const bloques = [];
+    for (const g of grupos) {
+      if (!g.items.length || mostrados >= MAX_VISIBLE) continue;
+      const visibles = g.items.slice(0, MAX_VISIBLE - mostrados);
+      mostrados += visibles.length;
+      bloques.push({ titulo: g.titulo, items: visibles });
+    }
+
+    function filaHTML(t) {
+      const d = new Date(t.fecha_entrega);
+      const vencida = d < hoyInicioGlobal;
+      const c = t.contacto_id ? contactoIdx[String(t.contacto_id)] : null;
+      const p = t.propiedad_id ? propIdx[String(t.propiedad_id)] : null;
+      const piezas = [esc(fmtRelativo(d, ahora))];
+      if (p) piezas.push(esc(p.clave_interna || p.titulo || 'Inmueble'));
+      if (c) piezas.push(esc(nombreContacto(c)));
+      const tel = c && c.telefono ? String(c.telefono).replace(/\D/g, '') : '';
       const ico = vencida
         ? '<span class="aten-item__ic aten-item__ic--vencida"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg></span>'
         : '<span class="aten-item__ic aten-item__ic--hoy"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>';
+      const waBtn = tel
+        ? '<button class="bk-icon-btn bk-icon-btn--sm" type="button" data-wa="' + esc(tel) + '" data-nombre="' + esc(nombreContacto(c)) + '" data-tarea="' + esc(limpiarTituloTarea(t.titulo)) + '" title="Escribir por WhatsApp" aria-label="Escribir por WhatsApp">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39a9.9 9.9 0 004.75 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm0 1.67c4.55 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.24 8.24a8.2 8.2 0 01-4.19-1.15l-.3-.18-3.14.82.84-3.06-.2-.32a8.18 8.18 0 01-1.26-4.35c0-4.55 3.7-8.24 8.25-8.24zm-4.6 4.35c-.16 0-.42.06-.65.31-.22.25-.86.84-.86 2.05 0 1.2.88 2.37 1 2.53.13.17 1.72 2.7 4.22 3.71.59.24 1.06.38 1.42.49.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.2-.58.2-1.07.14-1.18-.06-.1-.23-.16-.48-.29-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.78.98-.14.17-.29.19-.53.06-.25-.13-1.03-.38-1.97-1.22-.73-.65-1.22-1.45-1.36-1.7-.14-.25-.02-.38.11-.5.11-.12.25-.29.37-.44.12-.15.16-.25.24-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.37-.78-1.87-.2-.49-.41-.42-.56-.43z"/></svg></button>'
+        : '';
       return '<div class="aten-item" data-id="' + esc(t.id) + '">' + ico +
         '<div class="aten-item__main">' +
-          '<div class="aten-item__t">' + esc(t.titulo || 'Tarea') + '</div>' +
-          '<div class="aten-item__d' + (vencida ? ' is-vencida' : '') + '">' + (vencida ? 'Vencida · ' : 'Hoy · ') + fmt + '</div>' +
+          '<div class="aten-item__t">' + esc(limpiarTituloTarea(t.titulo)) + '</div>' +
+          '<div class="aten-item__d' + (vencida ? ' is-vencida' : '') + '">' + piezas.join(' · ') + '</div>' +
         '</div>' +
-        '<div class="aten-item__acts">' +
-          '<a class="bk-icon-btn bk-icon-btn--sm" href="tareas.html" title="Reagendar en Tareas">' +
+        '<div class="aten-item__acts">' + waBtn +
+          '<a class="bk-icon-btn bk-icon-btn--sm" href="tareas.html" title="Reagendar en Tareas" aria-label="Reagendar en Tareas">' +
             '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg></a>' +
-          '<button class="bk-icon-btn bk-icon-btn--sm" type="button" data-done title="Marcar hecha">' +
+          '<button class="bk-icon-btn bk-icon-btn--sm" type="button" data-done title="Marcar hecha" aria-label="Marcar hecha">' +
             '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg></button>' +
         '</div></div>';
-    }).join('');
+    }
+
+    lista.innerHTML = bloques.map(b =>
+      '<div class="aten-grupo__h">' + esc(b.titulo) + '</div>' + b.items.map(filaHTML).join('')
+    ).join('');
+
+    const restantes = Math.max(0, totalReal - mostrados);
+    if (restantes > 0) { vermasN.textContent = String(restantes); vermas.hidden = false; }
+    else vermas.hidden = true;
+
     lista.querySelectorAll('[data-done]').forEach(btn => {
       btn.addEventListener('click', async () => {
         const item = btn.closest('.aten-item');
@@ -727,16 +939,50 @@ window.addEventListener('brokr-shell-ready', async (e) => {
             await window.brokrSb.rest('tareas?id=eq.' + encodeURIComponent(id),
               { method: 'PATCH', body: { completada: true, fecha_completada: new Date().toISOString() } });
           }
-          // Marcar una vencida como hecha cambia tVencidas — se recalcula
-          // una sola vez y se reparte de nuevo a los tres lugares.
-          const tVencidasFresco = await fxCount(
-            'tareas?select=id&completada=eq.false&fecha_entrega=not.is.null&fecha_entrega=lt.' +
-            encodeURIComponent(hoyInicioGlobal.toISOString()));
-          cargarKpis(tVencidasFresco);
-          cargarAtencion(tVencidasFresco);
+          refrescarVencidas();
         } catch (err) { item.classList.remove('is-done'); }
       });
     });
+    lista.querySelectorAll('[data-wa]').forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const plantilla = 'Hola' + (btn.dataset.nombre && btn.dataset.nombre !== 'Contacto sin nombre' ? ' ' + btn.dataset.nombre : '') +
+          ', te escribo por: ' + btn.dataset.tarea;
+        abrirWhatsApp(btn.dataset.wa, plantilla);
+      });
+    });
+  }
+
+  /* ── WhatsApp: mismo criterio que contactos.html/clientes.html ──
+     Con el módulo de WhatsApp de Broquer conectado, abre el chat DENTRO
+     de Broquer (no admite plantilla propia, pero ahí ya se escribe en un
+     chat completo). Sin él, abre WhatsApp normal (wa.me) con el mensaje
+     precargado. */
+  let _waModulo = null;
+  async function _waVerificarModulo() {
+    try {
+      const cacheado = sessionStorage.getItem('brokr_wa_modulo');
+      if (cacheado !== null) { _waModulo = cacheado === '1'; return; }
+    } catch(_){}
+    try {
+      const tok = window.brokrSb ? await window.brokrSb.ensureToken() : null;
+      if (!tok) { _waModulo = false; return; }
+      const r = await fetch('https://api.broquer.app/whatsapp2/numeros', { headers: { Authorization: 'Bearer ' + tok } });
+      if (!r.ok) { _waModulo = false; return; }
+      const d = await r.json();
+      _waModulo = Array.isArray(d.numeros) && d.numeros.length > 0;
+    } catch(_) { _waModulo = false; }
+    try { sessionStorage.setItem('brokr_wa_modulo', _waModulo ? '1' : '0'); } catch(_){}
+  }
+  async function abrirWhatsApp(tel, plantilla) {
+    const digits = String(tel || '').replace(/\D/g, '');
+    if (!digits) return;
+    if (_waModulo === null) await _waVerificarModulo();
+    if (_waModulo) {
+      location.href = 'whatsapp.html?tel=' + digits;
+    } else {
+      window.open('https://wa.me/52' + digits + (plantilla ? '?text=' + encodeURIComponent(plantilla) : ''), '_blank');
+    }
   }
 
   /* ── Leads sin responder (chats de WhatsApp con no leídos) ──
@@ -830,7 +1076,146 @@ window.addEventListener('brokr-shell-ready', async (e) => {
       '</a>';
     }).join('');
   }
+
+  /* ── Poner al día: resolver todas las vencidas de un jalón ──
+     Siempre actúa sobre las VENCIDAS (no las de hoy/semana) — es
+     justo la lista que el usuario ya "abandonó" (pendientes desde el
+     21 de julio, en el caso que motivó esto). Cada acción pide
+     confirmación (es sobre TODAS las vencidas, no una) y da 5
+     segundos para deshacer por un toast, porque un cambio en bloque
+     sin awareness de qué tocó exactamente es peligroso. */
+  (function () {
+    const back = document.getElementById('podia-back');
+    const sheet = document.getElementById('podia-sheet');
+    const sub = document.getElementById('podia-sub');
+    const btnManana = document.getElementById('podia-manana');
+    const btnFechaAbrir = document.getElementById('podia-fecha-btn');
+    const fechaWrap = document.getElementById('podia-fecha-wrap');
+    const fechaInput = document.getElementById('podia-fecha-input');
+    const btnFechaConfirmar = document.getElementById('podia-fecha-confirmar');
+    const btnHechas = document.getElementById('podia-hechas');
+    const btnCerrar = document.getElementById('podia-cerrar');
+    const abridor = document.getElementById('aten-poner-al-dia');
+    if (!back || !sheet || !abridor) return;
+
+    let focoPrevio = null;
+    function focosDelSheet() {
+      return Array.from(sheet.querySelectorAll('button, input'))
+        .filter(el => !el.disabled && el.offsetParent !== null);
+    }
+    function onKeydown(e) {
+      if (e.key === 'Escape') { e.preventDefault(); cerrar(); return; }
+      if (e.key !== 'Tab') return;
+      // Foco atrapado: Tab/Shift+Tab no debe salirse del sheet mientras está abierto.
+      const focos = focosDelSheet();
+      if (!focos.length) return;
+      const primero = focos[0], ultimo = focos[focos.length - 1];
+      if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
+      else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
+    }
+    function abrir() {
+      focoPrevio = document.activeElement;
+      fechaWrap.hidden = true;
+      sub.textContent = 'Actúa sobre tus tareas vencidas.';
+      back.hidden = false; sheet.hidden = false;
+      requestAnimationFrame(() => { back.classList.add('is-open'); sheet.classList.add('is-open'); });
+      document.body.style.overflow = 'hidden'; // el fondo no se mueve mientras el sheet está abierto
+      document.addEventListener('keydown', onKeydown);
+      const primero = focosDelSheet()[0];
+      if (primero) primero.focus();
+    }
+    function cerrar() {
+      back.classList.remove('is-open'); sheet.classList.remove('is-open');
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', onKeydown);
+      setTimeout(() => { back.hidden = true; sheet.hidden = true; }, 220);
+      if (focoPrevio && focoPrevio.focus) focoPrevio.focus();
+    }
+
+    abridor.addEventListener('click', abrir);
+    btnCerrar.addEventListener('click', cerrar);
+    back.addEventListener('click', cerrar);
+    btnFechaAbrir.addEventListener('click', () => {
+      fechaWrap.hidden = !fechaWrap.hidden;
+      if (!fechaWrap.hidden) {
+        const hoyStr = new Date().toISOString().slice(0, 10);
+        fechaInput.min = hoyStr; fechaInput.value = hoyStr;
+        fechaInput.focus();
+      }
+    });
+
+    async function obtenerVencidas() {
+      const filas = await fxRest(
+        'tareas?select=id,fecha_entrega&completada=eq.false&fecha_entrega=not.is.null&fecha_entrega=lt.' +
+        encodeURIComponent(hoyInicioGlobal.toISOString()) + '&limit=500');
+      return Array.isArray(filas) ? filas : [];
+    }
+
+    async function aplicarEnBloque(cambios, mensajeExito) {
+      const filas = await obtenerVencidas();
+      if (!filas.length) { cerrar(); return; }
+      const anteriores = filas.map(f => ({ id: f.id, fecha_entrega: f.fecha_entrega }));
+      cerrar();
+      const listaIn = filas.map(f => encodeURIComponent(f.id)).join(',');
+      try {
+        if (window.brokrSb && window.brokrSb.rest) {
+          await window.brokrSb.rest('tareas?id=in.(' + listaIn + ')', { method: 'PATCH', body: cambios });
+        }
+      } catch (err) { mostrarToastDeshacer('No se pudo actualizar. Intenta de nuevo.', null); return; }
+      refrescarVencidas();
+      mostrarToastDeshacer(mensajeExito, async () => {
+        // Deshacer: cada tarea regresa a SU fecha_entrega original —
+        // no todas a una fecha compartida, que sería incorrecto.
+        try {
+          await Promise.all(anteriores.map(a => window.brokrSb && window.brokrSb.rest
+            ? window.brokrSb.rest('tareas?id=eq.' + encodeURIComponent(a.id),
+                { method: 'PATCH', body: { fecha_entrega: a.fecha_entrega, completada: false, fecha_completada: null } })
+            : Promise.resolve()));
+        } catch (_) {}
+        refrescarVencidas();
+      });
+    }
+
+    btnManana.addEventListener('click', () => {
+      if (!confirm('¿Mover todas tus tareas vencidas a mañana?')) return;
+      const manana = new Date(); manana.setDate(manana.getDate() + 1); manana.setHours(9, 0, 0, 0);
+      aplicarEnBloque({ fecha_entrega: manana.toISOString() }, 'Tareas movidas a mañana');
+    });
+    btnFechaConfirmar.addEventListener('click', () => {
+      const val = fechaInput.value;
+      if (!val) return;
+      if (!confirm('¿Mover todas tus tareas vencidas al ' + val + '?')) return;
+      const f = new Date(val + 'T09:00:00');
+      aplicarEnBloque({ fecha_entrega: f.toISOString() }, 'Tareas movidas de fecha');
+    });
+    btnHechas.addEventListener('click', () => {
+      if (!confirm('¿Marcar TODAS tus tareas vencidas como hechas?')) return;
+      aplicarEnBloque({ completada: true, fecha_completada: new Date().toISOString() }, 'Tareas marcadas como hechas');
+    });
+  })();
 });
+
+/* ── Toast con Deshacer (5s) ──
+   Para acciones en bloque: son destructivas y el usuario no ve una por
+   una qué se tocó, así que siempre hay ventana para arrepentirse. */
+function mostrarToastDeshacer(texto, onDeshacer) {
+  const toast = document.createElement('div');
+  toast.className = 'dash-toast';
+  toast.innerHTML = '<span>' + texto + '</span>' +
+    (onDeshacer ? '<button type="button" class="dash-toast__btn">Deshacer</button>' : '');
+  document.body.appendChild(toast);
+  let resuelto = false;
+  const quitar = () => { toast.classList.remove('is-open'); setTimeout(() => toast.remove(), 250); };
+  const btn = toast.querySelector('.dash-toast__btn');
+  if (btn) btn.addEventListener('click', () => {
+    if (resuelto) return;
+    resuelto = true;
+    onDeshacer();
+    quitar();
+  });
+  requestAnimationFrame(() => toast.classList.add('is-open'));
+  setTimeout(() => { if (!resuelto) quitar(); }, 5000);
+}
 </script>
 
 <!-- ═══ Agendar demo ═══ -->
