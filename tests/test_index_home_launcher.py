@@ -55,7 +55,7 @@ class HomeLauncherTests(unittest.TestCase):
 
         const _els = {};
         ['home-phrase', 'home-kpi-activos', 'home-kpi-pros', 'home-kpi-cierres',
-         'home-avatar', 'home-grid-mas'].forEach(id => { _els[id] = fakeEl(id); });
+         'home-avatar', 'home-more-menu'].forEach(id => { _els[id] = fakeEl(id); });
 
         const document = {
           getElementById: (id) => _els[id] || null,
@@ -82,7 +82,7 @@ class HomeLauncherTests(unittest.TestCase):
             cierres: _els['home-kpi-cierres'].textContent,
             avatarText: _els['home-avatar'].textContent,
             avatarHtml: _els['home-avatar'].innerHTML,
-            masHtml: _els['home-grid-mas'].innerHTML,
+            masHtml: _els['home-more-menu'].innerHTML,
             ultimaCarga: _stores.local['brokr_ultima_carga'] || null,
           }}));
           process.exit(0); // el script deja un setInterval vivo (rotación de frases)
