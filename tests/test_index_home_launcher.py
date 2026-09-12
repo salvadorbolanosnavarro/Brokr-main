@@ -55,7 +55,7 @@ class HomeLauncherTests(unittest.TestCase):
 
         const _els = {};
         ['home-phrase', 'home-kpi-activos', 'home-kpi-pros', 'home-kpi-cierres',
-         'home-avatar', 'home-more-menu'].forEach(id => { _els[id] = fakeEl(id); });
+         'home-avatar', 'home-avatar-menu'].forEach(id => { _els[id] = fakeEl(id); });
 
         const document = {
           getElementById: (id) => _els[id] || null,
@@ -82,7 +82,7 @@ class HomeLauncherTests(unittest.TestCase):
             cierres: _els['home-kpi-cierres'].textContent,
             avatarText: _els['home-avatar'].textContent,
             avatarHtml: _els['home-avatar'].innerHTML,
-            masHtml: _els['home-more-menu'].innerHTML,
+            menuHtml: _els['home-avatar-menu'].innerHTML,
             ultimaCarga: _stores.local['brokr_ultima_carga'] || null,
           }}));
           process.exit(0); // el script deja un setInterval vivo (rotación de frases)
@@ -124,19 +124,19 @@ class HomeLauncherTests(unittest.TestCase):
         )
         self.assertEqual(out["avatarText"], "AL")
 
-    def test_admin_no_ve_la_tarjeta_de_admin(self):
+    def test_sin_admin_no_aparece_el_enlace_de_admin(self):
         out = self._harness(
             fetch_impl=self._fetch_conteos(0, 0, 0),
             detail={"profile": {"user": {"id": "u1"}, "profile": {"nombre": "Ana"}, "isAdmin": False}},
         )
-        self.assertEqual(out["masHtml"], "")
+        self.assertEqual(out["menuHtml"], "")
 
-    def test_admin_si_ve_la_tarjeta_de_admin(self):
+    def test_solo_el_admin_ve_el_enlace_de_admin_en_su_menu(self):
         out = self._harness(
             fetch_impl=self._fetch_conteos(0, 0, 0),
             detail={"profile": {"user": {"id": "u1"}, "profile": {"nombre": "Ana"}, "isAdmin": True}},
         )
-        self.assertIn("admin.html", out["masHtml"])
+        self.assertIn("admin.html", out["menuHtml"])
 
     def test_guarda_la_hora_de_ultima_carga_exitosa(self):
         out = self._harness(
@@ -144,6 +144,17 @@ class HomeLauncherTests(unittest.TestCase):
             detail={"profile": {"user": {"id": "u1"}, "profile": {"nombre": "Ana"}, "isAdmin": False}},
         )
         self.assertIsNotNone(out["ultimaCarga"])
+
+    def test_mi_perfil_abre_el_drawer_real_no_mi_sitio(self):
+        # Bug real: "Mi perfil" es el drawer que ya existe en toda la app
+        # (window.openProfileDrawer, definido en app-shell.js) — no
+        # mi-sitio.html, que es el sitio público del agente, un módulo
+        # aparte que sigue teniendo su propia tarjeta "Mi sitio".
+        html = HTML.read_text(encoding="utf-8")
+        self.assertIn("window.openProfileDrawer", html)
+        self.assertIn(">Mi perfil<", html)
+        self.assertIn(">Mi sitio<", html)
+        self.assertIn('href="mi-sitio.html"', html)
 
     def test_files_compile(self):
         import tempfile
