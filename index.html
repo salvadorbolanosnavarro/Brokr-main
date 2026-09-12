@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <!-- Sin maximum-scale/user-scalable: bloquear el pinch-zoom viola WCAG 1.4.4
-     y no deja acercarse a leer un precio. El único input de esta pantalla
-     (la fecha del sheet "Poner al día") ya usa un tamaño de letra de 16px
-     (ver brokr-theme.css), la forma correcta de evitar el zoom-al-enfocar
-     de iOS sin matar el zoom general. -->
+     y no deja acercarse a leer algo. Ningún input vive en esta pantalla. -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Broquer — Inicio</title>
 <link rel="manifest" href="manifest.json"/>
@@ -17,32 +14,24 @@
 <meta name="apple-mobile-web-app-title" content="Broquer"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
-/* ─── Dashboard — canon, segunda generación ──────────────────────
-   El inicio deja de ser una postal y se vuelve el escritorio del
-   agente: saludo con lo que urge, acciones de un clic, KPIs del
-   día, lo que requiere atención (con resolver desde aquí), leads
-   sin responder, pipeline e inventario reciente. Navy manda en el
-   hero; todo lo demás son cards blancas con hairlines. ⌘K abre la
-   paleta de comandos para brincar a cualquier módulo o acción. */
-
-/* ═══ AUDIT-EXEMPT: alfas sobre navy (no existen como token global) ═══ */
-:root {
-  --dx-on-navy:       #FFFFFF;
-  --dx-on-navy-dim:   rgba(255,255,255,.76);
-  --dx-on-navy-faint: rgba(255,255,255,.52);
-  --dx-vidrio:        rgba(255,255,255,.10);
-  --dx-vidrio-hover:  rgba(255,255,255,.16);
-  --dx-line-on-navy:  rgba(255,255,255,.16);
-}
-/* ═══ /AUDIT-EXEMPT ═══ */
+/* ─── Home — tercera generación: launcher de módulos ──────────────
+   El inicio deja de ser un dashboard operativo (KPIs del día, tareas,
+   leads, pipeline, inventario) y se vuelve la puerta de entrada a toda
+   la app: una barra superior con la foto del agente, una frase y el
+   logotipo; debajo, las 3 cifras que de verdad importan para el
+   negocio; debajo de eso, todos los módulos en tarjetas agrupadas
+   exactamente como en el rail lateral, para que el mapa mental sea el
+   mismo en las dos superficies. El rail/topbar/mobile-head compartidos
+   (app-shell.js) se ocultan SOLO en esta pantalla — el resto de la app
+   no cambia. */
 
 .dash-scroll {
-  padding: 14px 28px 48px; max-width: 1180px; margin: 0 auto;
+  padding: 0 28px 48px; max-width: 1180px; margin: 0 auto;
   font-family: var(--font-sans);
   color: var(--ink);
   letter-spacing: -0.012em;
 }
-@media (max-width: 720px) { .dash-scroll { padding: 12px 14px 40px; } }
+@media (max-width: 720px) { .dash-scroll { padding: 0 14px 40px; } }
 
 /* ── Banner "sin conexión" — discreto, arriba de todo lo demás ──
    El bug real de por qué seguía apareciendo con la conexión bien: esta
@@ -57,317 +46,133 @@
   background: var(--warn-soft); color: var(--warn);
   border-radius: var(--r-sm); padding: 8px 14px;
   font-size: var(--fs-xs); font-weight: 600;
-  margin-bottom: var(--sp-3);
+  margin: 14px 0 0;
 }
 
-/* ── Cabecera: saludo + buscar + personalizar ── */
-.dash-top {
-  display: flex; align-items: flex-start; gap: var(--sp-4);
-  margin-bottom: var(--sp-4);
+/* ── Ocultar el rail/topbar/mobile-head compartidos SOLO aquí ──
+   .bk-content ya es flex:1 (ver app-shell.js), así que al quitar el
+   rail (flex-shrink:0, ancho fijo) el contenido reclama el ancho
+   completo sin tocar esa regla. Especificidad (0,2,1) le gana a la
+   de las reglas compartidas (incluida su @media) sin importar el
+   orden de inyección en el <head>. */
+body[data-app="home"] .bk-sidebar,
+body[data-app="home"] .bk-mobile-head,
+body[data-app="home"] .bk-topbar {
+  display: none;
 }
-.dash-greet { flex: 1 1 auto; min-width: 0; }
-.dash-greet h1 {
-  font-size: var(--fs-h2); font-weight: 800; letter-spacing: -0.025em;
-  color: var(--ink); line-height: 1.15;
-}
-.dash-greet p { font-size: var(--fs-sm); color: var(--mute); margin-top: 3px; }
-.dash-greet p b { color: var(--danger); font-weight: 700; }
-.dash-greet p b.is-ok { color: var(--success); }
 
-.dash-search {
-  flex: 0 1 340px;
-  display: none; align-items: center; gap: var(--sp-2);
-  border: 1px solid var(--line-2); background: var(--paper);
-  border-radius: var(--r-pill); padding: 10px 14px;
-  color: var(--mute); font-size: var(--fs-sm); font-family: inherit;
-  cursor: pointer; text-align: left;
-  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+/* ── Barra superior propia: perfil · frase · logotipo ──
+   Pegada arriba (el scroll real de la app es #bk-page, inyectado por
+   app-shell.js — position:sticky ya es un patrón usado en todos los
+   módulos sobre ese mismo contenedor). */
+.home-top {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; gap: var(--sp-4);
+  padding: 14px 0;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
 }
-.dash-search:hover { border-color: var(--sky-blue); color: var(--ink-2); }
-.dash-search svg { flex: 0 0 auto; }
-.dash-search .kbd {
-  margin-left: auto; font-size: var(--fs-xs); font-weight: 600;
-  color: var(--mute); border: 1px solid var(--line); border-radius: var(--r-xs);
-  padding: 1px 6px; background: var(--paper-2);
+.home-avatar {
+  flex: 0 0 auto; width: 44px; height: 44px; border-radius: var(--r-pill);
+  border: none; padding: 0; cursor: pointer; overflow: hidden;
+  background: var(--sky-navy); color: #FFFFFF;
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--fs-sm); font-weight: 700;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-@media (min-width: 900px) { .dash-search { display: inline-flex; } }
+.home-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.home-avatar:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.home-avatar:focus-visible { outline: none; box-shadow: var(--focus); }
+.home-phrase {
+  flex: 1 1 auto; min-width: 0;
+  text-align: center;
+  font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  opacity: 0; transition: opacity .4s var(--ease);
+}
+.home-phrase.is-visible { opacity: 1; }
+.home-phrase .quote-author { color: var(--mute); font-weight: 500; }
+.home-phrase .quote-author::before { content: ' — '; }
+@media (max-width: 640px) {
+  /* En una línea no cabe la cita completa en un teléfono: se permite
+     una segunda línea y se quita el truncado agresivo. */
+  .home-phrase { white-space: normal; -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--fs-xs); }
+}
+.home-logo { flex: 0 0 auto; height: 79px; width: auto; display: block; margin: -21px 0; }
+/* logo-broquer.png es un trazo oscuro pensado para fondo claro; bajo
+   modo oscuro el fondo de .home-top se invierte (var(--paper)) y el
+   logo se volvería invisible sin este ajuste. Mismo patrón de guardas
+   que el resto del modo oscuro (ver brokr-theme.css). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .home-logo { filter: brightness(0) invert(1); }
+}
+:root[data-theme="dark"] .home-logo { filter: brightness(0) invert(1); }
 
-/* ── Lápiz de personalización (igual que antes) ── */
-.dash-pencil {
-  position: relative; flex: 0 0 auto;
-  width: 40px; height: 40px; border-radius: var(--r-pill);
-  border: 1px solid var(--line-2); background: var(--paper);
-  color: var(--mute); cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
-  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+/* ── Las 3 cifras que de verdad importan para una agencia ── */
+.home-kpis {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-4); margin: var(--sp-5) 0;
 }
-.dash-pencil:hover { color: var(--sky-blue); border-color: var(--sky-blue); }
-.dash-panel {
-  position: absolute; right: 28px; top: 64px; z-index: 50;
-  background: var(--paper); border: 1px solid var(--line-2);
-  border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
-  padding: var(--sp-4) var(--sp-5); min-width: 230px;
-  max-height: calc(100vh - 84px); overflow-y: auto; overscroll-behavior: contain;
-}
-.dash-panel__t { font-size: var(--fs-sm); font-weight: 700; margin-bottom: var(--sp-3); }
-.dash-panel__opt {
-  display: flex; align-items: center; gap: var(--sp-2);
-  font-size: var(--fs-sm); color: var(--ink-2); padding: 5px 0; cursor: pointer;
-}
-.dash-panel__listo {
-  display: block; width: 100%; margin-top: var(--sp-4);
-  position: sticky; bottom: -1px; /* pegado al fondo del panel si hace scroll */
-}
-[data-widget].is-off { display: none; }
-
-/* ── Acciones rápidas ── */
-.dash-qa { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-5); }
-
-/* ── KPIs ── */
-.dash-kpis {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: var(--sp-4); margin-bottom: var(--sp-5);
-}
-@media (max-width: 900px) { .dash-kpis { grid-template-columns: repeat(2, 1fr); } }
-.dash-kpi { position: relative; }
-.dash-kpi .lab {
+@media (max-width: 640px) { .home-kpis { grid-template-columns: 1fr; } }
+.home-kpi { text-decoration: none; color: inherit; display: block; -webkit-tap-highlight-color: transparent; transition: background var(--dur) var(--ease); }
+.home-kpi:active { background: var(--paper-2); }
+.home-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
+.home-kpi__lab {
   display: flex; align-items: center; gap: var(--sp-2);
   font-size: var(--fs-sm); color: var(--mute); font-weight: 600;
 }
-.dash-kpi .lab .ic {
-  width: 26px; height: 26px; border-radius: var(--r-xs);
+.home-kpi__ic {
+  width: 26px; height: 26px; border-radius: var(--r-xs); flex: 0 0 auto;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.dash-kpi .lab .ic--pend   { background: var(--danger-soft);  color: var(--danger); }
-.dash-kpi .lab .ic--pros   { background: var(--data-1-soft);  color: var(--data-1); }
-.dash-kpi .lab .ic--cierre { background: var(--data-2-soft);  color: var(--data-2); }
-.dash-kpi .lab .ic--avance { background: var(--data-5-soft);  color: var(--data-5); }
-.dash-kpi .val {
+.home-kpi__ic--1 { background: var(--data-1-soft); color: var(--data-1); }
+.home-kpi__ic--2 { background: var(--data-2-soft); color: var(--data-2); }
+.home-kpi__ic--3 { background: var(--data-3-soft); color: var(--data-3); }
+.home-kpi__val {
   font-size: var(--fs-h2); font-weight: 800; letter-spacing: -0.02em;
   margin-top: var(--sp-2); font-variant-numeric: tabular-nums;
 }
-.dash-kpi .val small { font-size: var(--fs-sm); color: var(--mute); font-weight: 600; }
-.dash-kpi .badge-top { position: absolute; top: var(--sp-4); right: var(--sp-4); z-index: 2; }
-.dash-kpi .sub { font-size: var(--fs-xs); color: var(--mute); margin-top: 2px; }
 
-/* Las 4 tarjetas KPI son destinos, no solo lectura: cada una navega a su
-   lista ya filtrada. "Pendientes hoy" necesita DOS destinos (la tarjeta
-   completa y el badge de vencidas por separado), y <a> dentro de <a> no
-   es válido HTML — así que ahí el <a> de la tarjeta es un "stretched
-   link" (cubre toda la tarjeta por debajo) y el badge es su propio <a>
-   posicionado encima, con más z-index, para que capture su propio tap. */
-a.dash-kpi, .dash-kpi__stretch { text-decoration: none; color: inherit; }
-a.dash-kpi { display: block; -webkit-tap-highlight-color: transparent; transition: background var(--dur) var(--ease); }
-a.dash-kpi:active { background: var(--paper-2); }
-a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
-.dash-kpi__stretch {
-  position: absolute; inset: 0; z-index: 1; border-radius: var(--r-lg); /* = .bk-card */
-  -webkit-tap-highlight-color: transparent;
-}
-.dash-kpi__stretch:focus-visible { outline: none; box-shadow: var(--focus); }
-@supports selector(:has(a)) {
-  .dash-kpi:has(.dash-kpi__stretch:active) { background: var(--paper-2); }
-}
-.badge-top:focus-visible { outline: none; box-shadow: var(--focus); }
-
-/* ── Grid principal ── */
-.dash-grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: var(--sp-5); align-items: start; }
-@media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } }
-.dash-widget.is-drag { opacity: .45; }
-.dash-widget.is-over { outline: 2px dashed var(--sky-blue); outline-offset: 4px; }
-.dash-drag {
-  cursor: grab; color: var(--mute); font-size: var(--fs-sm);
-  padding: 0 var(--sp-1) 0 0; user-select: none;
-}
-.dash-drag:active { cursor: grabbing; }
-@media (max-width: 900px) { .dash-drag { display: none; } }
-
-.dash-card-h {
-  display: flex; align-items: center; gap: var(--sp-2);
-  padding-bottom: var(--sp-3);
-}
-.dash-card-h h2 { font-size: var(--fs-h5); font-weight: 800; letter-spacing: -0.01em; margin: 0; }
-.dash-card-h .link {
-  margin-left: auto; font-size: var(--fs-sm); font-weight: 600;
-  color: var(--sky-blue); text-decoration: none;
-}
-.dash-card-h .link:hover { text-decoration: underline; }
-.dash-card-h button.link {
-  border: none; background: none; font: inherit; cursor: pointer; padding: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-.dash-card-h button.link + .link { margin-left: var(--sp-3); }
-
-/* ── Requiere tu atención ── */
-.aten-grupo__h {
-  font-size: var(--fs-xs); font-weight: 800; letter-spacing: .04em;
+/* ── Todos los módulos, agrupados igual que el rail lateral ── */
+.home-group { margin-bottom: var(--sp-6); }
+.home-group__h {
+  font-size: var(--fs-xs); font-weight: 800; letter-spacing: .06em;
   text-transform: uppercase; color: var(--mute);
-  margin: var(--sp-3) 0 var(--sp-1);
+  margin: 0 0 var(--sp-3);
 }
-.aten-grupo__h:first-child { margin-top: 0; }
-.link.aten-vermas[hidden] { display: none; }
-.link.aten-vermas {
-  display: block; text-align: center; margin-top: var(--sp-2);
-  padding: 10px 0; font-size: var(--fs-sm); font-weight: 600;
-  color: var(--sky-blue); text-decoration: none;
+.home-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: var(--sp-3);
 }
-.link.aten-vermas:hover { text-decoration: underline; }
-.aten-item {
-  display: flex; align-items: center; gap: var(--sp-3);
-  padding: var(--sp-3) 0; border-top: 1px solid var(--line);
+.home-card {
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
+  text-align: center; text-decoration: none; color: inherit;
+  padding: var(--sp-4) var(--sp-2);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.aten-item__ic {
-  flex: 0 0 auto; width: 36px; height: 36px; border-radius: var(--r-sm);
+.home-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); border-color: var(--line-2); }
+.home-card:active { transform: translateY(0); background: var(--paper-2); }
+.home-card:focus-visible { outline: none; box-shadow: var(--focus); }
+.home-card__ic {
+  width: 48px; height: 48px; border-radius: var(--r-sm); flex: 0 0 auto;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.aten-item__ic--vencida { background: var(--danger-soft); color: var(--danger); }
-.aten-item__ic--hoy     { background: var(--data-1-soft); color: var(--data-1); }
-.aten-item__main { flex: 1 1 auto; min-width: 0; }
-.aten-item__t {
-  font-size: var(--fs-sm); font-weight: 600;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.aten-item__d { font-size: var(--fs-xs); font-weight: 600; margin-top: 2px; color: var(--mute); }
-.aten-item__d.is-vencida { color: var(--danger); }
-.aten-item__acts { display: flex; gap: var(--sp-1); }
-@media (min-width: 900px) {
-  .aten-item__acts { opacity: 0; transition: opacity var(--dur) var(--ease); }
-  .aten-item:hover .aten-item__acts { opacity: 1; }
-}
-.aten-item.is-done { opacity: .45; }
-.aten-item.is-done .aten-item__t { text-decoration: line-through; }
+.home-card__ic svg { width: 22px; height: 22px; }
+.home-card__ic--1 { background: var(--data-1-soft); color: var(--data-1); }
+.home-card__ic--2 { background: var(--data-2-soft); color: var(--data-2); }
+.home-card__ic--3 { background: var(--data-3-soft); color: var(--data-3); }
+.home-card__ic--4 { background: var(--data-4-soft); color: var(--data-4); }
+.home-card__ic--5 { background: var(--data-5-soft); color: var(--data-5); }
+.home-card__ic--8 { background: var(--data-8-soft); color: var(--data-8); }
+.home-card__label { font-size: var(--fs-xs); font-weight: 700; line-height: 1.25; }
 
-/* ── Leads sin responder ── */
-.lead-item {
-  display: flex; align-items: center; gap: var(--sp-3);
-  padding: var(--sp-3) 0; border-top: 1px solid var(--line);
-  text-decoration: none; color: inherit;
-}
-.lead-item:hover .lead-item__n { color: var(--sky-blue); }
-.lead-item__av {
-  flex: 0 0 auto; width: 36px; height: 36px; border-radius: var(--r-pill);
-  background: var(--sky-navy); color: var(--dx-on-navy);
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: var(--fs-sm); font-weight: 700;
-}
-.lead-item__main { flex: 1 1 auto; min-width: 0; }
-.lead-item__n { font-size: var(--fs-sm); font-weight: 600; }
-.lead-item__s {
-  font-size: var(--fs-xs); color: var(--mute);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
+@media (prefers-reduced-motion: reduce) {
+  .home-avatar, .home-card, .home-phrase { transition: none; }
+  .home-card:hover { transform: none; }
 }
 
-/* ── Pipeline ── */
-.pipe-row { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-2) 0; }
-.pipe-row .pl { flex: 0 0 92px; font-size: var(--fs-sm); font-weight: 600; color: var(--mute); }
-.pipe-bar {
-  flex: 1 1 auto; height: 22px; border-radius: var(--r-xs);
-  background: var(--paper-2); overflow: hidden;
-}
-.pipe-fill {
-  height: 100%; border-radius: var(--r-xs);
-  display: flex; align-items: center; padding-left: 8px;
-  color: var(--paper); font-size: var(--fs-xs); font-weight: 800;
-  min-width: 0; width: 0;
-  transition: width 1s cubic-bezier(.16,1,.3,1);
-  font-variant-numeric: tabular-nums;
-}
-.pipe-fill--nuevo      { background: var(--data-1); }
-.pipe-fill--activo     { background: var(--data-6); }
-.pipe-fill--contactado { background: var(--data-5); }
-.pipe-fill--cerrado    { background: var(--data-2); }
-
-/* ── Últimos inmuebles ── */
-.prop-item {
-  display: flex; align-items: center; gap: var(--sp-3);
-  padding: var(--sp-3) 0; border-top: 1px solid var(--line);
-  text-decoration: none; color: inherit;
-}
-.prop-item:hover .prop-item__n { color: var(--sky-blue); }
-.prop-item__pi {
-  flex: 0 0 auto; width: 44px; height: 38px; border-radius: var(--r-sm);
-  background: var(--data-1-soft); color: var(--data-1);
-  display: inline-flex; align-items: center; justify-content: center;
-  overflow: hidden; /* recorta la foto de portada al tamaño fijo de la caja */
-}
-.prop-item__pi--foto { background: var(--paper-2); }
-.prop-item__pi--foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.prop-item__main { flex: 1 1 auto; min-width: 0; }
-.prop-item__n {
-  font-size: var(--fs-sm); font-weight: 600;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.prop-item__s { font-size: var(--fs-xs); color: var(--mute); margin-top: 1px; }
-.prop-item__p {
-  flex: 0 0 auto; font-size: var(--fs-sm); font-weight: 800;
-  color: var(--sky-navy); font-variant-numeric: tabular-nums;
-}
-
-.dash-vacio { padding: var(--sp-4) 0; color: var(--mute); font-size: var(--fs-sm); }
-.dash-vacio__cta { display: block; width: max-content; margin-top: var(--sp-3); }
-
-/* ── Sheet "Poner al día" ──
-   El look (tarjeta pegada abajo, ⠿ de agarre, ítems) copia al bk-sheet
-   del shell (bk-sheet__grip/__eyebrow/__item sí se reutilizan), pero el
-   CONTENEDOR es propio: bk-sheet/bk-sheet-back traen
-   "@media (min-width:881px){display:none}" porque esa hoja es solo la
-   navegación móvil — "Poner al día" tiene que funcionar en cualquier
-   ancho. index.html controla todo su ciclo de vida (abrir/cerrar,
-   Escape, foco, bloqueo de scroll de fondo). */
-.podia-back {
-  position: fixed; inset: 0; z-index: 95;
-  background: rgba(8,28,78,0.38);
-  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
-  opacity: 0; pointer-events: none;
-  transition: opacity var(--dur) var(--ease);
-}
-.podia-back.is-open { opacity: 1; pointer-events: auto; }
-.podia-panel {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 96;
-  max-width: 420px; margin: 0 auto;
-  max-height: 82vh; overflow-y: auto; overscroll-behavior: contain;
-  background: var(--bone);
-  border-radius: var(--r-lg) var(--r-lg) 0 0;
-  padding: 8px 16px calc(22px + env(safe-area-inset-bottom, 0px));
-  box-shadow: 0 -12px 44px rgba(8,28,78,0.26); /* AUDIT-EXEMPT-LINE: mismo valor que .bk-sheet en app-shell.js (no auditado por vivir en JS) — sombra hacia arriba para una hoja anclada abajo; ningún --shadow-* del sistema es así de direccional */
-  transform: translateY(102%);
-  transition: transform var(--dur) var(--ease);
-}
-@media (min-width: 460px) { .podia-panel { border-radius: var(--r-lg); bottom: 24px; } }
-.podia-panel.is-open { transform: none; }
-.podia-sub { margin: 2px 4px var(--sp-3); }
-.podia-item { width: 100%; margin-bottom: 8px; }
-/* Mismo bug de fondo que .dash-offline (ver arriba): sin este override,
-   `display:flex` le gana al `[hidden]` del navegador y la fila de fecha
-   queda visible siempre, sin importar fechaWrap.hidden en JS. */
-.podia-fecha-wrap[hidden] { display: none; }
-.podia-fecha-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
-/* Sin font-size propio: brokr-theme.css ya fuerza los inputs a 16px
-   (evita el zoom-al-enfocar de iOS) en pantallas ≤768px. */
-.podia-fecha-wrap .bk-input { flex: 1 1 auto; }
-.podia-cancelar { width: 100%; }
-
-/* ── Toast con Deshacer ── */
-.dash-toast {
-  position: fixed; left: 50%; bottom: max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px));
-  transform: translate(-50%, 12px);
-  background: var(--ink-2); color: #fff; padding: 12px 10px 12px 18px;
-  border-radius: var(--r-pill); display: flex; align-items: center; gap: var(--sp-3);
-  font-size: var(--fs-sm); font-family: var(--font-sans);
-  box-shadow: var(--shadow-lg); z-index: 99999; opacity: 0; pointer-events: none;
-  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
-  max-width: calc(100vw - 32px);
-}
-.dash-toast.is-open { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
-.dash-toast__btn {
-  background: none; border: none; color: #fff; text-decoration: underline;
-  font-weight: 700; font-size: var(--fs-sm); font-family: inherit; cursor: pointer;
-  padding: 6px 8px; -webkit-tap-highlight-color: transparent; flex: 0 0 auto;
-}
-
-/* Insignia Meta Tech Provider: pie de página. Viaja con el
-   contenido — solo se ve al llegar al final del index, nunca
-   flota sobre él. Centrada, discreta, intocable. */
+/* Insignia Meta Tech Provider: pie de página, viaja con el contenido. */
 .dash-meta {
   width: max-content; margin: var(--sp-7) auto 0;
   display: inline-flex; align-items: center;
@@ -382,37 +187,10 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
   .dash-meta img { height: 14px; }
 }
 
-/* ── Ajuste móvil: todo cabe en el ancho de la pantalla ──
-   Los tracks 1fr de una grid NO encogen por debajo del contenido
-   mínimo de sus hijos; con textos o cifras largas la cuadrícula
-   se hacía más ancha que el viewport (por eso se podía arrastrar
-   la pantalla a la derecha). min-width:0 lo corrige y el texto
-   envuelve en vez de desbordar. */
+/* ── Ajuste móvil: nada se desborda del ancho de la pantalla ── */
 @media (max-width: 900px) {
   .dash-scroll { overflow-x: clip; }
-  .dash-top, .dash-qa, .dash-kpis, .dash-grid { max-width: 100%; }
-  .dash-kpis > .dash-kpi,
-  .dash-grid > .dash-widget { min-width: 0; max-width: 100%; }
-  .dash-greet h1, .dash-greet p,
-  .dash-widget h2, .aten-item__main, .lead-item__main,
-  .prop-item__main { overflow-wrap: anywhere; }
-}
-
-/* ── Targets táctiles mínimos (44×44, WCAG 2.5.5) ──
-   .bk-icon-btn--sm (32px) y los enlaces "Ver todas →"/"Ver →"/"Detalle →"
-   (~17px de alto) son más chicos que los 44px que el propio design
-   system documenta como mínimo (--touch-min). Se amplía el ÁREA de
-   toque con un ::after invisible, solo con puntero grueso (dedo) — el
-   tamaño VISUAL no cambia, y .bk-icon-btn--sm no se toca (lo usan más
-   pantallas; en desktop, con mouse, 32px es válido). */
-@media (pointer: coarse) {
-  .dash-scroll .bk-icon-btn--sm { position: relative; }
-  .dash-scroll .bk-icon-btn--sm::after { content: ''; position: absolute; inset: -6px; }
-  .dash-card-h .link { position: relative; display: inline-block; }
-  .link.aten-vermas { position: relative; }
-  .dash-card-h .link::after, .link.aten-vermas::after {
-    content: ''; position: absolute; inset: -14px -4px;
-  }
+  .home-kpis, .home-grid { max-width: 100%; }
 }
 </style>
 </head>
@@ -424,147 +202,92 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
     Sin conexión · datos de <span id="dash-offline-hora"></span>
   </div>
 
-  <!-- Cabecera: saludo con lo que urge + búsqueda + personalizar -->
-  <header class="dash-top">
-    <div class="dash-greet">
-      <h1><span id="dash-greet">Buenos días</span><span id="dash-greet-coma" hidden>,</span>&nbsp;<span id="dash-firstname" hidden></span></h1>
-      <p id="dash-sub"><span id="dash-date-mes">—</span> <b id="dash-urge" hidden></b></p>
-    </div>
-    <button class="dash-search" type="button" id="dash-search-btn">
-      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="m20 20-3.5-3.5"/></svg>
-      Buscar módulos y acciones…
-      <span class="kbd">⌘K</span>
-    </button>
-    <button class="dash-pencil" id="dash-pencil" type="button" aria-label="Personalizar inicio" aria-haspopup="true" aria-expanded="false" aria-controls="dash-panel">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg>
-    </button>
-    <div class="dash-panel" id="dash-panel" role="dialog" aria-labelledby="dash-panel-t" hidden>
-      <div class="dash-panel__t" id="dash-panel-t">Tu inicio, a tu manera</div>
-      <label class="bk-switch dash-panel__opt"><input type="checkbox" data-w="qa" checked/><span class="bk-switch__track"></span> Accesos rápidos</label>
-      <label class="bk-switch dash-panel__opt"><input type="checkbox" data-w="kpis" checked/><span class="bk-switch__track"></span> KPIs del día</label>
-      <label class="bk-switch dash-panel__opt"><input type="checkbox" data-w="atencion" checked/><span class="bk-switch__track"></span> Requiere tu atención</label>
-      <label class="bk-switch dash-panel__opt" id="dash-opt-leads"><input type="checkbox" data-w="leads" checked/><span class="bk-switch__track"></span> Leads sin responder</label>
-      <label class="bk-switch dash-panel__opt"><input type="checkbox" data-w="pipeline" checked/><span class="bk-switch__track"></span> Clientes</label>
-      <label class="bk-switch dash-panel__opt"><input type="checkbox" data-w="inmuebles" checked/><span class="bk-switch__track"></span> Últimos inmuebles</label>
-      <div class="bk-hint" style="margin-top:var(--sp-2);">Arrastra las tarjetas desde ⠿ para reacomodarlas: su tamaño se ajusta a la columna donde las sueltes.</div>
-      <button class="bk-btn bk-btn--forest dash-panel__listo" type="button" id="dash-panel-listo">Listo</button>
-    </div>
+  <!-- Barra superior: perfil del agente · frase rotativa · logotipo -->
+  <header class="home-top">
+    <button class="home-avatar" id="home-avatar" type="button" aria-label="Ver tu perfil">?</button>
+    <p class="home-phrase" id="home-phrase" aria-live="polite"></p>
+    <img class="home-logo" src="logo-broquer.png" alt="Broquer"/>
   </header>
 
-  <!-- Acciones rápidas -->
-  <div class="dash-qa" data-widget="qa">
-    <a class="bk-btn bk-btn--forest" href="propiedades.html">
-      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
-      Nuevo inmueble
+  <!-- Las 3 cifras que de verdad importan para una agencia: inventario
+       activo, prospección en curso y cierres — no productividad
+       personal del día (eso vive en Tareas). -->
+  <div class="home-kpis" aria-label="Indicadores clave">
+    <a class="home-kpi" href="propiedades.html" aria-label="Ver tus inmuebles">
+      <div class="home-kpi__lab"><span class="home-kpi__ic home-kpi__ic--1"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg></span>Inmuebles activos</div>
+      <div class="home-kpi__val" id="home-kpi-activos">—</div>
     </a>
-    <a class="bk-btn bk-btn--ghost" href="contactos.html">Contacto</a>
-    <a class="bk-btn bk-btn--ghost" href="tareas.html">Tarea</a>
-    <a class="bk-btn bk-btn--ghost" href="clientes.html">Nuevo cliente</a>
-  </div>
-
-  <!-- KPIs del día: cada tarjeta navega a su lista ya filtrada -->
-  <div class="dash-kpis" data-widget="kpis">
-    <div class="bk-card bk-card--pad bk-card--raise dash-kpi">
-      <a class="dash-kpi__stretch" href="tareas.html?filtro=hoy" aria-label="Ver pendientes de hoy"></a>
-      <div class="lab"><span class="ic ic--pend"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg></span>Pendientes hoy</div>
-      <div class="val" id="kpi-pend">—</div>
-      <a class="bk-badge bk-badge--danger badge-top" id="kpi-pend-badge" href="tareas.html?filtro=vencidas" aria-label="Ver tareas vencidas" hidden></a>
-    </div>
-    <a class="bk-card bk-card--pad bk-card--raise dash-kpi" href="clientes.html?filtro=prospectos" aria-label="Ver prospectos">
-      <div class="lab"><span class="ic ic--pros"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path stroke-linecap="round" d="M2 20a7 7 0 0114 0M17 8h5M19.5 5.5v5"/></svg></span>Prospectos</div>
-      <div class="val" id="kpi-pros">—</div>
+    <a class="home-kpi" href="clientes.html?filtro=prospectos" aria-label="Ver prospectos">
+      <div class="home-kpi__lab"><span class="home-kpi__ic home-kpi__ic--2"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path stroke-linecap="round" d="M2 20a7 7 0 0114 0M17 8h5M19.5 5.5v5"/></svg></span>Prospectos</div>
+      <div class="home-kpi__val" id="home-kpi-pros">—</div>
     </a>
-    <a class="bk-card bk-card--pad bk-card--raise dash-kpi" href="clientes.html?filtro=cierres&periodo=mes" aria-label="Ver cierres del mes">
-      <div class="lab"><span class="ic ic--cierre"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg></span>Cierres del mes</div>
-      <div class="val" id="kpi-cierre">—</div>
-    </a>
-    <a class="bk-card bk-card--pad bk-card--raise dash-kpi" href="estadisticas.html" aria-label="Ver estadísticas — avance del día">
-      <div class="lab"><span class="ic ic--avance"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 14l3-3 3 3 5-6"/></svg></span>Avance del día</div>
-      <div class="val" id="kpi-avance">—</div>
-      <div class="sub">Pendientes, prospectos y cierres vs. tu meta</div>
+    <a class="home-kpi" href="clientes.html?filtro=cierres&periodo=mes" aria-label="Ver cierres del mes">
+      <div class="home-kpi__lab"><span class="home-kpi__ic home-kpi__ic--3"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg></span>Cierres del mes</div>
+      <div class="home-kpi__val" id="home-kpi-cierres">—</div>
     </a>
   </div>
 
-  <div class="dash-grid" id="dash-grid">
-    <section class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="atencion" aria-labelledby="h-atencion">
-      <div class="dash-card-h">
-        <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
-        <h2 id="h-atencion">Requiere tu atención</h2>
-        <span class="bk-badge bk-badge--danger" id="aten-count" hidden></span>
-        <button class="link aten-poner-al-dia-btn" type="button" id="aten-poner-al-dia" hidden>Poner al día</button>
-        <a class="link" href="tareas.html">Ver todas →</a>
-      </div>
-      <div id="aten-lista"></div>
-      <a class="link aten-vermas" id="aten-vermas" href="tareas.html" hidden>Ver las otras <span id="aten-vermas-n"></span> →</a>
-      <div class="dash-vacio" id="aten-vacio" hidden>Todo al día. Sin pendientes vencidos ni tareas para hoy.</div>
-    </section>
-
-    <section class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="leads" id="leads-card" aria-labelledby="h-leads" hidden>
-      <div class="dash-card-h">
-        <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
-        <h2 id="h-leads">Leads sin responder</h2>
-        <a class="link" href="whatsapp.html">Ver →</a>
-      </div>
-      <div id="leads-lista"></div>
-      <div class="dash-vacio" id="leads-vacio" hidden>No tienes leads sin responder ahora mismo.</div>
-    </section>
-
-    <section class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="pipeline" aria-labelledby="h-pipeline">
-      <div class="dash-card-h">
-        <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
-        <h2 id="h-pipeline">Clientes</h2>
-        <a class="link" href="clientes.html">Detalle →</a>
-      </div>
-      <div id="pipe-lista"></div>
-      <div class="dash-vacio" id="pipe-vacio" hidden>
-        Aún no tienes contactos en el embudo.
-        <a class="bk-btn bk-btn--ghost dash-vacio__cta" href="clientes.html">Agregar cliente</a>
+  <!-- Todos los módulos, en tarjetas, agrupados igual que el rail lateral -->
+  <nav class="home-groups" aria-label="Módulos">
+    <section class="home-group" aria-labelledby="hg-crm">
+      <h2 class="home-group__h" id="hg-crm">CRM</h2>
+      <div class="home-grid">
+        <a class="home-card" href="propiedades.html"><span class="home-card__ic home-card__ic--1"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg></span><span class="home-card__label">Tus Inmuebles</span></a>
+        <a class="home-card" href="contactos.html"><span class="home-card__ic home-card__ic--1"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg></span><span class="home-card__label">Directorio</span></a>
+        <a class="home-card" href="clientes.html"><span class="home-card__ic home-card__ic--1"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="m11 17 2 2a1 1 0 1 0 3-3"/><path stroke-linecap="round" stroke-linejoin="round" d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path stroke-linecap="round" stroke-linejoin="round" d="m21 3 1 11h-2"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h8"/></svg></span><span class="home-card__label">Clientes</span></a>
+        <a class="home-card" href="tareas.html"><span class="home-card__ic home-card__ic--1"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span><span class="home-card__label">Tareas</span></a>
+        <a class="home-card" href="estadisticas.html"><span class="home-card__ic home-card__ic--1"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941"/></svg></span><span class="home-card__label">Estadísticas</span></a>
       </div>
     </section>
 
-    <section class="bk-card bk-card--pad bk-card--raise dash-widget" data-widget="inmuebles" aria-labelledby="h-inmuebles">
-      <div class="dash-card-h">
-        <span class="dash-drag" title="Arrastra para reacomodar">⠿</span><!-- AUDIT-EXEMPT-LINE: glifo braille como asa de arrastre (contenido, no icono decorativo) -->
-        <h2 id="h-inmuebles">Últimos inmuebles</h2>
-        <a class="link" href="propiedades.html">Ver →</a>
-      </div>
-      <div id="props-lista"></div>
-      <div class="dash-vacio" id="props-vacio" hidden>
-        Agrega tu primer inmueble para verlo aquí.
-        <a class="bk-btn bk-btn--ghost dash-vacio__cta" href="propiedades.html">Agregar inmueble</a>
+    <section class="home-group" aria-labelledby="hg-seguimiento">
+      <h2 class="home-group__h" id="hg-seguimiento">Seguimiento</h2>
+      <div class="home-grid">
+        <a class="home-card" href="whatsapp.html"><span class="home-card__ic home-card__ic--2"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path fill="currentColor" stroke="none" d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 00.614.612l6.115-1.598A11.947 11.947 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.967 0-3.805-.538-5.378-1.47l-.385-.23-3.993 1.044 1.012-3.9-.252-.403A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path fill="currentColor" stroke="none" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg></span><span class="home-card__label">WhatsApp</span></a>
       </div>
     </section>
-  </div>
+
+    <section class="home-group" aria-labelledby="hg-documentos">
+      <h2 class="home-group__h" id="hg-documentos">Documentos</h2>
+      <div class="home-grid">
+        <a class="home-card" href="contratos.html"><span class="home-card__ic home-card__ic--5"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></span><span class="home-card__label">Contratos</span></a>
+        <a class="home-card" href="firmas.html"><span class="home-card__ic home-card__ic--5"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg></span><span class="home-card__label">Firma electrónica</span></a>
+        <a class="home-card" href="cumplimiento.html"><span class="home-card__ic home-card__ic--5"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg></span><span class="home-card__label">Cumplimiento</span></a>
+      </div>
+    </section>
+
+    <section class="home-group" aria-labelledby="hg-numeros">
+      <h2 class="home-group__h" id="hg-numeros">Números</h2>
+      <div class="home-grid">
+        <a class="home-card" href="avm.html"><span class="home-card__ic home-card__ic--3"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18"/><path stroke-linecap="round" stroke-linejoin="round" d="M16 7.5c0-1.5-1.5-2.5-4-2.5s-4 1-4 2.5S9.5 10 12 10.5s4 1 4 2.5-1.5 3-4 3-4-1-4-2.5"/></svg></span><span class="home-card__label">Estimación de valor</span></a>
+        <a class="home-card" href="isr.html"><span class="home-card__ic home-card__ic--3"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="4.5" y="3" width="15" height="18" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 6.75h9v3h-9zM8.25 13.5h.008v.008H8.25V13.5zm0 3h.008v.008H8.25V16.5zm3.75-3h.008v.008H12V13.5zm0 3h.008v.008H12V16.5zm3.75-3h.008v.008h-.008V13.5zm0 3h.008v.008h-.008V16.5z"/></svg></span><span class="home-card__label">ISR</span></a>
+        <a class="home-card" href="finanzas.html"><span class="home-card__ic home-card__ic--3"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/></svg></span><span class="home-card__label">Finanzas</span></a>
+      </div>
+    </section>
+
+    <section class="home-group" aria-labelledby="hg-marketing">
+      <h2 class="home-group__h" id="hg-marketing">Marketing</h2>
+      <div class="home-grid">
+        <a class="home-card" href="image-cleaner.html"><span class="home-card__ic home-card__ic--4"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg></span><span class="home-card__label">Editor de imágenes</span></a>
+        <a class="home-card" href="ficha-manual.html"><span class="home-card__ic home-card__ic--4"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75l2.25-2.25 1.5 1.5 2.25-2.25 2.25 2.25M8.25 15h7.5M5.625 3H8.25M5.625 3c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></span><span class="home-card__label">Ficha técnica</span></a>
+        <a class="home-card" href="video.html"><span class="home-card__ic home-card__ic--4"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="2.25" y="6" width="13.5" height="12" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-2.83a.75.75 0 011.13.64v7.38a.75.75 0 01-1.13.64l-4.72-2.83"/></svg></span><span class="home-card__label">Video</span></a>
+        <a class="home-card" href="mi-sitio.html"><span class="home-card__ic home-card__ic--4"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18"/></svg></span><span class="home-card__label">Mi sitio</span></a>
+      </div>
+    </section>
+
+    <section class="home-group" aria-labelledby="hg-mas">
+      <h2 class="home-group__h" id="hg-mas">Más</h2>
+      <div class="home-grid" id="home-grid-mas">
+        <a class="home-card" href="blog.html"><span class="home-card__ic home-card__ic--8"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5l6.74-6.76zM16 8L2 22M17.5 15H9"/></svg></span><span class="home-card__label">Blog</span></a>
+        <a class="home-card" href="guia-agente.html"><span class="home-card__ic home-card__ic--8"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg></span><span class="home-card__label">Ayuda</span></a>
+      </div>
+    </section>
+  </nav>
 
   <!-- Pie: insignia Meta Tech Provider -->
   <footer class="dash-meta" aria-label="Meta Tech Provider">
     <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
   </footer>
-
-  <!-- Sheet: Poner al día (mover/resolver todas las vencidas de una vez) -->
-  <div class="podia-back" id="podia-back" hidden></div>
-  <div class="podia-panel" id="podia-sheet" role="dialog" aria-modal="true" aria-labelledby="podia-titulo" hidden>
-    <div class="bk-sheet__grip"></div>
-    <div class="bk-sheet__eyebrow" id="podia-titulo">Poner al día</div>
-    <p class="bk-hint podia-sub" id="podia-sub"></p>
-    <button class="bk-sheet__item podia-item" type="button" id="podia-manana">
-      <span class="bk-sheet__ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg></span>
-      <span>Mover todas a mañana</span>
-    </button>
-    <button class="bk-sheet__item podia-item" type="button" id="podia-fecha-btn">
-      <span class="bk-sheet__ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18M8 15h.01M12 15h.01M16 15h.01"/></svg></span>
-      <span>Mover todas a una fecha</span>
-    </button>
-    <div class="podia-fecha-wrap" id="podia-fecha-wrap" hidden>
-      <input class="bk-input" type="date" id="podia-fecha-input"/>
-      <button class="bk-btn bk-btn--forest" type="button" id="podia-fecha-confirmar">Mover</button>
-    </div>
-    <button class="bk-sheet__item podia-item" type="button" id="podia-hechas">
-      <span class="bk-sheet__ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg></span>
-      <span>Marcar todas como hechas</span>
-    </button>
-    <button class="bk-btn bk-btn--ghost podia-cancelar" type="button" id="podia-cerrar">Cancelar</button>
-  </div>
 
 </div>
 
@@ -629,8 +352,8 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
    "sin conexión" del navegador, no una falla real.
    Ahora la única fuente que lo enciende es una petición real que de
    verdad no se pudo completar (window.brokrReportarConexion(false),
-   llamado desde fxCount/fxRest), y CUALQUIER petición que sí obtuvo
-   respuesta del servidor —exitosa o no— lo apaga y usa esa hora como
+   llamado desde fxCount), y CUALQUIER petición que sí obtuvo respuesta
+   del servidor —exitosa o no— lo apaga y usa esa hora como
    "datos de las X:XX". */
 (function () {
   const banner = document.getElementById('dash-offline');
@@ -658,210 +381,86 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
 </script>
 
 <script>
-/* ── Personalizar el inicio: qué tarjetas se muestran ──
-   Los checkboxes ahora son .bk-switch (toggle del design system) en vez
-   de checkboxes nativos sin estilo — cada uno sigue siendo un <label>
-   que envuelve su <input>, así que el texto visible YA es su nombre
-   accesible (un lector de pantalla dice "Accesos rápidos, activado", no
-   solo "on"). Escape y el botón "Listo" cierran el panel; mientras está
-   abierto, el foco queda atrapado adentro y el scroll de fondo (el
-   contenedor real es #bk-page, el que arma app-shell.js) no se mueve. */
-(function(){
-  const KEY = 'brokr_dash_widgets';
-  let prefs = {};
-  try { prefs = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch(_){}
-  const apagado = w => prefs[w] === false;
-
-  document.querySelectorAll('[data-widget]').forEach(el => {
-    if (apagado(el.dataset.widget)) el.classList.add('is-off');
-  });
-
-  const btn = document.getElementById('dash-pencil');
-  const panel = document.getElementById('dash-panel');
-  const btnListo = document.getElementById('dash-panel-listo');
-  if (!btn || !panel) return;
-  panel.querySelectorAll('input[data-w]').forEach(chk => {
-    chk.checked = !apagado(chk.dataset.w);
-    chk.addEventListener('change', () => {
-      prefs[chk.dataset.w] = chk.checked;
-      try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch(_){}
-      document.querySelectorAll('[data-widget="' + chk.dataset.w + '"]').forEach(el => {
-        el.classList.toggle('is-off', !chk.checked);
-      });
-    });
-  });
-
-  function scrollDelFondo() {
-    // El scroll real de cada pantalla vive en #bk-page (lo arma
-    // app-shell.js), no en <body> — bloquear solo <body> no habría
-    // evitado que el fondo se moviera al arrastrar dentro del panel.
-    return document.getElementById('bk-page');
+/* ── Frase rotativa: negocios + mundo inmobiliario ──
+   Independiente de las frases del topbar de escritorio (app-shell.js) —
+   este banco es más grande y pensado para ser lo primero que se lee en
+   la home, así que prioriza traducciones naturales (nada de dejar la
+   mitad en inglés) y suma clásicos del gremio inmobiliario, no solo
+   frases de negocios en general. Rota cada hora, de forma determinista
+   (mismo criterio que el topbar de escritorio). */
+(function () {
+  const QUOTES = [
+    // — Mundo inmobiliario —
+    { t: 'Compra tierra: ya no la están haciendo.', a: 'Mark Twain' },
+    { t: 'Los bienes raíces no se pueden perder ni robar, ni se los pueden llevar. Comprados con sentido común y pagados en su totalidad, son la inversión más segura del mundo.', a: 'Franklin D. Roosevelt' },
+    { t: 'Ubicación, ubicación, ubicación.', a: 'Máxima inmobiliaria' },
+    { t: 'El 90% de los millonarios se hicieron ricos invirtiendo en bienes raíces.', a: 'Andrew Carnegie' },
+    { t: 'No esperes para comprar bienes raíces. Compra bienes raíces y espera.', a: 'T. Harv Eker' },
+    { t: 'Nunca falta la tierra: falta la gente que la sepa vender.', a: 'Refrán del gremio' },
+    { t: 'La mejor inversión sobre la faz de la Tierra es la Tierra misma.', a: 'Louis Glickman' },
+    { t: 'En bienes raíces, la ganancia se hace al comprar, no al vender.', a: 'Sabiduría inmobiliaria' },
+    { t: 'Las grandes fortunas de este país se han hecho en la tierra.', a: 'John D. Rockefeller' },
+    { t: 'El terrateniente se enriquece incluso mientras duerme.', a: 'John Stuart Mill' },
+    { t: 'No vendes una casa: ayudas a alguien a empezar su próximo capítulo.', a: 'Voz del oficio' },
+    { t: 'Un cliente no compra metros cuadrados. Compra la vida que va a vivir ahí.', a: 'Voz del oficio' },
+    { t: 'El mercado no tiene memoria: cada llamada es una oportunidad nueva.', a: 'Voz del oficio' },
+    { t: 'Nadie recuerda cuánto tardaste en contestar. Todos recuerdan si contestaste.', a: 'Voz del oficio' },
+    { t: 'El buen agente no busca la casa perfecta: busca la casa correcta para esa familia.', a: 'Voz del oficio' },
+    // — Negocios y persistencia —
+    { t: 'El éxito no es definitivo, el fracaso no es fatal: lo que cuenta es el coraje para continuar.', a: 'Winston Churchill' },
+    { t: 'La única forma de hacer un gran trabajo es amar lo que haces.', a: 'Steve Jobs' },
+    { t: 'No te preocupes por el fracaso; preocúpate por las oportunidades que pierdes cuando ni siquiera lo intentas.', a: 'Jack Canfield' },
+    { t: 'El mercado siempre puede permanecer irracional más tiempo del que tú puedes permanecer solvente.', a: 'John Maynard Keynes' },
+    { t: 'La oportunidad no toca: presenta su tarjeta cuando vienes a buscarla.', a: 'Charles Schwab' },
+    { t: 'Quien quiere hacer algo encuentra un medio; quien no quiere hacer nada encuentra una excusa.', a: 'Proverbio árabe' },
+    { t: 'El que no arriesga, no gana.', a: 'Refrán popular' },
+    { t: 'Cada batalla se gana antes de pelearla.', a: 'Sun Tzu' },
+    { t: 'No vendemos casas. Vendemos sueños, posibilidades, hogares.', a: 'Barbara Corcoran' },
+    { t: 'El dinero es como el estiércol: solo sirve si lo esparces.', a: 'J. Paul Getty' },
+    { t: 'Lo importante no es lo que te pasa, sino cómo reaccionas a lo que te pasa.', a: 'Epicteto' },
+    { t: 'Si no estás dispuesto a arriesgarlo todo, no esperes lograr nada.', a: 'Muhammad Ali' },
+    { t: 'En los negocios, lo que es peligroso es no evolucionar.', a: 'Jeff Bezos' },
+    { t: 'El precio es lo que pagas. El valor es lo que recibes.', a: 'Warren Buffett' },
+    { t: 'No se trata de ideas. Se trata de hacer que las ideas sucedan.', a: 'Scott Belsky' },
+    { t: 'Si lo construyes, ellos vendrán.', a: 'Field of Dreams' },
+    { t: 'La codicia, a falta de una mejor palabra, es buena.', a: 'Wall Street — Gordon Gekko' },
+    { t: 'Siempre estar cerrando.', a: 'Glengarry Glen Ross' },
+    { t: 'La gente no compra productos: compra la versión mejor de sí misma.', a: 'Don Draper — Mad Men' },
+    { t: 'El que tiene un porqué para vivir, puede soportar casi cualquier cómo.', a: 'Friedrich Nietzsche' },
+    { t: 'Lo que hagas hoy puede mejorar todos tus mañanas.', a: 'Ralph Marston' },
+    { t: 'No persigas el éxito: vuélvete una persona de valor y el éxito te seguirá.', a: 'Albert Einstein' },
+  ];
+  const el = document.getElementById('home-phrase');
+  if (!el) return;
+  let idx = -1;
+  function mostrar() {
+    let next = Math.floor(Date.now() / (1000 * 60 * 60)) % QUOTES.length;
+    if (next === idx) next = (next + 1) % QUOTES.length;
+    idx = next;
+    const q = QUOTES[next];
+    el.classList.remove('is-visible');
+    setTimeout(() => {
+      el.innerHTML = q.t + '<span class="quote-author">' + q.a + '</span>';
+      el.classList.add('is-visible');
+    }, 200);
   }
-  function abrirPanel() {
-    panel.hidden = false;
-    btn.setAttribute('aria-expanded', 'true');
-    const fondo = scrollDelFondo();
-    if (fondo) fondo.style.overflow = 'hidden';
-    document.addEventListener('keydown', onKeydownPanel);
-    const primero = panel.querySelector('input, button');
-    if (primero) primero.focus();
-  }
-  function cerrarPanel() {
-    panel.hidden = true;
-    btn.setAttribute('aria-expanded', 'false');
-    const fondo = scrollDelFondo();
-    if (fondo) fondo.style.overflow = '';
-    document.removeEventListener('keydown', onKeydownPanel);
-    btn.focus();
-  }
-  function onKeydownPanel(e) {
-    if (e.key === 'Escape') { e.preventDefault(); cerrarPanel(); return; }
-    if (e.key !== 'Tab') return;
-    const focos = Array.from(panel.querySelectorAll('input, button')).filter(el => !el.disabled);
-    if (!focos.length) return;
-    const primero = focos[0], ultimo = focos[focos.length - 1];
-    if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
-    else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
-  }
-
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    if (panel.hidden) abrirPanel(); else cerrarPanel();
-  });
-  if (btnListo) btnListo.addEventListener('click', cerrarPanel);
-  document.addEventListener('click', e => {
-    if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) cerrarPanel();
-  });
+  mostrar();
+  let lastHour = new Date().getHours();
+  setInterval(() => {
+    const h = new Date().getHours();
+    if (h !== lastHour) { lastHour = h; mostrar(); }
+  }, 60000);
 })();
 
-/* ── Fecha + saludo (sin auth, corre de inmediato) ── */
-(function(){
-  const d = new Date();
-  const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
-  const mesEl = document.getElementById('dash-date-mes');
-  if (mesEl) {
-    const semana = cap(d.toLocaleDateString('es-MX', { weekday: 'long' }));
-    const mes = d.toLocaleDateString('es-MX', { month: 'long' });
-    mesEl.textContent = semana + ' ' + d.getDate() + ' de ' + mes + '.';
-  }
-  const h = d.getHours();
-  const greet = h < 12 ? 'Buenos días' : (h < 19 ? 'Buenas tardes' : 'Buenas noches');
-  const gEl = document.getElementById('dash-greet');
-  if (gEl) gEl.textContent = greet;
-})();
-
-
-
-/* ── Widgets reacomodables: arrastra y suelta, el orden se guarda ──
-   La grid tiene dos columnas (ancha/angosta); el ancho de cada tarjeta
-   lo decide la columna donde cae, así que reacomodar también
-   redimensiona. En móvil (una columna) el arrastre se desactiva. */
-(function(){
-  const KEY = 'brokr_dash_orden';
-  const grid = document.getElementById('dash-grid');
-  if (!grid) return;
-
-  // Aplicar orden guardado
-  try {
-    const orden = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (Array.isArray(orden)) {
-      orden.forEach(w => {
-        const el = grid.querySelector('.dash-widget[data-widget="' + w + '"]');
-        if (el) grid.appendChild(el);
-      });
-    }
-  } catch(_){}
-
-  function guardar() {
-    const orden = Array.from(grid.querySelectorAll('.dash-widget'))
-      .map(el => el.dataset.widget);
-    try { localStorage.setItem(KEY, JSON.stringify(orden)); } catch(_){}
-  }
-
-  // draggable solo en desktop: en iOS el arrastre nativo secuestra el
-  // gesto de pan y la página no puede hacer scroll.
-  const mqDesktop = window.matchMedia('(min-width: 901px)');
-  function aplicarDraggable() {
-    grid.querySelectorAll('.dash-widget').forEach(el => {
-      el.draggable = mqDesktop.matches;
-    });
-  }
-  aplicarDraggable();
-  if (mqDesktop.addEventListener) mqDesktop.addEventListener('change', aplicarDraggable);
-
-  let arrastrando = null;
-  grid.querySelectorAll('.dash-widget').forEach(el => {
-    el.addEventListener('dragstart', (ev) => {
-      arrastrando = el;
-      el.classList.add('is-drag');
-      ev.dataTransfer.effectAllowed = 'move';
-      try { ev.dataTransfer.setData('text/plain', el.dataset.widget); } catch(_){}
-    });
-    el.addEventListener('dragend', () => {
-      el.classList.remove('is-drag');
-      grid.querySelectorAll('.is-over').forEach(x => x.classList.remove('is-over'));
-      arrastrando = null;
-    });
-    el.addEventListener('dragover', (ev) => {
-      if (!arrastrando || arrastrando === el) return;
-      ev.preventDefault();
-      ev.dataTransfer.dropEffect = 'move';
-      el.classList.add('is-over');
-    });
-    el.addEventListener('dragleave', () => el.classList.remove('is-over'));
-    el.addEventListener('drop', (ev) => {
-      if (!arrastrando || arrastrando === el) return;
-      ev.preventDefault();
-      el.classList.remove('is-over');
-      const hijos = Array.from(grid.querySelectorAll('.dash-widget'));
-      const de = hijos.indexOf(arrastrando);
-      const a = hijos.indexOf(el);
-      if (de < a) el.after(arrastrando);
-      else el.before(arrastrando);
-      guardar();
-    });
-  });
-})();
-
-/* ── El buscador del home abre la paleta global del shell ── */
-(function(){
-  const sBtn = document.getElementById('dash-search-btn');
-  if (sBtn) sBtn.addEventListener('click', () => {
-    if (window.brokrCmdk) window.brokrCmdk.open();
-  });
-})();
-
-/* ── "Últimos inmuebles": ícono genérico de respaldo si no hay foto o
-   falla la carga. Global (no dentro del closure de brokr-shell-ready):
-   un onerror="" inline se ejecuta como código de scope global sin
-   importar en qué closure se haya insertado el <img>, así que la
-   función que llama tiene que poder encontrarse ahí. */
-const ICONO_CASA_GENERICO = '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg>';
-window.brokrSinFotoInmueble = function (img) {
-  const span = img && img.parentElement;
-  if (span) span.innerHTML = ICONO_CASA_GENERICO;
-};
-
-/* ── Datos reales cuando el shell termina la autenticación ── */
+/* ── Datos reales cuando el shell termina la autenticación ──
+   3 conteos para las tarjetas KPI, la foto de perfil (o iniciales de
+   respaldo) para el avatar, y el módulo de Admin solo si aplica. */
 window.addEventListener('brokr-shell-ready', async (e) => {
   const profile = e.detail?.profile;
-  const nombrePerfil = (profile?.profile?.nombre || '').trim();
-  const first = nombrePerfil.split(/\s+/)[0] || '';
-  const fnEl = document.getElementById('dash-firstname');
-  const comaEl = document.getElementById('dash-greet-coma');
-  if (fnEl && first) {
-    fnEl.textContent = first;
-    fnEl.hidden = false;
-    if (comaEl) comaEl.hidden = false;
-  }
+  const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
   const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
   const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
-  const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  // "$2,977,000" es ambiguo en México (¿pesos? ¿dólares?). Se agrega el
-  // código de moneda explícito — Intl ya formatea en es-MX, pero
-  // style:'currency' solo pone el símbolo "$", no el código ISO.
-  const pesos = n => Number(n || 0).toLocaleString('es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }) + ' MXN';
 
   /* Cuenta exacta con HEAD + Prefer: count=exact (no descarga registros).
      Cada intento avisa a window.brokrReportarConexion si la red respondió
@@ -907,551 +506,61 @@ window.addEventListener('brokr-shell-ready', async (e) => {
     }
   }
 
-  /* ── Vencidas: UNA sola fuente para las tres pantallas ──
-     Antes el subtítulo del saludo y el badge del KPI sacaban su número de
-     esta misma cuenta, pero la tarjeta "Requiere tu atención" mostraba
-     filas.length de una query DISTINTA (vencidas + hoy, cortada a 8) —
-     así que si había, digamos, 10 vencidas y 8 entre vencidas+hoy, el
-     usuario veía "10 vencidas" arriba y "8" en la tarjeta, sin ninguna
-     relación entre los dos números. Ahora se cuenta una sola vez aquí y
-     se reparte a cargarKpis/cargarAtencion como parámetro. */
-  const hoyInicioGlobal = new Date(); hoyInicioGlobal.setHours(0,0,0,0);
-  function contarVencidas() {
-    return fxCount(
-      'tareas?select=id&completada=eq.false&fecha_entrega=not.is.null&fecha_entrega=lt.' +
-      encodeURIComponent(hoyInicioGlobal.toISOString()));
+  const iso = d => d.toISOString();
+  const lunes = new Date(); lunes.setHours(0,0,0,0);
+  lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7));
+  const mes1 = new Date(); mes1.setDate(1); mes1.setHours(0,0,0,0);
+
+  const [activos, pros, cierres] = await Promise.all([
+    fxCount('propiedades?select=id&estatus=eq.activa&archivada=not.is.true'),
+    fxCount('contactos?select=id&created_at=gte.' + encodeURIComponent(iso(lunes))),
+    fxCount('contratos?select=id&created_at=gte.' + encodeURIComponent(iso(mes1))),
+  ]);
+  document.getElementById('home-kpi-activos').textContent = activos;
+  document.getElementById('home-kpi-pros').textContent = pros;
+  document.getElementById('home-kpi-cierres').textContent = cierres;
+
+  /* ── Avatar: foto real si existe, iniciales de respaldo si no ──
+     Reemplaza el contenido del botón (nunca alterna un `hidden`) para no
+     repetir el bug de display-vs-[hidden] que ya mordió a esta pantalla
+     una vez con el banner de conexión. */
+  const avatarBtn = document.getElementById('home-avatar');
+  const nombre = (profile?.profile?.nombre || '').trim();
+  const iniciales = nombre
+    ? nombre.split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase()
+    : '';
+  if (avatarBtn) {
+    avatarBtn.textContent = iniciales || '?';
+    if (nombre) avatarBtn.setAttribute('aria-label', 'Ver el perfil de ' + nombre);
+    avatarBtn.addEventListener('click', () => { location.href = 'mi-sitio.html'; });
   }
-  // Refresca los tres lugares que dependen de tVencidas a la vez —
-  // se llama después de cualquier acción que pueda cambiar el número
-  // (marcar una hecha, o "Poner al día").
-  async function refrescarVencidas() {
-    const t = await contarVencidas();
-    cargarKpis(t);
-    cargarAtencion(t);
-    return t;
+  try {
+    const uid = profile?.user?.id;
+    if (uid) {
+      const filas = await fxRest('usuarios?id=eq.' + encodeURIComponent(uid) + '&select=foto_url');
+      const fotoUrl = Array.isArray(filas) && filas[0] && filas[0].foto_url;
+      if (fotoUrl && avatarBtn) {
+        avatarBtn.innerHTML = '<img src="' + esc(fotoUrl) + '" alt=""/>';
+      }
+    }
+  } catch (_) {}
+
+  /* ── Admin: el único módulo condicional, se agrega en vez de
+     alternar `hidden` — mismo motivo que el avatar arriba. */
+  if (profile?.isAdmin) {
+    const grid = document.getElementById('home-grid-mas');
+    if (grid) {
+      grid.insertAdjacentHTML('beforeend',
+        '<a class="home-card" href="admin.html">' +
+          '<span class="home-card__ic home-card__ic--8"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a6.759 6.759 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.28z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></span>' +
+          '<span class="home-card__label">Admin</span>' +
+        '</a>');
+    }
   }
 
-  refrescarVencidas();
-  cargarLeads();
-  cargarPipeline();
-  cargarInmuebles();
-  // Para el banner "sin conexión · datos de las X:XX" — se asume que esta
-  // tanda de cargas tuvo éxito (si no había red, el propio service worker
-  // ya habría servido algo desde caché o las funciones fxCount/fxRest
-  // habrían regresado vacío en silencio, como ya hacían antes de esto).
   try { localStorage.setItem('brokr_ultima_carga', new Date().toISOString()); } catch(_){}
-
-  /* ── KPIs del día ── */
-  async function cargarKpis(tVencidas) {
-    const iso = d => d.toISOString();
-    const hoy = new Date(); hoy.setHours(0,0,0,0);
-    const manana = new Date(hoy.getTime() + 86400000);
-    const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7));
-    const mes1 = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-
-    let metaPros = 5, metaCierre = 2;
-    try {
-      metaPros = Number(localStorage.getItem('brokr_meta_prospectos')) || 5;
-      metaCierre = Number(localStorage.getItem('brokr_meta_cierres')) || 2;
-    } catch(_){}
-
-    const fHoy = '&fecha_entrega=gte.' + encodeURIComponent(iso(hoy)) + '&fecha_entrega=lt.' + encodeURIComponent(iso(manana));
-    const [tHoy, tHoyDone, pros, cierres] = await Promise.all([
-      fxCount('tareas?select=id' + fHoy),
-      fxCount('tareas?select=id&completada=eq.true' + fHoy),
-      fxCount('contactos?select=id&created_at=gte.' + encodeURIComponent(iso(lunes))),
-      fxCount('contratos?select=id&created_at=gte.' + encodeURIComponent(iso(mes1))),
-    ]);
-
-    document.getElementById('kpi-pend').innerHTML = tHoyDone + '<small>/' + tHoy + ' hechas</small>';
-    const badge = document.getElementById('kpi-pend-badge');
-    if (badge && tVencidas > 0) { badge.textContent = tVencidas + ' vencidas'; badge.hidden = false; }
-    document.getElementById('kpi-pros').innerHTML = pros + '<small>/' + metaPros + ' meta</small>';
-    document.getElementById('kpi-cierre').innerHTML = cierres + '<small>/' + metaCierre + ' meta</small>';
-
-    let pctPend;
-    if (tHoy === 0) pctPend = tVencidas > 0 ? 0 : 1;
-    else pctPend = tHoyDone / tHoy;
-    const avance = Math.round(((pctPend + Math.min(1, pros / metaPros) + Math.min(1, cierres / metaCierre)) / 3) * 100);
-    document.getElementById('kpi-avance').innerHTML = avance + '<small>%</small>';
-
-    /* Línea del saludo: lo que urge */
-    const urge = document.getElementById('dash-urge');
-    if (urge) {
-      if (tVencidas > 0) {
-        urge.textContent = 'Tienes ' + tVencidas + (tVencidas === 1 ? ' pendiente vencida.' : ' pendientes vencidas.');
-        urge.hidden = false;
-      } else if (tHoy > tHoyDone) {
-        urge.textContent = 'Te quedan ' + (tHoy - tHoyDone) + ' tareas hoy.';
-        urge.classList.add('is-ok');
-        urge.hidden = false;
-      } else {
-        urge.textContent = 'Todo al día.';
-        urge.classList.add('is-ok');
-        urge.hidden = false;
-      }
-    }
-  }
-
-  /* ── Requiere tu atención: vencidas + hoy + esta semana, agrupadas ──
-     El badge usa tVencidas (la MISMA cuenta del subtítulo y del KPI) —
-     nunca cuántas filas se alcanzan a pintar, que es un número aparte y
-     ahora vive en "Ver las otras N →". Máximo 3 filas visibles, agrupadas
-     por encabezado y ordenadas por fecha ascendente; el resto solo se
-     cuenta, no se pinta (así la home no se vuelve un scroll infinito). */
-  function finDeSemana(desde) {
-    const f = new Date(desde);
-    f.setDate(f.getDate() + ((7 - f.getDay()) % 7));
-    f.setHours(23,59,59,999);
-    return f;
-  }
-  function limpiarTituloTarea(t) {
-    // "Quita el precio del título": una tarea creada desde WhatsApp puede
-    // traer el precio del inmueble pegado al final ("... - $2,977,000 MXN").
-    // Nunca toca títulos escritos a mano que no calcen con ese patrón.
-    return String(t || 'Tarea')
-      .replace(/\s*[-–—]\s*\$\s*[\d.,]+\s*(MXN|USD)?\s*$/i, '')
-      .trim() || 'Tarea';
-  }
-  function fmtRelativo(fecha, ahora) {
-    const d0 = new Date(fecha); d0.setHours(0,0,0,0);
-    const h0 = new Date(ahora); h0.setHours(0,0,0,0);
-    const dias = Math.round((h0 - d0) / 86400000);
-    if (dias > 0) return 'Vencida hace ' + dias + (dias === 1 ? ' día' : ' días');
-    if (dias === 0) return 'Hoy · ' + fecha.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
-    if (dias === -1) return 'Mañana';
-    return 'En ' + Math.abs(dias) + ' días';
-  }
-  // "Nunca una inicial suelta": si el contacto vinculado no tiene nombre
-  // real (vacío o de una sola letra), se prefiere su teléfono, y si
-  // tampoco hay teléfono, un rótulo explícito en vez de adivinar.
-  function nombreContacto(c) {
-    if (!c) return '';
-    const n = (c.nombre || '').trim();
-    if (n.length >= 2) return n;
-    if (c.telefono) return String(c.telefono);
-    return 'Contacto sin nombre';
-  }
-
-  async function cargarAtencion(tVencidas) {
-    const lista = document.getElementById('aten-lista');
-    const vacio = document.getElementById('aten-vacio');
-    const count = document.getElementById('aten-count');
-    const vermas = document.getElementById('aten-vermas');
-    const vermasN = document.getElementById('aten-vermas-n');
-    const btnPonerAlDia = document.getElementById('aten-poner-al-dia');
-
-    if (count) { count.hidden = tVencidas <= 0; if (tVencidas > 0) count.textContent = tVencidas + (tVencidas === 1 ? ' vencida' : ' vencidas'); }
-    if (btnPonerAlDia) btnPonerAlDia.hidden = tVencidas <= 0;
-
-    const hoyFin = new Date(); hoyFin.setHours(23,59,59,999);
-    const finSemana = finDeSemana(hoyInicioGlobal);
-    const filtro = 'completada=eq.false&fecha_entrega=not.is.null&fecha_entrega=lte.' + encodeURIComponent(finSemana.toISOString());
-    const [filas, totalReal] = await Promise.all([
-      fxRest('tareas?select=id,titulo,fecha_entrega,contacto_id,propiedad_id&' + filtro + '&order=fecha_entrega.asc&limit=30'),
-      fxCount('tareas?select=id&' + filtro),
-    ]);
-    if (!Array.isArray(filas) || !filas.length) { vacio.hidden = false; lista.innerHTML = ''; vermas.hidden = true; return; }
-    vacio.hidden = true;
-
-    // Enriquecer con el contacto/inmueble vinculado — el título libre de
-    // la tarea no es confiable para reconstruir "acción + nombre" (lo
-    // escribe cada quien a su manera), pero el vínculo estructurado sí.
-    const idsContacto = [...new Set(filas.map(t => t.contacto_id).filter(Boolean))];
-    const idsProp = [...new Set(filas.map(t => t.propiedad_id).filter(Boolean))];
-    const [contactosRows, propsRows] = await Promise.all([
-      idsContacto.length ? fxRest('contactos?select=id,nombre,telefono&id=in.(' + idsContacto.map(id => encodeURIComponent(id)).join(',') + ')') : [],
-      idsProp.length ? fxRest('propiedades?select=id,titulo,clave_interna&id=in.(' + idsProp.map(id => encodeURIComponent(id)).join(',') + ')') : [],
-    ]);
-    const contactoIdx = {}; (Array.isArray(contactosRows) ? contactosRows : []).forEach(c => contactoIdx[String(c.id)] = c);
-    const propIdx = {}; (Array.isArray(propsRows) ? propsRows : []).forEach(p => propIdx[String(p.id)] = p);
-
-    const ahora = new Date();
-    const grupos = [
-      { titulo: 'Vencidas', items: [] },
-      { titulo: 'Hoy', items: [] },
-      { titulo: 'Esta semana', items: [] },
-    ];
-    filas.forEach(t => {
-      const d = new Date(t.fecha_entrega);
-      (d < hoyInicioGlobal ? grupos[0] : d <= hoyFin ? grupos[1] : grupos[2]).items.push(t);
-    });
-
-    const MAX_VISIBLE = 3;
-    let mostrados = 0;
-    const bloques = [];
-    for (const g of grupos) {
-      if (!g.items.length || mostrados >= MAX_VISIBLE) continue;
-      const visibles = g.items.slice(0, MAX_VISIBLE - mostrados);
-      mostrados += visibles.length;
-      bloques.push({ titulo: g.titulo, items: visibles });
-    }
-
-    function filaHTML(t) {
-      const d = new Date(t.fecha_entrega);
-      const vencida = d < hoyInicioGlobal;
-      const c = t.contacto_id ? contactoIdx[String(t.contacto_id)] : null;
-      const p = t.propiedad_id ? propIdx[String(t.propiedad_id)] : null;
-      const piezas = [esc(fmtRelativo(d, ahora))];
-      if (p) piezas.push(esc(p.clave_interna || p.titulo || 'Inmueble'));
-      if (c) piezas.push(esc(nombreContacto(c)));
-      const tel = c && c.telefono ? String(c.telefono).replace(/\D/g, '') : '';
-      const ico = vencida
-        ? '<span class="aten-item__ic aten-item__ic--vencida"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg></span>'
-        : '<span class="aten-item__ic aten-item__ic--hoy"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>';
-      const waBtn = tel
-        ? '<button class="bk-icon-btn bk-icon-btn--sm" type="button" data-wa="' + esc(tel) + '" data-nombre="' + esc(nombreContacto(c)) + '" data-tarea="' + esc(limpiarTituloTarea(t.titulo)) + '" title="Escribir por WhatsApp" aria-label="Escribir por WhatsApp">' +
-            '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.29-1.39a9.9 9.9 0 004.75 1.21h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm0 1.67c4.55 0 8.24 3.7 8.24 8.24 0 4.55-3.7 8.24-8.24 8.24a8.2 8.2 0 01-4.19-1.15l-.3-.18-3.14.82.84-3.06-.2-.32a8.18 8.18 0 01-1.26-4.35c0-4.55 3.7-8.24 8.25-8.24zm-4.6 4.35c-.16 0-.42.06-.65.31-.22.25-.86.84-.86 2.05 0 1.2.88 2.37 1 2.53.13.17 1.72 2.7 4.22 3.71.59.24 1.06.38 1.42.49.6.19 1.14.16 1.57.1.48-.07 1.47-.6 1.68-1.18.2-.58.2-1.07.14-1.18-.06-.1-.23-.16-.48-.29-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.78.98-.14.17-.29.19-.53.06-.25-.13-1.03-.38-1.97-1.22-.73-.65-1.22-1.45-1.36-1.7-.14-.25-.02-.38.11-.5.11-.12.25-.29.37-.44.12-.15.16-.25.24-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.37-.78-1.87-.2-.49-.41-.42-.56-.43z"/></svg></button>'
-        : '';
-      return '<div class="aten-item" data-id="' + esc(t.id) + '">' + ico +
-        '<div class="aten-item__main">' +
-          '<div class="aten-item__t">' + esc(limpiarTituloTarea(t.titulo)) + '</div>' +
-          '<div class="aten-item__d' + (vencida ? ' is-vencida' : '') + '">' + piezas.join(' · ') + '</div>' +
-        '</div>' +
-        '<div class="aten-item__acts">' + waBtn +
-          '<a class="bk-icon-btn bk-icon-btn--sm" href="tareas.html" title="Reagendar en Tareas" aria-label="Reagendar en Tareas">' +
-            '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg></a>' +
-          '<button class="bk-icon-btn bk-icon-btn--sm" type="button" data-done title="Marcar hecha" aria-label="Marcar hecha">' +
-            '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg></button>' +
-        '</div></div>';
-    }
-
-    lista.innerHTML = bloques.map(b =>
-      '<div class="aten-grupo__h">' + esc(b.titulo) + '</div>' + b.items.map(filaHTML).join('')
-    ).join('');
-
-    const restantes = Math.max(0, totalReal - mostrados);
-    if (restantes > 0) { vermasN.textContent = String(restantes); vermas.hidden = false; }
-    else vermas.hidden = true;
-
-    lista.querySelectorAll('[data-done]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const item = btn.closest('.aten-item');
-        const id = item.getAttribute('data-id');
-        item.classList.add('is-done');
-        try {
-          if (window.brokrSb && window.brokrSb.rest) {
-            await window.brokrSb.rest('tareas?id=eq.' + encodeURIComponent(id),
-              { method: 'PATCH', body: { completada: true, fecha_completada: new Date().toISOString() } });
-          }
-          refrescarVencidas();
-        } catch (err) { item.classList.remove('is-done'); }
-      });
-    });
-    lista.querySelectorAll('[data-wa]').forEach(btn => {
-      btn.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        const plantilla = 'Hola' + (btn.dataset.nombre && btn.dataset.nombre !== 'Contacto sin nombre' ? ' ' + btn.dataset.nombre : '') +
-          ', te escribo por: ' + btn.dataset.tarea;
-        abrirWhatsApp(btn.dataset.wa, plantilla);
-      });
-    });
-  }
-
-  /* ── WhatsApp: mismo criterio que contactos.html/clientes.html ──
-     Con el módulo de WhatsApp de Broquer conectado, abre el chat DENTRO
-     de Broquer (no admite plantilla propia, pero ahí ya se escribe en un
-     chat completo). Sin él, abre WhatsApp normal (wa.me) con el mensaje
-     precargado. */
-  let _waModulo = null;
-  async function _waVerificarModulo() {
-    try {
-      const cacheado = sessionStorage.getItem('brokr_wa_modulo');
-      if (cacheado !== null) { _waModulo = cacheado === '1'; return; }
-    } catch(_){}
-    try {
-      const tok = window.brokrSb ? await window.brokrSb.ensureToken() : null;
-      if (!tok) { _waModulo = false; return; }
-      const r = await fetch('https://api.broquer.app/whatsapp2/numeros', { headers: { Authorization: 'Bearer ' + tok } });
-      if (!r.ok) { _waModulo = false; return; }
-      const d = await r.json();
-      _waModulo = Array.isArray(d.numeros) && d.numeros.length > 0;
-    } catch(_) { _waModulo = false; }
-    try { sessionStorage.setItem('brokr_wa_modulo', _waModulo ? '1' : '0'); } catch(_){}
-  }
-  async function abrirWhatsApp(tel, plantilla) {
-    const digits = String(tel || '').replace(/\D/g, '');
-    if (!digits) return;
-    if (_waModulo === null) await _waVerificarModulo();
-    if (_waModulo) {
-      location.href = 'whatsapp.html?tel=' + digits;
-    } else {
-      window.open('https://wa.me/52' + digits + (plantilla ? '?text=' + encodeURIComponent(plantilla) : ''), '_blank');
-    }
-  }
-
-  /* ── Leads sin responder (chats de WhatsApp con no leídos) ──
-     Antes: la tarjeta arrancaba oculta (hidden) y solo se mostraba si
-     había conversaciones sin leer — así que una cuenta sin WhatsApp
-     conectado la dejaba en el DOM para siempre, vacía, y aun así aparecía
-     activada (con su checkbox marcado) en el sheet de personalización:
-     un widget fantasma que el usuario podía "prender/apagar" sin que
-     tuviera ningún efecto visible. Ahora: sin WhatsApp conectado, se
-     quita del DOM y de la lista de personalización — no se monta a
-     medias. Con WhatsApp conectado pero cero leads sin responder, se
-     muestra con su propio estado vacío (nunca en blanco). */
-  async function cargarLeads() {
-    const card = document.getElementById('leads-card');
-    const lista = document.getElementById('leads-lista');
-    const vacio = document.getElementById('leads-vacio');
-    const opt = document.getElementById('dash-opt-leads');
-    const quitarDelTodo = () => { card.remove(); if (opt) opt.remove(); };
-    try {
-      const tok = window.brokrSb ? await window.brokrSb.ensureToken() : null;
-      if (!tok) { quitarDelTodo(); return; }
-      const r = await fetch('https://api.broquer.app/whatsapp2/conversaciones',
-        { headers: { Authorization: 'Bearer ' + tok } });
-      if (!r.ok) { quitarDelTodo(); return; }
-      const d = await r.json();
-      const convs = (d.conversaciones || [])
-        .filter(c => Number(c.unread_count) > 0 || c.no_leida)
-        .slice(0, 4);
-      card.hidden = false;
-      if (!convs.length) { vacio.hidden = false; return; }
-      lista.innerHTML = convs.map(c => {
-        const nombre = (c.wa2_contactos && c.wa2_contactos.nombre) || c.wa_id || 'Prospecto';
-        const ini = String(nombre).trim().split(/\s+/).map(p => p[0]).slice(0,2).join('').toUpperCase() || 'P';
-        const prev = c.preview_texto || 'Mensaje nuevo';
-        return '<a class="lead-item" href="whatsapp.html">' +
-          '<span class="lead-item__av">' + esc(ini) + '</span>' +
-          '<span class="lead-item__main">' +
-            '<span class="lead-item__n">' + esc(nombre) + '</span>' +
-            '<span class="lead-item__s">' + esc(prev) + '</span>' +
-          '</span>' +
-          '<span class="bk-badge bk-badge--success">Responder</span></a>';
-      }).join('');
-    } catch (err) { quitarDelTodo(); }
-  }
-
-  /* ── Pipeline: contactos por etapa ── */
-  async function cargarPipeline() {
-    const lista = document.getElementById('pipe-lista');
-    const vacio = document.getElementById('pipe-vacio');
-    const ETAPAS = [
-      ['nuevo', 'Nuevos', 'pipe-fill--nuevo'],
-      ['activo', 'Activos', 'pipe-fill--activo'],
-      ['contactado', 'Contactados', 'pipe-fill--contactado'],
-      ['cerrado', 'Cerrados', 'pipe-fill--cerrado'],
-    ];
-    // OJO: la columna real es "estatus" (la misma que usa el pipeline de
-    // Contactos) — "etapa" fue un nombre de columna que nunca existió salvo
-    // por un bug ya corregido, así que este conteo siempre daba cero/vacío.
-    // Se restringe a potenciales: es la definición real de "pipeline".
-    const counts = await Promise.all(
-      ETAPAS.map(e => fxCount('contactos?select=id&estatus=eq.' + e[0] + '&es_potencial=eq.true')));
-    const max = Math.max(1, ...counts);
-    if (!counts.some(n => n > 0)) { vacio.hidden = false; return; }
-    lista.innerHTML = ETAPAS.map((e, i) =>
-      '<div class="pipe-row"><span class="pl">' + e[1] + '</span>' +
-      '<div class="pipe-bar"><div class="pipe-fill ' + e[2] + '" data-w="' +
-      Math.max(8, Math.round(counts[i] / max * 100)) + '">' + counts[i] + '</div></div></div>'
-    ).join('');
-    setTimeout(() => lista.querySelectorAll('.pipe-fill').forEach(f => {
-      f.style.width = f.dataset.w + '%';
-    }), 150);
-  }
-
-  /* ── Últimos inmuebles ──
-     Antes solo había un ícono genérico de casita — lo único visual que
-     puede tener esta pantalla es la foto de portada, así que se usa.
-     La caja tiene tamaño fijo (44×38, ver CSS) para no generar salto de
-     layout (CLS) mientras carga; sin foto, o si falla, se cae al mismo
-     ícono de siempre (ICONO_CASA_GENERICO / brokrSinFotoInmueble, arriba
-     del todo del script — tienen que ser globales para que el onerror
-     inline del <img> los encuentre). */
-  async function cargarInmuebles() {
-    const lista = document.getElementById('props-lista');
-    const vacio = document.getElementById('props-vacio');
-    const filas = await fxRest('propiedades?select=id,titulo,precio,operacion,fotos&order=created_at.desc&limit=3');
-    if (!Array.isArray(filas) || !filas.length) { vacio.hidden = false; return; }
-    lista.innerHTML = filas.map(p => {
-      const op = p.operacion === 'renta' ? 'Renta' : (p.operacion === 'venta' ? 'Venta' : '');
-      const precio = (p.precio != null && p.precio !== '' && !isNaN(Number(p.precio)))
-        ? pesos(p.precio) : '';
-      const portada = Array.isArray(p.fotos) && p.fotos.length ? p.fotos[0] : '';
-      const miniatura = portada
-        ? '<img src="' + esc(portada) + '" alt="" loading="lazy" decoding="async" onerror="brokrSinFotoInmueble(this)"/>'
-        : ICONO_CASA_GENERICO;
-      return '<a class="prop-item" href="propiedades.html">' +
-        '<span class="prop-item__pi' + (portada ? ' prop-item__pi--foto' : '') + '">' + miniatura + '</span>' +
-        '<span class="prop-item__main">' +
-          '<span class="prop-item__n">' + esc(p.titulo || 'Propiedad') + '</span>' +
-          (op ? '<span class="prop-item__s">' + op + '</span>' : '') +
-        '</span>' +
-        (precio ? '<span class="prop-item__p">' + esc(precio) + '</span>' : '') +
-      '</a>';
-    }).join('');
-  }
-
-  /* ── Poner al día: resolver todas las vencidas de un jalón ──
-     Siempre actúa sobre las VENCIDAS (no las de hoy/semana) — es
-     justo la lista que el usuario ya "abandonó" (pendientes desde el
-     21 de julio, en el caso que motivó esto). Cada acción pide
-     confirmación (es sobre TODAS las vencidas, no una) y da 5
-     segundos para deshacer por un toast, porque un cambio en bloque
-     sin awareness de qué tocó exactamente es peligroso. */
-  (function () {
-    const back = document.getElementById('podia-back');
-    const sheet = document.getElementById('podia-sheet');
-    const sub = document.getElementById('podia-sub');
-    const btnManana = document.getElementById('podia-manana');
-    const btnFechaAbrir = document.getElementById('podia-fecha-btn');
-    const fechaWrap = document.getElementById('podia-fecha-wrap');
-    const fechaInput = document.getElementById('podia-fecha-input');
-    const btnFechaConfirmar = document.getElementById('podia-fecha-confirmar');
-    const btnHechas = document.getElementById('podia-hechas');
-    const btnCerrar = document.getElementById('podia-cerrar');
-    const abridor = document.getElementById('aten-poner-al-dia');
-    if (!back || !sheet || !abridor) return;
-
-    let focoPrevio = null;
-    function focosDelSheet() {
-      return Array.from(sheet.querySelectorAll('button, input'))
-        .filter(el => !el.disabled && el.offsetParent !== null);
-    }
-    function onKeydown(e) {
-      if (e.key === 'Escape') { e.preventDefault(); cerrar(); return; }
-      if (e.key !== 'Tab') return;
-      // Foco atrapado: Tab/Shift+Tab no debe salirse del sheet mientras está abierto.
-      const focos = focosDelSheet();
-      if (!focos.length) return;
-      const primero = focos[0], ultimo = focos[focos.length - 1];
-      if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
-      else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
-    }
-    function abrir() {
-      focoPrevio = document.activeElement;
-      fechaWrap.hidden = true;
-      sub.textContent = 'Actúa sobre tus tareas vencidas.';
-      back.hidden = false; sheet.hidden = false;
-      requestAnimationFrame(() => { back.classList.add('is-open'); sheet.classList.add('is-open'); });
-      document.body.style.overflow = 'hidden'; // el fondo no se mueve mientras el sheet está abierto
-      document.addEventListener('keydown', onKeydown);
-      const primero = focosDelSheet()[0];
-      if (primero) primero.focus();
-    }
-    function cerrar() {
-      back.classList.remove('is-open'); sheet.classList.remove('is-open');
-      document.body.style.overflow = '';
-      document.removeEventListener('keydown', onKeydown);
-      setTimeout(() => { back.hidden = true; sheet.hidden = true; }, 220);
-      if (focoPrevio && focoPrevio.focus) focoPrevio.focus();
-    }
-
-    abridor.addEventListener('click', abrir);
-    btnCerrar.addEventListener('click', cerrar);
-    back.addEventListener('click', cerrar);
-    btnFechaAbrir.addEventListener('click', () => {
-      fechaWrap.hidden = !fechaWrap.hidden;
-      if (!fechaWrap.hidden) {
-        const hoyStr = new Date().toISOString().slice(0, 10);
-        fechaInput.min = hoyStr; fechaInput.value = hoyStr;
-        fechaInput.focus();
-      }
-    });
-
-    async function obtenerVencidas() {
-      const filas = await fxRest(
-        'tareas?select=id,fecha_entrega&completada=eq.false&fecha_entrega=not.is.null&fecha_entrega=lt.' +
-        encodeURIComponent(hoyInicioGlobal.toISOString()) + '&limit=500');
-      return Array.isArray(filas) ? filas : [];
-    }
-
-    async function aplicarEnBloque(cambios, mensajeExito) {
-      const filas = await obtenerVencidas();
-      if (!filas.length) { cerrar(); return; }
-      const anteriores = filas.map(f => ({ id: f.id, fecha_entrega: f.fecha_entrega }));
-      cerrar();
-      const listaIn = filas.map(f => encodeURIComponent(f.id)).join(',');
-      try {
-        if (window.brokrSb && window.brokrSb.rest) {
-          await window.brokrSb.rest('tareas?id=in.(' + listaIn + ')', { method: 'PATCH', body: cambios });
-        }
-      } catch (err) { mostrarToastDeshacer('No se pudo actualizar. Intenta de nuevo.', null); return; }
-      refrescarVencidas();
-      mostrarToastDeshacer(mensajeExito, async () => {
-        // Deshacer: cada tarea regresa a SU fecha_entrega original —
-        // no todas a una fecha compartida, que sería incorrecto.
-        try {
-          await Promise.all(anteriores.map(a => window.brokrSb && window.brokrSb.rest
-            ? window.brokrSb.rest('tareas?id=eq.' + encodeURIComponent(a.id),
-                { method: 'PATCH', body: { fecha_entrega: a.fecha_entrega, completada: false, fecha_completada: null } })
-            : Promise.resolve()));
-        } catch (_) {}
-        refrescarVencidas();
-      });
-    }
-
-    btnManana.addEventListener('click', () => {
-      if (!confirm('¿Mover todas tus tareas vencidas a mañana?')) return;
-      const manana = new Date(); manana.setDate(manana.getDate() + 1); manana.setHours(9, 0, 0, 0);
-      aplicarEnBloque({ fecha_entrega: manana.toISOString() }, 'Tareas movidas a mañana');
-    });
-    btnFechaConfirmar.addEventListener('click', () => {
-      const val = fechaInput.value;
-      if (!val) return;
-      if (!confirm('¿Mover todas tus tareas vencidas al ' + val + '?')) return;
-      const f = new Date(val + 'T09:00:00');
-      aplicarEnBloque({ fecha_entrega: f.toISOString() }, 'Tareas movidas de fecha');
-    });
-    btnHechas.addEventListener('click', () => {
-      if (!confirm('¿Marcar TODAS tus tareas vencidas como hechas?')) return;
-      aplicarEnBloque({ completada: true, fecha_completada: new Date().toISOString() }, 'Tareas marcadas como hechas');
-    });
-  })();
 });
-
-/* ── Toast con Deshacer (5s) ──
-   Para acciones en bloque: son destructivas y el usuario no ve una por
-   una qué se tocó, así que siempre hay ventana para arrepentirse. */
-function mostrarToastDeshacer(texto, onDeshacer) {
-  const toast = document.createElement('div');
-  toast.className = 'dash-toast';
-  toast.innerHTML = '<span>' + texto + '</span>' +
-    (onDeshacer ? '<button type="button" class="dash-toast__btn">Deshacer</button>' : '');
-  document.body.appendChild(toast);
-  let resuelto = false;
-  const quitar = () => { toast.classList.remove('is-open'); setTimeout(() => toast.remove(), 250); };
-  const btn = toast.querySelector('.dash-toast__btn');
-  if (btn) btn.addEventListener('click', () => {
-    if (resuelto) return;
-    resuelto = true;
-    onDeshacer();
-    quitar();
-  });
-  requestAnimationFrame(() => toast.classList.add('is-open'));
-  setTimeout(() => { if (!resuelto) quitar(); }, 5000);
-}
 </script>
-
-<!-- ═══ Agendar demo ═══ -->
-<style>
-  .dx-ov[hidden] { display: none; }
-  .dx-ov { position: fixed; inset: 0; z-index: 2147483645; background: rgba(8,28,78,.46);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-    font-family: var(--font-sans); }
-  .dx-card { width: 100%; max-width: 420px; background: var(--paper);
-    border: 1px solid var(--line); border-radius: var(--r-modal); padding: var(--sp-7);
-    box-shadow: var(--shadow-lg); position: relative; text-align: left; }
-  .dx-card h3 { font-size: var(--fs-h3); margin: 0 0 6px; color: var(--ink); letter-spacing: -.02em; }
-  .dx-card p { font-size: var(--fs-sm); color: var(--mute); margin: 0 0 var(--sp-4); line-height: 1.5; }
-  .dx-x { position: absolute; top: 12px; right: 14px; border: none; background: transparent;
-    color: var(--mute); font-size: var(--fs-h2); line-height: 1; cursor: pointer; padding: 4px 8px; font-family: inherit; }
-  .dx-field { margin-bottom: var(--sp-3); }
-  .dx-field label { display: block; font-size: var(--fs-label-3); font-weight: 700;
-    color: var(--ink); margin-bottom: 5px; }
-  .dx-field input, .dx-field select, .dx-field textarea {
-    width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: var(--r-sm);
-    padding: 11px 12px; font-size: var(--fs-sm); font-family: inherit; color: var(--ink);
-    background: var(--paper); }
-  .dx-field input:focus, .dx-field select:focus, .dx-field textarea:focus {
-    outline: none; border-color: var(--sky-blue); }
-  .dx-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
-  .dx-msg { min-height: 18px; font-size: var(--fs-label-3); margin-top: var(--sp-2); }
-
-</style>
 
 </body>
 </html>
-

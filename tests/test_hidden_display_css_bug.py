@@ -26,8 +26,6 @@ ROOT = Path(__file__).resolve().parents[1]
 #  elemento real de la app que lo usa y se alterna con `.hidden` en JS)
 CASOS = [
     ("index.html", ".dash-offline", "#dash-offline (banner sin conexión)"),
-    ("index.html", ".podia-fecha-wrap", "#podia-fecha-wrap (fila de fecha en Poner al día)"),
-    ("index.html", ".link.aten-vermas", "#aten-vermas (Ver las otras N →)"),
     ("brokr-theme.css", ".bk-badge", "cualquier badge compartido en toda la app"),
 ]
 
