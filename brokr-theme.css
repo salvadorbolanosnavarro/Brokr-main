@@ -669,6 +669,10 @@ html {
 .bk-chip--success{ background: var(--success-soft);color: var(--success);border-color: transparent; }
 .bk-chip--info   { background: var(--info-soft);   color: var(--info);   border-color: transparent; }
 
+/* Sin esto, cualquier pantalla que alterne `.hidden` en un .bk-badge por
+   JS lo deja visible siempre: una regla de autor con `display` le gana al
+   `[hidden]{display:none}` del navegador sin importar el atributo. */
+.bk-badge[hidden] { display: none; }
 .bk-badge {
   display: inline-flex; align-items: center; gap: var(--sp-1);
   min-height: 26px; padding: var(--sp-1) var(--sp-3);

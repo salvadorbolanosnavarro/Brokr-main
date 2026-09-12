@@ -44,7 +44,14 @@
 }
 @media (max-width: 720px) { .dash-scroll { padding: 12px 14px 40px; } }
 
-/* ── Banner "sin conexión" — discreto, arriba de todo lo demás ── */
+/* ── Banner "sin conexión" — discreto, arriba de todo lo demás ──
+   El bug real de por qué seguía apareciendo con la conexión bien: esta
+   regla ponía `display:flex` a secas, y una regla de autor con `display`
+   siempre le gana a la regla del navegador `[hidden]{display:none}` sin
+   importar la especificidad ni lo que haga el JS con `.hidden = true` —
+   el atributo `hidden` nunca tuvo efecto real. La única forma correcta es
+   que el propio selector de autor respete `[hidden]` explícitamente. */
+.dash-offline[hidden] { display: none; }
 .dash-offline {
   display: flex; align-items: center; gap: var(--sp-2);
   background: var(--warn-soft); color: var(--warn);
@@ -198,6 +205,7 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
   margin: var(--sp-3) 0 var(--sp-1);
 }
 .aten-grupo__h:first-child { margin-top: 0; }
+.link.aten-vermas[hidden] { display: none; }
 .link.aten-vermas {
   display: block; text-align: center; margin-top: var(--sp-2);
   padding: 10px 0; font-size: var(--fs-sm); font-weight: 600;
@@ -329,6 +337,10 @@ a.dash-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
 .podia-panel.is-open { transform: none; }
 .podia-sub { margin: 2px 4px var(--sp-3); }
 .podia-item { width: 100%; margin-bottom: 8px; }
+/* Mismo bug de fondo que .dash-offline (ver arriba): sin este override,
+   `display:flex` le gana al `[hidden]` del navegador y la fila de fecha
+   queda visible siempre, sin importar fechaWrap.hidden en JS. */
+.podia-fecha-wrap[hidden] { display: none; }
 .podia-fecha-wrap { display: flex; gap: 8px; margin-bottom: 8px; }
 /* Sin font-size propio: brokr-theme.css ya fuerza los inputs a 16px
    (evita el zoom-al-enfocar de iOS) en pantallas ≤768px. */
