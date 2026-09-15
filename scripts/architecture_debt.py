@@ -110,7 +110,9 @@ LARGE_FILE_MAX_BYTES = {
     "routers/firmas.py": 119_193,
     # Bumped 80 bytes: se agregó la etapa "Futuro" al pipeline por defecto
     # (ETAPAS_DEFAULT) — un estatus nuevo para contactos/leads, no debt.
-    "estadisticas.html": 117_009,
+    # Bumped 18 bytes: se agregó "ajena" (inmueble de otro colega externo)
+    # al mapa de etiquetas de estatus de inmuebles — estatus nuevo, no debt.
+    "estadisticas.html": 117_027,
     # Bumped 825 bytes total: confirmaciones ("toast") al guardar etapa/
     # probabilidad, notas, vínculos y borrado masivo que antes eran
     # silenciosos, más una confirmación antes de descartar cambios sin
