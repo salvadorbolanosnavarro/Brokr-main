@@ -170,6 +170,10 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);min-h
             Utilizar en…
           </button>
           <div class="usar-menu" id="usar-menu" role="menu">
+            <button class="usar-item" type="button" role="menuitem" onclick="useInNuevoInmueble()">
+              <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M12 9v.01"/></svg>
+              Nuevo inmueble con estas imágenes
+            </button>
             <button class="usar-item" type="button" role="menuitem" onclick="useInFicha()">
               <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><rect x="7" y="12" width="10" height="6" rx="1"/><path d="M7 17l3-3 2 2 2-3 3 3"/></svg>
               Ficha técnica
@@ -822,6 +826,28 @@ function useInFicha() {
   try {
     sessionStorage.setItem('broquer_editor_images', JSON.stringify(imagesToUse));
     location.href = 'ficha-manual.html';
+  } catch(e) {
+    showToast('No se pudieron transferir las imágenes');
+  }
+}
+
+// ── Utilizar en Nuevo inmueble ────────────────────────────────────────────────
+// Manda las fotos editadas a "Tus Inmuebles" y deja abierto el formulario de
+// alta con esas imágenes ya cargadas — el agente solo llena los datos.
+function useInNuevoInmueble() {
+  toggleUsarMenu(false);
+  const imagesToUse = results
+    .map((res, i) => res && res.cleaned_b64
+      ? { url: 'data:' + res.content_type + ';base64,' + res.cleaned_b64,
+          name: nombreArchivoEditado(files[i].name, res.content_type) }
+      : null)
+    .filter(Boolean);
+
+  if (!imagesToUse.length) { showToast('No hay fotos editadas aún'); return; }
+
+  try {
+    sessionStorage.setItem('broquer_editor_images_prop', JSON.stringify(imagesToUse));
+    location.href = 'propiedades.html';
   } catch(e) {
     showToast('No se pudieron transferir las imágenes');
   }
