@@ -4459,40 +4459,18 @@ body[data-app="facebook-ads"]{--page-max:980px}
     }
 
     // ─── Frases motivacionales rotativas (cada hora) ───────────────
-    const QUOTES = [
-      { t: 'El éxito no es definitivo, el fracaso no es fatal: lo que cuenta es el coraje para continuar.', a: 'Winston Churchill' },
-      { t: 'La única forma de hacer un gran trabajo es amar lo que haces.', a: 'Steve Jobs' },
-      { t: 'No te preocupes por el fracaso; preocúpate por las oportunidades que pierdes cuando ni siquiera lo intentas.', a: 'Jack Canfield' },
-      { t: 'El mercado siempre puede permanecer irracional más tiempo del que tú puedes permanecer solvente.', a: 'John Maynard Keynes' },
-      { t: 'La oportunidad no toca: presenta su tarjeta cuando vienes a buscarla.', a: 'Charles Schwab' },
-      { t: 'Quien quiere hacer algo encuentra un medio; quien no quiere hacer nada encuentra una excusa.', a: 'Proverbio árabe' },
-      { t: 'Café es para closers.', a: 'Glengarry Glen Ross' },
-      { t: 'El que no arriesga, no gana.', a: 'Refrán popular' },
-      { t: 'Cada batalla se gana antes de pelearla.', a: 'Sun Tzu' },
-      { t: 'No vendemos casas. Vendemos sueños, posibilidades, hogares.', a: 'Barbara Corcoran' },
-      { t: 'El dinero es como el estiércol: solo sirve si lo esparces.', a: 'J. Paul Getty' },
-      { t: 'Lo importante no es lo que te pasa, sino cómo reaccionas a lo que te pasa.', a: 'Epicteto' },
-      { t: 'Si no estás dispuesto a arriesgarlo todo, no esperes lograr nada.', a: 'Muhammad Ali' },
-      { t: 'En los negocios, lo que es peligroso es no evolucionar.', a: 'Jeff Bezos' },
-      { t: 'El precio es lo que pagas. El valor es lo que recibes.', a: 'Warren Buffett' },
-      { t: 'No se trata de ideas. Se trata de hacer que las ideas sucedan.', a: 'Scott Belsky' },
-      { t: 'Si lo construyes, ellos vendrán.', a: 'Field of Dreams' },
-      { t: 'Greed, for lack of a better word, is good.', a: 'Wall Street — Gordon Gekko' },
-      { t: 'A.B.C. — Always Be Closing.', a: 'Glengarry Glen Ross' },
-      { t: 'La gente no compra productos: compra la versión mejor de sí mismos.', a: 'Don Draper — Mad Men' },
-      { t: 'El que tiene un porqué para vivir, puede soportar casi cualquier cómo.', a: 'Friedrich Nietzsche' },
-      { t: 'Lo que hagas hoy puede mejorar todos tus mañanas.', a: 'Ralph Marston' },
-      { t: 'El verdadero valor de un hombre se determina principalmente examinando en qué medida ha alcanzado la liberación del yo.', a: 'Albert Einstein' },
-      { t: 'No persigas el éxito: vuélvete una persona de valor y el éxito te seguirá.', a: 'Albert Einstein' },
-    ];
+    // El banco de frases vive en quotes.js, compartido con el banner de
+    // Inicio (index.html) — antes cada uno tenía su propio arreglo QUOTES
+    // sin sincronía entre ellos. Este archivo se incluye en ~40 páginas
+    // vía <script defer>, así que en vez de agregarle un <script> más a
+    // cada una, se carga quotes.js bajo demanda aquí mismo.
     const quoteEl = document.getElementById('bk-topbar-quote');
     let _quoteIdx = -1;
-    function showQuote() {
-      if (!quoteEl) return;
-      let next;
+    function showQuote(QUOTES) {
+      if (!quoteEl || !QUOTES || !QUOTES.length) return;
       // hash de la hora actual para que la frase cambie cada hora de forma determinista
       const hourHash = Math.floor(Date.now() / (1000 * 60 * 60));
-      next = hourHash % QUOTES.length;
+      let next = hourHash % QUOTES.length;
       if (next === _quoteIdx) next = (next + 1) % QUOTES.length;
       _quoteIdx = next;
       const q = QUOTES[next];
@@ -4502,16 +4480,26 @@ body[data-app="facebook-ads"]{--page-max:980px}
         quoteEl.classList.add('is-visible');
       }, 250);
     }
-    showQuote();
-    // verificación cada minuto: si cambió la hora, rotar
-    let _lastHour = new Date().getHours();
-    setInterval(() => {
-      const h = new Date().getHours();
-      if (h !== _lastHour) {
-        _lastHour = h;
-        showQuote();
-      }
-    }, 60 * 1000);
+    function cargarFrasesCompartidas(cb) {
+      if (window.BROQUER_QUOTES) { cb(window.BROQUER_QUOTES); return; }
+      const s = document.createElement('script');
+      s.src = 'quotes.js';
+      s.onload = () => cb(window.BROQUER_QUOTES || []);
+      s.onerror = () => cb([]);
+      document.head.appendChild(s);
+    }
+    cargarFrasesCompartidas((QUOTES) => {
+      showQuote(QUOTES);
+      // verificación cada minuto: si cambió la hora, rotar
+      let _lastHour = new Date().getHours();
+      setInterval(() => {
+        const h = new Date().getHours();
+        if (h !== _lastHour) {
+          _lastHour = h;
+          showQuote(QUOTES);
+        }
+      }, 60 * 1000);
+    });
 
     // ─── Búsqueda expandible (lupa en topbar) ──────────────────────
     const searchToggleBtn = document.getElementById('bk-search-toggle');

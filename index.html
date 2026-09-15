@@ -375,57 +375,17 @@ a.home-card, button.home-card { cursor: pointer; }
 })();
 </script>
 
+<script src="quotes.js"></script>
 <script>
 /* ── Frase rotativa: negocios + mundo inmobiliario ──
-   Independiente de las frases del topbar de escritorio (app-shell.js) —
-   este banco es más grande y pensado para ser lo primero que se lee en
-   la home, así que prioriza traducciones naturales (nada de dejar la
-   mitad en inglés) y suma clásicos del gremio inmobiliario, no solo
-   frases de negocios en general. Rota cada hora, de forma determinista
+   El banco de frases vive en quotes.js, compartido con el topbar de
+   escritorio (app-shell.js) — antes cada uno tenía el suyo, sin
+   sincronía entre ellos. Rota cada hora, de forma determinista
    (mismo criterio que el topbar de escritorio). */
 (function () {
-  const QUOTES = [
-    // — Mundo inmobiliario —
-    { t: 'Compra tierra: ya no la están haciendo.', a: 'Mark Twain' },
-    { t: 'Los bienes raíces no se pueden perder ni robar, ni se los pueden llevar. Comprados con sentido común y pagados en su totalidad, son la inversión más segura del mundo.', a: 'Franklin D. Roosevelt' },
-    { t: 'Ubicación, ubicación, ubicación.', a: 'Máxima inmobiliaria' },
-    { t: 'El 90% de los millonarios se hicieron ricos invirtiendo en bienes raíces.', a: 'Andrew Carnegie' },
-    { t: 'No esperes para comprar bienes raíces. Compra bienes raíces y espera.', a: 'T. Harv Eker' },
-    { t: 'Nunca falta la tierra: falta la gente que la sepa vender.', a: 'Refrán del gremio' },
-    { t: 'La mejor inversión sobre la faz de la Tierra es la Tierra misma.', a: 'Louis Glickman' },
-    { t: 'En bienes raíces, la ganancia se hace al comprar, no al vender.', a: 'Sabiduría inmobiliaria' },
-    { t: 'Las grandes fortunas de este país se han hecho en la tierra.', a: 'John D. Rockefeller' },
-    { t: 'El terrateniente se enriquece incluso mientras duerme.', a: 'John Stuart Mill' },
-    { t: 'No vendes una casa: ayudas a alguien a empezar su próximo capítulo.', a: 'Voz del oficio' },
-    { t: 'Un cliente no compra metros cuadrados. Compra la vida que va a vivir ahí.', a: 'Voz del oficio' },
-    { t: 'El mercado no tiene memoria: cada llamada es una oportunidad nueva.', a: 'Voz del oficio' },
-    { t: 'El buen agente no busca la casa perfecta: busca la casa correcta para esa familia.', a: 'Voz del oficio' },
-    // — Negocios y persistencia —
-    { t: 'El éxito no es definitivo, el fracaso no es fatal: lo que cuenta es el coraje para continuar.', a: 'Winston Churchill' },
-    { t: 'La única forma de hacer un gran trabajo es amar lo que haces.', a: 'Steve Jobs' },
-    { t: 'No te preocupes por el fracaso; preocúpate por las oportunidades que pierdes cuando ni siquiera lo intentas.', a: 'Jack Canfield' },
-    { t: 'El mercado siempre puede permanecer irracional más tiempo del que tú puedes permanecer solvente.', a: 'John Maynard Keynes' },
-    { t: 'La oportunidad no toca: presenta su tarjeta cuando vienes a buscarla.', a: 'Charles Schwab' },
-    { t: 'Quien quiere hacer algo encuentra un medio; quien no quiere hacer nada encuentra una excusa.', a: 'Proverbio árabe' },
-    { t: 'El que no arriesga, no gana.', a: 'Refrán popular' },
-    { t: 'Cada batalla se gana antes de pelearla.', a: 'Sun Tzu' },
-    { t: 'No vendemos casas. Vendemos sueños, posibilidades, hogares.', a: 'Barbara Corcoran' },
-    { t: 'El dinero es como el estiércol: solo sirve si lo esparces.', a: 'J. Paul Getty' },
-    { t: 'Lo importante no es lo que te pasa, sino cómo reaccionas a lo que te pasa.', a: 'Epicteto' },
-    { t: 'Si no estás dispuesto a arriesgarlo todo, no esperes lograr nada.', a: 'Muhammad Ali' },
-    { t: 'En los negocios, lo que es peligroso es no evolucionar.', a: 'Jeff Bezos' },
-    { t: 'El precio es lo que pagas. El valor es lo que recibes.', a: 'Warren Buffett' },
-    { t: 'No se trata de ideas. Se trata de hacer que las ideas sucedan.', a: 'Scott Belsky' },
-    { t: 'Si lo construyes, ellos vendrán.', a: 'Field of Dreams' },
-    { t: 'La codicia, a falta de una mejor palabra, es buena.', a: 'Wall Street — Gordon Gekko' },
-    { t: 'Siempre estar cerrando.', a: 'Glengarry Glen Ross' },
-    { t: 'La gente no compra productos: compra la versión mejor de sí misma.', a: 'Don Draper — Mad Men' },
-    { t: 'El que tiene un porqué para vivir, puede soportar casi cualquier cómo.', a: 'Friedrich Nietzsche' },
-    { t: 'Lo que hagas hoy puede mejorar todos tus mañanas.', a: 'Ralph Marston' },
-    { t: 'No persigas el éxito: vuélvete una persona de valor y el éxito te seguirá.', a: 'Albert Einstein' },
-  ];
+  const QUOTES = window.BROQUER_QUOTES || [];
   const el = document.getElementById('home-phrase');
-  if (!el) return;
+  if (!QUOTES.length || !el) return;
   let idx = -1;
   function mostrar() {
     let next = Math.floor(Date.now() / (1000 * 60 * 60)) % QUOTES.length;
