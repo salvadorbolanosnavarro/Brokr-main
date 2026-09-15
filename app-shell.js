@@ -434,14 +434,13 @@
    Los módulos van en BLANCO y en NEGRITAS, agrupados en bloques
    translúcidos separados por aire: nada de líneas divisorias. */
 .bk-sidebar {
-  width: 84px; flex-shrink: 0;
+  width: 88px; flex-shrink: 0;
   background: var(--sb-bg);
   border-right: none;
-  padding: 18px 12px 20px;
+  padding: 18px 10px 20px;
   display: flex; flex-direction: column;
-  /* overflow visible: con auto, los tooltips absolutos desbordaban los
-     84px y generaban un scrollbar horizontal (la barra al pie). Los
-     seis grupos caben sin scroll. */
+  /* overflow visible en el eje horizontal: nada debe desbordar hacia los
+     lados. El rail (ver .bk-rail) maneja su propio overflow vertical. */
   overflow: visible;
   position: relative;
 }
@@ -466,115 +465,88 @@
 .bk-sidebar__brand a:hover img { opacity: 1; }
 
 /* ── Rail de íconos ───────────────────────────────────────────────
-   Cada módulo va suelto, como su propio ícono — nada de menús que
-   esconden nada. "Más" es la única excepción: sigue siendo un botón
+   Cada módulo va suelto, como su propio ícono con su nombre chiquito
+   debajo, siempre visible — nada de menús que esconden nada, nada que
+   solo aparezca al pasar el mouse. Antes el nombre salía como texto
+   vertical grande ENCIMA del rail al hacer hover y tapaba los íconos
+   vecinos, dificultando navegar el propio menú; ahora nunca compite
+   con nadie porque vive en su propio espacio, debajo de su ícono.
+   "Más" es la única excepción de comportamiento: sigue siendo un botón
    que abre su propio flyout (ver buildRailItem), porque no es trabajo
-   del día a día. */
+   del día a día — visualmente es igual: ícono + nombre debajo. */
 .bk-sb-cols { flex: 1; display: flex; justify-content: center; min-height: 0; }
 .bk-rail {
-  flex: 0 0 56px;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  flex: 1; min-height: 0; width: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  /* Con 16+ módulos y cada ícono ahora más alto (trae su nombre debajo),
+     el rail puede no caber completo en pantallas bajas (laptop chico,
+     ventana sin maximizar). Se vuelve scrolleable en vez de recortar el
+     último módulo fuera de la vista — sin barra visible, como el resto
+     del sidebar. */
+  overflow-y: auto; overflow-x: visible; scrollbar-width: none;
 }
+.bk-rail::-webkit-scrollbar { width: 0; }
 
-/* Ícono suelto de un módulo: en reposo solo se ve el ícono. Al pasar el
-   mouse, el ícono desaparece (con un saltito breve antes de irse) y en
-   su lugar aparece su nombre — vertical, del mismo color que los
-   íconos, sin ningún recuadro ni fondo detrás: es el ícono mismo
-   transformándose en su nombre, no una etiqueta flotando encima. */
+/* Ícono suelto de un módulo + su nombre debajo: discreto en reposo,
+   se aclara al pasar el mouse o si es el módulo activo — el nombre es
+   parte del propio ícono, nunca un elemento flotante que tape vecinos. */
 .bk-sb-ico {
   position: relative;
-  width: 48px; height: 46px; border-radius: var(--r);
-  display: flex; align-items: center; justify-content: center;
+  width: 100%; border-radius: var(--r);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
   color: rgba(255,255,255,0.72);
   text-decoration: none !important;
-  transition: color var(--dur) var(--ease);
+  padding: 6px 2px 5px; gap: 3px;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.bk-sb-ico svg { width: 21px; height: 21px; transition: opacity var(--dur) var(--ease); }
-.bk-sb-ico:hover, .bk-sb-ico:focus-visible { color: #FFFFFF; }
-.bk-sb-ico:hover svg, .bk-sb-ico:focus-visible svg {
-  opacity: 0;
-  animation: bk-sb-ico-pop .3s var(--ease-out);
-}
-/* Un ícono vecino tapado por el nombre largo de otro (ver
-   ajustarEtiquetaVertical): desaparece igual, sin el saltito — el
-   saltito es la reacción al mouse, esto solo le hace espacio al texto. */
-.bk-sb-ico--tapado svg { opacity: 0; }
-@keyframes bk-sb-ico-pop {
-  0%   { transform: scale(1) rotate(0deg); }
-  45%  { transform: scale(1.22) rotate(-10deg); }
-  100% { transform: scale(1.08) rotate(0deg); }
-}
+.bk-sb-ico svg { width: 19px; height: 19px; flex-shrink: 0; }
+.bk-sb-ico:hover, .bk-sb-ico:focus-visible { background: var(--sb-hover); color: #FFFFFF; }
 .bk-sb-ico:focus { outline: none; }
 .bk-sb-ico:focus-visible { outline: 2px solid rgba(255,255,255,0.65); outline-offset: 2px; }
-.bk-sb-ico.is-active { background: #FFFFFF; color: var(--sky-navy); transition: background var(--dur) var(--ease), color var(--dur) var(--ease); }
+.bk-sb-ico.is-active { background: #FFFFFF; color: var(--sky-navy); }
 .bk-sb-ico.is-active::before {
-  content: ''; position: absolute; left: -12px; top: 50%;
+  content: ''; position: absolute; left: -10px; top: 50%;
   transform: translateY(-50%);
   width: 4px; height: 24px; border-radius: 0 4px 4px 0;
   background: #FFFFFF;
-  transition: opacity var(--dur) var(--ease);
 }
-/* La pastilla blanca del módulo activo también se apaga al hover — si no,
-   el nombre (blanco) queda ilegible encima de su propio fondo blanco. */
-.bk-sb-ico.is-active:hover,
-.bk-sb-ico.is-active:focus-visible {
-  background: transparent; color: #FFFFFF;
-}
-.bk-sb-ico.is-active:hover::before,
-.bk-sb-ico.is-active:focus-visible::before {
-  opacity: 0;
-}
-/* Mismo problema si el módulo activo es uno de los TAPADOS por el
-   nombre largo de un vecino (no el que se está hovereando): su fondo
-   blanco se queda ahí aunque su ícono ya se apagó. */
-.bk-sb-ico--tapado.is-active { background: transparent; }
-.bk-sb-ico--tapado.is-active::before { opacity: 0; }
-/* El nombre: vertical de verdad — cada letra en su orientación normal,
-   apilada de arriba hacia abajo (text-orientation:upright, NO "mixed",
-   que hubiera rotado cada letra de lado y habría que ladear la cabeza
-   para leerlo). Blanco, sin fondo ni sombra — el mismo color que un
-   ícono encendido — porque el efecto es que el ícono SE CONVIRTIÓ en su
-   nombre, no que le apareció una etiqueta encima.
-   Encima del propio sidebar, nunca hacia el contenido (ancho fijo = el
-   del ícono). Tapa solo los íconos que le hagan falta: su alto sale del
-   tamaño natural del texto (una palabra larga como "Estadísticas" ocupa
-   más renglones que "ISR"), nunca uno fijo. Se centra sobre el ícono que
-   se hoveréa y JS (ver ajustarEtiquetaVertical) la recorta para que no
-   se salga por arriba o por abajo del rail, y apaga los íconos vecinos
-   que tapa. */
+/* El nombre: chico y de peso fuerte para que se lea nítido a este
+   tamaño, hasta 2 renglones si el módulo tiene nombre largo ("Firma
+   electrónica", "Estimación de valor") — nunca empuja al ícono ni se
+   sale de su columna. */
 .bk-sb-ico__label {
-  position: absolute; left: 0; width: 48px;
-  top: 50%; transform: translateY(-50%);
-  display: flex; align-items: center; justify-content: center;
-  color: #FFFFFF;
-  writing-mode: vertical-rl; text-orientation: upright;
-  font-size: 16px; font-weight: 800; letter-spacing: 0.02em; line-height: 1.3;
-  white-space: nowrap;
-  opacity: 0; pointer-events: none; z-index: 2;
+  font-size: 8.5px; font-weight: 700; letter-spacing: 0.01em; line-height: 1.15;
+  text-align: center; color: inherit; opacity: 0.75;
+  max-width: 100%; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   transition: opacity var(--dur) var(--ease);
 }
 .bk-sb-ico:hover .bk-sb-ico__label,
-.bk-sb-ico:focus-visible .bk-sb-ico__label {
+.bk-sb-ico:focus-visible .bk-sb-ico__label,
+.bk-sb-ico.is-active .bk-sb-ico__label {
   opacity: 1;
 }
 
 .bk-rail__item {
   position: relative;
-  width: 48px; height: 46px; border-radius: var(--r);
-  display: flex; align-items: center; justify-content: center;
+  width: 100%; border-radius: var(--r);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
   color: rgba(255,255,255,0.72); background: transparent;
   border: none; cursor: pointer;
+  padding: 6px 2px 5px; gap: 3px;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.bk-rail__item svg { width: 21px; height: 21px; }
+.bk-rail__item svg { width: 19px; height: 19px; flex-shrink: 0; }
 .bk-rail__item:hover { background: var(--sb-hover); color: #FFFFFF; }
 .bk-rail__item:focus { outline: none; }
 .bk-rail__item:focus-visible { outline: 2px solid rgba(255,255,255,0.65); outline-offset: 2px; }
+.bk-rail__item .bk-sb-ico__label { opacity: 0.75; }
+.bk-rail__item:hover .bk-sb-ico__label { opacity: 1; }
 /* Grupo con flyout abierto: toma la pastilla blanca (es lo seleccionado).
    Mientras un flyout esta abierto, la pastilla del grupo del modulo
    actual se atenua para que solo haya UNA seleccion visible. */
 .bk-rail__item.is-open { background: #FFFFFF; color: var(--sky-navy); }
-.bk-rail__item.is-open .bk-rail__tip { display: none; }
+.bk-rail__item.is-open .bk-sb-ico__label { opacity: 1; }
 .bk-rail.has-open .bk-rail__item.is-active:not(.is-open) {
   background: var(--sb-hover); color: #FFFFFF;
 }
@@ -582,29 +554,18 @@
 /* Estado activo con contraste real: pastilla blanca + icono navy. */
 .bk-rail__item.is-active { background: #FFFFFF; color: var(--sky-navy); }
 .bk-rail__item.is-active::before {
-  content: ''; position: absolute; left: -12px; top: 50%;
+  content: ''; position: absolute; left: -10px; top: 50%;
   transform: translateY(-50%);
   width: 4px; height: 24px; border-radius: 0 4px 4px 0;
   background: #FFFFFF;
 }
-.bk-rail__tip {
-  position: absolute; left: 56px; top: 50%;
-  transform: translateY(-50%) scale(0.92); transform-origin: left center;
-  background: var(--sky-navy); color: #FFFFFF;
-  padding: 5px 10px; border-radius: var(--r-xs);
-  font-size: 12px; font-weight: 600; white-space: nowrap;
-  opacity: 0; pointer-events: none; z-index: 80;
-  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
-  box-shadow: var(--shadow-lg);
-}
-.bk-rail__item:hover .bk-rail__tip { opacity: 1; transform: translateY(-50%) scale(1); }
 
 /* ── Flyout del grupo ─────────────────────────────────────────────
    El rail es todo el menú. Clic en un grupo abre este flyout flotante
    con sus módulos; navegar o hacer clic afuera lo cierra. La pantalla
    del módulo gana todo el ancho que ocupaba el panel. */
 .bk-flyout {
-  position: fixed; left: 92px; z-index: 90;
+  position: fixed; left: 96px; z-index: 90;
   min-width: 216px;
   background: var(--sb-bg);
   border-radius: var(--r-lg);
@@ -721,8 +682,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .bk-sidebar::after { animation: none; }
-  .bk-sb-ico:hover svg, .bk-sb-ico:focus-visible svg { animation: none; }
-  .bk-sb-ico__label { transition: none; }
+  .bk-sb-ico, .bk-sb-ico__label { transition: none; }
 }
 
 /* Content area */
@@ -1529,14 +1489,12 @@ body[data-app="facebook-ads"]{--page-max:980px}
   }
   /* ── Rail ──
      Cada módulo es su propio ícono, suelto en el rail — nada de menús que
-     esconden nada. En reposo solo se ven íconos; al pasar el mouse, el
-     ícono se ilumina y su nombre aparece VERTICAL encima del propio
-     sidebar, centrado en ese ícono y tapando solo los íconos vecinos que
-     le hagan falta según lo largo de la palabra (ver ajustarEtiquetaVertical
-     más abajo, que además lo recorta cerca de las orillas del rail).
-     "Más" es la única excepción: sigue siendo un botón que abre su propio
-     flyout (Blog, Ayuda, Mi perfil, Admin) — no es trabajo del día a día,
-     así que no necesita estar suelto como el resto. */
+     esconden nada, y su nombre va SIEMPRE visible, chico, debajo del
+     ícono (ver .bk-sb-ico__label en el CSS). "Más" es la única
+     excepción: sigue siendo un botón que abre su propio flyout (Blog,
+     Ayuda, Mi perfil, Admin) — no es trabajo del día a día, así que no
+     necesita estar suelto como el resto, pero visualmente es igual:
+     ícono + nombre debajo. */
   function buildRailIcon(m, active) {
     const on = m.key === active;
     return `<a href="${m.href}" class="bk-sb-ico${on ? ' is-active' : ''}" aria-label="${m.label}">
@@ -1547,7 +1505,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     if (!items.length && grupo.key !== 'mas') return '';
     const on = grupo.key === grupoActivo;
     return `<button class="bk-rail__item${on ? ' is-active' : ''}" type="button" data-rail="${grupo.key}" aria-label="${grupo.label}">
-      ${svg(grupo.icon)}<span class="bk-rail__tip">${grupo.label}</span>
+      ${svg(grupo.icon)}<span class="bk-sb-ico__label">${grupo.label}</span>
     </button>`;
   }
 
@@ -1704,60 +1662,6 @@ body[data-app="facebook-ads"]{--page-max:980px}
     document.addEventListener('keydown', (ev) => {
       if (ev.key === 'Escape' && flyoutAbierto) cerrarTodo();
     });
-
-    // ── Nombre vertical de los íconos sueltos del rail ──
-    // El nombre se centra sobre el ícono que se hoveréa, pero si eso lo
-    // saca por arriba o por abajo del rail (un ícono cerca de una orilla
-    // con un nombre largo, ej. "Tus Inmuebles" hasta arriba del todo) se
-    // recorta para que nunca se salga de la vista.
-    function ajustarEtiquetaVertical(ico) {
-      const label = ico.querySelector('.bk-sb-ico__label');
-      if (!label || !railEl) return;
-      const sueltos = railEl.querySelectorAll('.bk-sb-ico');
-      if (!sueltos.length) return;
-      // Los límites son el primer y el último ÍCONO SUELTO, no el rail
-      // completo — "Más" también vive dentro de #bk-rail, pero se queda
-      // exactamente como estaba (no entra al sistema de apagado/nombre),
-      // así que un nombre largo nunca debe alcanzar a taparlo.
-      const limiteArriba = sueltos[0].getBoundingClientRect().top;
-      const limiteAbajo = sueltos[sueltos.length - 1].getBoundingClientRect().bottom;
-      const icoRect = ico.getBoundingClientRect();
-      const alto = label.offsetHeight;
-      // `label` es position:absolute dentro de `ico` (su ícono), así que
-      // "top" se mide desde la esquina del ÍCONO, no del rail — hay que
-      // calcular la posición deseada en coordenadas de PANTALLA (centrada
-      // en el ícono, recortada a esos límites) y solo al final
-      // convertirla a "cuánto le falta al ícono para llegar ahí".
-      let topPantalla = icoRect.top + icoRect.height / 2 - alto / 2;
-      topPantalla = Math.max(limiteArriba, Math.min(topPantalla, limiteAbajo - alto));
-      label.style.top = (topPantalla - icoRect.top) + 'px';
-      label.style.transform = 'none';
-      // El propio ícono ya desaparece solo por :hover — aquí solo hace
-      // falta apagar a los VECINOS que el nombre alcanza a tapar. Por
-      // CUALQUIER traslape (no solo si su centro cae adentro): el nombre
-      // no mide un múltiplo exacto de renglón, así que un traslape a
-      // medias dejaría a un ícono a medio desvanecer, con la letra
-      // encimada sobre el pedazo de ícono que no se apagó.
-      const abajoPantalla = topPantalla + alto;
-      sueltos.forEach(otro => {
-        if (otro === ico) { otro.classList.remove('bk-sb-ico--tapado'); return; }
-        const r = otro.getBoundingClientRect();
-        const traslape = r.bottom > topPantalla && r.top < abajoPantalla;
-        otro.classList.toggle('bk-sb-ico--tapado', traslape);
-      });
-    }
-    function limpiarTapados() {
-      if (!railEl) return;
-      railEl.querySelectorAll('.bk-sb-ico--tapado').forEach(el => el.classList.remove('bk-sb-ico--tapado'));
-    }
-    if (railEl) {
-      railEl.querySelectorAll('.bk-sb-ico').forEach(ico => {
-        ico.addEventListener('mouseenter', () => ajustarEtiquetaVertical(ico));
-        ico.addEventListener('focus', () => ajustarEtiquetaVertical(ico));
-        ico.addEventListener('mouseleave', limpiarTapados);
-        ico.addEventListener('blur', limpiarTapados);
-      });
-    }
 
     // ── Paleta de comandos (⌘K) — global en toda la app ──
     // Se arma desde MODS (la fuente de verdad): módulo nuevo en el shell =
