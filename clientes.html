@@ -726,6 +726,23 @@ html, body { background: var(--paper); }
 .prop-sugerencia--vacio { color: var(--mute); cursor: default; }
 .prop-sugerencia--vacio:hover { background: none; }
 
+/* Propiedades de interés elegidas en el alta/edición, pendientes de
+   vincular hasta que se guarde el cliente (ver mAgregarPropPendiente). */
+.props-pend-lista { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+.props-pend-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--navy-soft); color: var(--sky-navy);
+  font-size: var(--fs-xs); font-weight: 600;
+  padding: 5px 6px 5px 10px; border-radius: var(--r-pill);
+  max-width: 100%;
+}
+.props-pend-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.props-pend-chip button {
+  border: none; background: none; color: inherit; cursor: pointer;
+  font-size: var(--fs-label-1); line-height: 1; padding: 0 2px; font-family: inherit; flex-shrink: 0;
+}
+.props-pend-chip button:hover { opacity: .7; }
+
 .mini-empty { text-align: center; padding: 26px 12px; color: var(--mute); font-size: var(--fs-sm); }
 
 /* Botón "+" — acento propio de Clientes */
@@ -873,6 +890,19 @@ html, body { background: var(--paper); }
           <input id="m-etiquetas" type="text" placeholder="vip, urgente, crédito"/>
         </div>
       </div>
+
+      <div class="sec-lbl">Propiedades de interés</div>
+      <div class="vinculo-form">
+        <div class="prop-buscador">
+          <input type="text" id="m-prop-buscar" placeholder="Busca por título, colonia o ciudad…" autocomplete="off"
+                 oninput="mBuscarPropInput()" onfocus="mBuscarPropInput()" onkeydown="mPropBuscarKeydown(event)"/>
+          <input type="hidden" id="m-prop-sel"/>
+          <div class="prop-sugerencias" id="m-prop-sugerencias" hidden></div>
+        </div>
+        <button type="button" onclick="mAgregarPropPendiente()">Agregar</button>
+      </div>
+      <div id="m-props-lista"></div>
+
       <div class="sec-lbl">Domicilio</div>
       <div class="frow three">
         <div class="f col-2"><label>Calle</label><input id="m-calle" type="text" placeholder="AV. INSURGENTES" oninput="this.value=this.value.toUpperCase()"/></div>
@@ -1269,7 +1299,7 @@ function setSexo(s, btn) {
 
 // Evita perder cambios sin guardar por un clic accidental fuera del modal.
 let contactFormDirty = false;
-function abrirModal(id = null) {
+async function abrirModal(id = null) {
   editandoId = id;
   contactFormDirty = false;
   const modalBox = document.querySelector('#modal-ov .sheet') || document.getElementById('modal-ov');
@@ -1306,6 +1336,28 @@ function abrirModal(id = null) {
   }
   document.getElementById('modal-ov').classList.add('open');
   setTimeout(() => document.getElementById('m-nombre').focus(), 100);
+
+  // Propiedades de interés: se pueden agregar desde aquí mismo, sin
+  // esperar a guardar y entrar luego a la ficha. El id del cliente ya se
+  // conoce de antemano aunque sea nuevo (se genera antes de guardar, ver
+  // guardarContacto), así que el vínculo se crea justo después del
+  // upsert, en el mismo guardado.
+  _mPropsPendientes = [];
+  _mPropsDisponibles = [];
+  sv('m-prop-buscar', '');
+  document.getElementById('m-prop-sel').value = '';
+  document.getElementById('m-prop-sugerencias').hidden = true;
+  renderPropsPendientes();
+  const props = await cargarPropsMin();
+  let yaVinculadas = new Set();
+  if (id) {
+    try {
+      const vinculos = await restGet('contactos_propiedades?select=propiedad_id&contacto_id=eq.' + encodeURIComponent(id));
+      yaVinculadas = new Set(vinculos.map(v => String(v.propiedad_id)));
+    } catch (_) {}
+  }
+  if (editandoId !== id) return; // el usuario cambió de cliente mientras cargaba
+  _mPropsDisponibles = props.filter(p => !yaVinculadas.has(String(p.id)));
 }
 
 function cerrarModal() {
@@ -1364,11 +1416,27 @@ async function guardarContacto() {
 
   try {
     await upsertRemoto(datos);
+    let mensaje = editandoId ? 'Cliente actualizado' : 'Cliente guardado';
+    // datos.id ya existe desde antes de guardar (se genera arriba para un
+    // cliente nuevo), así que las propiedades elegidas en el formulario
+    // se vinculan aquí mismo, sin tener que abrir la ficha después.
+    if (_mPropsPendientes.length) {
+      const pendientes = _mPropsPendientes;
+      const resultados = await Promise.allSettled(pendientes.map(p =>
+        restPost('contactos_propiedades', { contacto_id: datos.id, propiedad_id: p.id, relacion: 'interes' })
+      ));
+      const ok = resultados.filter(r => r.status === 'fulfilled').length;
+      const fallidos = pendientes.length - ok;
+      if (ok) mensaje += ' con ' + ok + ' propiedad' + (ok !== 1 ? 'es' : '') + ' de interés';
+      if (fallidos) mensaje += ' (' + fallidos + (fallidos !== 1 ? ' no se pudieron vincular' : ' no se pudo vincular') + ')';
+      _mPropsPendientes = [];
+      renderPropsPendientes();
+    }
     await cargarRemoto();
     contactFormDirty = false;
     cerrarModal();
     renderActual();
-    showToast(editandoId ? 'Cliente actualizado' : 'Cliente guardado');
+    showToast(mensaje);
   } catch (e) {
     alert('No se pudo guardar el cliente.\n\n' + (e.message || e));
   } finally {
@@ -1650,16 +1718,6 @@ async function cargarPropsMin() {
   return _propsMin;
 }
 
-// Buscador de propiedades para vincular: en vez de un <select> con hasta
-// 500 opciones en orden de fecha (ir "una por una" hasta dar con la
-// correcta), un campo de texto con sugerencias por título, colonia,
-// ciudad o tipo. _propsDisponibles son las que aún no están vinculadas
-// a este cliente; _propSugCache guarda la lista mostrada para que el
-// click/teclado puedan resolver el id sin volver a filtrar.
-let _propsDisponibles = [];
-let _propSugCache = [];
-let _propSugHL = -1;
-
 function propSubtitulo(p) {
   const tipo = p.tipo ? p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1) : '';
   const op = p.operacion === 'renta' ? 'Renta' : (p.operacion === 'venta' ? 'Venta' : '');
@@ -1667,78 +1725,137 @@ function propSubtitulo(p) {
   return [tipo, op, ubic].filter(Boolean).join(' · ') || 'Sin más datos';
 }
 
-function buscarProps(q) {
-  q = (q || '').toLowerCase().trim();
-  if (!q) return _propsDisponibles.slice(0, 8);
-  return _propsDisponibles.filter(p =>
-    ((p.titulo||'') + ' ' + (p.colonia||'') + ' ' + (p.ciudad||'') + ' ' + (p.tipo||'')).toLowerCase().includes(q)
-  ).slice(0, 8);
-}
+// Buscador de propiedades: en vez de un <select> con hasta 500 opciones
+// en orden de fecha (ir "una por una" hasta dar con la correcta), un
+// campo de texto con sugerencias por título, colonia, ciudad o tipo.
+// Hay dos instancias en esta página: la de la ficha de detalle (vincula
+// de inmediato al backend) y la del alta/edición (junta una lista local
+// que se vincula toda junta al guardar, para no obligar a entrar a la
+// ficha después de crear el cliente). Cada una trae sus propios ids de
+// DOM; la lista de candidatos ("disponibles") se le pasa desde afuera
+// porque cada una filtra distinto.
+function crearBuscadorPropiedades(inputId, hiddenId, cajaId, vacioTexto) {
+  let sugCache = [];
+  let hl = -1;
+  const inputEl = () => document.getElementById(inputId);
+  const hiddenEl = () => document.getElementById(hiddenId);
+  const cajaEl = () => document.getElementById(cajaId);
 
-function pintarSugerenciasProp(lista) {
-  _propSugCache = lista;
-  _propSugHL = -1;
-  const caja = document.getElementById('vinculo-prop-sugerencias');
-  if (!lista.length) {
-    caja.innerHTML = '<div class="prop-sugerencia prop-sugerencia--vacio">' +
-      (_propsDisponibles.length ? 'Sin coincidencias' : 'No tienes propiedades disponibles para vincular') +
-      '</div>';
+  function filtrar(q, disponibles) {
+    q = (q || '').toLowerCase().trim();
+    if (!q) return disponibles.slice(0, 8);
+    return disponibles.filter(p =>
+      ((p.titulo||'') + ' ' + (p.colonia||'') + ' ' + (p.ciudad||'') + ' ' + (p.tipo||'')).toLowerCase().includes(q)
+    ).slice(0, 8);
+  }
+  function pintar(lista, disponibles) {
+    sugCache = lista;
+    hl = -1;
+    const caja = cajaEl();
+    if (!lista.length) {
+      caja.innerHTML = '<div class="prop-sugerencia prop-sugerencia--vacio">' +
+        (disponibles.length ? 'Sin coincidencias' : vacioTexto) + '</div>';
+      caja.hidden = false;
+      return;
+    }
+    caja.innerHTML = lista.map((p, i) => `<button type="button" class="prop-sugerencia" data-idx="${i}">
+        <span class="prop-sugerencia__n">${esc(p.titulo || 'Sin título')}</span>
+        <span class="prop-sugerencia__d">${esc(propSubtitulo(p))}</span>
+      </button>`).join('');
     caja.hidden = false;
-    return;
   }
-  caja.innerHTML = lista.map((p, i) => `<button type="button" class="prop-sugerencia" data-i="${i}">
-      <span class="prop-sugerencia__n">${esc(p.titulo || 'Sin título')}</span>
-      <span class="prop-sugerencia__d">${esc(propSubtitulo(p))}</span>
-    </button>`).join('');
-  caja.hidden = false;
-}
-
-function buscarPropInput() {
-  document.getElementById('vinculo-prop').value = '';
-  pintarSugerenciasProp(buscarProps(document.getElementById('vinculo-prop-buscar').value));
-}
-
-function elegirProp(idx) {
-  const p = _propSugCache[idx];
-  if (!p) return;
-  document.getElementById('vinculo-prop').value = p.id;
-  document.getElementById('vinculo-prop-buscar').value = p.titulo || 'Sin título';
-  document.getElementById('vinculo-prop-sugerencias').hidden = true;
-}
-
-function propBuscarKeydown(ev) {
-  const caja = document.getElementById('vinculo-prop-sugerencias');
-  if (caja.hidden) return;
-  const n = _propSugCache.length;
-  if (ev.key === 'ArrowDown' && n) {
-    ev.preventDefault();
-    _propSugHL = Math.min(_propSugHL + 1, n - 1);
-    pintarResaltadoProp(caja);
-  } else if (ev.key === 'ArrowUp' && n) {
-    ev.preventDefault();
-    _propSugHL = Math.max(_propSugHL - 1, 0);
-    pintarResaltadoProp(caja);
-  } else if (ev.key === 'Enter') {
-    ev.preventDefault();
-    elegirProp(_propSugHL >= 0 ? _propSugHL : 0);
-  } else if (ev.key === 'Escape') {
-    caja.hidden = true;
+  function onInput(disponibles) {
+    hiddenEl().value = '';
+    pintar(filtrar(inputEl().value, disponibles), disponibles);
   }
+  function elegir(idx) {
+    const p = sugCache[idx];
+    if (!p) return null;
+    hiddenEl().value = p.id;
+    inputEl().value = p.titulo || 'Sin título';
+    cajaEl().hidden = true;
+    return p;
+  }
+  function resaltar() {
+    const caja = cajaEl();
+    Array.from(caja.querySelectorAll('.prop-sugerencia[data-idx]')).forEach((el, i) => {
+      el.classList.toggle('is-hl', i === hl);
+      if (i === hl) el.scrollIntoView({ block: 'nearest' });
+    });
+  }
+  function onKeydown(ev) {
+    const caja = cajaEl();
+    if (!caja || caja.hidden) return;
+    const n = sugCache.length;
+    if (ev.key === 'ArrowDown' && n) { ev.preventDefault(); hl = Math.min(hl + 1, n - 1); resaltar(); }
+    else if (ev.key === 'ArrowUp' && n) { ev.preventDefault(); hl = Math.max(hl - 1, 0); resaltar(); }
+    else if (ev.key === 'Enter') { ev.preventDefault(); elegir(hl >= 0 ? hl : 0); }
+    else if (ev.key === 'Escape') { caja.hidden = true; }
+  }
+  function manejarClick(target) {
+    const btn = target.closest('.prop-sugerencia[data-idx]');
+    if (btn && cajaEl().contains(btn)) { elegir(Number(btn.dataset.idx)); return true; }
+    return false;
+  }
+  function cerrarSiClickAfuera(target) {
+    if (!target.closest('#' + inputId) && !target.closest('#' + cajaId)) cajaEl().hidden = true;
+  }
+  return { onInput, onKeydown, manejarClick, cerrarSiClickAfuera };
 }
-function pintarResaltadoProp(caja) {
-  Array.from(caja.querySelectorAll('.prop-sugerencia[data-i]')).forEach((el, i) => {
-    el.classList.toggle('is-hl', i === _propSugHL);
-    if (i === _propSugHL) el.scrollIntoView({ block: 'nearest' });
-  });
-}
+
+const _buscadorPropDetalle = crearBuscadorPropiedades(
+  'vinculo-prop-buscar', 'vinculo-prop', 'vinculo-prop-sugerencias',
+  'No tienes propiedades disponibles para vincular');
+const _buscadorPropModal = crearBuscadorPropiedades(
+  'm-prop-buscar', 'm-prop-sel', 'm-prop-sugerencias',
+  'No tienes más propiedades para agregar');
+
+let _propsDisponibles = [];
+function buscarPropInput() { _buscadorPropDetalle.onInput(_propsDisponibles); }
+function propBuscarKeydown(ev) { _buscadorPropDetalle.onKeydown(ev); }
+
+let _mPropsDisponibles = [];
+let _mPropsPendientes = [];
+function mBuscarPropInput() { _buscadorPropModal.onInput(_mPropsDisponibles); }
+function mPropBuscarKeydown(ev) { _buscadorPropModal.onKeydown(ev); }
+
 document.addEventListener('click', (ev) => {
-  const btn = ev.target.closest('.prop-sugerencia[data-i]');
-  if (btn) { elegirProp(Number(btn.dataset.i)); return; }
-  if (!ev.target.closest('.prop-buscador')) {
-    const caja = document.getElementById('vinculo-prop-sugerencias');
-    if (caja) caja.hidden = true;
-  }
+  if (_buscadorPropDetalle.manejarClick(ev.target)) return;
+  if (_buscadorPropModal.manejarClick(ev.target)) return;
+  _buscadorPropDetalle.cerrarSiClickAfuera(ev.target);
+  _buscadorPropModal.cerrarSiClickAfuera(ev.target);
 });
+
+// Agrega la propiedad elegida en el buscador del alta/edición a una
+// lista local (no llama al backend todavía: el cliente puede ni existir
+// aún si se está creando). Se vincula toda junta cuando se guarda el
+// formulario, ver guardarContacto().
+function mAgregarPropPendiente() {
+  const id = document.getElementById('m-prop-sel').value;
+  if (!id) { showToast('Busca y elige una propiedad de la lista primero'); return; }
+  const idx = _mPropsDisponibles.findIndex(x => String(x.id) === String(id));
+  if (idx === -1) return;
+  const [p] = _mPropsDisponibles.splice(idx, 1);
+  _mPropsPendientes.push(p);
+  document.getElementById('m-prop-buscar').value = '';
+  document.getElementById('m-prop-sel').value = '';
+  document.getElementById('m-prop-sugerencias').hidden = true;
+  renderPropsPendientes();
+}
+function mQuitarPropPendiente(idx) {
+  const [p] = _mPropsPendientes.splice(idx, 1);
+  if (p) _mPropsDisponibles.push(p);
+  renderPropsPendientes();
+}
+function renderPropsPendientes() {
+  const box = document.getElementById('m-props-lista');
+  if (!box) return;
+  box.innerHTML = _mPropsPendientes.length ? '<div class="props-pend-lista">' +
+    _mPropsPendientes.map((p, i) => `<span class="props-pend-chip">
+        <span>${esc(p.titulo || 'Sin título')}</span>
+        <button type="button" onclick="mQuitarPropPendiente(${i})" title="Quitar" aria-label="Quitar ${esc(p.titulo || '')}">×</button>
+      </span>`).join('') + '</div>' : '';
+}
 
 async function cargarVinculos() {
   if (!detContacto) return;
