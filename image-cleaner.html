@@ -831,10 +831,39 @@ function useInFicha() {
   }
 }
 
+// ── Transferencia vía IndexedDB ──────────────────────────────────────────────
+// sessionStorage aguanta ~5MB por origen: con 2-3 fotos editadas (JPEG/PNG en
+// base64, ~1.5-3MB cada una) ya se pasa y setItem tira QuotaExceededError.
+// IndexedDB no tiene ese límite práctico, así que es el canal principal para
+// mover las imágenes entre pantallas; sessionStorage queda solo de respaldo
+// para navegadores donde IndexedDB no esté disponible (modo privado, etc.).
+function guardarTransferenciaIDB(clave, valor) {
+  return new Promise((resolve, reject) => {
+    let req;
+    try {
+      req = indexedDB.open('broquer-transfer', 1);
+    } catch (e) { reject(e); return; }
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+    };
+    req.onerror = () => reject(req.error || new Error('No se pudo abrir IndexedDB'));
+    req.onsuccess = () => {
+      const db = req.result;
+      try {
+        const tx = db.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put({ valor, ts: Date.now() }, clave);
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error || new Error('No se pudo guardar en IndexedDB')); };
+      } catch (e) { db.close(); reject(e); }
+    };
+  });
+}
+
 // ── Utilizar en Nuevo inmueble ────────────────────────────────────────────────
 // Manda las fotos editadas a "Tus Inmuebles" y deja abierto el formulario de
 // alta con esas imágenes ya cargadas — el agente solo llena los datos.
-function useInNuevoInmueble() {
+async function useInNuevoInmueble() {
   toggleUsarMenu(false);
   const imagesToUse = results
     .map((res, i) => res && res.cleaned_b64
@@ -846,10 +875,19 @@ function useInNuevoInmueble() {
   if (!imagesToUse.length) { showToast('No hay fotos editadas aún'); return; }
 
   try {
+    await guardarTransferenciaIDB('editor_images_prop', imagesToUse);
+    location.href = 'propiedades.html';
+    return;
+  } catch (e) {
+    console.error('Error guardando en IndexedDB:', e);
+  }
+
+  // Respaldo: navegadores sin IndexedDB (modo privado, etc.)
+  try {
     sessionStorage.setItem('broquer_editor_images_prop', JSON.stringify(imagesToUse));
     location.href = 'propiedades.html';
   } catch(e) {
-    showToast('No se pudieron transferir las imágenes');
+    showToast('Las fotos pesan demasiado para transferirlas. Descárgalas y súbelas al inmueble.');
   }
 }
 
