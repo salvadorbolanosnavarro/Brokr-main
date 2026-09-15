@@ -2373,6 +2373,22 @@ function initFotoDragDrop() {
   });
 }
 
+// Sube un blob de foto al bucket "fotos-propiedades" y regresa su URL pública.
+// Compartido entre el <input type=file> normal y las fotos que llegan ya
+// editadas desde el Editor de imágenes (ver preloadFotosDesdeEditor).
+async function subirFotoABucket(blob, ext, contentType, userToken) {
+  const name = `prop_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  const r = await fetch(`${SB_URL}/storage/v1/object/fotos-propiedades/${name}`, { method:'POST', headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+userToken, 'Content-Type':contentType, 'x-upsert':'true' }, body:blob });
+  if (!r.ok) {
+    const errTxt = await r.text();
+    if (r.status === 401 || r.status === 403 || errTxt.includes('row-level security')) {
+      throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+    }
+    throw new Error(errTxt);
+  }
+  return `${SB_URL}/storage/v1/object/public/fotos-propiedades/${name}`;
+}
+
 function initFotoUpload() {
   initFotoDragDrop();
   const input = g('fotos-upload'); if (!input) return;
@@ -2390,22 +2406,56 @@ function initFotoUpload() {
       progress.textContent = `Subiendo ${i+1} de ${files.length}…`;
       try {
         const ext = file.name.split('.').pop().toLowerCase();
-        const name = `prop_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const r = await fetch(`${SB_URL}/storage/v1/object/fotos-propiedades/${name}`, { method:'POST', headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+userToken, 'Content-Type':file.type, 'x-upsert':'true' }, body:file });
-        if (!r.ok) {
-          const errTxt = await r.text();
-          if (r.status === 401 || r.status === 403 || errTxt.includes('row-level security')) {
-            throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
-          }
-          throw new Error(errTxt);
-        }
-        const url = `${SB_URL}/storage/v1/object/public/fotos-propiedades/${name}`;
+        const url = await subirFotoABucket(file, ext, file.type, userToken);
         uploadedFotoUrls.push(url);
         renderFotosPreview();
       } catch(err) { progress.textContent = `Error: ${err.message}`; return; }
     }
     input.value = ''; // permite volver a elegir el mismo archivo si hace falta
   };
+}
+
+// ── Fotos enviadas desde el Editor de imágenes ──────────────────────────────
+// El botón "Nuevo inmueble con estas imágenes" del editor guarda las fotos
+// editadas (data URLs) en sessionStorage y navega hasta acá. Se abre el alta
+// de inmueble y se suben esas fotos al bucket, igual que si el agente las
+// hubiera elegido desde su equipo.
+async function preloadFotosDesdeEditor() {
+  let raw;
+  try { raw = sessionStorage.getItem('broquer_editor_images_prop'); } catch(_) { return; }
+  if (!raw) return;
+  try { sessionStorage.removeItem('broquer_editor_images_prop'); } catch(_) {}
+  let imgs;
+  try { imgs = JSON.parse(raw); } catch(_) { return; }
+  if (!Array.isArray(imgs) || !imgs.length) return;
+
+  openPropForm(null);
+  const progress = g('fotos-progress');
+  const userToken = await getValidToken();
+  if (!userToken) {
+    if (progress) progress.textContent = 'Tu sesión expiró. Vuelve a iniciar sesión.';
+    return;
+  }
+  let subidas = 0;
+  for (let i = 0; i < imgs.length; i++) {
+    const img = imgs[i];
+    if (!img || !img.url) continue;
+    if (progress) progress.textContent = `Subiendo ${i + 1} de ${imgs.length} imágenes del editor…`;
+    try {
+      const blob = await (await fetch(img.url)).blob();
+      const mime = blob.type || 'image/jpeg';
+      const ext = (mime.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+      const url = await subirFotoABucket(blob, ext, mime, userToken);
+      uploadedFotoUrls.push(url);
+      renderFotosPreview();
+      subidas++;
+    } catch (err) {
+      if (progress) progress.textContent = `Error subiendo una imagen: ${err.message}`;
+    }
+  }
+  if (subidas) {
+    mostrarToast(subidas + ' imagen' + (subidas !== 1 ? 'es' : '') + ' del editor cargada' + (subidas !== 1 ? 's' : ''));
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3154,8 +3204,8 @@ async function ejecutarImportCsv() {
 }
 
 /* Wait for shell to authenticate before loading props (shell may redirect to login) */
-if (window.__brokrShellLoaded) { loadProps(); }
-else { window.addEventListener('brokr-shell-ready', loadProps, { once: true }); }
+if (window.__brokrShellLoaded) { loadProps(); preloadFotosDesdeEditor(); }
+else { window.addEventListener('brokr-shell-ready', () => { loadProps(); preloadFotosDesdeEditor(); }, { once: true }); }
 </script>
 
 <!-- Modal de progreso de importación desde EasyBroker -->
