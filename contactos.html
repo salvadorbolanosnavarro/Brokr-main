@@ -799,8 +799,11 @@ html, body { background: var(--paper); }
   color: var(--ink);
   outline: none;
 }
-.vinculo-form select:first-child { flex: 1; min-width: 160px; }
-.vinculo-form button {
+/* Combinador directo: si no, esta regla (más específica que
+   .prop-sugerencia) también pintaría de verde los botones de sugerencia
+   del buscador de propiedades, que viven anidados dentro de
+   .prop-buscador, no sueltos en .vinculo-form. */
+.vinculo-form > button {
   border: none;
   background: var(--forest); color: var(--paper);
   border-radius: var(--r);
@@ -808,7 +811,43 @@ html, body { background: var(--paper); }
   font-family: inherit; font-size: var(--fs-sm); font-weight: 600;
   cursor: pointer;
 }
-.vinculo-form button:hover { opacity: .9; }
+.vinculo-form > button:hover { opacity: .9; }
+
+/* Buscador de propiedades para vincular — reemplaza el <select> gigante
+   (hasta 500 propiedades en orden alfabético/fecha, sin filtro) por un
+   campo de texto con sugerencias en vivo por título, colonia o ciudad. */
+.prop-buscador { position: relative; flex: 1; min-width: 160px; }
+.prop-buscador input {
+  width: 100%;
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 9px 11px;
+  font-family: inherit; font-size: var(--fs-sm);
+  color: var(--ink);
+  outline: none;
+}
+.prop-buscador input:disabled { color: var(--mute); cursor: not-allowed; }
+.prop-sugerencias {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
+  max-height: 260px; overflow-y: auto;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-md);
+}
+.prop-sugerencia {
+  display: block; width: 100%; text-align: left;
+  padding: 9px 11px; border: none; background: none; cursor: pointer;
+  font-family: inherit;
+  border-bottom: 1px solid var(--line);
+}
+.prop-sugerencia:last-child { border-bottom: none; }
+.prop-sugerencia:hover, .prop-sugerencia.is-hl { background: var(--paper-2); }
+.prop-sugerencia__n { display: block; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
+.prop-sugerencia__d { display: block; font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
+.prop-sugerencia--vacio { color: var(--mute); cursor: default; }
+.prop-sugerencia--vacio:hover { background: none; }
 
 .mini-empty { text-align: center; padding: 26px 12px; color: var(--mute); font-size: var(--fs-sm); }
 
@@ -1209,7 +1248,12 @@ html, body { background: var(--paper); }
       </div>
       <div id="dtab-props" hidden>
         <div class="vinculo-form">
-          <select id="vinculo-prop"></select>
+          <div class="prop-buscador">
+            <input type="text" id="vinculo-prop-buscar" placeholder="Busca por título, colonia o ciudad…" autocomplete="off"
+                   oninput="buscarPropInput()" onfocus="buscarPropInput()" onkeydown="propBuscarKeydown(event)"/>
+            <input type="hidden" id="vinculo-prop"/>
+            <div class="prop-sugerencias" id="vinculo-prop-sugerencias" hidden></div>
+          </div>
           <select id="vinculo-rel">
             <option value="interes">Interesado</option>
             <option value="propietario">Propietario</option>
@@ -2448,10 +2492,100 @@ let _propsMin = null;
 async function cargarPropsMin() {
   if (_propsMin) return _propsMin;
   try {
-    _propsMin = await restGet('propiedades?select=id,titulo&order=updated_at.desc&limit=500');
+    _propsMin = await restGet('propiedades?select=id,titulo,tipo,operacion,colonia,ciudad&order=updated_at.desc&limit=500');
   } catch { _propsMin = []; }
   return _propsMin;
 }
+
+// Buscador de propiedades para vincular: en vez de un <select> con hasta
+// 500 opciones en orden de fecha (ir "una por una" hasta dar con la
+// correcta), un campo de texto con sugerencias por título, colonia,
+// ciudad o tipo. _propsDisponibles son las que aún no están vinculadas
+// a este contacto; _propSugCache guarda la lista mostrada para que el
+// click/teclado puedan resolver el id sin volver a filtrar.
+let _propsDisponibles = [];
+let _propSugCache = [];
+let _propSugHL = -1;
+
+function propSubtitulo(p) {
+  const tipo = p.tipo ? p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1) : '';
+  const op = p.operacion === 'renta' ? 'Renta' : (p.operacion === 'venta' ? 'Venta' : '');
+  const ubic = [p.colonia, p.ciudad].filter(Boolean).join(', ');
+  return [tipo, op, ubic].filter(Boolean).join(' · ') || 'Sin más datos';
+}
+
+function buscarProps(q) {
+  q = (q || '').toLowerCase().trim();
+  if (!q) return _propsDisponibles.slice(0, 8);
+  return _propsDisponibles.filter(p =>
+    ((p.titulo||'') + ' ' + (p.colonia||'') + ' ' + (p.ciudad||'') + ' ' + (p.tipo||'')).toLowerCase().includes(q)
+  ).slice(0, 8);
+}
+
+function pintarSugerenciasProp(lista) {
+  _propSugCache = lista;
+  _propSugHL = -1;
+  const caja = document.getElementById('vinculo-prop-sugerencias');
+  if (!lista.length) {
+    caja.innerHTML = '<div class="prop-sugerencia prop-sugerencia--vacio">' +
+      (_propsDisponibles.length ? 'Sin coincidencias' : 'No tienes propiedades disponibles para vincular') +
+      '</div>';
+    caja.hidden = false;
+    return;
+  }
+  caja.innerHTML = lista.map((p, i) => `<button type="button" class="prop-sugerencia" data-i="${i}">
+      <span class="prop-sugerencia__n">${esc(p.titulo || 'Sin título')}</span>
+      <span class="prop-sugerencia__d">${esc(propSubtitulo(p))}</span>
+    </button>`).join('');
+  caja.hidden = false;
+}
+
+function buscarPropInput() {
+  document.getElementById('vinculo-prop').value = '';
+  pintarSugerenciasProp(buscarProps(document.getElementById('vinculo-prop-buscar').value));
+}
+
+function elegirProp(idx) {
+  const p = _propSugCache[idx];
+  if (!p) return;
+  document.getElementById('vinculo-prop').value = p.id;
+  document.getElementById('vinculo-prop-buscar').value = p.titulo || 'Sin título';
+  document.getElementById('vinculo-prop-sugerencias').hidden = true;
+}
+
+function propBuscarKeydown(ev) {
+  const caja = document.getElementById('vinculo-prop-sugerencias');
+  if (caja.hidden) return;
+  const n = _propSugCache.length;
+  if (ev.key === 'ArrowDown' && n) {
+    ev.preventDefault();
+    _propSugHL = Math.min(_propSugHL + 1, n - 1);
+    pintarResaltadoProp(caja);
+  } else if (ev.key === 'ArrowUp' && n) {
+    ev.preventDefault();
+    _propSugHL = Math.max(_propSugHL - 1, 0);
+    pintarResaltadoProp(caja);
+  } else if (ev.key === 'Enter') {
+    ev.preventDefault();
+    elegirProp(_propSugHL >= 0 ? _propSugHL : 0);
+  } else if (ev.key === 'Escape') {
+    caja.hidden = true;
+  }
+}
+function pintarResaltadoProp(caja) {
+  Array.from(caja.querySelectorAll('.prop-sugerencia[data-i]')).forEach((el, i) => {
+    el.classList.toggle('is-hl', i === _propSugHL);
+    if (i === _propSugHL) el.scrollIntoView({ block: 'nearest' });
+  });
+}
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('.prop-sugerencia[data-i]');
+  if (btn) { elegirProp(Number(btn.dataset.i)); return; }
+  if (!ev.target.closest('.prop-buscador')) {
+    const caja = document.getElementById('vinculo-prop-sugerencias');
+    if (caja) caja.hidden = true;
+  }
+});
 
 async function cargarVinculos() {
   if (!detContacto) return;
@@ -2465,13 +2599,16 @@ async function cargarVinculos() {
   ]);
   if (!detContacto || detContacto.id !== cid) return;
 
-  // Poblar selector con propiedades no vinculadas aún
   const yaVinculadas = new Set(vinculos.map(v => String(v.propiedad_id)));
-  const sel = document.getElementById('vinculo-prop');
-  const disponibles = props.filter(p => !yaVinculadas.has(String(p.id)));
-  sel.innerHTML = disponibles.length
-    ? '<option value="">Elige una propiedad…</option>' + disponibles.map(p => `<option value="${esc(String(p.id))}">${esc(p.titulo || 'Sin título')}</option>`).join('')
-    : '<option value="">' + (props.length ? 'Todas ya vinculadas' : 'No tienes propiedades') + '</option>';
+  _propsDisponibles = props.filter(p => !yaVinculadas.has(String(p.id)));
+  const buscador = document.getElementById('vinculo-prop-buscar');
+  buscador.value = '';
+  document.getElementById('vinculo-prop').value = '';
+  document.getElementById('vinculo-prop-sugerencias').hidden = true;
+  buscador.disabled = !_propsDisponibles.length;
+  buscador.placeholder = _propsDisponibles.length
+    ? 'Busca por título, colonia o ciudad…'
+    : (props.length ? 'Todas tus propiedades ya están vinculadas' : 'No tienes propiedades registradas');
 
   const porId = Object.fromEntries(props.map(p => [String(p.id), p]));
   const REL = { interes:'Interesado', propietario:'Propietario', relacionado:'Relacionado' };
@@ -2490,7 +2627,7 @@ async function agregarVinculo() {
   if (!detContacto) return;
   const propId = document.getElementById('vinculo-prop').value;
   const rel = document.getElementById('vinculo-rel').value;
-  if (!propId) return;
+  if (!propId) { showToast('Busca y elige una propiedad de la lista primero'); return; }
   try {
     await restPost('contactos_propiedades', { contacto_id: detContacto.id, propiedad_id: propId, relacion: rel });
     await cargarVinculos();

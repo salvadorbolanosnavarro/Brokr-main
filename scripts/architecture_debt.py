@@ -137,7 +137,11 @@ LARGE_FILE_MAX_BYTES = {
     # Tareas no hacía nada, sin error visible. Bug real, no debt.
     # Bumped 170 bytes: .sheet/#detail-ov usan --vvh (alto real visible)
     # en vez de vh/dvh fijos — mismo arreglo de teclado que arriba.
-    "contactos.html": 116_789,
+    # Bumped 5,741 bytes: el <select> de hasta 500 propiedades para
+    # vincular a un contacto (sin filtro, ir "una por una") se reemplazó
+    # por un buscador con sugerencias en vivo por título/colonia/ciudad —
+    # arregla una usabilidad real, no es deuda.
+    "contactos.html": 122_530,
     # Bumped for the Profeco/IA-generativa disclosure clauses (9.9 Bis /
     # 5.6 Bis) — legitimate legal content, not debt to pay down.
     # Bumped 1,985 bytes: Anexo de WhatsApp ampliado con el cambio de cobro
