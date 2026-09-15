@@ -1956,13 +1956,20 @@ async function publicarEnFacebook(prop) {
 // Click en una card: si hay algo seleccionado, click toggle selección.
 // Si no hay nada seleccionado, click abre el detalle como siempre.
 function onPropCardClick(event, id) {
-  if (!puedeEliminar) { openPropDetail(id); return; }
+  if (!puedeEliminar) { abrirPropiedadEnPestana(id); return; }
   if (selectedIds.size > 0) {
     event.stopPropagation();
     toggleSelectProp(id);
   } else {
-    openPropDetail(id);
+    abrirPropiedadEnPestana(id);
   }
+}
+
+// Cada inmueble se abre en su propia pestaña (misma pestaña si ya estaba
+// abierta para ese id) para que la lista de Mis Inmuebles, con sus filtros,
+// nunca se recargue ni se pierda al ver el detalle de una propiedad.
+function abrirPropiedadEnPestana(id) {
+  window.open('propiedades.html?id=' + encodeURIComponent(id), 'brokr_prop_' + id);
 }
 
 function toggleSelectProp(id) {
@@ -2114,8 +2121,10 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ── Mis Inmuebles → Ficha Manual ─────────────────────────
-// Guarda la propiedad en sessionStorage y redirige a ficha-manual
-// donde se va a precargar automáticamente.
+// Guarda la propiedad en sessionStorage y abre ficha-manual en OTRA
+// pestaña (no navega la actual) para que Mis Inmuebles, con los filtros
+// que el agente haya puesto, se quede tal cual — útil para generar fichas
+// de varias propiedades filtradas por ciertos criterios sin perder la lista.
 function crearFichaDesde(id) {
   const p = allProps.find(x => String(x.id) === String(id));
   if (!p) { alert('Propiedad no encontrada'); return; }
@@ -2139,7 +2148,7 @@ function crearFichaDesde(id) {
     fotos:     (p.fotos || []).map(url => ({ url, name: 'foto.jpg' }))
   };
   sessionStorage.setItem('prefill_ficha_manual', JSON.stringify(prefill));
-  location.href = 'ficha-manual.html';
+  window.open('ficha-manual.html', 'brokr_ficha_' + p.id);
 }
 
 async function deleteProp(id) {

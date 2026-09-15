@@ -92,7 +92,13 @@ LARGE_FILE_MAX_BYTES = {
     # Bumped 134 bytes: max-height del modal usa --vvh (alto real visible)
     # en vez de vh fijo — el teclado de iOS no encoge vh/dvh, así que el
     # botón de guardar podía quedar tapado. Bug real, no debt.
-    "propiedades.html": 155_322,
+    # Bumped 493 bytes: abrir un inmueble o generar su ficha ahora usa
+    # window.open en una pestaña propia por id (en vez de reusar la misma
+    # pestaña o navegar con location.href) para que la lista de Mis
+    # Inmuebles, con los filtros que el agente haya puesto, nunca se
+    # recargue ni se pierda al ver el detalle o generar fichas de varias
+    # propiedades filtradas — bug de UX real, no debt.
+    "propiedades.html": 155_815,
     # Bumped 1,844 bytes for the "Revisar webhook de la app" button in
     # Administrar números (fija el webhook de WhatsApp a nivel app) — a real
     # product change, not debt to pay down.
