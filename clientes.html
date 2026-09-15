@@ -136,7 +136,12 @@ html, body { background: var(--paper); }
   flex: 1;
 }
 .kb-col__count {
-  font-size: var(--fs-xs); color: var(--mute);
+  font-size: var(--fs-caption); font-weight: 700;
+  color: var(--paper);
+  background: var(--kb-accent, var(--mute));
+  min-width: 20px; height: 20px; padding: 0 6px;
+  border-radius: var(--r-pill);
+  display: inline-flex; align-items: center; justify-content: center;
   font-variant-numeric: tabular-nums;
 }
 .kb-col__body {
@@ -145,36 +150,59 @@ html, body { background: var(--paper); }
   display: flex; flex-direction: column; gap: 8px;
   flex: 1;
 }
+/* Tarjeta del pipeline: antes era plana (radio de input, sombra casi
+   nula, avatar chico) — ahora usa el radio real de tarjeta del sistema
+   (--r-lg, el mismo que .prop-card) y una franja de color a la
+   izquierda con el color de SU etapa (ver kbCard/renderPipeline), así
+   el tablero se lee por color de un vistazo y cada tarjeta pesa más. */
 .kb-card {
+  position: relative;
   background: var(--bone);
   border: 1px solid var(--line);
-  border-radius: var(--r);
-  padding: 12px 13px;
+  border-radius: var(--r-lg);
+  padding: 13px 14px 13px 17px;
   cursor: pointer;
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
   transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.kb-card:hover { border-color: var(--line-2); transform: translateY(-1px); box-shadow: var(--sh-1, 0 1px 3px rgba(0,0,0,.07)); }
+.kb-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--kb-accent, var(--line-2));
+}
+.kb-card:hover {
+  border-color: var(--kb-accent, var(--line-2));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
 .kb-card.dragging { opacity: .45; }
 .kb-card__top { display: flex; align-items: center; gap: 10px; }
 .kb-card__av {
-  width: 32px; height: 32px;
+  width: 36px; height: 36px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: var(--fs-caption); font-weight: 600;
+  font-size: var(--fs-xs); font-weight: 700;
   color: var(--paper);
   flex-shrink: 0;
+  box-shadow: var(--shadow-xs);
 }
 .kb-card__name {
-  font-size: var(--fs-sm); font-weight: 500; color: var(--ink);
-  letter-spacing: -0.01em;
+  font-size: var(--fs-sm); font-weight: 700; color: var(--ink);
+  letter-spacing: -0.015em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   flex: 1; min-width: 0;
 }
 .kb-card__meta {
   display: flex; align-items: center; gap: 6px;
-  margin-top: 8px; flex-wrap: wrap;
+  margin-top: 10px; flex-wrap: wrap;
 }
-.kb-card__sub { font-size: var(--fs-caption); color: var(--mute); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb-card__sub {
+  display: flex; align-items: center; gap: 5px;
+  font-size: var(--fs-caption); color: var(--mute); font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 10px; padding-top: 9px; border-top: 1px dashed var(--line);
+}
+.kb-card__sub svg { flex-shrink: 0; opacity: .7; }
 .kb-empty {
   border: 1px dashed var(--line-2);
   border-radius: var(--r);
@@ -2132,7 +2160,7 @@ function renderPipeline() {
   kb.innerHTML = ETAPAS.map(e => {
     const cards = filtrados.filter(c => String(c.estatus || 'nuevo').toLowerCase() === e.clave);
     const cardsHtml = cards.length
-      ? cards.map(c => kbCard(c)).join('')
+      ? cards.map(c => kbCard(c, e.color)).join('')
       : `<div class="kb-empty">Arrastra aquí</div>`;
     return `<div class="kb-col" data-etapa="${esc(e.clave)}"
       ondragover="kbDragOver(event, this)" ondragleave="kbDragLeave(this)" ondrop="kbDrop(event, this)">
@@ -2140,17 +2168,25 @@ function renderPipeline() {
       <div class="kb-col__head">
         <span class="kb-col__dot" style="background:${e.color}"></span>
         <span class="kb-col__name">${esc(e.nombre)}</span>
-        <span class="kb-col__count">${cards.length}</span>
+        <span class="kb-col__count" style="--kb-accent:${e.color}">${cards.length}</span>
       </div>
       <div class="kb-col__body">${cardsHtml}</div>
     </div>`;
   }).join('');
 }
 
-function kbCard(c) {
+const KB_ICO_TEL = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h1.5a2.25 2.25 0 002.25-2.25v-1.372a1.5 1.5 0 00-1.06-1.437l-4.017-1.148a1.5 1.5 0 00-1.516.39l-1.408 1.408a11.25 11.25 0 01-6.336-6.336l1.408-1.408a1.5 1.5 0 00.39-1.516L7.31 3.31A1.5 1.5 0 005.872 2.25H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>';
+const KB_ICO_MAIL = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>';
+const KB_ICO_EMPRESA = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5M4.5 3h9.75v18M4.5 3v18M14.25 21V9.75l6 3.75V21m-9.75-9h.008v.008h-.008V12zm0 3h.008v.008h-.008V15zm0 3h.008v.008h-.008V18zm-3-9h.008v.008H8.25V9zm0 3h.008v.008H8.25V12zm0 3h.008v.008H8.25V15zm0 3h.008v.008H8.25V18z"/></svg>';
+
+// Tarjeta del pipeline: la franja izquierda (ver .kb-card::before) toma
+// el color de SU etapa (`accent`, viene de ETAPAS en renderPipeline) —
+// el tablero se lee por color de un vistazo, no solo por columna.
+function kbCard(c, accent) {
   const sub = c.telefono || c.email || c.empresa || '';
+  const subIco = c.telefono ? KB_ICO_TEL : c.email ? KB_ICO_MAIL : c.empresa ? KB_ICO_EMPRESA : '';
   const tags = Array.isArray(c.etiquetas) ? c.etiquetas.slice(0,2) : [];
-  return `<div class="kb-card" draggable="true" data-id="${esc(c.id)}"
+  return `<div class="kb-card" draggable="true" data-id="${esc(c.id)}" style="--kb-accent:${accent}"
     ondragstart="kbDragStart(event, this)" ondragend="this.classList.remove('dragging')"
     onclick="abrirDetalle(this.dataset.id)">
     <div class="kb-card__top">
@@ -2162,7 +2198,7 @@ function kbCard(c) {
       ${c.fuente ? `<span class="tag-chip">${esc(c.fuente)}</span>` : ''}
       ${tags.map(t => `<span class="tag-chip">${esc(t)}</span>`).join('')}
     </div>
-    ${sub ? `<div class="kb-card__sub" style="margin-top:6px">${esc(sub)}</div>` : ''}
+    ${sub ? `<div class="kb-card__sub">${subIco}<span>${esc(sub)}</span></div>` : ''}
   </div>`;
 }
 
