@@ -999,8 +999,11 @@ html, body { background: var(--paper); }
       <div id="dtab-hist" hidden>
         <div class="composer">
           <input type="text" id="nota-input" placeholder="Escribe una nota…" onkeydown="if(event.key==='Enter')agregarNota()"/>
+          <input type="file" id="nota-adjuntos" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt" style="display:none" onchange="haAgregarArchivos(this.files,'nota-preview');this.value=''"/>
+          <button type="button" class="ha-clip-btn" onclick="document.getElementById('nota-adjuntos').click()" title="Adjuntar fotos, videos o archivos">📎</button>
           <button id="nota-btn" onclick="agregarNota()">Agregar</button>
         </div>
+        <div class="ha-preview" id="nota-preview"></div>
         <div id="hist-feed"></div>
       </div>
       <div id="dtab-props" hidden>
@@ -1045,6 +1048,7 @@ html, body { background: var(--paper); }
 
 <div class="toast" id="toast"></div>
 
+<script src="historial-adjuntos.js" defer></script>
 <script src="app-shell.js" defer></script>
 
 <script>
@@ -1504,6 +1508,7 @@ function setDetTab(tab) {
 function abrirDetalle(id) {
   const c = cargar().find(x => String(x.id) === String(id));
   if (!c) return;
+  if (typeof haTomarAdjuntosListos === 'function') haTomarAdjuntosListos('nota-preview');
   detContacto = c;
   const av = document.getElementById('det-av');
   av.textContent = initials(c.nombre);
@@ -1706,6 +1711,7 @@ async function cargarHistorial() {
       <div class="act-ico ${actIconClass(a.tipo)}">${ACT_ICONS[a.tipo] || ACT_ICONS.nota}</div>
       <div style="flex:1;min-width:0">
         <div class="act-txt">${esc(a.texto || '')}</div>
+        ${haRenderAdjuntos(a.adjuntos)}
         <div class="act-date">${fechaHora(a.created_at)}</div>
       </div>
     </div>`).join('');
@@ -1723,10 +1729,12 @@ async function agregarNota() {
   const inp = document.getElementById('nota-input');
   const btn = document.getElementById('nota-btn');
   const texto = (inp.value || '').trim();
-  if (!texto) { inp.focus(); return; }
+  if (haHaySubiendoPendiente('nota-preview')) { showToast('Espera a que terminen de subir los adjuntos'); return; }
+  if (!texto && !haHayAdjuntosListos('nota-preview')) { inp.focus(); return; }
+  const adjuntos = haTomarAdjuntosListos('nota-preview');
   btn.disabled = true;
   try {
-    await restPost('actividades', { tipo: 'nota', texto: texto, contacto_id: detContacto.id });
+    await restPost('actividades', { tipo: 'nota', texto: texto, adjuntos: adjuntos, contacto_id: detContacto.id });
     inp.value = '';
     await cargarHistorial();
     showToast('Nota agregada');
@@ -2142,7 +2150,11 @@ async function eliminarDesdeDetalle() {
   }
 }
 
-function cerrarDetalle() { document.getElementById('detail-ov').classList.remove('open'); detContacto = null; }
+function cerrarDetalle() {
+  document.getElementById('detail-ov').classList.remove('open');
+  detContacto = null;
+  if (typeof haTomarAdjuntosListos === 'function') haTomarAdjuntosListos('nota-preview');
+}
 
 /* ── Pipeline (Kanban) ─────────────────────────────────────────── */
 function renderPipeline() {

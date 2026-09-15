@@ -1309,8 +1309,11 @@
       <div id="pd-pane-hist" style="display:none">
         <div class="pd-composer">
           <input type="text" id="pd-nota-input" placeholder="Escribe una nota…" onkeydown="if(event.key==='Enter')pdAgregarNota()"/>
+          <input type="file" id="pd-nota-adjuntos" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt" style="display:none" onchange="haAgregarArchivos(this.files,'pd-nota-preview');this.value=''"/>
+          <button type="button" class="ha-clip-btn" onclick="document.getElementById('pd-nota-adjuntos').click()" title="Adjuntar fotos, videos o archivos">📎</button>
           <button class="go" id="pd-nota-btn" onclick="pdAgregarNota()">Agregar</button>
         </div>
+        <div class="ha-preview" id="pd-nota-preview"></div>
         <div id="pd-hist-feed"></div>
       </div>
       <div id="pd-pane-int" style="display:none">
@@ -2234,6 +2237,7 @@ function openPropDetail(id) {
   clearTimeout(_filtT);
   id = String(id || '');
   const p = allProps.find(x => String(x.id) === id); if (!p) return;
+  if (typeof haTomarAdjuntosListos === 'function') haTomarAdjuntosListos('pd-nota-preview');
   currentDetailId = id;
   g('detail-title').textContent = p.titulo;
   g('detail-id').textContent = p.clave_interna || (p.eb_public_id ? 'EB · ' + p.eb_public_id : '');
@@ -2378,7 +2382,11 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'ArrowLeft') lightboxNav(-1);
   else if (e.key === 'ArrowRight') lightboxNav(1);
 });
-function closePropDetail() { g('prop-detail-modal').style.display = 'none'; currentDetailId = null; }
+function closePropDetail() {
+  g('prop-detail-modal').style.display = 'none';
+  currentDetailId = null;
+  if (typeof haTomarAdjuntosListos === 'function') haTomarAdjuntosListos('pd-nota-preview');
+}
 
 /* ── Orden de las fotos ────────────────────────────────────────────
    La primera foto de uploadedFotoUrls es la portada (la que se ve en
@@ -2856,6 +2864,7 @@ async function pdCargarHistorial() {
         <div class="pd-item__ico ${pdIconClass(a.tipo)}">${PD_ICONS[a.tipo] || PD_ICONS.nota}</div>
         <div style="flex:1;min-width:0">
           <div class="pd-item__txt">${pdTextoActividad(a)}</div>
+          ${haRenderAdjuntos(a.adjuntos)}
           <div class="pd-item__date">${pdFechaHora(a.created_at)}</div>
         </div>
       </div>`).join('')
@@ -2867,12 +2876,14 @@ async function pdAgregarNota() {
   const pid = currentDetailId; if (!pid) return;
   const inp = g('pd-nota-input'); const btn = g('pd-nota-btn');
   const texto = (inp.value || '').trim();
-  if (!texto) { inp.focus(); return; }
+  if (haHaySubiendoPendiente('pd-nota-preview')) { mostrarToast('Espera a que terminen de subir los adjuntos'); return; }
+  if (!texto && !haHayAdjuntosListos('pd-nota-preview')) { inp.focus(); return; }
   const uid = getCurrentUserId();
   if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  const adjuntos = haTomarAdjuntosListos('pd-nota-preview');
   btn.disabled = true;
   try {
-    await sbFetch('actividades', 'POST', { user_id: uid, tipo: 'nota', texto: texto, propiedad_id: pid });
+    await sbFetch('actividades', 'POST', { user_id: uid, tipo: 'nota', texto: texto, adjuntos: adjuntos, propiedad_id: pid });
     inp.value = '';
     await pdCargarHistorial();
     mostrarToast('Nota agregada');
@@ -3345,6 +3356,7 @@ else { window.addEventListener('brokr-shell-ready', () => { loadProps(); _preloa
 </div>
 
 <script src="propiedades-editor.js" defer></script>
+<script src="historial-adjuntos.js" defer></script>
 <script src="app-shell.js" defer></script>
 </body>
 </html>
