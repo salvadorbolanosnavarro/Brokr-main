@@ -707,7 +707,7 @@ TOOLS_SCHEMA = [
                 "titulo": {"type": "string"},
                 "tipo": {"type": "string", "enum": ["casa", "departamento", "terreno", "local", "oficina", "bodega"]},
                 "operacion": {"type": "string", "enum": ["venta", "renta"]},
-                "estatus": {"type": "string", "enum": ["activa", "vendida", "rentada", "suspendida"]},
+                "estatus": {"type": "string", "enum": ["activa", "vendida", "rentada", "suspendida", "ajena"]},
                 "precio": {"type": "number"},
                 "moneda": {"type": "string", "enum": ["MXN", "USD"]},
                 "calle": {"type": "string"},

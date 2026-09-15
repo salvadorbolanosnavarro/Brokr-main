@@ -31,8 +31,11 @@ async def _buscar_inmuebles(user_id: str, filtros: dict, limit: int = 3) -> tupl
     # con lo que le mandó un tercero por WhatsApp. Esos NUNCA se le ofrecen a
     # un comprador: nadie ha verificado el precio, la titularidad ni que la
     # propiedad exista. Solo salen del cajón cuando el asesor los activa.
+    #
+    # 'ajena' es una propiedad de otro colega externo que el asesor solo
+    # guarda como referencia: tampoco es suya para ofrecerla como propia.
     base = {"user_id": f"eq.{user_id}", "select": sel,
-            "or": "(estatus.is.null,estatus.not.in.(vendida,rentada,suspendida,no_activa))",
+            "or": "(estatus.is.null,estatus.not.in.(vendida,rentada,suspendida,no_activa,ajena))",
             "order": "updated_at.desc", "limit": str(limit)}
     op = (filtros.get("operacion") or "").strip().lower()
     if op in ("venta", "renta"):
