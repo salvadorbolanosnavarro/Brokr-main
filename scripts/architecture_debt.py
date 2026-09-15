@@ -98,7 +98,11 @@ LARGE_FILE_MAX_BYTES = {
     # Inmuebles, con los filtros que el agente haya puesto, nunca se
     # recargue ni se pierda al ver el detalle o generar fichas de varias
     # propiedades filtradas — bug de UX real, no debt.
-    "propiedades.html": 155_815,
+    # Bumped 4,122 bytes: al hacer clic en una foto de un inmueble ahora se
+    # abre un lightbox con carrusel (flechas, contador, teclado, clic fuera
+    # para cerrar) en vez de una pestaña nueva por foto — funcionalidad de
+    # producto real, no debt.
+    "propiedades.html": 159_937,
     # Bumped 1,844 bytes for the "Revisar webhook de la app" button in
     # Administrar números (fija el webhook de WhatsApp a nivel app) — a real
     # product change, not debt to pay down.
