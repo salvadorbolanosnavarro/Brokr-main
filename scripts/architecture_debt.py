@@ -102,12 +102,12 @@ LARGE_FILE_MAX_BYTES = {
     # abre un lightbox con carrusel (flechas, contador, teclado, clic fuera
     # para cerrar) en vez de una pestaña nueva por foto — funcionalidad de
     # producto real, no debt.
-    # Bumped 989 bytes: el historial de un inmueble ahora acepta adjuntar
-    # fotos, videos y archivos a cada nota (botón de clip + previsualización
-    # junto al composer; el resto de la lógica vive en historial-adjuntos.js
-    # compartido con Contactos y Clientes) — funcionalidad de producto real,
-    # no debt.
-    "propiedades.html": 160_926,
+    # Bumped 1,247 bytes: el historial de un inmueble ahora acepta adjuntar
+    # fotos, videos y archivos a cada nota (botón de clip con ícono SVG,
+    # como el resto de la app, + previsualización junto al composer; el
+    # resto de la lógica vive en historial-adjuntos.js compartido con
+    # Contactos y Clientes) — funcionalidad de producto real, no debt.
+    "propiedades.html": 161_184,
     # Bumped 1,844 bytes for the "Revisar webhook de la app" button in
     # Administrar números (fija el webhook de WhatsApp a nivel app) — a real
     # product change, not debt to pay down.
@@ -156,12 +156,12 @@ LARGE_FILE_MAX_BYTES = {
     # vincular a un contacto (sin filtro, ir "una por una") se reemplazó
     # por un buscador con sugerencias en vivo por título/colonia/ciudad —
     # arregla una usabilidad real, no es deuda.
-    # Bumped 957 bytes: el historial de un contacto ahora acepta adjuntar
-    # fotos, videos y archivos a cada nota (botón de clip + previsualización
-    # junto al composer; el resto de la lógica vive en historial-adjuntos.js
-    # compartido con Clientes e Inmuebles) — funcionalidad de producto real,
-    # no debt.
-    "contactos.html": 123_487,
+    # Bumped 1,215 bytes: el historial de un contacto ahora acepta adjuntar
+    # fotos, videos y archivos a cada nota (botón de clip con ícono SVG,
+    # como el resto de la app, + previsualización junto al composer; el
+    # resto de la lógica vive en historial-adjuntos.js compartido con
+    # Clientes e Inmuebles) — funcionalidad de producto real, no debt.
+    "contactos.html": 123_745,
     # Bumped for the Profeco/IA-generativa disclosure clauses (9.9 Bis /
     # 5.6 Bis) — legitimate legal content, not debt to pay down.
     # Bumped 1,985 bytes: Anexo de WhatsApp ampliado con el cambio de cobro
