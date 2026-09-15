@@ -4379,9 +4379,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
         const url = SB_URL + '/' + path.replace(/^\/+/, '');
 
         // Timeout de 15 s para evitar que fetch quede colgado en conexiones lentas/inestables.
+        // init.timeoutMs lo alarga para llamadas que de por sí tardan más (ej. subir un
+        // adjunto de varios MB a Storage, ver historial-adjuntos.js).
         function fetchWithTimeout(u, o) {
           const controller = new AbortController();
-          const tid = setTimeout(() => controller.abort(), 15000);
+          const tid = setTimeout(() => controller.abort(), init.timeoutMs || 15000);
           return fetch(u, { ...o, signal: controller.signal })
             .then(res => { clearTimeout(tid); return res; })
             .catch(err => {
