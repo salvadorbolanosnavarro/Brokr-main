@@ -280,7 +280,7 @@
     <div class="tk-head__title">
       <h1>Tareas<span class="tk-head__count" id="tk-count"></span></h1>
     </div>
-    <button class="btn-new-tarea" onclick="enfocarComposer()">
+    <button class="btn-new-tarea" onclick="tknAbrir()">
       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
       Nueva tarea
     </button>
@@ -359,6 +359,41 @@
       <button class="bk-btn bk-btn--danger" onclick="tkEliminarDesdeModal()">Eliminar tarea</button>
       <button class="bk-btn bk-btn--ghost" onclick="tkCerrarEditar()">Cancelar</button>
       <button class="bk-btn bk-btn--forest" id="tke-guardar-btn" onclick="tkGuardarEdicion()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Modal: nueva tarea ═══ -->
+<div class="bk-overlay" id="tk-modal-nueva">
+  <div class="bk-modal">
+    <div class="bk-modal__head"><span class="bk-modal__title">Nueva tarea</span></div>
+    <div class="bk-modal__body">
+      <div class="bk-field"><label class="bk-label">Título</label><input class="bk-input" id="tkn-titulo" placeholder="Ej. Llamar a Pedro para agendar visita"/></div>
+      <div class="bk-field-row">
+        <div class="bk-field"><label class="bk-label">Fecha</label><input class="bk-input" type="date" id="tkn-fecha"/></div>
+        <div class="bk-field"><label class="bk-label">Hora</label><input class="bk-input" type="time" id="tkn-hora"/></div>
+      </div>
+      <div class="bk-field"><label class="bk-label">Notas</label><textarea class="bk-textarea" id="tkn-notas" rows="2"></textarea></div>
+
+      <div class="bk-divider"></div>
+      <span class="bk-eyebrow">Contactos vinculados</span>
+      <div class="tke-chips" id="tkn-contactos-chips" style="margin:var(--sp-2) 0;"></div>
+      <div class="bk-field-row">
+        <select class="bk-select" id="tkn-agregar-contacto"><option value="">Agregar contacto…</option></select>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tknAgregarContacto()">Agregar</button>
+      </div>
+
+      <div class="bk-divider"></div>
+      <span class="bk-eyebrow">Inmuebles vinculados</span>
+      <div class="tke-chips" id="tkn-propiedades-chips" style="margin:var(--sp-2) 0;"></div>
+      <div class="bk-field-row">
+        <select class="bk-select" id="tkn-agregar-propiedad"><option value="">Agregar inmueble…</option></select>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tknAgregarPropiedad()">Agregar</button>
+      </div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--ghost" onclick="tknCerrar()">Cancelar</button>
+      <button class="bk-btn bk-btn--forest" id="tkn-crear-btn" onclick="tknCrearTarea()">Crear tarea</button>
     </div>
   </div>
 </div>
@@ -854,6 +889,128 @@ async function tkQuitarPropiedad(pid) {
     showToast('Vínculo eliminado');
   } catch (e) {
     alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
+  }
+}
+
+/* ── Nueva tarea (modal completo, con vínculos desde la creación) ──── */
+// El id de la tarea aún no existe al abrir este modal (a diferencia de
+// Clientes, aquí el id lo genera la base de datos), así que los vínculos
+// elegidos se guardan en TKN_PENDIENTE y solo se mandan al backend DESPUÉS
+// de crear la tarea y conocer su id real.
+let TKN_PENDIENTE = { contactos: [], propiedades: [] };
+
+function tknPintarChips() {
+  const contactos = TKN_PENDIENTE.contactos;
+  const propiedades = TKN_PENDIENTE.propiedades;
+  g('tkn-contactos-chips').innerHTML = contactos.length
+    ? contactos.map(cid => {
+        const c = contactoIdx[String(cid)];
+        return `<span class="tke-chip">${esc(c ? c.nombre : 'Contacto')}<button onclick="tknQuitarContacto('${esc(String(cid))}')" title="Quitar">×</button></span>`;
+      }).join('')
+    : '<span class="bk-hint">Ninguno todavía.</span>';
+  g('tkn-propiedades-chips').innerHTML = propiedades.length
+    ? propiedades.map(pid => {
+        const p = propIdx[String(pid)];
+        const nombre = p ? (p.clave_interna || p.titulo || 'Inmueble') : 'Inmueble';
+        return `<span class="tke-chip">${esc(nombre)}<button onclick="tknQuitarPropiedad('${esc(String(pid))}')" title="Quitar">×</button></span>`;
+      }).join('')
+    : '<span class="bk-hint">Ninguno todavía.</span>';
+  tkPintarSelectAgregar('tkn-agregar-contacto',
+    contactosMin.map(c => ({ id: c.id, label: c.nombre || 'Sin nombre' })), contactos);
+  tkPintarSelectAgregar('tkn-agregar-propiedad',
+    propsMin.map(p => ({ id: p.id, label: p.clave_interna ? p.clave_interna + ' · ' + (p.titulo||'') : (p.titulo || 'Sin título') })), propiedades);
+}
+
+function tknAbrir() {
+  TKN_PENDIENTE = { contactos: [], propiedades: [] };
+  g('tkn-titulo').value = '';
+  g('tkn-fecha').value = '';
+  g('tkn-hora').value = '';
+  g('tkn-notas').value = '';
+  tknPintarChips();
+  g('tk-modal-nueva').classList.add('is-open');
+  setTimeout(() => g('tkn-titulo').focus(), 0);
+}
+
+function tknCerrar() {
+  g('tk-modal-nueva').classList.remove('is-open');
+  TKN_PENDIENTE = { contactos: [], propiedades: [] };
+}
+
+function tknAgregarContacto() {
+  const cid = g('tkn-agregar-contacto').value;
+  if (!cid) return;
+  TKN_PENDIENTE.contactos.push(String(cid));
+  tknPintarChips();
+}
+
+function tknQuitarContacto(cid) {
+  TKN_PENDIENTE.contactos = TKN_PENDIENTE.contactos.filter(x => x !== String(cid));
+  tknPintarChips();
+}
+
+function tknAgregarPropiedad() {
+  const pid = g('tkn-agregar-propiedad').value;
+  if (!pid) return;
+  TKN_PENDIENTE.propiedades.push(String(pid));
+  tknPintarChips();
+}
+
+function tknQuitarPropiedad(pid) {
+  TKN_PENDIENTE.propiedades = TKN_PENDIENTE.propiedades.filter(x => x !== String(pid));
+  tknPintarChips();
+}
+
+async function tknCrearTarea() {
+  const titulo = g('tkn-titulo').value.trim();
+  if (!titulo) { alert('El título es obligatorio.'); g('tkn-titulo').focus(); return; }
+  const uid = await userId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  const fecha = g('tkn-fecha').value;
+  const hora = g('tkn-hora').value || '12:00';
+  const payload = {
+    user_id: uid,
+    titulo,
+    // Mismo arreglo que en tkGuardarEdicion(): construir con Date (hora LOCAL
+    // del navegador) y toISOString() para el instante UTC real.
+    fecha_entrega: fecha ? new Date(fecha + 'T' + hora + ':00').toISOString() : null,
+    notas: g('tkn-notas').value.trim() || null,
+  };
+  const btn = g('tkn-crear-btn');
+  const prevTxt = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Creando…'; }
+  try {
+    const rows = await sbFetch('tareas', 'POST', payload);
+    const nueva = Array.isArray(rows) ? rows[0] : rows;
+    if (!nueva || !nueva.id) throw new Error('Respuesta inesperada del servidor.');
+    const tareaId = String(nueva.id);
+    tareas.unshift(nueva);
+
+    const pendContactos = TKN_PENDIENTE.contactos.slice();
+    const pendPropiedades = TKN_PENDIENTE.propiedades.slice();
+    let vinculosFallidos = 0;
+    for (const cid of pendContactos) {
+      try {
+        await sbFetch('tareas_contactos', 'POST', { user_id: uid, tarea_id: tareaId, contacto_id: cid });
+        (VINCULOS.contactos[tareaId] = VINCULOS.contactos[tareaId] || []).push(String(cid));
+      } catch (e) { vinculosFallidos++; }
+    }
+    for (const pid of pendPropiedades) {
+      try {
+        await sbFetch('tareas_propiedades', 'POST', { user_id: uid, tarea_id: tareaId, propiedad_id: pid });
+        (VINCULOS.propiedades[tareaId] = VINCULOS.propiedades[tareaId] || []).push(String(pid));
+      } catch (e) { vinculosFallidos++; }
+    }
+
+    tknCerrar();
+    renderTareas();
+    showToast(vinculosFallidos
+      ? 'Tarea creada, pero ' + vinculosFallidos + ' vínculo(s) no se pudieron guardar'
+      : 'Tarea creada');
+  } catch (e) {
+    alert('No se pudo crear la tarea.\n\n' + (e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = prevTxt; }
   }
 }
 
