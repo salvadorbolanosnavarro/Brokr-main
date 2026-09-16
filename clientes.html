@@ -694,6 +694,9 @@ html, body { background: var(--paper); }
         <button class="bk-tab" id="f-tab-tareas" role="tab" aria-selected="false" aria-controls="f-pane-tareas" onclick="setDetTab('tareas')">
           Tareas <span class="bk-tab__n" id="f-n-tareas" hidden></span>
         </button>
+        <button class="bk-tab" id="f-tab-requerimiento" role="tab" aria-selected="false" aria-controls="f-pane-requerimiento" onclick="setDetTab('requerimiento')">
+          Requerimiento <span class="bk-tab__n" id="f-n-requerimiento" hidden></span>
+        </button>
       </div>
     </div>
 
@@ -767,6 +770,83 @@ html, body { background: var(--paper); }
           <select id="vinculo-tarea" aria-label="Vincular una tarea existente" onchange="vincularTareaExistente(this.value)"></select>
         </div>
         <div id="tareas-feed"></div>
+      </div>
+
+      <div id="f-pane-requerimiento" role="tabpanel" aria-labelledby="f-tab-requerimiento" hidden>
+        <p class="bk-prosa">
+          Guarda lo que este cliente busca y el Buscador de propiedades lo revisa una vez al día,
+          dejando listos los enlaces de los portales que se le parecen. Si cambias estos datos,
+          la próxima lectura ya los toma en cuenta.
+        </p>
+
+        <div class="bk-field-row">
+          <div class="bk-field">
+            <label class="bk-label" for="bp-operacion">Operación</label>
+            <select class="bk-select" id="bp-operacion">
+              <option value="venta">Venta</option>
+              <option value="renta">Renta</option>
+            </select>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="bp-tipo">Tipo de propiedad</label>
+            <select class="bk-select" id="bp-tipo">
+              <option value="casa">Casa</option>
+              <option value="departamento">Departamento</option>
+              <option value="terreno">Terreno</option>
+              <option value="local">Local comercial</option>
+              <option value="oficina">Oficina</option>
+              <option value="bodega">Bodega</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bk-field-row is-three">
+          <div class="bk-field">
+            <label class="bk-label" for="bp-colonia">Colonia</label>
+            <input class="bk-input" id="bp-colonia" type="text" placeholder="Ej. Roma Norte"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="bp-ciudad">Ciudad</label>
+            <input class="bk-input" id="bp-ciudad" type="text" placeholder="Ej. Ciudad de México"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="bp-estado">Estado</label>
+            <input class="bk-input" id="bp-estado" type="text" placeholder="Ej. CDMX"/>
+          </div>
+        </div>
+
+        <div class="bk-field-row is-three">
+          <div class="bk-field">
+            <label class="bk-label" for="bp-precio-min">Precio mínimo</label>
+            <input class="bk-input" id="bp-precio-min" type="number" min="0" placeholder="$"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="bp-precio-max">Precio máximo</label>
+            <input class="bk-input" id="bp-precio-max" type="number" min="0" placeholder="$"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="bp-recamaras">Recámaras mínimas</label>
+            <input class="bk-input" id="bp-recamaras" type="number" min="0" placeholder="0"/>
+          </div>
+        </div>
+
+        <div class="bk-field">
+          <label class="bk-label" for="bp-notas">Notas</label>
+          <textarea class="bk-input" id="bp-notas" rows="2" placeholder="Cualquier otro detalle que ayude a encontrar lo que busca…"></textarea>
+        </div>
+
+        <div class="bk-acciones">
+          <label class="bk-switch"><input type="checkbox" id="bp-activo" checked/><span class="bk-switch__track"></span> Buscar automáticamente todos los días</label>
+          <button class="bk-btn bk-btn--sm" id="bp-guardar" onclick="bpGuardarRequerimiento()">Guardar requerimiento</button>
+        </div>
+
+        <div class="bk-bloque" id="bp-resultados-bloque">
+          <div class="bk-acciones">
+            <h3 class="bk-acciones__t" id="bp-resultados-titulo">Enlaces encontrados</h3>
+            <button class="bk-btn bk-btn--ghost bk-btn--sm" id="bp-buscar-ahora" onclick="bpBuscarAhora()">Buscar ahora</button>
+          </div>
+          <div id="bp-resultados-feed"></div>
+        </div>
       </div>
 
     </div>
@@ -1589,7 +1669,11 @@ function abrirWA(ev, tel) {
     renderActual();
     const params = new URLSearchParams(window.location.search);
     const openId = params.get('id') || params.get('contacto');
-    if (openId && _contactosMem.some(c => String(c.id) === String(openId))) abrirDetalle(openId);
+    if (openId && _contactosMem.some(c => String(c.id) === String(openId))) {
+      abrirDetalle(openId);
+      const tab = params.get('tab');
+      if (tab) setDetTab(tab);
+    }
   } catch (e) {
     if (!_contactosMem.length) {
       document.getElementById('kanban').innerHTML = '<div class="empty" style="flex:1"><strong>No se pudieron cargar tus clientes</strong><p>' + esc(e.message || 'Revisa tu conexión.') + '</p></div>';

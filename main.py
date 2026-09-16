@@ -471,6 +471,11 @@ app.include_router(avm_apify_router)
 from routers.avm_places import router as avm_places_router
 app.include_router(avm_places_router)
 
+# Buscador de propiedades: requerimiento por cliente + ciclo diario que deja
+# listos enlaces de anuncios que le calzan.
+from routers.buscador_propiedades import router as buscador_propiedades_router
+app.include_router(buscador_propiedades_router)
+
 # Comparables AVM cercanos vía Supabase/PostGIS.
 from routers.avm_nearby import router as avm_nearby_router
 app.include_router(avm_nearby_router)

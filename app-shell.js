@@ -293,6 +293,7 @@
     { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',            group:'seguimiento', icon:'whatsapp' },
     { key:'correo',       href:'correo.html',        label:'Correo',              group:'seguimiento', icon:'mail', hidden:true },
     // Documentos — en el orden real de la operación: se redacta, se firma, se reporta.
+    { key:'buscador',     href:'buscador.html',      label:'Buscador de propiedades', group:'documentos', icon:'search' },
     { key:'contratos',    href:'contratos.html',     label:'Contratos',           group:'documentos',  icon:'document' },
     { key:'firmas',       href:'firmas.html',        label:'Firma electrónica',   group:'documentos',  icon:'pencil' },
     { key:'cumplimiento', href:'cumplimiento.html',  label:'Cumplimiento',        group:'documentos',  icon:'shield' },
@@ -322,6 +323,7 @@
     'estadisticas': 'Estadísticas — captación, pipeline e inmuebles con más interés',
     'bolsa':        'Bolsa inmobiliaria — propiedades compartidas entre agentes Broquer con comisión compartida; publicar inmuebles propios y contactar al agente captador',
     'mi-sitio':     'Mi sitio — perfil público, plantilla y sitio web del agente',
+    'buscador':     'Buscador de propiedades — enlaces de portales que calzan con el requerimiento de cada cliente, actualizados a diario',
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
     'cumplimiento': 'Cumplimiento PLD/UIF — expediente único de identificación del cliente, umbrales de aviso, acumulación de operaciones, avisos al SPPLD y bitácora',
     'firmas':       'Firma electrónica — mandar contratos a firma de las partes, código de verificación, constancia de firma y verificación pública por folio',

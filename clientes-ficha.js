@@ -38,7 +38,8 @@ function abrirDetalle(id) {
   document.getElementById('f-bitacora-feed').innerHTML = '';
   document.getElementById('props-feed').innerHTML = '';
   document.getElementById('tareas-feed').innerHTML = '';
-  ['bitacora', 'props', 'tareas'].forEach(t => {
+  document.getElementById('bp-resultados-feed').innerHTML = '';
+  ['bitacora', 'props', 'tareas', 'requerimiento'].forEach(t => {
     const n = document.getElementById('f-n-' + t);
     if (n) { n.textContent = ''; n.hidden = true; }
   });
@@ -216,7 +217,7 @@ function bkAccion(el, activo, href) {
    ══════════════════════════════════════════════════════════════════ */
 function setDetTab(tab) {
   detTabActual = tab;
-  ['info', 'bitacora', 'props', 'tareas'].forEach(t => {
+  ['info', 'bitacora', 'props', 'tareas', 'requerimiento'].forEach(t => {
     document.getElementById('f-pane-' + t).hidden = t !== tab;
     const btn = document.getElementById('f-tab-' + t);
     btn.classList.toggle('is-on', t === tab);
@@ -226,6 +227,7 @@ function setDetTab(tab) {
   if (tab === 'bitacora') cargarBitacora();
   if (tab === 'props') cargarVinculos();
   if (tab === 'tareas') cargarTareasVinculadas();
+  if (tab === 'requerimiento') bpCargarRequerimiento();
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -694,3 +696,139 @@ document.addEventListener('keydown', (ev) => {
   if (ev.key !== 'Escape' || bkHayMenuAbierto()) return;
   if (document.getElementById('detail-ov').classList.contains('is-open')) cerrarDetalle();
 });
+
+/* ══════════════════════════════════════════════════════════════════
+   Requerimiento — lo que busca el cliente, más los enlaces que el
+   Buscador de propiedades encuentra por él una vez al día.
+   ══════════════════════════════════════════════════════════════════ */
+async function _bpApi(path, opts) {
+  opts = opts || {};
+  const sb = window.brokrSb;
+  if (!sb || !sb.ensureToken) throw new Error('La app aún se está cargando. Intenta en un segundo.');
+  let tok = await sb.ensureToken();
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (tok) headers.Authorization = 'Bearer ' + tok;
+  const API = window.API_BASE || 'https://api.broquer.app';
+  let r = await fetch(API + path, { method: opts.method || 'GET', headers, body: opts.body });
+  if (r.status === 401 && sb.refreshNow) {
+    tok = await sb.refreshNow();
+    if (tok) {
+      headers.Authorization = 'Bearer ' + tok;
+      r = await fetch(API + path, { method: opts.method || 'GET', headers, body: opts.body });
+    }
+  }
+  const txt = await r.text();
+  let data = null;
+  try { data = txt ? JSON.parse(txt) : null; } catch { data = null; }
+  if (!r.ok) throw new Error((data && data.detail) || ('HTTP ' + r.status));
+  return data;
+}
+
+function bpFechaHora(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    return fechaCorta(iso) + ', ' + d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+  } catch { return ''; }
+}
+
+function bpRenderResultados(resultados, ultimaBusqueda) {
+  const feed = document.getElementById('bp-resultados-feed');
+  const titulo = document.getElementById('bp-resultados-titulo');
+  titulo.textContent = ultimaBusqueda
+    ? 'Enlaces encontrados · última lectura ' + bpFechaHora(ultimaBusqueda)
+    : 'Enlaces encontrados';
+  feed.innerHTML = (resultados || []).length
+    ? resultados.map(r => {
+        const precioTxt = r.precio
+          ? ' · $' + Number(r.precio).toLocaleString('es-MX') + (r.precio_confirmado ? '' : ' (sin confirmar)')
+          : '';
+        return `<div class="bk-fila">
+          <span class="bk-fila__ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg></span>
+          <a class="bk-fila__cuerpo" href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">
+            <span class="bk-fila__t">${esc(r.titulo || r.portal || 'Ver anuncio')}</span>
+            <span class="bk-fila__d">${esc(r.portal || '')}${precioTxt}</span>
+          </a>
+        </div>`;
+      }).join('')
+    : `<div class="bk-vacio"><h3>Todavía no hay enlaces</h3><p>Guarda el requerimiento o presiona "Buscar ahora" para la primera lectura.</p></div>`;
+  bkContador('f-n-requerimiento', (resultados || []).length);
+}
+
+async function bpCargarRequerimiento() {
+  if (!detContacto) return;
+  const feed = document.getElementById('bp-resultados-feed');
+  feed.innerHTML = '<div class="bk-cargando"></div>';
+  try {
+    const [req, datos] = await Promise.all([
+      _bpApi('/api/buscador/requerimiento/' + encodeURIComponent(detContacto.id)),
+      _bpApi('/api/buscador/resultados/' + encodeURIComponent(detContacto.id)),
+    ]);
+    sv('bp-operacion', req.operacion || 'venta');
+    sv('bp-tipo', req.tipo_inmueble || 'casa');
+    sv('bp-colonia', req.colonia || '');
+    sv('bp-ciudad', req.ciudad || '');
+    sv('bp-estado', req.estado || '');
+    sv('bp-precio-min', req.precio_min || '');
+    sv('bp-precio-max', req.precio_max || '');
+    sv('bp-recamaras', req.recamaras_min || '');
+    sv('bp-notas', req.notas || '');
+    document.getElementById('bp-activo').checked = req.activo !== false;
+    bpRenderResultados(datos.resultados, (datos.requerimiento || {}).ultima_busqueda_en);
+  } catch (e) {
+    feed.innerHTML = `<div class="bk-vacio"><h3>No se pudo cargar</h3><p>${esc(e.message || '')}</p></div>`;
+  }
+}
+
+async function bpGuardarRequerimiento() {
+  if (!detContacto) return;
+  const btn = document.getElementById('bp-guardar');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+  try {
+    const body = {
+      activo: document.getElementById('bp-activo').checked,
+      operacion: gv('bp-operacion') || 'venta',
+      tipo_inmueble: gv('bp-tipo') || 'casa',
+      colonia: gv('bp-colonia'),
+      ciudad: gv('bp-ciudad'),
+      estado: gv('bp-estado'),
+      precio_min: Number(gv('bp-precio-min')) || 0,
+      precio_max: Number(gv('bp-precio-max')) || 0,
+      recamaras_min: Number(gv('bp-recamaras')) || 0,
+      notas: gv('bp-notas'),
+    };
+    await _bpApi('/api/buscador/requerimiento/' + encodeURIComponent(detContacto.id), {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+    showToast('Requerimiento guardado');
+    if (body.activo && body.colonia) {
+      await bpBuscarAhora();
+    }
+  } catch (e) {
+    showToast(e.message || 'No se pudo guardar el requerimiento');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Guardar requerimiento';
+  }
+}
+
+async function bpBuscarAhora() {
+  if (!detContacto) return;
+  const btn = document.getElementById('bp-buscar-ahora');
+  const feed = document.getElementById('bp-resultados-feed');
+  btn.disabled = true;
+  btn.textContent = 'Buscando…';
+  feed.innerHTML = '<div class="bk-cargando"></div>';
+  try {
+    await _bpApi('/api/buscador/escanear/' + encodeURIComponent(detContacto.id), { method: 'POST' });
+    const datos = await _bpApi('/api/buscador/resultados/' + encodeURIComponent(detContacto.id));
+    bpRenderResultados(datos.resultados, (datos.requerimiento || {}).ultima_busqueda_en);
+  } catch (e) {
+    feed.innerHTML = `<div class="bk-vacio"><h3>No se pudo buscar</h3><p>${esc(e.message || '')}</p></div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Buscar ahora';
+  }
+}
