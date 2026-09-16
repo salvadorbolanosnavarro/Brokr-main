@@ -1,0 +1,867 @@
+// Broquer · Clientes — la ficha del cliente.
+//
+// Vive fuera de clientes.html por dos razones: ese archivo ya rozaba el techo
+// de bytes de scripts/architecture_debt.py, y la ficha es una superficie con
+// vida propia (identidad, estado, bitácora, propiedades, tareas) que se lee
+// mejor completa que intercalada con el tablero.
+//
+// Usa los globales que define clientes.html: _sb, _userId, restGet, restPost,
+// restDelete, esc, showToast, fecha*, initials, avColor, rolBadge, domicilio,
+// ETAPAS, etapaInfo, PROBS, patchContacto, renderActual, cargar, abrirModal,
+// abrirWA, cargarRemoto, eliminarRemoto, cargarPropsMin, propSubtitulo,
+// crearBuscadorPropiedades, detContacto, y las de historial-adjuntos.js.
+
+/* ══════════════════════════════════════════════════════════════════
+   Menú anclado — un solo componente para etapa, probabilidad y "más".
+   Se dibuja en <body> con position:fixed porque la ficha tiene
+   contenedores con overflow y un popover absoluto dentro de ellos se
+   recorta (y porque así nunca hereda el z-index de su fila).
+   ══════════════════════════════════════════════════════════════════ */
+let _clMenuAbierto = null;   // { caja, anchor, onElegir }
+
+const CL_ICONO_CHECK = '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+
+function clCerrarMenu() {
+  if (!_clMenuAbierto) return;
+  const { caja, anchor } = _clMenuAbierto;
+  _clMenuAbierto = null;
+  caja.remove();
+  if (anchor) anchor.setAttribute('aria-expanded', 'false');
+  document.removeEventListener('keydown', _clMenuTecla, true);
+}
+
+function _clMenuTecla(ev) {
+  if (!_clMenuAbierto) return;
+  const items = Array.from(_clMenuAbierto.caja.querySelectorAll('.cl-menu__item:not([disabled])'));
+  const i = items.indexOf(document.activeElement);
+  if (ev.key === 'Escape') {
+    ev.preventDefault();
+    const a = _clMenuAbierto.anchor;
+    clCerrarMenu();
+    if (a) a.focus();
+  } else if (ev.key === 'ArrowDown') {
+    ev.preventDefault();
+    (items[i + 1] || items[0]).focus();
+  } else if (ev.key === 'ArrowUp') {
+    ev.preventDefault();
+    (items[i - 1] || items[items.length - 1]).focus();
+  } else if (ev.key === 'Tab') {
+    clCerrarMenu();
+  }
+}
+
+// items: [{ id, etiqueta, nota?, color?, activo?, peligro?, separa? }]
+function clAbrirMenu(anchor, items, onElegir) {
+  const yaEra = _clMenuAbierto && _clMenuAbierto.anchor === anchor;
+  clCerrarMenu();
+  if (yaEra) return;                      // segundo clic en el mismo botón: cierra
+
+  const caja = document.createElement('div');
+  caja.className = 'cl-menu';
+  caja.setAttribute('role', 'menu');
+  caja.innerHTML = items.map((it, i) => `
+    ${it.separa ? '<div class="cl-menu__sep"></div>' : ''}
+    <button type="button" role="menuitem" data-i="${i}"
+            class="cl-menu__item${it.activo ? ' is-on' : ''}${it.peligro ? ' cl-menu__item--peligro' : ''}">
+      ${it.color ? `<span class="cl-punto" style="background:${it.color}"></span>` : ''}
+      <span class="cl-menu__txt">${esc(it.etiqueta)}${it.nota ? `<small>${esc(it.nota)}</small>` : ''}</span>
+      <span class="cl-menu__check">${it.activo ? CL_ICONO_CHECK : ''}</span>
+    </button>`).join('');
+  document.body.appendChild(caja);
+
+  const r = anchor.getBoundingClientRect();
+  const alto = caja.offsetHeight;
+  const ancho = Math.max(caja.offsetWidth, r.width);
+  const cabeAbajo = r.bottom + alto + 8 <= window.innerHeight;
+  caja.style.minWidth = r.width + 'px';
+  caja.style.top = (cabeAbajo ? r.bottom + 6 : Math.max(8, r.top - alto - 6)) + 'px';
+  caja.style.left = Math.min(Math.max(8, r.left), window.innerWidth - ancho - 8) + 'px';
+
+  anchor.setAttribute('aria-expanded', 'true');
+  _clMenuAbierto = { caja, anchor };
+
+  caja.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.cl-menu__item');
+    if (!btn) return;
+    const it = items[Number(btn.dataset.i)];
+    clCerrarMenu();
+    if (it) onElegir(it.id);
+  });
+  document.addEventListener('keydown', _clMenuTecla, true);
+  const activo = caja.querySelector('.cl-menu__item.is-on') || caja.querySelector('.cl-menu__item');
+  if (activo) activo.focus();
+}
+
+document.addEventListener('mousedown', (ev) => {
+  if (!_clMenuAbierto) return;
+  if (ev.target.closest('.cl-menu') || ev.target.closest('[data-cl-menu]')) return;
+  clCerrarMenu();
+});
+window.addEventListener('resize', clCerrarMenu);
+document.addEventListener('scroll', clCerrarMenu, true);
+
+/* ══════════════════════════════════════════════════════════════════
+   Abrir / cerrar la ficha
+   ══════════════════════════════════════════════════════════════════ */
+function abrirDetalle(id) {
+  const c = cargar().find(x => String(x.id) === String(id));
+  if (!c) return;
+  clDescartarBorrador();
+  detContacto = c;
+
+  const av = document.getElementById('f-av');
+  av.textContent = initials(c.nombre || '??');
+  av.className = 'cl-ficha__av ' + avColor(c.nombre || '');
+  document.getElementById('f-nombre').textContent = c.nombre || 'Sin nombre';
+  document.getElementById('f-rol').innerHTML = rolBadge(c.tipo);
+  const meta = [c.empresa, c.fuente ? 'Vía ' + c.fuente : ''].filter(Boolean).join(' · ');
+  const metaEl = document.getElementById('f-meta');
+  metaEl.textContent = meta;
+  metaEl.hidden = !meta;
+
+  clRenderAsignacion(c);
+  clRenderEstado(c);
+  clRenderAcciones(c);
+  clRenderResumen(c);
+
+  document.getElementById('f-bitacora-feed').innerHTML = '';
+  document.getElementById('props-feed').innerHTML = '';
+  document.getElementById('tareas-feed').innerHTML = '';
+  ['bitacora', 'props', 'tareas'].forEach(t => {
+    const n = document.getElementById('f-n-' + t);
+    if (n) { n.textContent = ''; n.hidden = true; }
+  });
+
+  setDetTab('info');
+  document.getElementById('detail-ov').classList.add('open');
+  document.body.classList.add('cl-sin-scroll');
+}
+
+function cerrarDetalle() {
+  clCerrarMenu();
+  clDescartarBorrador();
+  document.getElementById('detail-ov').classList.remove('open');
+  document.body.classList.remove('cl-sin-scroll');
+  detContacto = null;
+}
+
+function clDescartarBorrador() {
+  if (typeof haTomarAdjuntosListos === 'function') haTomarAdjuntosListos('f-nota-preview');
+  const comp = document.getElementById('f-composer');
+  if (comp) comp.hidden = true;
+  const ta = document.getElementById('f-nota-texto');
+  if (ta) ta.value = '';
+}
+
+/* Asignación de agente (solo cuentas Broquer para Empresas). */
+function clRenderAsignacion(c) {
+  const wrap = document.getElementById('f-asignado');
+  if (!cEsEmpresa || !cMiembros.length) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  const sel = document.getElementById('f-asignado-sel');
+  const txt = document.getElementById('f-asignado-txt');
+  if (cEsAdminOrg) {
+    sel.hidden = false; txt.hidden = true;
+    sel.innerHTML = '<option value="">Sin asignar</option>' +
+      cMiembros.map(m => `<option value="${esc(m.user_id)}">${esc(m.nombre || m.email)}</option>`).join('');
+    sel.value = c.asignado_a || '';
+  } else {
+    sel.hidden = true; txt.hidden = false;
+    txt.textContent = c.asignado_a ? cNombreAgente(c.asignado_a) : 'Sin asignar';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Estado: etapa y probabilidad, cada una en un menú desplegable.
+   Antes eran nueve pastillas siempre visibles (seis etapas + tres
+   probabilidades) compitiendo con el nombre del cliente. Lo que
+   importa de un vistazo es en qué etapa está, no la lista completa.
+   ══════════════════════════════════════════════════════════════════ */
+const CL_CHEVRON = '<svg class="cl-pill__chev" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>';
+
+function clProbInfo(v) {
+  const mapa = {
+    alta:  { l: 'Alta',  color: 'var(--success)' },
+    media: { l: 'Media', color: 'var(--warn)' },
+    baja:  { l: 'Baja',  color: 'var(--mute-2)' },
+  };
+  return mapa[String(v || '').toLowerCase()] || null;
+}
+
+function clRenderEstado(c) {
+  const etapa = etapaInfo(c.estatus);
+  const tieneEtapa = !!String(c.estatus || '').trim();
+  document.getElementById('f-etapa-btn').innerHTML =
+    `<span class="cl-punto" style="background:${tieneEtapa ? etapa.color : 'var(--mute-3)'}"></span>
+     <span class="cl-pill__txt">${tieneEtapa ? esc(etapa.nombre) : 'Sin etapa'}</span>${CL_CHEVRON}`;
+
+  const prob = clProbInfo(c.probabilidad);
+  document.getElementById('f-prob-btn').innerHTML =
+    `<span class="cl-pill__lbl">Probabilidad</span>
+     <span class="cl-pill__txt"${prob ? ` style="color:${prob.color}"` : ''}>${prob ? prob.l : 'Sin definir'}</span>${CL_CHEVRON}`;
+}
+
+function clMenuEtapa(btn) {
+  if (!detContacto) return;
+  const actual = String(detContacto.estatus || '').toLowerCase();
+  const items = ETAPAS.map(e => ({ id: e.clave, etiqueta: e.nombre, color: e.color, activo: actual === e.clave }));
+  if (actual) items.push({ id: '', etiqueta: 'Quitar etapa', separa: true });
+  clAbrirMenu(btn, items, (v) => setEtapa(v));
+}
+
+function clMenuProb(btn) {
+  if (!detContacto) return;
+  const actual = String(detContacto.probabilidad || '').toLowerCase();
+  const items = PROBS.map(p => {
+    const info = clProbInfo(p.v);
+    return { id: p.v, etiqueta: p.l, color: info && info.color, activo: actual === p.v };
+  });
+  if (actual) items.push({ id: '', etiqueta: 'Sin definir', separa: true });
+  clAbrirMenu(btn, items, (v) => setProbabilidad(v));
+}
+
+function clMenuMas(btn) {
+  if (!detContacto) return;
+  clAbrirMenu(btn, [
+    { id: 'editar', etiqueta: 'Editar cliente' },
+    { id: 'eliminar', etiqueta: 'Eliminar cliente', peligro: true, separa: true },
+  ], (v) => {
+    if (v === 'editar') editarDesdeDetalle();
+    if (v === 'eliminar') eliminarDesdeDetalle();
+  });
+}
+
+async function setEtapa(v) {
+  if (!detContacto) return;
+  const prev = String(detContacto.estatus || '').toLowerCase();
+  if (prev === v) return;
+  detContacto.estatus = v;
+  clRenderEstado(detContacto);
+  try {
+    await patchContacto(detContacto.id, { estatus: v || null });
+    renderActual();
+    showToast(v ? 'Etapa: ' + etapaInfo(v).nombre : 'Etapa quitada');
+    clRegistrarCambioEtapa(detContacto.id, prev, v);
+  } catch (e) {
+    detContacto.estatus = prev;
+    clRenderEstado(detContacto);
+    showToast('No se pudo guardar la etapa');
+  }
+}
+
+async function setProbabilidad(v) {
+  if (!detContacto) return;
+  const prev = String(detContacto.probabilidad || '').toLowerCase();
+  if (prev === v) return;
+  detContacto.probabilidad = v;
+  clRenderEstado(detContacto);
+  try {
+    await patchContacto(detContacto.id, { probabilidad: v || null });
+    renderActual();
+    const info = clProbInfo(v);
+    showToast(info ? 'Probabilidad: ' + info.l : 'Probabilidad quitada');
+  } catch (e) {
+    detContacto.probabilidad = prev;
+    clRenderEstado(detContacto);
+    showToast('No se pudo guardar la probabilidad');
+  }
+}
+
+// Deja constancia del cambio de etapa en la bitácora. Se llama tanto desde
+// la ficha como desde el tablero (arrastrar una tarjeta a otra columna):
+// si no, la bitácora contaba notas pero no el avance real del cliente.
+function clRegistrarCambioEtapa(contactoId, previo, nuevo) {
+  const de = previo ? etapaInfo(previo).nombre : 'Sin etapa';
+  const a = nuevo ? etapaInfo(nuevo).nombre : 'Sin etapa';
+  restPost('actividades', {
+    tipo: 'cambio_estatus',
+    texto: 'Etapa: ' + de + ' → ' + a,
+    contacto_id: contactoId,
+  }).then(() => {
+    if (detContacto && String(detContacto.id) === String(contactoId) && detTabActual === 'bitacora') cargarBitacora();
+  }).catch(() => {});
+}
+
+/* Acciones de contacto: sin dato, el botón se deshabilita de verdad. */
+function clRenderAcciones(c) {
+  const wa = c.wa || c.telefono;
+  const waBtn = document.getElementById('f-wa');
+  const telBtn = document.getElementById('f-tel');
+  const mailBtn = document.getElementById('f-mail');
+
+  clAccion(waBtn, !!wa, 'https://wa.me/52' + String(wa || '').replace(/\D/g, ''));
+  if (wa) waBtn.onclick = (ev) => abrirWA(ev, wa);
+  clAccion(telBtn, !!c.telefono, 'tel:' + (c.telefono || ''));
+  clAccion(mailBtn, !!c.email, 'mailto:' + (c.email || ''));
+}
+
+function clAccion(el, activo, href) {
+  el.href = activo ? href : '#';
+  el.setAttribute('aria-disabled', activo ? 'false' : 'true');
+  el.tabIndex = activo ? 0 : -1;
+  el.onclick = activo ? null : (ev) => { ev.preventDefault(); };
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Pestañas
+   ══════════════════════════════════════════════════════════════════ */
+function setDetTab(tab) {
+  detTabActual = tab;
+  ['info', 'bitacora', 'props', 'tareas'].forEach(t => {
+    document.getElementById('f-pane-' + t).hidden = t !== tab;
+    const btn = document.getElementById('f-tab-' + t);
+    btn.classList.toggle('is-on', t === tab);
+    btn.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+  });
+  if (!detContacto) return;
+  if (tab === 'bitacora') cargarBitacora();
+  if (tab === 'props') cargarVinculos();
+  if (tab === 'tareas') cargarTareasVinculadas();
+}
+
+function clContador(id, n) {
+  const el = document.getElementById('f-n-' + id);
+  if (!el) return;
+  el.textContent = n;
+  el.hidden = !n;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Resumen — los datos duros del cliente
+   ══════════════════════════════════════════════════════════════════ */
+function clDato(label, valor, ancho) {
+  if (!valor) return '';
+  return `<div class="cl-dato${ancho ? ' cl-dato--ancho' : ''}">
+    <span class="cl-dato__lbl">${esc(label)}</span>
+    <span class="cl-dato__val">${valor}</span>
+  </div>`;
+}
+
+function clRenderResumen(c) {
+  const tel = c.telefono ? `<a href="tel:${esc(c.telefono)}">${esc(c.telefono)}</a>` : '';
+  const wa = c.wa ? `<a href="#" onclick="return abrirWA(event,'${esc(c.wa)}')">${esc(c.wa)}</a>` : '';
+  const mail = c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : '';
+
+  let html = '<div class="cl-datos">' +
+    clDato('Teléfono', tel) +
+    clDato('WhatsApp', wa) +
+    clDato('Correo', mail) +
+    clDato('Fuente', esc(c.fuente || '')) +
+    clDato('Domicilio', esc(domicilio(c)), true) +
+    clDato('Sexo', c.sexo === 'F' ? 'Femenino' : 'Masculino') +
+    clDato('En el pipeline desde', esc(fechaCorta(c.created_at))) +
+    '</div>';
+
+  if (Array.isArray(c.etiquetas) && c.etiquetas.length) {
+    html += `<div class="cl-bloque"><h3 class="cl-bloque__t">Etiquetas</h3>
+      <div class="cl-tags">${c.etiquetas.map(t => `<span class="tag-chip">${esc(t)}</span>`).join('')}</div></div>`;
+  }
+  if (c.notas) {
+    html += `<div class="cl-bloque"><h3 class="cl-bloque__t">Notas</h3><p class="cl-texto">${esc(c.notas)}</p></div>`;
+  }
+  if (c.descripcion_privada) {
+    html += `<div class="cl-bloque"><h3 class="cl-bloque__t">Perfil que arma Broq</h3>
+      <p class="cl-texto cl-texto--broq">${esc(c.descripcion_privada)}</p></div>`;
+  }
+
+  // Una ficha a medias se cobra sola el día que necesitas el correo para
+  // mandar un contrato: si faltan datos de contacto, se dice cuáles.
+  const faltan = [];
+  if (!c.email) faltan.push('el correo');
+  if (!c.wa && !c.telefono) faltan.push('un teléfono');
+  if (!domicilio(c)) faltan.push('el domicilio');
+  if (faltan.length) {
+    const lista = faltan.length > 1
+      ? faltan.slice(0, -1).join(', ') + ' y ' + faltan[faltan.length - 1]
+      : faltan[0];
+    html += `<div class="cl-falta">
+      <p>Falta ${esc(lista)}. Con la ficha completa puedes mandarle un contrato o una ficha sin andar buscando el dato.</p>
+      <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="editarDesdeDetalle()">Completar datos</button>
+    </div>`;
+  }
+  document.getElementById('f-pane-info').innerHTML = html;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Bitácora — todo lo que le ha pasado a este cliente, con fecha y hora.
+   Reúne las actividades del CRM (notas, archivos, cambios de etapa,
+   tareas completadas), las operaciones históricas del contacto y su
+   alta, en una sola línea de tiempo agrupada por día.
+   ══════════════════════════════════════════════════════════════════ */
+const CL_BITACORA_ICONOS = {
+  nota:             '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.86 4.49l1.69-1.69a1.88 1.88 0 112.65 2.65L6.83 19.82a4.5 4.5 0 01-1.9 1.13l-2.68.8.8-2.69a4.5 4.5 0 011.13-1.9L16.86 4.5z"/></svg>',
+  archivo:          '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17.5 8.5l-7.1 7.1a2.5 2.5 0 003.5 3.5l7.1-7.1a4.5 4.5 0 00-6.4-6.4l-7.1 7.1a6.5 6.5 0 009.2 9.2"/></svg>',
+  cambio_estatus:   '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-4-4 4-4m-4 4h18M17 8l4 4-4 4"/></svg>',
+  tarea_completada: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+  alta:             '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM19 8v6M22 11h-6"/></svg>',
+  operacion:        '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.59a1 1 0 01.7.29l4.42 4.42a1 1 0 01.29.7V19a2 2 0 01-2 2z"/></svg>',
+};
+const CL_BITACORA_TITULOS = {
+  nota: 'Nota', archivo: 'Archivos', cambio_estatus: 'Cambio de etapa',
+  tarea_completada: 'Tarea completada', alta: 'Alta del cliente', operacion: 'Operación',
+};
+
+function clDiaEtiqueta(d) {
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const dia = new Date(d); dia.setHours(0, 0, 0, 0);
+  const difDias = Math.round((hoy - dia) / 86400000);
+  if (difDias === 0) return 'Hoy';
+  if (difDias === 1) return 'Ayer';
+  const opts = { day: 'numeric', month: 'long' };
+  if (dia.getFullYear() !== hoy.getFullYear()) opts.year = 'numeric';
+  return dia.toLocaleDateString('es-MX', opts);
+}
+
+function clHora(iso) {
+  try { return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }); }
+  catch { return ''; }
+}
+
+// El renglón ya dice de qué tipo es el evento; el texto guardado repite ese
+// prefijo ("Tarea completada: Llamar a…"). Se quita para no leerlo dos veces.
+function clSinPrefijo(tipo, texto) {
+  const prefijos = { tarea_completada: /^Tarea completada:\s*/i, cambio_estatus: /^Etapa:\s*/i };
+  const p = prefijos[tipo];
+  return p ? String(texto || '').replace(p, '') : texto;
+}
+
+async function cargarBitacora() {
+  if (!detContacto) return;
+  const feed = document.getElementById('f-bitacora-feed');
+  feed.innerHTML = '<div class="cl-cargando">Cargando la bitácora…</div>';
+  const cid = detContacto.id;
+  let acts = [];
+  try {
+    acts = await restGet('actividades?select=*&contacto_id=eq.' + encodeURIComponent(cid) + '&order=created_at.desc&limit=200');
+  } catch { acts = []; }
+  if (!detContacto || detContacto.id !== cid) return;
+
+  const entradas = acts.map(a => ({
+    tipo: a.tipo || 'nota',
+    texto: a.texto || '',
+    adjuntos: a.adjuntos,
+    fecha: a.created_at,
+  }));
+
+  // Operaciones históricas del contacto: su fecha es texto libre, así que
+  // solo se mezclan en la línea de tiempo las que sí se pueden fechar.
+  const ops = Array.isArray(detContacto.operaciones) ? detContacto.operaciones : [];
+  const opsSinFecha = [];
+  ops.forEach(op => {
+    const t = Date.parse(op.fecha);
+    if (isFinite(t)) entradas.push({ tipo: 'operacion', texto: op.desc || '', fecha: new Date(t).toISOString() });
+    else opsSinFecha.push(op);
+  });
+
+  if (detContacto.created_at) {
+    entradas.push({ tipo: 'alta', texto: 'Se agregó a ' + (detContacto.nombre || 'el cliente') + ' al pipeline.', fecha: detContacto.created_at });
+  }
+
+  entradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  clContador('bitacora', entradas.length + opsSinFecha.length);
+
+  if (!entradas.length && !opsSinFecha.length) {
+    feed.innerHTML = `<div class="cl-vacio">
+      <h3>Todavía no hay nada anotado</h3>
+      <p>Cada nota, archivo y cambio de etapa queda aquí con su fecha y hora, para que dentro de un año sepas exactamente qué pasó con este cliente.</p>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  let diaActual = '';
+  entradas.forEach(e => {
+    const dia = clDiaEtiqueta(e.fecha);
+    if (dia !== diaActual) {
+      diaActual = dia;
+      html += `<div class="cl-bita__dia">${esc(dia)}</div>`;
+    }
+    const adj = (typeof haRenderAdjuntos === 'function') ? haRenderAdjuntos(e.adjuntos) : '';
+    const texto = clSinPrefijo(e.tipo, e.texto);
+    html += `<article class="cl-bita__item">
+      <span class="cl-bita__ico cl-bita__ico--${esc(e.tipo)}">${CL_BITACORA_ICONOS[e.tipo] || CL_BITACORA_ICONOS.nota}</span>
+      <div class="cl-bita__cuerpo">
+        <header class="cl-bita__head">
+          <span class="cl-bita__tipo">${esc(CL_BITACORA_TITULOS[e.tipo] || 'Actividad')}</span>
+          <time class="cl-bita__hora">${esc(clHora(e.fecha))}</time>
+        </header>
+        ${texto ? `<p class="cl-bita__txt">${esc(texto)}</p>` : ''}
+        ${adj}
+      </div>
+    </article>`;
+  });
+
+  if (opsSinFecha.length) {
+    html += `<div class="cl-bita__dia">Sin fecha registrada</div>` +
+      opsSinFecha.map(op => `<article class="cl-bita__item">
+        <span class="cl-bita__ico cl-bita__ico--operacion">${CL_BITACORA_ICONOS.operacion}</span>
+        <div class="cl-bita__cuerpo">
+          <header class="cl-bita__head">
+            <span class="cl-bita__tipo">Operación</span>
+            <time class="cl-bita__hora">${esc(op.fecha || '')}</time>
+          </header>
+          <p class="cl-bita__txt">${esc(op.desc || '')}</p>
+        </div>
+      </article>`).join('');
+  }
+  feed.innerHTML = html;
+}
+
+/* ── Escribir en la bitácora ──────────────────────────────────────
+   Dos caminos, ninguno de ellos un campo de texto permanente robando
+   espacio al historial: "Nota" abre el editor, "Archivo" abre
+   directamente el selector y guarda la entrada en cuanto suben. */
+function clAbrirNota() {
+  const comp = document.getElementById('f-composer');
+  comp.hidden = false;
+  document.getElementById('f-nota-texto').focus();
+}
+
+function clCancelarNota() {
+  clDescartarBorrador();
+}
+
+async function clGuardarNota() {
+  if (!detContacto) return;
+  const ta = document.getElementById('f-nota-texto');
+  const btn = document.getElementById('f-nota-guardar');
+  const texto = (ta.value || '').trim();
+  if (haHaySubiendoPendiente('f-nota-preview')) { showToast('Espera a que terminen de subir los adjuntos'); return; }
+  if (!texto && !haHayAdjuntosListos('f-nota-preview')) { ta.focus(); return; }
+  const adjuntos = haTomarAdjuntosListos('f-nota-preview');
+  btn.disabled = true;
+  try {
+    await restPost('actividades', {
+      tipo: texto ? 'nota' : 'archivo',
+      texto: texto,
+      adjuntos: adjuntos,
+      contacto_id: detContacto.id,
+    });
+    ta.value = '';
+    document.getElementById('f-composer').hidden = true;
+    await cargarBitacora();
+    showToast(texto ? 'Nota guardada' : 'Archivos guardados');
+  } catch (e) {
+    alert('No se pudo guardar en la bitácora.\n\n' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// "Adjuntar archivo" sin escribir nota: se sube y se guarda solo.
+async function clArchivosSueltos(files) {
+  if (!detContacto || !files || !files.length) return;
+  const feed = document.getElementById('f-bitacora-feed');
+  const cid = detContacto.id;
+  haAgregarArchivos(files, 'f-suelto-preview');
+  showToast(files.length === 1 ? 'Subiendo el archivo…' : 'Subiendo ' + files.length + ' archivos…');
+  while (haHaySubiendoPendiente('f-suelto-preview')) {
+    await new Promise(r => setTimeout(r, 300));
+  }
+  if (!detContacto || detContacto.id !== cid) { haTomarAdjuntosListos('f-suelto-preview'); return; }
+  const adjuntos = haTomarAdjuntosListos('f-suelto-preview');
+  if (!adjuntos.length) { showToast('No se pudo subir ningún archivo'); return; }
+  try {
+    await restPost('actividades', { tipo: 'archivo', texto: '', adjuntos: adjuntos, contacto_id: cid });
+    if (detContacto && detContacto.id === cid) await cargarBitacora();
+    showToast(adjuntos.length === 1 ? 'Archivo guardado' : adjuntos.length + ' archivos guardados');
+  } catch (e) {
+    if (feed) alert('No se pudo guardar en la bitácora.\n\n' + (e.message || e));
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Propiedades vinculadas
+   ══════════════════════════════════════════════════════════════════ */
+const _buscadorPropDetalle = crearBuscadorPropiedades(
+  'vinculo-prop-buscar', 'vinculo-prop', 'vinculo-prop-sugerencias',
+  'No tienes propiedades disponibles para vincular');
+
+let _propsDisponibles = [];
+function buscarPropInput() { _buscadorPropDetalle.onInput(_propsDisponibles); }
+function propBuscarKeydown(ev) { _buscadorPropDetalle.onKeydown(ev); }
+
+document.addEventListener('click', (ev) => {
+  if (_buscadorPropDetalle.manejarClick(ev.target)) return;
+  _buscadorPropDetalle.cerrarSiClickAfuera(ev.target);
+});
+
+const CL_REL = { interes: 'Interesado', propietario: 'Propietario', relacionado: 'Relacionado' };
+
+async function cargarVinculos() {
+  if (!detContacto) return;
+  const feed = document.getElementById('props-feed');
+  feed.innerHTML = '<div class="cl-cargando">Cargando…</div>';
+  const cid = detContacto.id;
+
+  const [props, vinculos] = await Promise.all([
+    cargarPropsMin(),
+    restGet('contactos_propiedades?select=*&contacto_id=eq.' + encodeURIComponent(cid) + '&order=created_at.desc').catch(() => []),
+  ]);
+  if (!detContacto || detContacto.id !== cid) return;
+
+  const yaVinculadas = new Set(vinculos.map(v => String(v.propiedad_id)));
+  _propsDisponibles = props.filter(p => !yaVinculadas.has(String(p.id)));
+  const buscador = document.getElementById('vinculo-prop-buscar');
+  buscador.value = '';
+  document.getElementById('vinculo-prop').value = '';
+  document.getElementById('vinculo-prop-sugerencias').hidden = true;
+  buscador.disabled = !_propsDisponibles.length;
+  buscador.placeholder = _propsDisponibles.length
+    ? 'Busca por título, colonia o ciudad…'
+    : (props.length ? 'Todas tus propiedades ya están vinculadas' : 'No tienes propiedades registradas');
+
+  const porId = Object.fromEntries(props.map(p => [String(p.id), p]));
+  feed.innerHTML = vinculos.length
+    ? vinculos.map(v => {
+        const p = porId[String(v.propiedad_id)] || {};
+        return `<div class="cl-fila">
+          <span class="cl-fila__ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg></span>
+          <a class="cl-fila__cuerpo" href="propiedades.html?id=${encodeURIComponent(String(v.propiedad_id))}">
+            <span class="cl-fila__t">${esc(p.titulo || 'Propiedad')}</span>
+            <span class="cl-fila__d">${esc(p.id ? propSubtitulo(p) : 'Abrir en Inmuebles')}</span>
+          </a>
+          <span class="cl-rel">${esc(CL_REL[v.relacion] || v.relacion)}</span>
+          <button class="cl-quitar" title="Quitar vínculo" aria-label="Quitar vínculo" onclick="eliminarVinculo('${esc(String(v.id))}')">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>`;
+      }).join('')
+    : `<div class="cl-vacio"><h3>Sin propiedades vinculadas</h3><p>Liga los inmuebles que le interesan para tenerlos a la mano cuando te marque.</p></div>`;
+  clContador('props', vinculos.length);
+}
+
+async function agregarVinculo() {
+  if (!detContacto) return;
+  const propId = document.getElementById('vinculo-prop').value;
+  const rel = document.getElementById('vinculo-rel').value;
+  if (!propId) { showToast('Busca y elige una propiedad de la lista primero'); return; }
+  try {
+    await restPost('contactos_propiedades', { contacto_id: detContacto.id, propiedad_id: propId, relacion: rel });
+    await cargarVinculos();
+    showToast('Propiedad vinculada');
+  } catch (e) {
+    alert('No se pudo vincular.\n\n' + (e.message || e));
+  }
+}
+
+async function eliminarVinculo(id) {
+  try {
+    await restDelete('contactos_propiedades', id);
+    await cargarVinculos();
+    showToast('Vínculo eliminado');
+  } catch (e) {
+    alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Tareas
+   ══════════════════════════════════════════════════════════════════ */
+let _tareasMin = null;
+let _tareasVinculos = [];
+let _tareas = [];
+
+async function cargarTareasMin() {
+  if (_tareasMin) return _tareasMin;
+  try {
+    _tareasMin = await restGet('tareas?select=id,titulo,fecha_entrega,completada&order=created_at.desc&limit=500');
+  } catch { _tareasMin = []; }
+  return _tareasMin;
+}
+
+async function cargarTareasVinculadas() {
+  if (!detContacto) return;
+  const feed = document.getElementById('tareas-feed');
+  feed.innerHTML = '<div class="cl-cargando">Cargando…</div>';
+  const cid = detContacto.id;
+  let legacy = [], vinculos = [];
+  try {
+    [legacy, vinculos] = await Promise.all([
+      restGet('tareas?select=*&contacto_id=eq.' + encodeURIComponent(cid) + '&order=created_at.desc'),
+      restGet('tareas_contactos?select=*&contacto_id=eq.' + encodeURIComponent(cid) + '&order=created_at.desc').catch(() => []),
+    ]);
+  } catch { legacy = []; vinculos = []; }
+  if (!detContacto || detContacto.id !== cid) return;
+
+  _tareasVinculos = vinculos;
+  const idsYaVistos = new Set(legacy.map(t => String(t.id)));
+  const idsPorVinculo = vinculos.map(v => String(v.tarea_id)).filter(id => !idsYaVistos.has(id));
+  let extra = [];
+  if (idsPorVinculo.length) {
+    try { extra = await restGet('tareas?select=*&id=in.(' + idsPorVinculo.join(',') + ')'); } catch { extra = []; }
+  }
+  _tareas = [...legacy, ...extra].sort((a, b) => {
+    if (!!a.completada !== !!b.completada) return a.completada ? 1 : -1;
+    return new Date(a.fecha_entrega || '9999-12-31') - new Date(b.fecha_entrega || '9999-12-31');
+  });
+
+  const yaLigadas = new Set(_tareas.map(t => String(t.id)));
+  let todas = [];
+  try { todas = await cargarTareasMin(); } catch { todas = []; }
+  const disponibles = todas.filter(t => !yaLigadas.has(String(t.id)) && !t.completada);
+  // Un desplegable deshabilitado que solo dice "no hay nada" es un renglón
+  // muerto: si no hay tareas sueltas que vincular, no se muestra.
+  const sel = document.getElementById('vinculo-tarea');
+  sel.innerHTML = '<option value="">Vincular una tarea que ya existe…</option>' +
+    disponibles.map(t => `<option value="${esc(String(t.id))}">${esc(t.titulo)}</option>`).join('');
+  sel.value = '';
+  sel.closest('.cl-forma').hidden = !disponibles.length;
+
+  renderTareas();
+}
+
+function renderTareas() {
+  const feed = document.getElementById('tareas-feed');
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  feed.innerHTML = _tareas.length
+    ? _tareas.map(t => {
+        const due = t.fecha_entrega ? new Date(t.fecha_entrega) : null;
+        const vencida = due && !t.completada && due < hoy;
+        return `<div class="cl-fila${t.completada ? ' is-lista' : ''}">
+          <button class="cl-check${t.completada ? ' is-on' : ''}" onclick="toggleTarea('${esc(String(t.id))}')"
+                  title="${t.completada ? 'Reabrir la tarea' : 'Marcar como completada'}"
+                  aria-label="${t.completada ? 'Reabrir la tarea' : 'Marcar como completada'}">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </button>
+          <div class="cl-fila__cuerpo">
+            <span class="cl-fila__t">${esc(t.titulo)}</span>
+            ${due ? `<span class="cl-fila__d${vencida ? ' cl-fila__d--vencida' : ''}">${vencida ? 'Venció el ' : 'Para el '}${esc(fechaCorta(t.fecha_entrega))}</span>` : ''}
+          </div>
+          <button class="cl-quitar" title="Quitar de este cliente" aria-label="Quitar de este cliente" onclick="quitarVinculoTarea('${esc(String(t.id))}')">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>`;
+      }).join('')
+    : `<div class="cl-vacio"><h3>Sin tareas pendientes</h3><p>Apunta el siguiente paso —llamarle, mandarle la ficha, agendar la visita— para que no se te pase.</p></div>`;
+  clContador('tareas', _tareas.filter(t => !t.completada).length);
+}
+
+async function crearTareaVinculada() {
+  if (!detContacto) return;
+  const inp = document.getElementById('tarea-nueva-titulo');
+  const titulo = (inp.value || '').trim();
+  if (!titulo) { inp.focus(); return; }
+  const uid = await _userId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  const fecha = document.getElementById('tarea-nueva-fecha').value;
+  try {
+    const creada = await restPost('tareas', {
+      user_id: uid, titulo: titulo, contacto_id: detContacto.id,
+      // OJO: nunca mandar "fecha+'T12:00:00'" pelón — la columna es timestamptz
+      // y Postgres lo toma como si YA fuera UTC. new Date(...) interpreta el
+      // texto en la hora LOCAL del navegador, y toISOString() sí da el
+      // instante UTC correcto.
+      fecha_entrega: fecha ? new Date(fecha + 'T12:00:00').toISOString() : null,
+    });
+    const nueva = Array.isArray(creada) ? creada[0] : creada;
+    if (nueva && nueva.id) {
+      await restPost('tareas_contactos', { user_id: uid, tarea_id: nueva.id, contacto_id: detContacto.id }).catch(() => {});
+    }
+    inp.value = '';
+    document.getElementById('tarea-nueva-fecha').value = '';
+    _tareasMin = null;
+    await cargarTareasVinculadas();
+    showToast('Tarea creada');
+  } catch (e) {
+    alert('No se pudo crear la tarea.\n\n' + (e.message || e));
+  }
+}
+
+async function vincularTareaExistente(tareaId) {
+  if (!detContacto || !tareaId) return;
+  const uid = await _userId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  try {
+    await restPost('tareas_contactos', { user_id: uid, tarea_id: tareaId, contacto_id: detContacto.id });
+    await cargarTareasVinculadas();
+    showToast('Tarea vinculada');
+  } catch (e) {
+    alert('No se pudo vincular.\n\n' + (e.message || e));
+  }
+}
+
+async function toggleTarea(tid) {
+  const t = _tareas.find(x => String(x.id) === tid); if (!t) return;
+  const completar = !t.completada;
+  t.completada = completar;
+  t.fecha_completada = completar ? new Date().toISOString() : null;
+  renderTareas();
+  try {
+    // Un PATCH que no toca ninguna fila (RLS, o la tarea ya no existe)
+    // responde 200 con un arreglo vacío en vez de un error — se verifica
+    // aquí para no fingir éxito, igual que en propiedades.html.
+    const r = await _sb().fetch('rest/v1/tareas?id=eq.' + encodeURIComponent(tid), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+      body: JSON.stringify({ completada: completar, fecha_completada: t.fecha_completada }),
+    });
+    const data = await r.json().catch(() => []);
+    if (!r.ok || !Array.isArray(data) || data.length === 0) {
+      throw new Error('No tienes permiso sobre esta tarea o ya no existe.');
+    }
+    if (completar && detContacto) {
+      const cid = detContacto.id;
+      restPost('actividades', { tipo: 'tarea_completada', texto: 'Tarea completada: ' + t.titulo, contacto_id: cid })
+        .then(() => { if (detContacto && detContacto.id === cid && detTabActual === 'bitacora') cargarBitacora(); })
+        .catch(() => {});
+    }
+    showToast(completar ? 'Tarea completada' : 'Tarea reabierta');
+  } catch (e) {
+    t.completada = !completar;
+    t.fecha_completada = null;
+    renderTareas();
+    alert('No se pudo actualizar la tarea.\n\n' + (e.message || e));
+  }
+}
+
+async function quitarVinculoTarea(tid) {
+  if (!detContacto) return;
+  try {
+    const vinculo = _tareasVinculos.find(v => String(v.tarea_id) === tid);
+    if (vinculo) await restDelete('tareas_contactos', vinculo.id);
+    const t = _tareas.find(x => String(x.id) === tid);
+    if (t && String(t.contacto_id) === String(detContacto.id)) {
+      await _sb().fetch('rest/v1/tareas?id=eq.' + encodeURIComponent(tid), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+        body: JSON.stringify({ contacto_id: null }),
+      });
+    }
+    _tareasMin = null;
+    await cargarTareasVinculadas();
+    showToast('Vínculo eliminado');
+  } catch (e) {
+    alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Editar / eliminar
+   ══════════════════════════════════════════════════════════════════ */
+function editarDesdeDetalle() {
+  if (!detContacto) return;
+  const id = detContacto.id;
+  cerrarDetalle();
+  abrirModal(id);
+}
+
+async function eliminarDesdeDetalle() {
+  if (!detContacto) return;
+  const c = detContacto;
+  if (!confirm(`¿Eliminar a ${c.nombre || 'este cliente'}?\n\nSe pierde su bitácora completa: notas, archivos y todo su historial. No se puede deshacer.`)) return;
+  try {
+    await eliminarRemoto(c.id);
+    await cargarRemoto();
+    cerrarDetalle();
+    renderActual();
+    showToast('Cliente eliminado');
+  } catch (e) {
+    alert('No se pudo eliminar el cliente.\n\n' + (e.message || e));
+  }
+}
+
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Escape' || _clMenuAbierto) return;
+  if (document.getElementById('detail-ov').classList.contains('open')) cerrarDetalle();
+});
