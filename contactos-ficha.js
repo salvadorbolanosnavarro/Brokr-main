@@ -1,23 +1,25 @@
-// Broquer · Clientes — la ficha del cliente.
+// Broquer · Directorio — la ficha del contacto.
 //
-// Vive fuera de clientes.html por dos razones: ese archivo ya rozaba el techo
-// de bytes de scripts/architecture_debt.py, y la ficha es una superficie con
-// vida propia (identidad, estado, bitácora, propiedades, tareas) que se lee
-// mejor completa que intercalada con el tablero.
+// Misma superficie que la de Clientes (ver ficha-comun.js y el bloque FICHA
+// de brokr-theme.css), con lo propio del Directorio: aquí vive TODA la
+// agenda, no sólo el pipeline, así que el control de cabecera es "¿este
+// contacto es un cliente potencial?" y la etapa sólo aparece cuando lo es.
 //
-// Usa los globales que define clientes.html: _sb, _userId, restGet, restPost,
-// restDelete, esc, showToast, fecha*, initials, avColor, rolBadge, domicilio,
-// ETAPAS, etapaInfo, PROBS, patchContacto, renderActual, cargar, abrirModal,
-// abrirWA, cargarRemoto, eliminarRemoto, cargarPropsMin, propSubtitulo,
-// crearBuscadorPropiedades, detContacto, y las de historial-adjuntos.js.
+// Usa los globales de contactos.html: _sb, _userId, restGet, restPost,
+// restDelete, patchRemoto, esc, showToast, fechaCorta, initials, avColor,
+// rolBadge, domicilio, ETAPAS, etapaInfo, PROBS, patchContacto, renderActual,
+// cargar, abrirModal, abrirWA, cargarRemoto, eliminarRemoto, cargarPropsMin,
+// propSubtitulo, buscarPropInput, propBuscarKeydown, detContacto.
 
 /* ══════════════════════════════════════════════════════════════════
-   Abrir / cerrar la ficha
+   Abrir / cerrar
    ══════════════════════════════════════════════════════════════════ */
 function abrirDetalle(id) {
-  const c = cargar().find(x => String(x.id) === String(id));
+  clearTimeout(_busqT);
+  id = String(id || '');
+  const c = cargar().find(x => String(x.id) === id);
   if (!c) return;
-  clDescartarBorrador();
+  ctDescartarBorrador();
   detContacto = c;
 
   const av = document.getElementById('f-av');
@@ -30,10 +32,10 @@ function abrirDetalle(id) {
   metaEl.textContent = meta;
   metaEl.hidden = !meta;
 
-  clRenderAsignacion(c);
-  clRenderEstado(c);
-  clRenderAcciones(c);
-  clRenderResumen(c);
+  ctRenderAsignacion(c);
+  ctRenderEstado(c);
+  ctRenderAcciones(c);
+  ctRenderResumen(c);
 
   document.getElementById('f-bitacora-feed').innerHTML = '';
   document.getElementById('props-feed').innerHTML = '';
@@ -50,13 +52,13 @@ function abrirDetalle(id) {
 
 function cerrarDetalle() {
   bkCerrarMenu();
-  clDescartarBorrador();
+  ctDescartarBorrador();
   document.getElementById('detail-ov').classList.remove('is-open');
   document.body.classList.remove('bk-sin-scroll');
   detContacto = null;
 }
 
-function clDescartarBorrador() {
+function ctDescartarBorrador() {
   if (typeof haTomarAdjuntosListos === 'function') haTomarAdjuntosListos('f-nota-preview');
   const comp = document.getElementById('f-composer');
   if (comp) comp.hidden = true;
@@ -64,8 +66,7 @@ function clDescartarBorrador() {
   if (ta) ta.value = '';
 }
 
-/* Asignación de agente (solo cuentas Broquer para Empresas). */
-function clRenderAsignacion(c) {
+function ctRenderAsignacion(c) {
   const wrap = document.getElementById('f-asignado');
   if (!cEsEmpresa || !cMiembros.length) { wrap.hidden = true; return; }
   wrap.hidden = false;
@@ -83,12 +84,15 @@ function clRenderAsignacion(c) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   Estado: etapa y probabilidad, cada una en un menú desplegable.
-   Antes eran nueve pastillas siempre visibles (seis etapas + tres
-   probabilidades) compitiendo con el nombre del cliente. Lo que
-   importa de un vistazo es en qué etapa está, no la lista completa.
+   Estado
+   Un contacto del Directorio puede ser sólo una entrada de agenda (un
+   notario, un colega) o un cliente potencial. Etapa y probabilidad
+   describen un proceso de venta: sólo tienen sentido —y sólo se
+   muestran— cuando el contacto está en el pipeline.
    ══════════════════════════════════════════════════════════════════ */
-function clProbInfo(v) {
+const CT_ESTRELLA = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg>';
+
+function ctProbInfo(v) {
   const mapa = {
     alta:  { l: 'Alta',  color: 'var(--success)' },
     media: { l: 'Media', color: 'var(--warn)' },
@@ -97,20 +101,55 @@ function clProbInfo(v) {
   return mapa[String(v || '').toLowerCase()] || null;
 }
 
-function clRenderEstado(c) {
+function ctRenderEstado(c) {
+  const esPotencial = !!c.es_potencial;
+
+  const pot = document.getElementById('f-potencial');
+  pot.innerHTML = CT_ESTRELLA + '<span class="bk-pill__txt">' +
+    (esPotencial ? 'En el pipeline' : 'Pasar al pipeline') + '</span>';
+  pot.classList.toggle('is-on', esPotencial);
+  pot.title = esPotencial
+    ? 'Sacar del pipeline de Clientes (se queda en el Directorio)'
+    : 'Marcarlo como cliente potencial y mandarlo al pipeline';
+
+  document.getElementById('f-etapa-btn').hidden = !esPotencial;
+  document.getElementById('f-prob-btn').hidden = !esPotencial;
+  if (!esPotencial) return;
+
   const etapa = etapaInfo(c.estatus);
   const tieneEtapa = !!String(c.estatus || '').trim();
   document.getElementById('f-etapa-btn').innerHTML =
     `<span class="bk-punto" style="background:${tieneEtapa ? etapa.color : 'var(--mute-3)'}"></span>
      <span class="bk-pill__txt">${tieneEtapa ? esc(etapa.nombre) : 'Sin etapa'}</span>${BK_CHEVRON}`;
 
-  const prob = clProbInfo(c.probabilidad);
+  const prob = ctProbInfo(c.probabilidad);
   document.getElementById('f-prob-btn').innerHTML =
     `<span class="bk-pill__lbl">Probabilidad</span>
      <span class="bk-pill__txt"${prob ? ` style="color:${prob.color}"` : ''}>${prob ? prob.l : 'Sin definir'}</span>${BK_CHEVRON}`;
 }
 
-function clMenuEtapa(btn) {
+async function toggleDetPotencial() {
+  if (!detContacto) return;
+  const c = cargar().find(x => String(x.id) === String(detContacto.id));
+  if (!c) return;
+  const nuevo = !c.es_potencial;
+  c.es_potencial = nuevo;             // optimista
+  detContacto.es_potencial = nuevo;
+  ctRenderEstado(detContacto);
+  try {
+    await patchRemoto(c.id, { es_potencial: nuevo });
+    try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch (_) {}
+    renderActual();
+    showToast(nuevo ? 'Ahora aparece en Clientes' : 'Salió del pipeline de Clientes');
+  } catch (e) {
+    c.es_potencial = !nuevo;
+    detContacto.es_potencial = !nuevo;
+    ctRenderEstado(detContacto);
+    showToast('No se pudo guardar el cambio');
+  }
+}
+
+function ctMenuEtapa(btn) {
   if (!detContacto) return;
   const actual = String(detContacto.estatus || '').toLowerCase();
   const items = ETAPAS.map(e => ({ id: e.clave, etiqueta: e.nombre, color: e.color, activo: actual === e.clave }));
@@ -118,22 +157,22 @@ function clMenuEtapa(btn) {
   bkAbrirMenu(btn, items, (v) => setEtapa(v));
 }
 
-function clMenuProb(btn) {
+function ctMenuProb(btn) {
   if (!detContacto) return;
   const actual = String(detContacto.probabilidad || '').toLowerCase();
   const items = PROBS.map(p => {
-    const info = clProbInfo(p.v);
+    const info = ctProbInfo(p.v);
     return { id: p.v, etiqueta: p.l, color: info && info.color, activo: actual === p.v };
   });
   if (actual) items.push({ id: '', etiqueta: 'Sin definir', separa: true });
   bkAbrirMenu(btn, items, (v) => setProbabilidad(v));
 }
 
-function clMenuMas(btn) {
+function ctMenuMas(btn) {
   if (!detContacto) return;
   bkAbrirMenu(btn, [
-    { id: 'editar', etiqueta: 'Editar cliente' },
-    { id: 'eliminar', etiqueta: 'Eliminar cliente', peligro: true, separa: true },
+    { id: 'editar', etiqueta: 'Editar contacto' },
+    { id: 'eliminar', etiqueta: 'Eliminar contacto', peligro: true, separa: true },
   ], (v) => {
     if (v === 'editar') editarDesdeDetalle();
     if (v === 'eliminar') eliminarDesdeDetalle();
@@ -145,15 +184,15 @@ async function setEtapa(v) {
   const prev = String(detContacto.estatus || '').toLowerCase();
   if (prev === v) return;
   detContacto.estatus = v;
-  clRenderEstado(detContacto);
+  ctRenderEstado(detContacto);
   try {
     await patchContacto(detContacto.id, { estatus: v || null });
     renderActual();
     showToast(v ? 'Etapa: ' + etapaInfo(v).nombre : 'Etapa quitada');
-    clRegistrarCambioEtapa(detContacto.id, prev, v);
+    ctRegistrarCambioEtapa(detContacto.id, prev, v);
   } catch (e) {
     detContacto.estatus = prev;
-    clRenderEstado(detContacto);
+    ctRenderEstado(detContacto);
     showToast('No se pudo guardar la etapa');
   }
 }
@@ -163,23 +202,20 @@ async function setProbabilidad(v) {
   const prev = String(detContacto.probabilidad || '').toLowerCase();
   if (prev === v) return;
   detContacto.probabilidad = v;
-  clRenderEstado(detContacto);
+  ctRenderEstado(detContacto);
   try {
     await patchContacto(detContacto.id, { probabilidad: v || null });
     renderActual();
-    const info = clProbInfo(v);
+    const info = ctProbInfo(v);
     showToast(info ? 'Probabilidad: ' + info.l : 'Probabilidad quitada');
   } catch (e) {
     detContacto.probabilidad = prev;
-    clRenderEstado(detContacto);
+    ctRenderEstado(detContacto);
     showToast('No se pudo guardar la probabilidad');
   }
 }
 
-// Deja constancia del cambio de etapa en la bitácora. Se llama tanto desde
-// la ficha como desde el tablero (arrastrar una tarjeta a otra columna):
-// si no, la bitácora contaba notas pero no el avance real del cliente.
-function clRegistrarCambioEtapa(contactoId, previo, nuevo) {
+function ctRegistrarCambioEtapa(contactoId, previo, nuevo) {
   const de = previo ? etapaInfo(previo).nombre : 'Sin etapa';
   const a = nuevo ? etapaInfo(nuevo).nombre : 'Sin etapa';
   restPost('actividades', {
@@ -191,24 +227,13 @@ function clRegistrarCambioEtapa(contactoId, previo, nuevo) {
   }).catch(() => {});
 }
 
-/* Acciones de contacto: sin dato, el botón se deshabilita de verdad. */
-function clRenderAcciones(c) {
+function ctRenderAcciones(c) {
   const wa = c.wa || c.telefono;
   const waBtn = document.getElementById('f-wa');
-  const telBtn = document.getElementById('f-tel');
-  const mailBtn = document.getElementById('f-mail');
-
   bkAccion(waBtn, !!wa, 'https://wa.me/52' + String(wa || '').replace(/\D/g, ''));
   if (wa) waBtn.onclick = (ev) => abrirWA(ev, wa);
-  bkAccion(telBtn, !!c.telefono, 'tel:' + (c.telefono || ''));
-  bkAccion(mailBtn, !!c.email, 'mailto:' + (c.email || ''));
-}
-
-function bkAccion(el, activo, href) {
-  el.href = activo ? href : '#';
-  el.setAttribute('aria-disabled', activo ? 'false' : 'true');
-  el.tabIndex = activo ? 0 : -1;
-  el.onclick = activo ? null : (ev) => { ev.preventDefault(); };
+  bkAccion(document.getElementById('f-tel'), !!c.telefono, 'tel:' + (c.telefono || ''));
+  bkAccion(document.getElementById('f-mail'), !!c.email, 'mailto:' + (c.email || ''));
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -219,7 +244,7 @@ function setDetTab(tab) {
   ['info', 'bitacora', 'props', 'tareas'].forEach(t => {
     document.getElementById('f-pane-' + t).hidden = t !== tab;
     const btn = document.getElementById('f-tab-' + t);
-    btn.classList.toggle('is-on', t === tab);
+    btn.classList.toggle('is-active', t === tab);
     btn.setAttribute('aria-selected', t === tab ? 'true' : 'false');
   });
   if (!detContacto) return;
@@ -229,9 +254,9 @@ function setDetTab(tab) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   Resumen — los datos duros del cliente
+   Resumen
    ══════════════════════════════════════════════════════════════════ */
-function clRenderResumen(c) {
+function ctRenderResumen(c) {
   const tel = c.telefono ? `<a href="tel:${esc(c.telefono)}">${esc(c.telefono)}</a>` : '';
   const wa = c.wa ? `<a href="#" onclick="return abrirWA(event,'${esc(c.wa)}')">${esc(c.wa)}</a>` : '';
   const mail = c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : '';
@@ -243,7 +268,7 @@ function clRenderResumen(c) {
     bkDato('Fuente', esc(c.fuente || '')) +
     bkDato('Domicilio', esc(domicilio(c)), true) +
     bkDato('Sexo', c.sexo === 'F' ? 'Femenino' : 'Masculino') +
-    bkDato('En el pipeline desde', esc(fechaCorta(c.created_at))) +
+    bkDato('En el directorio desde', esc(fechaCorta(c.created_at))) +
     '</div>';
 
   if (Array.isArray(c.etiquetas) && c.etiquetas.length) {
@@ -258,8 +283,6 @@ function clRenderResumen(c) {
       <p class="bk-prosa bk-prosa--broq">${esc(c.descripcion_privada)}</p></div>`;
   }
 
-  // Una ficha a medias se cobra sola el día que necesitas el correo para
-  // mandar un contrato: si faltan datos de contacto, se dice cuáles.
   const faltan = [];
   if (!c.email) faltan.push('el correo');
   if (!c.wa && !c.telefono) faltan.push('un teléfono');
@@ -277,10 +300,7 @@ function clRenderResumen(c) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   Bitácora — todo lo que le ha pasado a este cliente, con fecha y hora.
-   Reúne las actividades del CRM (notas, archivos, cambios de etapa,
-   tareas completadas), las operaciones históricas del contacto y su
-   alta, en una sola línea de tiempo agrupada por día.
+   Bitácora
    ══════════════════════════════════════════════════════════════════ */
 async function cargarBitacora() {
   if (!detContacto) return;
@@ -294,14 +314,11 @@ async function cargarBitacora() {
   if (!detContacto || detContacto.id !== cid) return;
 
   const entradas = acts.map(a => ({
-    tipo: a.tipo || 'nota',
-    texto: a.texto || '',
-    adjuntos: a.adjuntos,
-    fecha: a.created_at,
+    tipo: a.tipo || 'nota', texto: a.texto || '', adjuntos: a.adjuntos, fecha: a.created_at,
   }));
 
-  // Operaciones históricas del contacto: su fecha es texto libre, así que
-  // solo se mezclan en la línea de tiempo las que sí se pueden fechar.
+  // Las operaciones históricas traen la fecha como texto libre: sólo entran
+  // en la línea de tiempo las que sí se pueden fechar.
   const ops = Array.isArray(detContacto.operaciones) ? detContacto.operaciones : [];
   const opsSinFecha = [];
   ops.forEach(op => {
@@ -311,22 +328,20 @@ async function cargarBitacora() {
   });
 
   if (detContacto.created_at) {
-    entradas.push({ tipo: 'alta', texto: 'Se agregó a ' + (detContacto.nombre || 'el cliente') + ' al pipeline.', fecha: detContacto.created_at });
+    entradas.push({ tipo: 'alta', texto: 'Se agregó a ' + (detContacto.nombre || 'el contacto') + ' al directorio.', fecha: detContacto.created_at });
   }
 
-  entradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
   bkContador('f-n-bitacora', entradas.length + opsSinFecha.length);
 
   if (!entradas.length && !opsSinFecha.length) {
     feed.innerHTML = `<div class="bk-vacio">
       <h3>Todavía no hay nada anotado</h3>
-      <p>Cada nota, archivo y cambio de etapa queda aquí con su fecha y hora, para que dentro de un año sepas exactamente qué pasó con este cliente.</p>
+      <p>Cada nota, archivo y cambio de etapa queda aquí con su fecha y hora, para que dentro de un año sepas exactamente qué pasó con este contacto.</p>
     </div>`;
     return;
   }
 
-  let html = bkRenderBitacora(entradas, { alta: 'Alta del cliente', cambio_estatus: 'Cambio de etapa' });
-
+  let html = bkRenderBitacora(entradas, { alta: 'Alta del contacto', cambio_estatus: 'Cambio de etapa' });
   if (opsSinFecha.length) {
     html += '<div class="bk-bita__dia">Sin fecha registrada</div>' +
       opsSinFecha.map(op => bkItemBitacora({
@@ -336,21 +351,14 @@ async function cargarBitacora() {
   feed.innerHTML = html;
 }
 
-/* ── Escribir en la bitácora ──────────────────────────────────────
-   Dos caminos, ninguno de ellos un campo de texto permanente robando
-   espacio al historial: "Nota" abre el editor, "Archivo" abre
-   directamente el selector y guarda la entrada en cuanto suben. */
-function clAbrirNota() {
-  const comp = document.getElementById('f-composer');
-  comp.hidden = false;
+function ctAbrirNota() {
+  document.getElementById('f-composer').hidden = false;
   document.getElementById('f-nota-texto').focus();
 }
 
-function clCancelarNota() {
-  clDescartarBorrador();
-}
+function ctCancelarNota() { ctDescartarBorrador(); }
 
-async function clGuardarNota() {
+async function ctGuardarNota() {
   if (!detContacto) return;
   const ta = document.getElementById('f-nota-texto');
   const btn = document.getElementById('f-nota-guardar');
@@ -361,10 +369,7 @@ async function clGuardarNota() {
   btn.disabled = true;
   try {
     await restPost('actividades', {
-      tipo: texto ? 'nota' : 'archivo',
-      texto: texto,
-      adjuntos: adjuntos,
-      contacto_id: detContacto.id,
+      tipo: texto ? 'nota' : 'archivo', texto: texto, adjuntos: adjuntos, contacto_id: detContacto.id,
     });
     ta.value = '';
     document.getElementById('f-composer').hidden = true;
@@ -377,10 +382,9 @@ async function clGuardarNota() {
   }
 }
 
-// "Adjuntar archivo" sin escribir nota: se sube y se guarda solo.
-async function clArchivosSueltos(files) {
+// "Archivo, foto o video" sin escribir nota: se sube y se guarda solo.
+async function ctArchivosSueltos(files) {
   if (!detContacto || !files || !files.length) return;
-  const feed = document.getElementById('f-bitacora-feed');
   const cid = detContacto.id;
   haAgregarArchivos(files, 'f-suelto-preview');
   showToast(files.length === 1 ? 'Subiendo el archivo…' : 'Subiendo ' + files.length + ' archivos…');
@@ -395,27 +399,14 @@ async function clArchivosSueltos(files) {
     if (detContacto && detContacto.id === cid) await cargarBitacora();
     showToast(adjuntos.length === 1 ? 'Archivo guardado' : adjuntos.length + ' archivos guardados');
   } catch (e) {
-    if (feed) alert('No se pudo guardar en la bitácora.\n\n' + (e.message || e));
+    alert('No se pudo guardar en la bitácora.\n\n' + (e.message || e));
   }
 }
 
 /* ══════════════════════════════════════════════════════════════════
    Propiedades vinculadas
    ══════════════════════════════════════════════════════════════════ */
-const _buscadorPropDetalle = crearBuscadorPropiedades(
-  'vinculo-prop-buscar', 'vinculo-prop', 'vinculo-prop-sugerencias',
-  'No tienes propiedades disponibles para vincular');
-
-let _propsDisponibles = [];
-function buscarPropInput() { _buscadorPropDetalle.onInput(_propsDisponibles); }
-function propBuscarKeydown(ev) { _buscadorPropDetalle.onKeydown(ev); }
-
-document.addEventListener('click', (ev) => {
-  if (_buscadorPropDetalle.manejarClick(ev.target)) return;
-  _buscadorPropDetalle.cerrarSiClickAfuera(ev.target);
-});
-
-const CL_REL = { interes: 'Interesado', propietario: 'Propietario', relacionado: 'Relacionado' };
+const CT_REL = { interes: 'Interesado', propietario: 'Propietario', relacionado: 'Relacionado' };
 
 async function cargarVinculos() {
   if (!detContacto) return;
@@ -450,7 +441,7 @@ async function cargarVinculos() {
             <span class="bk-fila__t">${esc(p.titulo || 'Propiedad')}</span>
             <span class="bk-fila__d">${esc(p.id ? propSubtitulo(p) : 'Abrir en Inmuebles')}</span>
           </a>
-          <span class="bk-rel">${esc(CL_REL[v.relacion] || v.relacion)}</span>
+          <span class="bk-rel">${esc(CT_REL[v.relacion] || v.relacion)}</span>
           <button class="bk-quitar" title="Quitar vínculo" aria-label="Quitar vínculo" onclick="eliminarVinculo('${esc(String(v.id))}')">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
@@ -529,8 +520,6 @@ async function cargarTareasVinculadas() {
   let todas = [];
   try { todas = await cargarTareasMin(); } catch { todas = []; }
   const disponibles = todas.filter(t => !yaLigadas.has(String(t.id)) && !t.completada);
-  // Un desplegable deshabilitado que solo dice "no hay nada" es un renglón
-  // muerto: si no hay tareas sueltas que vincular, no se muestra.
   const sel = document.getElementById('vinculo-tarea');
   sel.innerHTML = '<option value="">Vincular una tarea que ya existe…</option>' +
     disponibles.map(t => `<option value="${esc(String(t.id))}">${esc(t.titulo)}</option>`).join('');
@@ -557,7 +546,7 @@ function renderTareas() {
             <span class="bk-fila__t">${esc(t.titulo)}</span>
             ${due ? `<span class="bk-fila__d${vencida ? ' bk-fila__d--alerta' : ''}">${vencida ? 'Venció el ' : 'Para el '}${esc(fechaCorta(t.fecha_entrega))}</span>` : ''}
           </div>
-          <button class="bk-quitar" title="Quitar de este cliente" aria-label="Quitar de este cliente" onclick="quitarVinculoTarea('${esc(String(t.id))}')">
+          <button class="bk-quitar" title="Quitar de este contacto" aria-label="Quitar de este contacto" onclick="eliminarVinculoTarea('${esc(String(t.id))}')">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
         </div>`;
@@ -578,9 +567,7 @@ async function crearTareaVinculada() {
     const creada = await restPost('tareas', {
       user_id: uid, titulo: titulo, contacto_id: detContacto.id,
       // OJO: nunca mandar "fecha+'T12:00:00'" pelón — la columna es timestamptz
-      // y Postgres lo toma como si YA fuera UTC. new Date(...) interpreta el
-      // texto en la hora LOCAL del navegador, y toISOString() sí da el
-      // instante UTC correcto.
+      // y Postgres lo toma como si YA fuera UTC.
       fecha_entrega: fecha ? new Date(fecha + 'T12:00:00').toISOString() : null,
     });
     const nueva = Array.isArray(creada) ? creada[0] : creada;
@@ -618,8 +605,7 @@ async function toggleTarea(tid) {
   renderTareas();
   try {
     // Un PATCH que no toca ninguna fila (RLS, o la tarea ya no existe)
-    // responde 200 con un arreglo vacío en vez de un error — se verifica
-    // aquí para no fingir éxito, igual que en propiedades.html.
+    // responde 200 con un arreglo vacío en vez de un error.
     const r = await _sb().fetch('rest/v1/tareas?id=eq.' + encodeURIComponent(tid), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
@@ -644,7 +630,7 @@ async function toggleTarea(tid) {
   }
 }
 
-async function quitarVinculoTarea(tid) {
+async function eliminarVinculoTarea(tid) {
   if (!detContacto) return;
   try {
     const vinculo = _tareasVinculos.find(v => String(v.tarea_id) === tid);
@@ -678,15 +664,15 @@ function editarDesdeDetalle() {
 async function eliminarDesdeDetalle() {
   if (!detContacto) return;
   const c = detContacto;
-  if (!confirm(`¿Eliminar a ${c.nombre || 'este cliente'}?\n\nSe pierde su bitácora completa: notas, archivos y todo su historial. No se puede deshacer.`)) return;
+  if (!confirm(`¿Eliminar a ${c.nombre || 'este contacto'}?\n\nSe pierde su bitácora completa: notas, archivos y todo su historial. No se puede deshacer.`)) return;
   try {
     await eliminarRemoto(c.id);
     await cargarRemoto();
     cerrarDetalle();
     renderActual();
-    showToast('Cliente eliminado');
+    showToast('Contacto eliminado');
   } catch (e) {
-    alert('No se pudo eliminar el cliente.\n\n' + (e.message || e));
+    alert('No se pudo eliminar el contacto.\n\n' + (e.message || e));
   }
 }
 

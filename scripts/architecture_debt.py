@@ -107,7 +107,10 @@ LARGE_FILE_MAX_BYTES = {
     # como el resto de la app, + previsualización junto al composer; el
     # resto de la lógica vive en historial-adjuntos.js compartido con
     # Contactos y Clientes) — funcionalidad de producto real, no debt.
-    "propiedades.html": 161_184,
+    # Baja 29,512 bytes: la ficha del inmueble salió a propiedades-ficha.js y
+    # su CSS (cabecera, pestañas, bitácora, filas) al bloque FICHA de
+    # brokr-theme.css, compartido con Clientes y Directorio. Deuda pagada.
+    "propiedades.html": 131_672,
     # Bumped 1,844 bytes for the "Revisar webhook de la app" button in
     # Administrar números (fija el webhook de WhatsApp a nivel app) — a real
     # product change, not debt to pay down.
@@ -161,7 +164,9 @@ LARGE_FILE_MAX_BYTES = {
     # como el resto de la app, + previsualización junto al composer; el
     # resto de la lógica vive en historial-adjuntos.js compartido con
     # Clientes e Inmuebles) — funcionalidad de producto real, no debt.
-    "contactos.html": 123_745,
+    # Fuera del inventario: la ficha del contacto salió a contactos-ficha.js y
+    # su CSS al bloque FICHA del theme; el archivo bajó de 123,745 a ~94 KB y
+    # ya no cruza los 100 KB. (clientes.html salió igual, en el PR anterior.)
     # Bumped for the Profeco/IA-generativa disclosure clauses (9.9 Bis /
     # 5.6 Bis) — legitimate legal content, not debt to pay down.
     # Bumped 1,985 bytes: Anexo de WhatsApp ampliado con el cambio de cobro
@@ -175,6 +180,13 @@ LARGE_FILE_MAX_BYTES = {
     # 100 KB. Es funcionalidad real de producto, no deuda por pagar; queda
     # registrada con techo para que no siga creciendo sin revisión.
     "admin.html": 100_009,
+    # El sistema canónico creció al absorber la ficha de detalle que vivía
+    # copiada en Clientes, Directorio e Inmuebles (bloque FICHA). Es lo que
+    # DESIGN.md §10 pide —el mundo visual se cambia en el sistema, no módulo
+    # por módulo— y a cambio los tres módulos encogieron mucho más de lo que
+    # creció el theme. Entra al inventario para que no siga creciendo sin
+    # revisión.
+    "brokr-theme.css": 104_393,
 }
 MAX_LARGE_CODE_FILES = len(LARGE_FILE_MAX_BYTES)
 
