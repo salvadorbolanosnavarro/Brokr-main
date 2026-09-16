@@ -45,9 +45,11 @@ log = logging.getLogger("broquer.buscador")
 # Cuántos candidatos se recolectan como máximo por requerimiento y cuántos
 # de ellos se verifican de verdad con Firecrawl (crédito real) por corrida.
 # La caché compartida con el AVM hace que verificar la misma URL en días
-# consecutivos no vuelva a costar crédito.
+# consecutivos no vuelva a costar crédito. Subido de 8 a 14 porque ahora
+# cada página de listado detectada consume varias verificaciones (una por
+# cada anuncio individual que se le extrae) en vez de una sola.
 MAX_CANDIDATOS = 20
-MAX_VERIFICAR_PRECIO = 8
+MAX_VERIFICAR_PRECIO = 14
 MAX_RESULTADOS_GUARDADOS = 15
 
 _RE_PRECIO_ESTRUCTURADO = re.compile(r"DATO ESTRUCTURADO FIRECRAWL[^\n]*?precio=([\d.]+)")
@@ -161,37 +163,70 @@ async def _recolectar_candidatos(req: Dict[str, Any]) -> List[Dict[str, Any]]:
     return candidatos[:MAX_CANDIDATOS]
 
 
-async def _verificar_precio(url: str, req: Dict[str, Any]) -> tuple[Optional[float], bool]:
-    """Reusa la caché durable del AVM (avm_scrape_cache): la misma URL
+async def _texto_pagina(url: str, colonia: str, ciudad: str) -> Optional[str]:
+    """Cache-or-fetch: mismo texto (markdown + línea estructurada) que usa
+    el AVM, reusando su caché durable (avm_scrape_cache) — la misma URL
     verificada ayer para otro cliente en la misma colonia no le cuesta
     crédito de nuevo a Firecrawl hoy."""
     cacheado = await avm._avm_cache_lookup(url)
-    texto = cacheado
-    if texto is None:
-        if not avm.FIRECRAWL_API_KEY:
-            return None, False
-        try:
-            resultado = await avm._firecrawl_scrape(url)
-        except Exception:
-            return None, False
-        if not resultado.get("ok"):
-            return None, False
-        texto = resultado["page_text"]
-        await avm._avm_cache_store(url, req.get("colonia") or "", req.get("ciudad") or "", texto)
-    precio = _extraer_precio(texto)
-    return precio, precio is not None
+    if cacheado is not None:
+        return cacheado
+    if not avm.FIRECRAWL_API_KEY:
+        return None
+    try:
+        resultado = await avm._firecrawl_scrape(url)
+    except Exception:
+        return None
+    if not resultado.get("ok"):
+        return None
+    texto = resultado["page_text"]
+    await avm._avm_cache_store(url, colonia, ciudad, texto)
+    return texto
 
 
-def _dentro_de_rango(precio: float, req: Dict[str, Any]) -> bool:
+def _dentro_de_rango(precio: float, criterios: Dict[str, Any]) -> bool:
     # 10% de tolerancia: esto es un buscador de descubrimiento, no la
     # valuación estricta del AVM — un anuncio justo en el borde del rango
     # sigue siendo relevante para el agente.
-    precio_min, precio_max = req.get("precio_min"), req.get("precio_max")
+    precio_min, precio_max = criterios.get("precio_min"), criterios.get("precio_max")
     if precio_min and precio < float(precio_min) * 0.9:
         return False
     if precio_max and precio > float(precio_max) * 1.1:
         return False
     return True
+
+
+_RE_MD_LINK = re.compile(r"\]\((https?://[^\s)]+)\)")
+_RE_ID_EN_URL = re.compile(r"\d{5,}")
+MAX_ENLACES_POR_LISTADO = 4
+
+
+def _extraer_enlaces_de_listado(texto: str, url_base: str) -> List[str]:
+    """De una página que resultó ser un listado (varios precios revueltos,
+    detectado con la misma heurística del AVM), saca del propio markdown ya
+    descargado los enlaces que parecen anuncios individuales — sin gastar
+    otra llamada a Firecrawl solo para listarlos. Un anuncio individual casi
+    siempre trae un ID largo o un slug largo con el título completo en la
+    URL; un enlace de navegación (menú, paginación, "contacto") no."""
+    host = avm._host(url_base)
+    canon_base = avm._canonical_url(url_base)
+    vistos = {canon_base}
+    enlaces: List[str] = []
+    for m in _RE_MD_LINK.finditer(texto or ""):
+        link = m.group(1).rstrip(").,;\"'")
+        if avm._host(link) != host:
+            continue
+        canon = avm._canonical_url(link)
+        if canon in vistos:
+            continue
+        path = link.split(host, 1)[-1] if host in link else link
+        if not (_RE_ID_EN_URL.search(path) or len(path) > 60):
+            continue  # pinta de enlace de navegación, no de anuncio individual
+        vistos.add(canon)
+        enlaces.append(link)
+        if len(enlaces) >= MAX_ENLACES_POR_LISTADO:
+            break
+    return enlaces
 
 
 async def _buscar_resultados(criterios: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -200,26 +235,75 @@ async def _buscar_resultados(criterios: Dict[str, Any]) -> List[Dict[str, Any]]:
     manual de una sola vez (sin cliente ni nada guardado) como para el
     escaneo diario de un requerimiento guardado."""
     candidatos = await _recolectar_candidatos(criterios)
+    colonia = criterios.get("colonia") or ""
+    ciudad = criterios.get("ciudad") or ""
 
     resultados: List[Dict[str, Any]] = []
     verificados = 0
+
+    async def _procesar_listado(url: str, titulo: str, portal: str, texto: str) -> str:
+        """La página resultó ser un listado con varias propiedades
+        revueltas (site:portal casi siempre devuelve esto, no el anuncio
+        suelto) — nunca se le cree un precio a esa página completa. En vez
+        de descartarla sin más, se abren algunos de los anuncios
+        individuales que ella misma enlaza y se verifica el precio de cada
+        uno por separado."""
+        nonlocal verificados
+        agregado = False
+        for enlace in _extraer_enlaces_de_listado(texto, url):
+            if verificados >= MAX_VERIFICAR_PRECIO:
+                break
+            verificados += 1
+            sub_texto = await _texto_pagina(enlace, colonia, ciudad)
+            if not sub_texto or avm._advertencia_multi_listado(sub_texto):
+                continue  # no se pudo leer, o resultó ser OTRO listado
+            precio = _extraer_precio(sub_texto)
+            if precio is None or not _dentro_de_rango(precio, criterios):
+                continue
+            resultados.append({
+                "titulo": titulo, "url": enlace, "portal": portal,
+                "precio": precio, "precio_confirmado": True, "snippet": "",
+            })
+            agregado = True
+        return "agregado" if agregado else "descartado"
+
+    def _procesar_individual(url: str, titulo: str, portal: str, texto: str) -> str:
+        precio = _extraer_precio(texto)
+        if precio is None:
+            return "sin_precio"
+        if not _dentro_de_rango(precio, criterios):
+            return "descartado"
+        resultados.append({
+            "titulo": titulo, "url": url, "portal": portal,
+            "precio": precio, "precio_confirmado": True, "snippet": "",
+        })
+        return "agregado"
+
     for item in candidatos:
         url = item.get("url", "")
         host = avm._host(url)
         es_premium = any(d in host for d in avm.PREMIUM_FETCH_DOMAINS)
-        precio: Optional[float] = None
-        confirmado = False
+        titulo = item.get("title") or ""
+        portal = item.get("portal") or avm._portal_name(url)
+
         if es_premium and verificados < MAX_VERIFICAR_PRECIO:
             verificados += 1
-            precio, confirmado = await _verificar_precio(url, criterios)
-            if confirmado and not _dentro_de_rango(precio, criterios):
-                continue  # precio confirmado y fuera de rango: se descarta
+            texto = await _texto_pagina(url, colonia, ciudad)
+            if texto:
+                es_listado = bool(avm._advertencia_multi_listado(texto))
+                estado = (
+                    await _procesar_listado(url, titulo, portal, texto) if es_listado
+                    else _procesar_individual(url, titulo, portal, texto)
+                )
+                if estado in ("agregado", "descartado"):
+                    continue
+                # estado == "sin_precio": es un anuncio individual, no un
+                # listado, pero no se le pudo sacar un precio limpio — cae
+                # al mismo lugar que un candidato sin verificar, abajo.
+
         resultados.append({
-            "titulo": item.get("title") or "",
-            "url": url,
-            "portal": item.get("portal") or avm._portal_name(url),
-            "precio": precio,
-            "precio_confirmado": confirmado,
+            "titulo": titulo, "url": url, "portal": portal,
+            "precio": None, "precio_confirmado": False,
             "snippet": (item.get("snippet") or "")[:400],
         })
 
