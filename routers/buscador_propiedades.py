@@ -281,12 +281,20 @@ async def _buscar_resultados(criterios: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     for item in candidatos:
         url = item.get("url", "")
-        host = avm._host(url)
-        es_premium = any(d in host for d in avm.PREMIUM_FETCH_DOMAINS)
         titulo = item.get("title") or ""
         portal = item.get("portal") or avm._portal_name(url)
 
-        if es_premium and verificados < MAX_VERIFICAR_PRECIO:
+        # A diferencia del AVM (que primero intenta un fetch directo barato
+        # y solo le pasa a Firecrawl los dominios "premium" que bloquean
+        # ese fetch), el buscador no tiene ruta directa: es Firecrawl o
+        # nada. Restringir la verificación a esa misma lista de dominios
+        # premium dejaba sin verificar — y por lo tanto sin detectar
+        # páginas de listado — a cualquier portal que no estuviera en ella
+        # (EasyBroker, Mercado Libre, cualquier otro que encuentre la
+        # búsqueda), que es justo el bug reportado: seguían saliendo
+        # enlaces englobados por portal. Aquí se intenta verificar
+        # cualquier candidato, con el mismo tope de crédito de siempre.
+        if verificados < MAX_VERIFICAR_PRECIO:
             verificados += 1
             texto = await _texto_pagina(url, colonia, ciudad)
             if texto:
