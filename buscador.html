@@ -175,7 +175,7 @@
   }
 
   if (window.brokrSb && window.brokrSb.ensureToken) cargar();
-  else document.addEventListener('brokr-shell-ready', cargar, { once: true });
+  else window.addEventListener('brokr-shell-ready', cargar, { once: true });
 })();
 </script>
 </body>

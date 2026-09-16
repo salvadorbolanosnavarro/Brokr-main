@@ -427,7 +427,7 @@
   /* ── Arranque: espera al shell ── */
   function arrancar() { cargarBolsa(); }
   if (window.brokrSb && window.brokrSb.ensureToken) arrancar();
-  else document.addEventListener('brokr-shell-ready', arrancar, { once: true });
+  else window.addEventListener('brokr-shell-ready', arrancar, { once: true });
 })();
 </script>
 </body>
