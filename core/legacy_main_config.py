@@ -17,9 +17,11 @@ class LegacyMainSettings:
     avm_max_search_results: int
     avm_max_urls_to_fetch: int
     avm_max_text_chars_per_url: int
+    avm_cache_ttl_days: int
     firecrawl_api_key: str
     firecrawl_concurrency: int
     firecrawl_timeout: float
+    firecrawl_structured_extract: bool
     google_cse_api_key: str
     google_cse_id: str
     serpapi_api_key: str
@@ -55,12 +57,27 @@ class LegacyMainSettings:
             # numeric values therefore still fail fast at process startup.
             avm_search_timeout=float(os.getenv("AVM_SEARCH_TIMEOUT", "18")),
             avm_fetch_timeout=float(os.getenv("AVM_FETCH_TIMEOUT", "10")),
-            avm_max_search_results=int(os.getenv("AVM_MAX_SEARCH_RESULTS", "16")),
-            avm_max_urls_to_fetch=int(os.getenv("AVM_MAX_URLS_TO_FETCH", "8")),
+            # Subidos de 16/8: con ~300 créditos Firecrawl/mes contra un plan
+            # de miles disponibles había ~15x de holgura sin usar — más
+            # candidatos y más páginas leídas por valuación es más
+            # comparables reales, que es justo donde el AVM se quedaba corto.
+            avm_max_search_results=int(os.getenv("AVM_MAX_SEARCH_RESULTS", "24")),
+            avm_max_urls_to_fetch=int(os.getenv("AVM_MAX_URLS_TO_FETCH", "14")),
             avm_max_text_chars_per_url=int(os.getenv("AVM_MAX_TEXT_CHARS_PER_URL", "6500")),
+            # TTL de la caché durable de páginas raspadas (avm_scrape_cache):
+            # dos valuaciones en la misma colonia con días de diferencia no
+            # deberían volver a gastarle crédito a Firecrawl por la misma URL.
+            avm_cache_ttl_days=int(os.getenv("AVM_CACHE_TTL_DAYS", "14")),
             firecrawl_api_key=os.getenv("FIRECRAWL_API_KEY", ""),
             firecrawl_concurrency=int(os.getenv("FIRECRAWL_CONCURRENCY", "5")),
             firecrawl_timeout=float(os.getenv("FIRECRAWL_TIMEOUT", "45")),
+            # Extracción estructurada (jsonOptions) además del markdown de
+            # siempre: cuesta crédito extra por página, así que queda
+            # apagable por si el consumo se dispara.
+            firecrawl_structured_extract=(
+                os.getenv("FIRECRAWL_STRUCTURED_EXTRACT", "1").strip().lower()
+                not in ("0", "false", "no")
+            ),
             google_cse_api_key=(
                 os.getenv("GOOGLE_CSE_API_KEY", "")
                 or os.getenv("GOOGLE_SEARCH_API_KEY", "")
