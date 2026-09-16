@@ -1,12 +1,17 @@
 # ──────────────────────────────────────────────────────────────────────────
 # routers/buscador_propiedades.py · Broquer — Buscador de propiedades
 # ──────────────────────────────────────────────────────────────────────────
-# Cada cliente puede tener un "requerimiento" de búsqueda (operación, tipo
-# de inmueble, colonia/ciudad/estado, rango de precio, recámaras mínimas).
-# Un ciclo de fondo lo revisa una vez al día (por si el requerimiento
-# cambió) y deja listos los enlaces de anuncios que se le parecen, para que
-# el usuario los consulte en tiempo real en el portal de origen — Broquer
-# no guarda ni muestra el contacto de nadie más, solo el enlace.
+# Un buscador manual de verdad: el usuario teclea lo que se le ocurra
+# (operación, tipo de inmueble, colonia/ciudad/estado, rango de precio) y
+# recibe enlaces de portales de inmediato, sin necesidad de ligar la
+# búsqueda a ningún cliente — POST /api/buscador/buscar.
+#
+# Además, si esa búsqueda sí es para un cliente registrado, se puede
+# guardar como su "requerimiento": un ciclo de fondo la vuelve a correr una
+# vez al día (por si el requerimiento cambió) y deja listos los enlaces
+# nuevos, para que el usuario los consulte en tiempo real en el portal de
+# origen — Broquer no guarda ni muestra el contacto de nadie más, solo el
+# enlace.
 #
 # Reusa a propósito los proveedores de búsqueda y el scrape estructurado de
 # Firecrawl ya construidos en avm_websearch.py (incluida su caché
@@ -189,10 +194,12 @@ def _dentro_de_rango(precio: float, req: Dict[str, Any]) -> bool:
     return True
 
 
-async def _escanear_requerimiento(req: Dict[str, Any]) -> int:
-    """Corre una búsqueda para un requerimiento y reemplaza por completo
-    sus resultados guardados. Devuelve cuántos quedaron."""
-    candidatos = await _recolectar_candidatos(req)
+async def _buscar_resultados(criterios: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """El corazón del buscador: recolecta candidatos y verifica precio en
+    los premium. No toca la base de datos — sirve tanto para una búsqueda
+    manual de una sola vez (sin cliente ni nada guardado) como para el
+    escaneo diario de un requerimiento guardado."""
+    candidatos = await _recolectar_candidatos(criterios)
 
     resultados: List[Dict[str, Any]] = []
     verificados = 0
@@ -204,8 +211,8 @@ async def _escanear_requerimiento(req: Dict[str, Any]) -> int:
         confirmado = False
         if es_premium and verificados < MAX_VERIFICAR_PRECIO:
             verificados += 1
-            precio, confirmado = await _verificar_precio(url, req)
-            if confirmado and not _dentro_de_rango(precio, req):
+            precio, confirmado = await _verificar_precio(url, criterios)
+            if confirmado and not _dentro_de_rango(precio, criterios):
                 continue  # precio confirmado y fuera de rango: se descarta
         resultados.append({
             "titulo": item.get("title") or "",
@@ -217,27 +224,42 @@ async def _escanear_requerimiento(req: Dict[str, Any]) -> int:
         })
 
     resultados.sort(key=lambda r: (not r["precio_confirmado"]))
-    resultados = resultados[:MAX_RESULTADOS_GUARDADOS]
+    return resultados[:MAX_RESULTADOS_GUARDADOS]
 
+
+async def _persistir_resultados(
+    requerimiento_id: str, user_id: str, contacto_id: str, resultados: List[Dict[str, Any]]
+) -> None:
+    """Reemplaza por completo los resultados guardados de un requerimiento
+    (delete + insert, nunca se acumula historial) y marca la hora de esta
+    lectura."""
     ahora = datetime.now(timezone.utc).isoformat()
     try:
-        await delete_rows("busqueda_resultados", {"requerimiento_id": f"eq.{req['id']}"})
+        await delete_rows("busqueda_resultados", {"requerimiento_id": f"eq.{requerimiento_id}"})
     except Exception as exc:
-        log.warning("No se pudo limpiar resultados previos de %s: %s", req.get("id"), exc)
+        log.warning("No se pudo limpiar resultados previos de %s: %s", requerimiento_id, exc)
     if resultados:
         filas = [{
-            "requerimiento_id": req["id"], "user_id": req["user_id"], "contacto_id": req["contacto_id"],
+            "requerimiento_id": requerimiento_id, "user_id": user_id, "contacto_id": contacto_id,
             "titulo": r["titulo"], "url": r["url"], "portal": r["portal"], "precio": r["precio"],
             "precio_confirmado": r["precio_confirmado"], "snippet": r["snippet"], "encontrado_en": ahora,
         } for r in resultados]
         try:
             await post_rows("busqueda_resultados", filas, prefer="return=minimal")
         except Exception as exc:
-            log.warning("No se pudieron guardar resultados de %s: %s", req.get("id"), exc)
+            log.warning("No se pudieron guardar resultados de %s: %s", requerimiento_id, exc)
     try:
-        await patch_rows("requerimientos_busqueda", {"id": f"eq.{req['id']}"}, {"ultima_busqueda_en": ahora})
+        await patch_rows("requerimientos_busqueda", {"id": f"eq.{requerimiento_id}"}, {"ultima_busqueda_en": ahora})
     except Exception as exc:
-        log.warning("No se pudo marcar ultima_busqueda_en de %s: %s", req.get("id"), exc)
+        log.warning("No se pudo marcar ultima_busqueda_en de %s: %s", requerimiento_id, exc)
+
+
+async def _escanear_requerimiento(req: Dict[str, Any]) -> int:
+    """Corre y guarda la búsqueda de un requerimiento ya existente en la
+    base (el ciclo diario y el botón "Buscar ahora" de la ficha del
+    cliente). Devuelve cuántos resultados quedaron."""
+    resultados = await _buscar_resultados(req)
+    await _persistir_resultados(req["id"], req["user_id"], req["contacto_id"], resultados)
     return len(resultados)
 
 
@@ -250,6 +272,78 @@ async def _escanear_y_loguear(req: Dict[str, Any]) -> None:
 
 
 # ── Endpoints ────────────────────────────────────────────────────────────
+
+class BusquedaManualIn(BaseModel):
+    operacion: str = "venta"
+    tipo_inmueble: str = "casa"
+    colonia: str = ""
+    ciudad: str = ""
+    estado: str = ""
+    precio_min: float = 0
+    precio_max: float = 0
+    recamaras_min: int = 0
+    # Ambos opcionales: una búsqueda suelta (sin cliente) es tan válida como
+    # una para un cliente registrado — el módulo es un buscador de verdad,
+    # no solo la pantalla de requerimientos guardados.
+    contacto_id: str = ""
+    guardar: bool = False
+
+
+@router.post("/api/buscador/buscar")
+async def buscar_manual(body: BusquedaManualIn, request: Request):
+    """Búsqueda manual, del momento: el usuario teclea lo que se le
+    ocurra y recibe enlaces ya mismo, sin necesidad de ligarla a ningún
+    cliente. Si además manda contacto_id con guardar=true, esa misma
+    búsqueda queda como el requerimiento diario de ese cliente (mismo
+    efecto que la pestaña "Requerimiento" de su ficha)."""
+    uid = await require_user_id(request, detail="Inicia sesión para continuar.")
+    _require_db()
+    if not body.colonia.strip() and not body.ciudad.strip():
+        raise HTTPException(status_code=400, detail="Indica al menos una colonia o ciudad para buscar.")
+
+    if body.contacto_id:
+        await _verificar_contacto(body.contacto_id, uid)
+    elif body.guardar:
+        raise HTTPException(status_code=400, detail="Para guardar la búsqueda diaria, elige primero un cliente.")
+
+    criterios = {
+        "operacion": body.operacion,
+        "tipo_inmueble": body.tipo_inmueble,
+        "colonia": body.colonia.strip() or None,
+        "ciudad": body.ciudad.strip() or None,
+        "estado": body.estado.strip() or None,
+        "precio_min": body.precio_min or None,
+        "precio_max": body.precio_max or None,
+    }
+    resultados = await _buscar_resultados(criterios)
+
+    guardado = None
+    if body.guardar:
+        ahora = datetime.now(timezone.utc).isoformat()
+        fila = {
+            "user_id": uid,
+            "contacto_id": body.contacto_id,
+            "activo": True,
+            "operacion": body.operacion,
+            "tipo_inmueble": body.tipo_inmueble,
+            "colonia": criterios["colonia"],
+            "ciudad": criterios["ciudad"],
+            "estado": criterios["estado"],
+            "precio_min": criterios["precio_min"],
+            "precio_max": criterios["precio_max"],
+            "recamaras_min": body.recamaras_min or None,
+            "actualizado_en": ahora,
+        }
+        try:
+            guardadas = await upsert_rows("requerimientos_busqueda", [fila], conflict="contacto_id")
+        except httpx.HTTPStatusError as exc:
+            detalle = exc.response.text[:200] if exc.response is not None else str(exc)
+            raise HTTPException(status_code=502, detail=f"No se pudo guardar la búsqueda: {detalle}")
+        guardado = guardadas[0] if guardadas else fila
+        await _persistir_resultados(guardado["id"], uid, body.contacto_id, resultados)
+
+    return {"resultados": resultados, "guardado": guardado}
+
 
 class RequerimientoIn(BaseModel):
     activo: bool = True

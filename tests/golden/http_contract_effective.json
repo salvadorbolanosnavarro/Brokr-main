@@ -1,5 +1,5 @@
 {
-  "count": 260,
+  "count": 261,
   "operations": [
     {
       "body": false,
@@ -166,6 +166,16 @@
       "path": "/api/buscador",
       "responses": [
         "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/api/buscador/buscar",
+      "responses": [
+        "200",
+        "422"
       ]
     },
     {

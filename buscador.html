@@ -26,11 +26,51 @@
   font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.5;
 }
 
-.bp-body { padding: 24px 28px 48px; max-width: 900px; margin: 0 auto; }
+.bp-body { padding: 24px 28px 48px; max-width: 780px; margin: 0 auto; }
 @media (max-width: 720px) {
   .bp-head { padding: 16px 14px 14px; }
   .bp-body { padding: 16px 14px 40px; }
 }
+
+.bp-seccion { margin-bottom: var(--sp-8); }
+.bp-seccion__t {
+  font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700;
+  margin-bottom: var(--sp-1);
+}
+.bp-seccion__d { font-size: var(--fs-sm); color: var(--mute); margin-bottom: var(--sp-4); }
+
+/* Autocompletado de cliente — mismo patrón que .prop-buscador de clientes.html */
+.bp-cliente-wrap { position: relative; }
+.bp-sugerencias {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
+  max-height: 240px; overflow-y: auto;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-md);
+}
+.bp-sugerencia {
+  display: block; width: 100%; text-align: left;
+  padding: 9px 11px; border: none; background: none; cursor: pointer;
+  font-family: inherit; font-size: var(--fs-sm); color: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+.bp-sugerencia:last-child { border-bottom: none; }
+.bp-sugerencia:hover { background: var(--paper-2); }
+.bp-sugerencia--vacio { color: var(--mute); cursor: default; }
+.bp-sugerencia--vacio:hover { background: none; }
+.bp-cliente-elegido {
+  display: none; align-items: center; gap: var(--sp-2);
+  margin-top: var(--sp-2); font-size: var(--fs-sm); color: var(--ink-2);
+}
+.bp-cliente-elegido.is-on { display: flex; }
+.bp-cliente-elegido button {
+  background: none; border: none; color: var(--mute); cursor: pointer;
+  font-size: var(--fs-xs); text-decoration: underline;
+}
+
+.bp-guardar-fila { display: none; }
+.bp-guardar-fila.is-on { display: flex; }
 
 .bp-lista { display: flex; flex-direction: column; gap: var(--sp-3); }
 
@@ -62,17 +102,104 @@
 <div class="bp-head">
   <h1>Buscador de propiedades</h1>
   <p>
-    Un requerimiento por cliente (colonia, tipo de propiedad, rango de precio) y una lectura
-    automática una vez al día. Aquí ves de un vistazo a quién le toca revisar enlaces; para
-    editar el requerimiento o ver los enlaces completos, entra a la ficha del cliente.
+    Busca lo que se te ocurra — colonia, tipo de propiedad, rango de precio — y recibe enlaces
+    de portales al instante. No hace falta ligarlo a ningún cliente; si quieres, también puedes
+    elegir uno y dejar la búsqueda guardada para que se repita sola todos los días.
   </p>
 </div>
 
 <div class="bp-body">
-  <div class="bp-lista" id="bp-lista">
-    <div class="bp-skel"></div>
-    <div class="bp-skel"></div>
+
+  <div class="bp-seccion">
+    <div class="bk-field-row">
+      <div class="bk-field">
+        <label class="bk-label" for="bp-operacion">Operación</label>
+        <select class="bk-select" id="bp-operacion">
+          <option value="venta">Venta</option>
+          <option value="renta">Renta</option>
+        </select>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="bp-tipo">Tipo de propiedad</label>
+        <select class="bk-select" id="bp-tipo">
+          <option value="casa">Casa</option>
+          <option value="departamento">Departamento</option>
+          <option value="terreno">Terreno</option>
+          <option value="local">Local comercial</option>
+          <option value="oficina">Oficina</option>
+          <option value="bodega">Bodega</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="bk-field-row is-three">
+      <div class="bk-field">
+        <label class="bk-label" for="bp-colonia">Colonia</label>
+        <input class="bk-input" id="bp-colonia" type="text" placeholder="Ej. Roma Norte"/>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="bp-ciudad">Ciudad</label>
+        <input class="bk-input" id="bp-ciudad" type="text" placeholder="Ej. Ciudad de México"/>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="bp-estado">Estado</label>
+        <input class="bk-input" id="bp-estado" type="text" placeholder="Ej. CDMX"/>
+      </div>
+    </div>
+
+    <div class="bk-field-row is-three">
+      <div class="bk-field">
+        <label class="bk-label" for="bp-precio-min">Precio mínimo</label>
+        <input class="bk-input" id="bp-precio-min" type="number" min="0" placeholder="$"/>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="bp-precio-max">Precio máximo</label>
+        <input class="bk-input" id="bp-precio-max" type="number" min="0" placeholder="$"/>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="bp-recamaras">Recámaras mínimas</label>
+        <input class="bk-input" id="bp-recamaras" type="number" min="0" placeholder="0"/>
+      </div>
+    </div>
+
+    <div class="bk-field bp-cliente-wrap">
+      <label class="bk-label" for="bp-cliente-input">Cliente (opcional)</label>
+      <input class="bk-input" id="bp-cliente-input" type="text" autocomplete="off"
+             placeholder="Buscar un cliente por nombre… déjalo vacío si no es para nadie en particular"
+             oninput="bpFiltrarClientes()" onfocus="bpFiltrarClientes()"/>
+      <input type="hidden" id="bp-cliente-id"/>
+      <div class="bp-sugerencias" id="bp-cliente-sugerencias" hidden></div>
+      <div class="bp-cliente-elegido" id="bp-cliente-elegido">
+        <span>Vinculado a <strong id="bp-cliente-nombre"></strong></span>
+        <button type="button" onclick="bpQuitarCliente()">Quitar</button>
+      </div>
+    </div>
+
+    <div class="bk-acciones bp-guardar-fila" id="bp-guardar-fila">
+      <label class="bk-switch"><input type="checkbox" id="bp-guardar"/><span class="bk-switch__track"></span> Guardar esta búsqueda para este cliente (se repite todos los días)</label>
+    </div>
+
+    <div class="bk-acciones">
+      <button class="bk-btn" id="bp-buscar-btn" onclick="bpBuscar()">Buscar</button>
+    </div>
   </div>
+
+  <div class="bp-seccion">
+    <h2 class="bp-seccion__t" id="bp-resultados-titulo">Resultados</h2>
+    <div id="bp-resultados-feed">
+      <div class="bk-vacio"><h3>Todavía no has buscado nada</h3><p>Llena al menos la colonia o la ciudad y presiona "Buscar".</p></div>
+    </div>
+  </div>
+
+  <div class="bp-seccion">
+    <h2 class="bp-seccion__t">Búsquedas guardadas</h2>
+    <p class="bp-seccion__d">Las que dejaste corriendo todos los días para un cliente en particular.</p>
+    <div class="bp-lista" id="bp-lista-guardadas">
+      <div class="bp-skel"></div>
+      <div class="bp-skel"></div>
+    </div>
+  </div>
+
 </div>
 
 <script src="app-shell.js" defer></script>
@@ -86,19 +213,20 @@
     var sb = window.brokrSb;
     if (!sb || !sb.ensureToken) throw new Error('La app aún se está cargando. Intenta en un segundo.');
     var tok = await sb.ensureToken();
-    var headers = Object.assign({}, opts.headers || {});
+    var headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
     if (tok) headers['Authorization'] = 'Bearer ' + tok;
-    var r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers });
+    var body = opts.json !== undefined ? JSON.stringify(opts.json) : opts.body;
+    var r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers, body: body });
     if (r.status === 401 && sb.refreshNow) {
       tok = await sb.refreshNow();
       if (tok) {
         headers['Authorization'] = 'Bearer ' + tok;
-        r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers });
+        r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers, body: body });
       }
     }
     var data = null;
     try { data = await r.json(); } catch (e) { data = null; }
-    if (!r.ok) throw new Error((data && data.detail) || 'No se pudo cargar el buscador.');
+    if (!r.ok) throw new Error((data && data.detail) || 'No se pudo completar la acción.');
     return data;
   }
 
@@ -107,15 +235,13 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
+  function gv(id) { return (document.getElementById(id).value || '').trim(); }
 
   var TIPO_LABEL = {
     casa: 'Casa', departamento: 'Departamento', terreno: 'Terreno',
     local: 'Local comercial', oficina: 'Oficina', bodega: 'Bodega',
   };
-
-  function dinero(n) {
-    return '$' + Number(n).toLocaleString('es-MX', { maximumFractionDigits: 0 });
-  }
+  function dinero(n) { return '$' + Number(n).toLocaleString('es-MX', { maximumFractionDigits: 0 }); }
 
   function criterios(r) {
     var partes = [];
@@ -139,7 +265,126 @@
     } catch (e) { return ''; }
   }
 
-  function tarjeta(r) {
+  /* ── Autocompletado de cliente ── */
+  var contactosCache = null;
+  async function contactos() {
+    if (contactosCache) return contactosCache;
+    try {
+      var r = await window.brokrSb.fetch('rest/v1/contactos?select=id,nombre&order=nombre.asc');
+      contactosCache = r.ok ? await r.json() : [];
+    } catch (e) { contactosCache = []; }
+    return contactosCache;
+  }
+
+  window.bpFiltrarClientes = async function () {
+    var q = gv('bp-cliente-input').toLowerCase();
+    var caja = document.getElementById('bp-cliente-sugerencias');
+    if (!q) { caja.hidden = true; return; }
+    var todos = await contactos();
+    var filtrados = todos.filter(function (c) { return (c.nombre || '').toLowerCase().includes(q); }).slice(0, 8);
+    if (!filtrados.length) {
+      caja.innerHTML = '<div class="bp-sugerencia bp-sugerencia--vacio">Sin coincidencias</div>';
+    } else {
+      caja.innerHTML = filtrados.map(function (c, i) {
+        return '<button type="button" class="bp-sugerencia" data-idx="' + i + '">' + esc(c.nombre || 'Sin nombre') + '</button>';
+      }).join('');
+      Array.prototype.forEach.call(caja.querySelectorAll('.bp-sugerencia[data-idx]'), function (btn, i) {
+        btn.onclick = function () { bpElegirCliente(filtrados[i]); };
+      });
+    }
+    caja.hidden = false;
+  };
+
+  window.bpElegirCliente = function (c) {
+    document.getElementById('bp-cliente-id').value = c.id;
+    document.getElementById('bp-cliente-input').value = '';
+    document.getElementById('bp-cliente-sugerencias').hidden = true;
+    document.getElementById('bp-cliente-nombre').textContent = c.nombre || 'Sin nombre';
+    document.getElementById('bp-cliente-elegido').classList.add('is-on');
+    document.getElementById('bp-guardar-fila').classList.add('is-on');
+  };
+
+  window.bpQuitarCliente = function () {
+    document.getElementById('bp-cliente-id').value = '';
+    document.getElementById('bp-cliente-elegido').classList.remove('is-on');
+    document.getElementById('bp-guardar-fila').classList.remove('is-on');
+    document.getElementById('bp-guardar').checked = false;
+  };
+
+  document.addEventListener('click', function (ev) {
+    if (!ev.target.closest('.bp-cliente-wrap')) {
+      var caja = document.getElementById('bp-cliente-sugerencias');
+      if (caja) caja.hidden = true;
+    }
+  });
+
+  /* ── Resultados de la búsqueda manual ── */
+  function renderResultados(resultados) {
+    var feed = document.getElementById('bp-resultados-feed');
+    if (!resultados || !resultados.length) {
+      feed.innerHTML = '<div class="bk-vacio"><h3>Sin resultados</h3><p>No encontramos anuncios que calcen con estos criterios. Prueba con una colonia distinta o un rango de precio más amplio.</p></div>';
+      return;
+    }
+    feed.innerHTML = resultados.map(function (r) {
+      var precioTxt = r.precio
+        ? ' · ' + dinero(r.precio) + (r.precio_confirmado ? '' : ' (sin confirmar)')
+        : '';
+      return '<div class="bk-fila">' +
+        '<span class="bk-fila__ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg></span>' +
+        '<a class="bk-fila__cuerpo" href="' + esc(r.url) + '" target="_blank" rel="noopener noreferrer">' +
+          '<span class="bk-fila__t">' + esc(r.titulo || r.portal || 'Ver anuncio') + '</span>' +
+          '<span class="bk-fila__d">' + esc(r.portal || '') + precioTxt + '</span>' +
+        '</a>' +
+      '</div>';
+    }).join('');
+  }
+
+  window.bpBuscar = async function () {
+    var colonia = gv('bp-colonia');
+    var ciudad = gv('bp-ciudad');
+    if (!colonia && !ciudad) {
+      alert('Escribe al menos una colonia o una ciudad para buscar.');
+      return;
+    }
+    var contactoId = gv('bp-cliente-id');
+    var guardar = document.getElementById('bp-guardar').checked;
+    if (guardar && !contactoId) {
+      alert('Para guardar la búsqueda diaria, primero elige un cliente.');
+      return;
+    }
+    var btn = document.getElementById('bp-buscar-btn');
+    var titulo = document.getElementById('bp-resultados-titulo');
+    btn.disabled = true;
+    btn.textContent = 'Buscando…';
+    titulo.textContent = 'Resultados';
+    document.getElementById('bp-resultados-feed').innerHTML = '<div class="bk-cargando"></div>';
+    try {
+      var body = {
+        operacion: gv('bp-operacion') || 'venta',
+        tipo_inmueble: gv('bp-tipo') || 'casa',
+        colonia: colonia, ciudad: ciudad, estado: gv('bp-estado'),
+        precio_min: Number(gv('bp-precio-min')) || 0,
+        precio_max: Number(gv('bp-precio-max')) || 0,
+        recamaras_min: Number(gv('bp-recamaras')) || 0,
+        contacto_id: contactoId, guardar: guardar,
+      };
+      var out = await api('/api/buscador/buscar', { method: 'POST', json: body });
+      renderResultados(out.resultados);
+      titulo.textContent = 'Resultados (' + (out.resultados || []).length + ')';
+      if (out.guardado) {
+        cargarGuardadas();
+      }
+    } catch (e) {
+      document.getElementById('bp-resultados-feed').innerHTML =
+        '<div class="bk-vacio"><h3>No se pudo buscar</h3><p>' + esc(e.message || '') + '</p></div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Buscar';
+    }
+  };
+
+  /* ── Búsquedas guardadas (las de lectura diaria) ── */
+  function tarjetaGuardada(r) {
     var n = r.total_resultados || 0;
     var badge = n ? (n + (n === 1 ? ' enlace' : ' enlaces')) : 'Sin enlaces aún';
     return '<div class="bp-card">' +
@@ -156,26 +401,22 @@
     '</div>';
   }
 
-  async function cargar() {
-    var lista = document.getElementById('bp-lista');
+  async function cargarGuardadas() {
+    var lista = document.getElementById('bp-lista-guardadas');
     try {
       var reqs = await api('/api/buscador');
       if (!reqs.length) {
-        lista.innerHTML = '<div class="bk-vacio">' +
-          '<h3>Todavía no hay requerimientos activos</h3>' +
-          '<p>Abre la ficha de un cliente → pestaña "Requerimiento" para guardar qué está buscando ' +
-          '(colonia, tipo de propiedad, rango de precio) y activar la lectura diaria.</p>' +
-        '</div>';
+        lista.innerHTML = '<div class="bk-vacio"><h3>Ninguna todavía</h3><p>Marca "Guardar esta búsqueda" arriba, con un cliente elegido, para que se repita sola todos los días.</p></div>';
         return;
       }
-      lista.innerHTML = reqs.map(tarjeta).join('');
+      lista.innerHTML = reqs.map(tarjetaGuardada).join('');
     } catch (e) {
       lista.innerHTML = '<div class="bk-vacio"><h3>No se pudo cargar</h3><p>' + esc(e.message || '') + '</p></div>';
     }
   }
 
-  if (window.brokrSb && window.brokrSb.ensureToken) cargar();
-  else window.addEventListener('brokr-shell-ready', cargar, { once: true });
+  if (window.brokrSb && window.brokrSb.ensureToken) cargarGuardadas();
+  else window.addEventListener('brokr-shell-ready', cargarGuardadas, { once: true });
 })();
 </script>
 </body>
