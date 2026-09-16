@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>Buscador de propiedades · Broquer</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+/* layout owned by app-shell.js (.bk-page is the scroll container) */
+
+.bp-head {
+  padding: 22px 28px 18px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.bp-head h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.03em;
+}
+.bp-head p {
+  margin-top: 6px; max-width: 640px;
+  font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.5;
+}
+
+.bp-body { padding: 24px 28px 48px; max-width: 900px; margin: 0 auto; }
+@media (max-width: 720px) {
+  .bp-head { padding: 16px 14px 14px; }
+  .bp-body { padding: 16px 14px 40px; }
+}
+
+.bp-lista { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+.bp-card {
+  background: var(--paper);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  display: flex; flex-direction: column; gap: var(--sp-2);
+}
+.bp-card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+.bp-card__nombre { font-size: var(--fs-md); font-weight: 700; color: var(--ink); }
+.bp-card__badge {
+  flex-shrink: 0;
+  font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: 600;
+  color: var(--ink-2); background: var(--paper-2);
+  border-radius: var(--r-pill); padding: 3px 10px;
+}
+.bp-card__badge.is-vacio { color: var(--mute); }
+.bp-card__criterios { font-size: var(--fs-sm); color: var(--ink-2); }
+.bp-card__pie { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-1); }
+.bp-card__fecha { font-size: var(--fs-xs); color: var(--mute); }
+
+.bp-skel { height: 92px; background: var(--paper-2); border-radius: var(--r-md); }
+</style>
+</head>
+<body data-app="buscador">
+
+<div class="bp-head">
+  <h1>Buscador de propiedades</h1>
+  <p>
+    Un requerimiento por cliente (colonia, tipo de propiedad, rango de precio) y una lectura
+    automática una vez al día. Aquí ves de un vistazo a quién le toca revisar enlaces; para
+    editar el requerimiento o ver los enlaces completos, entra a la ficha del cliente.
+  </p>
+</div>
+
+<div class="bp-body">
+  <div class="bp-lista" id="bp-lista">
+    <div class="bp-skel"></div>
+    <div class="bp-skel"></div>
+  </div>
+</div>
+
+<script src="app-shell.js" defer></script>
+<script>
+(function () {
+  'use strict';
+  var API_BASE = window.API_BASE || 'https://api.broquer.app';
+
+  async function api(path, opts) {
+    opts = opts || {};
+    var sb = window.brokrSb;
+    if (!sb || !sb.ensureToken) throw new Error('La app aún se está cargando. Intenta en un segundo.');
+    var tok = await sb.ensureToken();
+    var headers = Object.assign({}, opts.headers || {});
+    if (tok) headers['Authorization'] = 'Bearer ' + tok;
+    var r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers });
+    if (r.status === 401 && sb.refreshNow) {
+      tok = await sb.refreshNow();
+      if (tok) {
+        headers['Authorization'] = 'Bearer ' + tok;
+        r = await fetch(API_BASE + path, { method: opts.method || 'GET', headers: headers });
+      }
+    }
+    var data = null;
+    try { data = await r.json(); } catch (e) { data = null; }
+    if (!r.ok) throw new Error((data && data.detail) || 'No se pudo cargar el buscador.');
+    return data;
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  var TIPO_LABEL = {
+    casa: 'Casa', departamento: 'Departamento', terreno: 'Terreno',
+    local: 'Local comercial', oficina: 'Oficina', bodega: 'Bodega',
+  };
+
+  function dinero(n) {
+    return '$' + Number(n).toLocaleString('es-MX', { maximumFractionDigits: 0 });
+  }
+
+  function criterios(r) {
+    var partes = [];
+    partes.push((TIPO_LABEL[r.tipo_inmueble] || r.tipo_inmueble || 'Propiedad') +
+      ' en ' + (r.operacion === 'renta' ? 'renta' : 'venta'));
+    var lugar = [r.colonia, r.ciudad].filter(Boolean).join(', ');
+    if (lugar) partes.push(lugar);
+    if (r.precio_min && r.precio_max) partes.push(dinero(r.precio_min) + ' – ' + dinero(r.precio_max));
+    else if (r.precio_max) partes.push('hasta ' + dinero(r.precio_max));
+    else if (r.precio_min) partes.push('desde ' + dinero(r.precio_min));
+    return partes.join(' · ');
+  }
+
+  function fechaHora(iso) {
+    if (!iso) return 'Todavía sin leer';
+    try {
+      var d = new Date(iso);
+      var fecha = d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+      var hora = d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+      return 'Última lectura: ' + fecha + ', ' + hora;
+    } catch (e) { return ''; }
+  }
+
+  function tarjeta(r) {
+    var n = r.total_resultados || 0;
+    var badge = n ? (n + (n === 1 ? ' enlace' : ' enlaces')) : 'Sin enlaces aún';
+    return '<div class="bp-card">' +
+      '<div class="bp-card__head">' +
+        '<span class="bp-card__nombre">' + esc(r.cliente_nombre) + '</span>' +
+        '<span class="bp-card__badge' + (n ? '' : ' is-vacio') + '">' + esc(badge) + '</span>' +
+      '</div>' +
+      '<div class="bp-card__criterios">' + esc(criterios(r)) + '</div>' +
+      '<div class="bp-card__pie">' +
+        '<span class="bp-card__fecha">' + esc(fechaHora(r.ultima_busqueda_en)) + '</span>' +
+        '<a class="bk-btn bk-btn--ghost bk-btn--sm" href="clientes.html?id=' +
+          encodeURIComponent(r.contacto_id) + '&tab=requerimiento">Ver cliente</a>' +
+      '</div>' +
+    '</div>';
+  }
+
+  async function cargar() {
+    var lista = document.getElementById('bp-lista');
+    try {
+      var reqs = await api('/api/buscador');
+      if (!reqs.length) {
+        lista.innerHTML = '<div class="bk-vacio">' +
+          '<h3>Todavía no hay requerimientos activos</h3>' +
+          '<p>Abre la ficha de un cliente → pestaña "Requerimiento" para guardar qué está buscando ' +
+          '(colonia, tipo de propiedad, rango de precio) y activar la lectura diaria.</p>' +
+        '</div>';
+        return;
+      }
+      lista.innerHTML = reqs.map(tarjeta).join('');
+    } catch (e) {
+      lista.innerHTML = '<div class="bk-vacio"><h3>No se pudo cargar</h3><p>' + esc(e.message || '') + '</p></div>';
+    }
+  }
+
+  if (window.brokrSb && window.brokrSb.ensureToken) cargar();
+  else document.addEventListener('brokr-shell-ready', cargar, { once: true });
+})();
+</script>
+</body>
+</html>

@@ -87,6 +87,7 @@ class Settings:
     frontend_url: str
     ai_require_session: bool
     reminders_enabled: bool
+    buscador_propiedades_enabled: bool
     hourly_anonymous_limit: int
     hourly_user_limit: int
     apns_key_p8: str
@@ -163,6 +164,11 @@ class Settings:
             # enviadas. Debe correr en UNA sola instancia: cualquier entorno
             # espejo (staging, preview) tiene que apagarlo explícitamente.
             reminders_enabled=_env_bool("RECORDATORIOS_ACTIVOS", default=True),
+            # El ciclo del Buscador de propiedades raspa portales con
+            # crédito de Firecrawl. Debe correr en UNA sola instancia igual
+            # que los recordatorios: cualquier entorno espejo (staging,
+            # preview) tiene que apagarlo explícitamente.
+            buscador_propiedades_enabled=_env_bool("BUSCADOR_PROPIEDADES_ACTIVO", default=True),
             hourly_anonymous_limit=_env_positive_int("TOPE_HORA_ANONIMO", 40),
             hourly_user_limit=_env_positive_int("TOPE_HORA_USUARIO", 400),
             apns_key_p8=os.getenv("APNS_KEY_P8", "").replace("\\n", "\n").strip(),

@@ -1,5 +1,5 @@
 {
-  "count": 255,
+  "count": 260,
   "operations": [
     {
       "body": false,
@@ -154,6 +154,63 @@
       "method": "POST",
       "params": [],
       "path": "/api/avm-websearch",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/api/buscador",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/api/buscador/escanear/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/api/buscador/requerimiento/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PUT",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/api/buscador/requerimiento/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/api/buscador/resultados/{contacto_id}",
       "responses": [
         "200",
         "422"
