@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import json
 import math
 import re
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request
@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.cache import cache_get, cache_set
 from core.config import settings
+from core.database import rest_url, service_headers
 from core.easybroker import normalize as _normalize_colonia
 from core.http import fetch_public_http_result
 from core.legacy_main_config import legacy_main_settings
@@ -82,6 +83,8 @@ BLOCKED_FETCH_DOMAINS = {
 FIRECRAWL_API_KEY = legacy_main_settings.firecrawl_api_key
 FIRECRAWL_CONCURRENCY = legacy_main_settings.firecrawl_concurrency
 FIRECRAWL_TIMEOUT = legacy_main_settings.firecrawl_timeout
+FIRECRAWL_STRUCTURED_EXTRACT = legacy_main_settings.firecrawl_structured_extract
+AVM_CACHE_TTL_DAYS = legacy_main_settings.avm_cache_ttl_days
 
 PREMIUM_FETCH_DOMAINS = {
     "inmuebles24.com",
@@ -104,12 +107,66 @@ PREMIUM_FETCH_DOMAINS = {
 }
 
 
+_FIRECRAWL_LISTING_PROMPT = (
+    "Extrae del anuncio inmobiliario en esta página: precio de venta o renta "
+    "(solo el número, sin símbolos de moneda ni separadores), la moneda, "
+    "superficie de terreno en m2, superficie de construcción en m2, número "
+    "de recámaras, número de baños y número de estacionamientos. Si un dato "
+    "no aparece explícitamente en la página, devuelve null en ese campo — "
+    "nunca inventes ni adivines un valor."
+)
+
+_FIRECRAWL_LISTING_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "precio": {"type": ["number", "null"]},
+        "moneda": {"type": ["string", "null"]},
+        "m2_terreno": {"type": ["number", "null"]},
+        "m2_construccion": {"type": ["number", "null"]},
+        "recamaras": {"type": ["number", "null"]},
+        "banos": {"type": ["number", "null"]},
+        "estacionamientos": {"type": ["number", "null"]},
+    },
+}
+
+
+def _formatea_estructurado_firecrawl(datos: Dict[str, Any]) -> str:
+    """Igual que _extract_json_ld: una línea de alta confianza que el
+    prompt de valuación (regla 10) sabe leer antes que el texto libre."""
+    etiquetas = {
+        "precio": "precio", "moneda": "moneda", "m2_terreno": "m2_terreno",
+        "m2_construccion": "m2_construccion", "recamaras": "recamaras",
+        "banos": "banos", "estacionamientos": "estacionamientos",
+    }
+    partes = [
+        f"{etiquetas[campo]}={datos[campo]}"
+        for campo in etiquetas
+        if datos.get(campo) not in (None, "")
+    ]
+    if not partes:
+        return ""
+    return "DATO ESTRUCTURADO FIRECRAWL (alta confianza): " + ", ".join(partes) + ".\n\n"
+
+
 async def _firecrawl_scrape(url: str) -> Dict[str, Any]:
     if not FIRECRAWL_API_KEY:
         return {"ok": False, "error": "no_api_key", "page_text": "", "credits": 0}
+    formats: List[Any] = ["markdown"]
+    if FIRECRAWL_STRUCTURED_EXTRACT:
+        # Además del markdown de siempre, se le pide a Firecrawl que rellene
+        # un esquema fijo (precio/m²/recámaras/baños/estacionamientos) con su
+        # propio LLM leyendo la página ya renderizada. Cuesta crédito extra
+        # (json mode), pero con el margen de plan que hay hoy sale barato
+        # comparado con dejar de tener precio/superficie limpios en vez de
+        # tener que exprimirlos del texto plano.
+        formats.append({
+            "type": "json",
+            "prompt": _FIRECRAWL_LISTING_PROMPT,
+            "schema": _FIRECRAWL_LISTING_SCHEMA,
+        })
     payload = {
         "url": url,
-        "formats": ["markdown"],
+        "formats": formats,
         "proxy": "auto",
         "onlyMainContent": True,
         "timeout": int(FIRECRAWL_TIMEOUT * 1000),
@@ -137,11 +194,69 @@ async def _firecrawl_scrape(url: str) -> Dict[str, Any]:
             }
         data = data_all.get("data") or {}
         text = (data.get("markdown") or "")[:MAX_TEXT_CHARS_PER_URL]
+        estructurado = data.get("json") or {}
+        if isinstance(estructurado, dict):
+            linea = _formatea_estructurado_firecrawl(estructurado)
+            if linea:
+                text = linea + text
         meta = data.get("metadata") or {}
         credits = int(meta.get("creditsUsed") or data_all.get("creditsUsed") or 1)
         return {"ok": True, "page_text": text, "credits": credits}
     except Exception as exc:
         return {"ok": False, "error": str(exc)[:120], "page_text": "", "credits": 0}
+
+
+async def _avm_cache_lookup(url: str) -> Optional[str]:
+    """Caché durable (Supabase, no en memoria) de páginas ya raspadas por
+    Firecrawl. Dos valuaciones en la misma colonia con días de diferencia
+    tocan a menudo las mismas URLs de portal — sin esto se le vuelve a
+    cobrar crédito a Firecrawl por la misma página cada vez. Si la tabla no
+    existe todavía o Supabase no responde, se ignora en silencio (None): la
+    caché es solo una optimización de crédito, nunca debe tumbar una
+    valuación."""
+    canon = _canonical_url(url)
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=AVM_CACHE_TTL_DAYS)).isoformat()
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            resp = await client.get(
+                rest_url("avm_scrape_cache"),
+                headers=service_headers(),
+                params={
+                    "url": f"eq.{canon}",
+                    "creado_en": f"gte.{cutoff}",
+                    "select": "page_text",
+                    "limit": "1",
+                },
+            )
+        if resp.status_code == 200:
+            filas = resp.json() or []
+            if filas:
+                return filas[0].get("page_text") or None
+    except Exception:
+        pass
+    return None
+
+
+async def _avm_cache_store(url: str, colonia: str, ciudad: str, page_text: str) -> None:
+    if not page_text:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            await client.post(
+                rest_url("avm_scrape_cache"),
+                headers=service_headers(prefer="resolution=merge-duplicates,return=minimal"),
+                json={
+                    "url": _canonical_url(url),
+                    "host": _host(url),
+                    "colonia": colonia or None,
+                    "ciudad": ciudad or None,
+                    "fetch_status": "ok_firecrawl",
+                    "page_text": page_text[:MAX_TEXT_CHARS_PER_URL],
+                    "creado_en": datetime.now(timezone.utc).isoformat(),
+                },
+            )
+    except Exception:
+        pass
 
 
 def _today_mx() -> str:
@@ -385,6 +500,40 @@ async def _search_tavily(client: httpx.AsyncClient, query: str) -> List[Dict[str
     return out
 
 
+async def _search_firecrawl(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
+    """Firecrawl como quinto proveedor de búsqueda, pero solo entra como
+    respaldo (ver _collect_search_candidates) cuando los cuatro gratuitos no
+    devolvieron nada para una query — así no se le cobra crédito de más a
+    algo que Google CSE/SerpAPI/Brave/Tavily ya cubren la mayoría de veces."""
+    if not FIRECRAWL_API_KEY:
+        return []
+    try:
+        response = await client.post(
+            "https://api.firecrawl.dev/v1/search",
+            json={"query": query, "limit": 8, "lang": "es", "country": "mx"},
+            headers={
+                "Authorization": f"Bearer {FIRECRAWL_API_KEY}",
+                "Content-Type": "application/json",
+            },
+        )
+        if response.status_code != 200:
+            return []
+        data_all = response.json() or {}
+        if not data_all.get("success"):
+            return []
+        out = []
+        for item in data_all.get("data") or []:
+            link = item.get("url")
+            if link:
+                out.append({
+                    "title": item.get("title", ""), "url": link,
+                    "snippet": item.get("description", ""), "provider": "firecrawl_search",
+                })
+        return out
+    except Exception:
+        return []
+
+
 async def _collect_search_candidates(req: AvmWebSearchRequest, colonias_vecinas: List[str] = ()) -> Dict[str, Any]:
     queries = _build_search_queries(req, colonias_vecinas)
     providers_configured = {
@@ -392,6 +541,7 @@ async def _collect_search_candidates(req: AvmWebSearchRequest, colonias_vecinas:
         "serpapi": bool(legacy_main_settings.serpapi_api_key),
         "brave": bool(legacy_main_settings.brave_search_api_key),
         "tavily": bool(legacy_main_settings.tavily_api_key),
+        "firecrawl_search": bool(FIRECRAWL_API_KEY),
     }
     if not any(providers_configured.values()):
         raise HTTPException(
@@ -401,6 +551,21 @@ async def _collect_search_candidates(req: AvmWebSearchRequest, colonias_vecinas:
 
     results: List[Dict[str, Any]] = []
     seen = set()
+
+    def _agregar(item: Dict[str, Any], query: str) -> bool:
+        url = item.get("url", "")
+        canon = _canonical_url(url)
+        if not url or canon in seen:
+            return False
+        host = _host(url)
+        if any(bad in host for bad in BLOCKED_FETCH_DOMAINS):
+            return False
+        item["portal"] = _portal_name(url)
+        item["query"] = query
+        seen.add(canon)
+        results.append(item)
+        return True
+
     async with httpx.AsyncClient(timeout=SEARCH_TIMEOUT, follow_redirects=True) as client:
         for query in queries:
             batches = await asyncio.gather(
@@ -410,22 +575,27 @@ async def _collect_search_candidates(req: AvmWebSearchRequest, colonias_vecinas:
                 _search_tavily(client, query),
                 return_exceptions=True,
             )
+            conteo_antes = len(results)
             for batch in batches:
                 if isinstance(batch, Exception):
                     continue
                 for item in batch:
-                    url = item.get("url", "")
-                    canon = _canonical_url(url)
-                    if not url or canon in seen:
-                        continue
-                    host = _host(url)
-                    if any(bad in host for bad in BLOCKED_FETCH_DOMAINS):
-                        continue
-                    item["portal"] = _portal_name(url)
-                    item["query"] = query
-                    seen.add(canon)
-                    results.append(item)
-                    if len(results) >= MAX_SEARCH_RESULTS:
+                    if _agregar(item, query) and len(results) >= MAX_SEARCH_RESULTS:
+                        return {
+                            "queries": queries,
+                            "results": results,
+                            "providers_configured": providers_configured,
+                        }
+
+            # Los cuatro proveedores gratuitos no devolvieron nada para esta
+            # query puntual (bloqueo momentáneo, límite de cuota, etc.):
+            # Firecrawl entra como quinto proveedor de respaldo en vez de
+            # simplemente perder esa query — solo aquí, para no gastarle
+            # crédito de más a algo que los gratuitos ya cubren casi siempre.
+            if len(results) == conteo_antes:
+                extra = await _search_firecrawl(client, query)
+                for item in extra:
+                    if _agregar(item, query) and len(results) >= MAX_SEARCH_RESULTS:
                         return {
                             "queries": queries,
                             "results": results,
@@ -769,7 +939,9 @@ def _build_page_summary(html: str) -> str:
     return visible
 
 
-async def _fetch_candidate_pages(candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+async def _fetch_candidate_pages(
+    candidates: List[Dict[str, Any]], colonia: str = "", ciudad: str = ""
+) -> List[Dict[str, Any]]:
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -777,7 +949,7 @@ async def _fetch_candidate_pages(candidates: List[Dict[str, Any]]) -> List[Dict[
     }
     sem_http = asyncio.Semaphore(3)
     sem_fc = asyncio.Semaphore(FIRECRAWL_CONCURRENCY)
-    stats = {"firecrawl_calls": 0, "firecrawl_credits": 0}
+    stats = {"firecrawl_calls": 0, "firecrawl_credits": 0, "firecrawl_cache_hits": 0}
 
     async def _try_httpx(url: str) -> Dict[str, Any]:
         async with sem_http:
@@ -792,6 +964,10 @@ async def _fetch_candidate_pages(candidates: List[Dict[str, Any]]) -> List[Dict[
         return {"ok": True, "status": response.status_code, "text": _build_page_summary(response.text)}
 
     async def _try_firecrawl(url: str) -> Dict[str, Any]:
+        cacheado = await _avm_cache_lookup(url)
+        if cacheado is not None:
+            stats["firecrawl_cache_hits"] += 1
+            return {"ok": True, "page_text": cacheado, "credits": 0, "from_cache": True}
         async with sem_fc:
             result = await _firecrawl_scrape(url)
         if result.get("ok"):
@@ -802,6 +978,7 @@ async def _fetch_candidate_pages(candidates: List[Dict[str, Any]]) -> List[Dict[
             advertencia = _advertencia_multi_listado(result.get("page_text", ""))
             if advertencia:
                 result["page_text"] = advertencia + result["page_text"]
+            await _avm_cache_store(url, colonia, ciudad, result["page_text"])
         return result
 
     async def one(item: Dict[str, Any]) -> Dict[str, Any]:
@@ -867,8 +1044,11 @@ async def _fetch_candidate_pages(candidates: List[Dict[str, Any]]) -> List[Dict[
 
     tasks = [one(candidate) for candidate in candidates[:MAX_URLS_TO_FETCH]]
     fetched = await asyncio.gather(*tasks) if tasks else []
-    if stats["firecrawl_calls"]:
-        print(f"[firecrawl] calls={stats['firecrawl_calls']} credits={stats['firecrawl_credits']}")
+    if stats["firecrawl_calls"] or stats["firecrawl_cache_hits"]:
+        print(
+            f"[firecrawl] calls={stats['firecrawl_calls']} credits={stats['firecrawl_credits']} "
+            f"cache_hits={stats['firecrawl_cache_hits']}"
+        )
     return fetched
 
 
@@ -934,7 +1114,7 @@ Reglas duras:
 7. Aplica factor negociación de -5% a precios de oferta en venta. En renta usa -3% si aplica.
 8. Penaliza comparables sospechosos: anuncio viejo, datos incompletos, precio/m² extremo, ubicación poco clara, submercado distinto.
 9. Esta salida es una estimación de valor, no avalúo certificado.
-10. Cada "texto_visible_limitado" puede traer, antes del texto de la página, una línea "DATO ESTRUCTURADO JSON-LD (alta confianza): ..." — es precio/superficie extraído del propio código de la página, mucho más confiable que el texto suelto de abajo. Si está presente, úsalo como fuente principal de ese comparable en vez de intentar leerlo del texto plano.
+10. Cada "texto_visible_limitado" puede traer, antes del texto de la página, una línea "DATO ESTRUCTURADO JSON-LD (alta confianza): ..." o "DATO ESTRUCTURADO FIRECRAWL (alta confianza): ..." — ambas son precio/superficie extraídos del propio código o render de la página (nunca inventados, no aparecen si la página no traía el dato), mucho más confiables que el texto suelto de abajo. Si alguna está presente, úsala como fuente principal de ese comparable en vez de intentar leerlo del texto plano.
 11. Si una fuente trae "ADVERTENCIA AUTOMÁTICA: ... probablemente es un listado de resultados con varias propiedades...", esa página mezcla precios de varios anuncios distintos: NO le asignes un precio a una superficie a menos que el texto deje clarísimo que un precio específico corresponde a una superficie específica. Pero esa misma página de listado casi siempre trae también un indicador agregado del portal (ej. "precio promedio/medio de casas en venta en X colonia: $Y", "rango de precios", "N propiedades activas") — ESE dato SÍ lo puedes usar como comparable de baja confianza (descripción: "Indicador estadístico de mercado — no es un anuncio individual"), en vez de descartar la página entera y quedarte sin nada.
 12. Vuelve a sumar/promediar tú mismo los precio_m2 de los comparables que marques incluido_en_promedio antes de reportar valor_por_m2 — no arrastres un cálculo mental impreciso; verifica la aritmética.
 13. NUNCA dejes valor_estimado en 0 ni respondas que "no fue posible" generar una estimación — eso no le sirve de nada a un agente inmobiliario. Siempre entrega un número, usando en orden lo mejor disponible: (a) comparables individuales de la colonia; (b) comparables de zonas adyacentes/similares; (c) el indicador estadístico agregado del portal (regla 11) para la colonia o ciudad; (d) si de plano no hay NINGÚN precio en toda la evidencia (ni individual ni agregado), da tu mejor estimación razonada a partir de lo que sí sepas del tipo de inmueble y la zona, dejándolo explícito en advertencias. Cuanto más débil la evidencia, más ancho el rango (valor_minimo/valor_maximo) y más baja la nivel_confianza — pero siempre con un valor_estimado numérico. Reserva nivel_confianza='baja' + un rango amplio para estos casos; jamás una respuesta vacía.
@@ -1046,7 +1226,7 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
             detail="No encontré URLs candidatas con las APIs de búsqueda configuradas. Prueba con otra colonia/zona o configura otra API de búsqueda.",
         )
 
-    paginas = await _fetch_candidate_pages(candidatos)
+    paginas = await _fetch_candidate_pages(candidatos, colonia=req.colonia, ciudad=req.ciudad)
     resultado = await _claude_extract_and_value(
         req,
         tipo_label,
