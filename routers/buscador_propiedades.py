@@ -196,14 +196,18 @@ def _dentro_de_rango(precio: float, criterios: Dict[str, Any]) -> bool:
     return True
 
 
-_RE_MD_LINK = re.compile(r"\]\((https?://[^\s)]+)\)")
+# Cualquier URL suelta en el texto, sea de un link markdown `[t](url)` o
+# una URL a secas — Firecrawl no siempre envuelve los enlaces de una
+# página compleja (grids armados con JS) en sintaxis de link markdown, así
+# que atarse a "](url)" se comía justo los casos reales que hacían falta.
+_RE_URL_CUALQUIERA = re.compile(r"https?://[^\s)\]\"'<>]+")
 _RE_ID_EN_URL = re.compile(r"\d{5,}")
-MAX_ENLACES_POR_LISTADO = 4
+MAX_ENLACES_POR_LISTADO = 6
+MIN_ENLACES_PARA_LISTADO = 2
 
 
 def _extraer_enlaces_de_listado(texto: str, url_base: str) -> List[str]:
-    """De una página que resultó ser un listado (varios precios revueltos,
-    detectado con la misma heurística del AVM), saca del propio markdown ya
+    """De una página que resultó ser un listado, saca del propio texto ya
     descargado los enlaces que parecen anuncios individuales — sin gastar
     otra llamada a Firecrawl solo para listarlos. Un anuncio individual casi
     siempre trae un ID largo o un slug largo con el título completo en la
@@ -212,8 +216,8 @@ def _extraer_enlaces_de_listado(texto: str, url_base: str) -> List[str]:
     canon_base = avm._canonical_url(url_base)
     vistos = {canon_base}
     enlaces: List[str] = []
-    for m in _RE_MD_LINK.finditer(texto or ""):
-        link = m.group(1).rstrip(").,;\"'")
+    for m in _RE_URL_CUALQUIERA.finditer(texto or ""):
+        link = m.group(0).rstrip(").,;\"'")
         if avm._host(link) != host:
             continue
         canon = avm._canonical_url(link)
@@ -229,6 +233,25 @@ def _extraer_enlaces_de_listado(texto: str, url_base: str) -> List[str]:
     return enlaces
 
 
+def _es_pagina_listado(texto: str, url: str) -> tuple[bool, List[str]]:
+    """Dos señales independientes para "esto es un listado, no un anuncio
+    individual" — cualquiera de las dos basta:
+      (a) la heurística del AVM: 5+ precios distintos con signo "$" en el
+          texto. Falla si el portal no usa "$" en el precio (hay formatos
+          con "MXN", sin símbolo, precio armado por CSS/JS, etc.) — eso
+          fue justo lo que dejó pasar la página de listado completa la
+          primera vez que se probó este fix en producción.
+      (b) la propia página enlaza 2 o más anuncios individuales. No
+          depende del formato del precio en absoluto: un detalle de un
+          solo anuncio casi nunca trae dos o más enlaces con pinta de
+          "otro anuncio individual" en el mismo dominio; un listado sí,
+          casi siempre.
+    """
+    enlaces = _extraer_enlaces_de_listado(texto, url)
+    es_listado = bool(avm._advertencia_multi_listado(texto)) or len(enlaces) >= MIN_ENLACES_PARA_LISTADO
+    return es_listado, enlaces
+
+
 async def _buscar_resultados(criterios: Dict[str, Any]) -> List[Dict[str, Any]]:
     """El corazón del buscador: recolecta candidatos y verifica precio en
     los premium. No toca la base de datos — sirve tanto para una búsqueda
@@ -241,7 +264,7 @@ async def _buscar_resultados(criterios: Dict[str, Any]) -> List[Dict[str, Any]]:
     resultados: List[Dict[str, Any]] = []
     verificados = 0
 
-    async def _procesar_listado(url: str, titulo: str, portal: str, texto: str) -> str:
+    async def _procesar_listado(url: str, titulo: str, portal: str, enlaces: List[str]) -> str:
         """La página resultó ser un listado con varias propiedades
         revueltas (site:portal casi siempre devuelve esto, no el anuncio
         suelto) — nunca se le cree un precio a esa página completa. En vez
@@ -250,13 +273,16 @@ async def _buscar_resultados(criterios: Dict[str, Any]) -> List[Dict[str, Any]]:
         uno por separado."""
         nonlocal verificados
         agregado = False
-        for enlace in _extraer_enlaces_de_listado(texto, url):
+        for enlace in enlaces:
             if verificados >= MAX_VERIFICAR_PRECIO:
                 break
             verificados += 1
             sub_texto = await _texto_pagina(enlace, colonia, ciudad)
-            if not sub_texto or avm._advertencia_multi_listado(sub_texto):
-                continue  # no se pudo leer, o resultó ser OTRO listado
+            if not sub_texto:
+                continue
+            sub_es_listado, _ = _es_pagina_listado(sub_texto, enlace)
+            if sub_es_listado:
+                continue  # resultó ser OTRO listado, no un anuncio individual
             precio = _extraer_precio(sub_texto)
             if precio is None or not _dentro_de_rango(precio, criterios):
                 continue
@@ -298,9 +324,9 @@ async def _buscar_resultados(criterios: Dict[str, Any]) -> List[Dict[str, Any]]:
             verificados += 1
             texto = await _texto_pagina(url, colonia, ciudad)
             if texto:
-                es_listado = bool(avm._advertencia_multi_listado(texto))
+                es_listado, enlaces = _es_pagina_listado(texto, url)
                 estado = (
-                    await _procesar_listado(url, titulo, portal, texto) if es_listado
+                    await _procesar_listado(url, titulo, portal, enlaces) if es_listado
                     else _procesar_individual(url, titulo, portal, texto)
                 )
                 if estado in ("agregado", "descartado"):
