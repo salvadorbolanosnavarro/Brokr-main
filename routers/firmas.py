@@ -85,6 +85,9 @@ APP_URL = settings.app_url
 RESEND_API_KEY = settings.resend_api_key
 RESEND_FROM = settings.resend_from
 WA_PLANTILLA_OTP = settings.wa_plantilla_otp
+MIFIEL_APP_ID = settings.mifiel_app_id
+MIFIEL_APP_SECRET = settings.mifiel_app_secret
+MIFIEL_BASE_URL = settings.mifiel_base_url
 
 BUCKET = "firmas"
 
@@ -930,7 +933,12 @@ async def desde_contrato_estado(job_id: str, request: Request):
 async def abrir_archivo(request: Request, documento_id: str, cual: str = "original"):
     uid = await _uid(request)
     doc = await _doc_del_usuario(documento_id, uid)
-    ruta = doc.get("firmado_ruta") if cual == "firmado" else doc.get("archivo_ruta")
+    if cual == "firmado":
+        ruta = doc.get("firmado_ruta")
+    elif cual == "nom151":
+        ruta = doc.get("nom151_ruta")
+    else:
+        ruta = doc.get("archivo_ruta")
     if not ruta:
         raise HTTPException(404, "Todavía no hay archivo para mostrar.")
     url = await _liga_firmada(ruta, FIRMA_SEGUNDOS)
@@ -1565,6 +1573,20 @@ async def publico_firmar(request: Request, token: str, body: FirmarIn):
                          f"El armado del documento final falló: {e}. Las firmas están guardadas; "
                          f"se puede reintentar desde el módulo.",
                          documento_id=doc["id"], actor="sistema")
+        else:
+            # Mejora adicional y opcional: si hay un PSC configurado, se
+            # intenta la constancia NOM-151 sobre el PDF que se acaba de
+            # armar. Nunca bloquea el cierre del documento ni deshace nada
+            # de lo anterior si falla.
+            if _nom151_configurado():
+                try:
+                    await _nom151_emitir(doc["id"])
+                except Exception as e:
+                    log.warning("NOM-151 automático falló para %s: %s", doc["id"], e)
+                    await evento(doc["user_id"], "nom151_emitido",
+                                 f"El sello NOM-151 no se pudo emitir: {e}. El documento firmado "
+                                 f"queda completo y válido igual; se puede reintentar desde el módulo.",
+                                 documento_id=doc["id"], actor="sistema")
         await _avisar_cierre(doc["id"])
     else:
         await _sb_patch("firma_documentos", {"id": f"eq.{doc['id']}"},
@@ -2176,6 +2198,121 @@ async def resellar(request: Request, documento_id: str):
 
 
 # ══════════════════════════════════════════════════════════════════════════
+# NOM-151 — CONSTANCIA DE CONSERVACIÓN DEL PSC
+# ══════════════════════════════════════════════════════════════════════════
+# Paso OPCIONAL y ADICIONAL, después de _sellar(). La firma simple reforzada
+# (trazo + OTP + bitácora + hash) es válida y suficiente por sí sola bajo los
+# artículos 89 a 114 del Código de Comercio; esto no la sustituye ni la
+# condiciona. Lo único que hace es mandarle al PSC el PDF final —el que ya
+# trae el hash y la constancia de Broquer anexada— para que emita su propia
+# Constancia de Conservación NOM-151 sobre ese mismo archivo.
+#
+# Si el PSC no está configurado, tarda o falla, el documento se queda
+# "completo" exactamente igual: esto nunca bloquea ni revierte una firma ya
+# hecha. Es reintentable a mano en cualquier momento desde el panel
+# (POST /firmas/documentos/{id}/nom151).
+#
+# NOTA PARA QUIEN CONTRATE EL PSC: _nom151_solicitar() de abajo asume el
+# contrato de API de Mifiel (autenticación con app_id/app_secret, PDF por
+# multipart, respuesta con folio + archivo de constancia). Verificar contra
+# la documentación real de Mifiel (o del PSC que se confirme) antes del
+# primer uso en producción y ajustar endpoint/campos si difieren.
+
+def _nom151_configurado() -> bool:
+    return bool(MIFIEL_APP_ID and MIFIEL_APP_SECRET)
+
+
+async def _nom151_solicitar(pdf_bytes: bytes, doc: dict) -> Tuple[str, bytes]:
+    """Envía el PDF final al PSC y regresa (folio_del_psc, pdf_de_la_constancia).
+    Lanza si el PSC no está configurado o si la respuesta no trae lo esperado."""
+    if not _nom151_configurado():
+        raise RuntimeError("No hay PSC configurado (MIFIEL_APP_ID / MIFIEL_APP_SECRET).")
+
+    nombre = _limpio(doc.get("archivo_nombre") or "documento.pdf")
+    try:
+        async with httpx.AsyncClient(timeout=60) as c:
+            r = await c.post(
+                f"{MIFIEL_BASE_URL}/document_wrappers",
+                auth=(MIFIEL_APP_ID, MIFIEL_APP_SECRET),
+                files={"file": (nombre, pdf_bytes, "application/pdf")},
+                data={"hash": doc.get("hash_firmado") or "",
+                      "original_hash": doc.get("hash_original") or ""},
+            )
+        r.raise_for_status()
+        data = r.json() or {}
+    except httpx.HTTPStatusError as exc:
+        texto = (exc.response.text or "")[:300] if exc.response is not None else ""
+        raise RuntimeError(f"El PSC rechazó la solicitud: {texto}") from exc
+    except Exception as exc:
+        raise RuntimeError(f"No se pudo contactar al PSC: {exc}") from exc
+
+    folio = str(data.get("id") or data.get("folio") or "").strip()
+    constancia_b64 = data.get("file") or data.get("certificate") or data.get("nom151_file")
+    if not folio or not constancia_b64:
+        raise RuntimeError("El PSC respondió sin folio o sin archivo de constancia.")
+
+    import base64
+    try:
+        constancia = base64.b64decode(constancia_b64)
+    except Exception as exc:
+        raise RuntimeError("El PSC regresó un archivo de constancia ilegible.") from exc
+    if not constancia:
+        raise RuntimeError("El PSC regresó una constancia vacía.")
+    return folio, constancia
+
+
+async def _nom151_emitir(documento_id: str) -> None:
+    """Pide la Constancia de Conservación NOM-151 y la guarda. Se llama sola
+    tras un _sellar() exitoso, y también a mano desde /nom151 para reintentar."""
+    docs = await _sb_get("firma_documentos", {"id": f"eq.{documento_id}", "limit": "1"})
+    if not docs:
+        raise RuntimeError("documento no encontrado")
+    doc = docs[0]
+    if not doc.get("firmado_ruta") or not doc.get("hash_firmado"):
+        raise RuntimeError("el documento todavía no tiene el PDF final sellado")
+
+    pdf = await _bajar_bytes(doc["firmado_ruta"])
+    folio_psc, constancia = await _nom151_solicitar(pdf, doc)
+
+    sello = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    ruta = f"{doc['user_id']}/{documento_id}/nom151-{sello}.pdf"
+    await _subir_bytes(ruta, constancia, "application/pdf")
+
+    ahora = _ahora()
+    await _sb_patch("firma_documentos", {"id": f"eq.{documento_id}"}, {
+        "nom151_ruta": ruta,
+        "nom151_folio": folio_psc,
+        "nom151_at": ahora,
+        "updated_at": ahora,
+    })
+    await evento(doc["user_id"], "nom151_emitido",
+                 f"El PSC emitió constancia de conservación NOM-151. Folio: {folio_psc}",
+                 documento_id=documento_id, actor="sistema",
+                 payload={"folio_psc": folio_psc})
+
+
+@router.post("/documentos/{documento_id}/nom151")
+async def reintentar_nom151(request: Request, documento_id: str):
+    """Reintento manual del sello NOM-151 desde el panel. No exige nada del
+    flujo de firma: el documento ya está completo y firmado antes de llegar
+    aquí; esto solo intenta de nuevo la mejora adicional del PSC."""
+    uid = await _uid(request)
+    doc = await _doc_del_usuario(documento_id, uid)
+    if doc.get("estado") != "completo":
+        raise HTTPException(409, "El documento tiene que estar completo (todos firmaron) antes de certificarlo con NOM-151.")
+    if not doc.get("firmado_ruta"):
+        raise HTTPException(409, "Todavía no se arma el documento final. Rearma el documento primero.")
+    if not _nom151_configurado():
+        raise HTTPException(409, "Todavía no hay un PSC de NOM-151 configurado en el servidor.")
+    try:
+        await _nom151_emitir(documento_id)
+    except Exception as e:
+        log.warning("NOM-151 (reintento manual) falló para %s: %s", documento_id, e)
+        raise HTTPException(502, f"El PSC no pudo emitir la constancia: {e}") from e
+    return {"ok": True}
+
+
+# ══════════════════════════════════════════════════════════════════════════
 # DÓNDE VA CADA FIRMA
 # ══════════════════════════════════════════════════════════════════════════
 # Los contratos dicen "lo firman al margen de cada página y al calce de esta".
@@ -2477,7 +2614,10 @@ async def verificar(folio: str):
             "estado": f.get("estado"),
             "firmado_at": f.get("firmado_at"),
         } for f in firmantes],
+        # Sello adicional y opcional de un PSC (NOM-151), aparte de la firma
+        # electrónica reforzada de Broquer. Su ausencia no invalida nada.
         "nom151": bool(doc.get("nom151_folio")),
+        "nom151_folio": doc.get("nom151_folio"),
     }
 
 
@@ -2522,4 +2662,5 @@ async def salud():
         "plantilla_whatsapp_otp": bool(WA_PLANTILLA_OTP),
         "pypdf": ok_pdf,
         "nivel_maximo": "simple",
+        "psc_nom151": _nom151_configurado(),
     }
