@@ -85,9 +85,8 @@ APP_URL = settings.app_url
 RESEND_API_KEY = settings.resend_api_key
 RESEND_FROM = settings.resend_from
 WA_PLANTILLA_OTP = settings.wa_plantilla_otp
-MIFIEL_APP_ID = settings.mifiel_app_id
-MIFIEL_APP_SECRET = settings.mifiel_app_secret
-MIFIEL_BASE_URL = settings.mifiel_base_url
+FIRMAME_API_KEY = settings.firmame_api_key
+FIRMAME_BASE_URL = settings.firmame_base_url
 
 BUCKET = "firmas"
 
@@ -2212,28 +2211,30 @@ async def resellar(request: Request, documento_id: str):
 # hecha. Es reintentable a mano en cualquier momento desde el panel
 # (POST /firmas/documentos/{id}/nom151).
 #
-# NOTA PARA QUIEN CONTRATE EL PSC: _nom151_solicitar() de abajo asume el
-# contrato de API de Mifiel (autenticación con app_id/app_secret, PDF por
-# multipart, respuesta con folio + archivo de constancia). Verificar contra
-# la documentación real de Mifiel (o del PSC que se confirme) antes del
-# primer uso en producción y ajustar endpoint/campos si difieren.
+# NOTA PARA QUIEN CONTRATE EL PSC: _nom151_solicitar() de abajo asume un
+# contrato de API genérico tipo REST para Firmame Bienes Raíces (autenticación
+# con API key por Bearer token, PDF por multipart, respuesta con folio +
+# archivo de constancia en base64). No hay documentación pública verificada
+# de su API al momento de escribir esto: revisarla con Firmame antes del
+# primer uso en producción y ajustar endpoint/campos/autenticación si
+# difieren de lo asumido aquí.
 
 def _nom151_configurado() -> bool:
-    return bool(MIFIEL_APP_ID and MIFIEL_APP_SECRET)
+    return bool(FIRMAME_API_KEY)
 
 
 async def _nom151_solicitar(pdf_bytes: bytes, doc: dict) -> Tuple[str, bytes]:
     """Envía el PDF final al PSC y regresa (folio_del_psc, pdf_de_la_constancia).
     Lanza si el PSC no está configurado o si la respuesta no trae lo esperado."""
     if not _nom151_configurado():
-        raise RuntimeError("No hay PSC configurado (MIFIEL_APP_ID / MIFIEL_APP_SECRET).")
+        raise RuntimeError("No hay PSC configurado (FIRMAME_API_KEY).")
 
     nombre = _limpio(doc.get("archivo_nombre") or "documento.pdf")
     try:
         async with httpx.AsyncClient(timeout=60) as c:
             r = await c.post(
-                f"{MIFIEL_BASE_URL}/document_wrappers",
-                auth=(MIFIEL_APP_ID, MIFIEL_APP_SECRET),
+                f"{FIRMAME_BASE_URL}/nom151/constancias",
+                headers={"Authorization": f"Bearer {FIRMAME_API_KEY}"},
                 files={"file": (nombre, pdf_bytes, "application/pdf")},
                 data={"hash": doc.get("hash_firmado") or "",
                       "original_hash": doc.get("hash_original") or ""},
