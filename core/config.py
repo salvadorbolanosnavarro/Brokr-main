@@ -108,6 +108,9 @@ class Settings:
     wa2_campaign_limit: int
     wa2_media_bucket: str
     wa2_ai_limit: int
+    mifiel_app_id: str
+    mifiel_app_secret: str
+    mifiel_base_url: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -189,6 +192,16 @@ class Settings:
             wa2_campaign_limit=_env_positive_int("WA2_CAMPANA_TOPE", 250),
             wa2_media_bucket=os.getenv("WA_MEDIA_BUCKET", "wa-media"),
             wa2_ai_limit=_env_positive_int("WA2_TOPE_IA", 25),
+            # PSC (Proveedor de Servicios de Certificación) para la constancia
+            # de conservación NOM-151. Vacío = el sello NOM-151 queda apagado
+            # y la firma electrónica reforzada sigue funcionando igual.
+            mifiel_app_id=os.getenv("MIFIEL_APP_ID", "").strip(),
+            mifiel_app_secret=os.getenv("MIFIEL_APP_SECRET", "").strip(),
+            mifiel_base_url=os.getenv(
+                "MIFIEL_BASE_URL",
+                "https://sandbox.mifiel.com/api/v1" if _env_bool("MIFIEL_SANDBOX", default=True)
+                else "https://www.mifiel.com/api/v1",
+            ).rstrip("/"),
         )
 
     def require_supabase_public(self) -> None:

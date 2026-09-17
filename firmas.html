@@ -1004,6 +1004,16 @@
       if (todosFirmaron && !d.firmado_ruta) {
         b.push('<button class="bk-btn bk-btn--ghost" type="button" id="fr-a-sellar">Rearmar documento</button>');
       }
+      // NOM-151 es un sello adicional y opcional de un PSC, aparte de la
+      // firma electrónica reforzada que ya es válida por sí sola. Solo
+      // aplica sobre un documento ya completo y con su PDF final armado.
+      if (d.estado === 'completo' && d.firmado_ruta) {
+        if (d.nom151_folio) {
+          b.push('<button class="bk-btn bk-btn--ghost" type="button" id="fr-a-nom151-ver">Ver constancia NOM-151</button>');
+        } else {
+          b.push('<button class="bk-btn bk-btn--ghost" type="button" id="fr-a-nom151">Certificar NOM-151</button>');
+        }
+      }
       if (d.estado !== 'completo' && d.estado !== 'cancelado') {
         b.push('<button class="bk-btn bk-btn--quiet" type="button" id="fr-a-cancelar">Cancelar</button>');
       }
@@ -1015,6 +1025,8 @@
       'fr-a-ver': function () { verArchivo('original'); },
       'fr-a-firmado': function () { verArchivo('firmado'); },
       'fr-a-sellar': resellar,
+      'fr-a-nom151': certificarNom151,
+      'fr-a-nom151-ver': function () { verArchivo('nom151'); },
       'fr-a-cancelar': function () { ver('fr-m-cancelar', true); }
     };
     Object.keys(m).forEach(function (id) {
@@ -1424,6 +1436,22 @@
       toast(e.message, 'error');
       btn.disabled = false;
       btn.textContent = 'Rearmar documento';
+    }
+  }
+
+  async function certificarNom151() {
+    var btn = g('fr-a-nom151');
+    btn.disabled = true;
+    btn.textContent = 'Enviando al PSC…';
+    try {
+      await api('/firmas/documentos/' + encodeURIComponent(ACTUAL.documento.id) + '/nom151',
+                { method: 'POST' });
+      toast('Constancia NOM-151 emitida.', 'success');
+      await abrir(ACTUAL.documento.id);
+    } catch (e) {
+      toast(e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Certificar NOM-151';
     }
   }
 

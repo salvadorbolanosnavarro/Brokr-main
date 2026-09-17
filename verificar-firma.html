@@ -401,7 +401,10 @@
         'El documento existe pero todavía faltan firmas. Aún no está cerrado.';
     }
 
-    g('vf-r-folio').textContent = d.folio || '';
+    var badgeNom151 = d.nom151_folio
+      ? ' <span class="bk-badge bk-badge--success" title="Constancia de conservación NOM-151 emitida por un PSC acreditado, adicional a la firma electrónica de Broquer">Certificado NOM-151</span>'
+      : '';
+    g('vf-r-folio').innerHTML = esc(d.folio || '') + badgeNom151;
     g('vf-r-titulo').textContent = d.titulo || '';
     g('vf-r-tipo').textContent = d.tipo_label || '';
     g('vf-r-paginas').textContent = d.paginas || '—';
