@@ -853,7 +853,11 @@ async def listar_organizaciones(request: Request):
 # ═══════════════════════════════════════════════════════════════════════════
 # ASIGNACIÓN DE AGENTE RESPONSABLE (Broquer para Empresas)
 # Solo owner/admin pueden asignar o reasignar. La columna asignado_a es una
-# etiqueta de responsabilidad: no cambia el dueño (user_id) ni la visibilidad.
+# etiqueta de responsabilidad: no cambia el dueño (user_id). En contactos sí
+# garantiza visibilidad: el agente asignado puede seguir viendo ese contacto
+# aunque el dueño le haya apagado "ver contactos del equipo" (ver
+# migracion-contactos-asignados-visibles.sql, política adicional de RLS en
+# Supabase sobre `contactos`).
 # ═══════════════════════════════════════════════════════════════════════════
 
 _TABLAS_ASIGNABLES = ("contactos", "propiedades")
