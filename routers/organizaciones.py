@@ -100,12 +100,16 @@ async def get_org_context(user_id: str) -> Optional[Dict[str, Any]]:
     rows = await _sb_get("organizacion_miembros", {
         "user_id": f"eq.{user_id}",
         "activo": "eq.true",
-        "select": "org_id,rol_org,permisos,activo",
-        "limit": "1",
+        "select": "org_id,rol_org,permisos,activo,created_at",
+        "order": "created_at.desc",
     })
     if not rows:
         return None
-    m = rows[0]
+    # Lo normal es una sola fila activa por usuario, pero cuentas migradas a
+    # empresa pueden arrastrar una fila vieja que nunca se desactivó. Ante la
+    # ambigüedad, gana la membresía de dueño (la cuenta que se convirtió a
+    # empresa); si ninguna es dueño, la más reciente.
+    m = next((r for r in rows if r.get("rol_org") == "owner"), rows[0])
 
     # Segunda query en vez de join embebido: PostgREST necesita tener la FK en
     # su cache de esquema para resolver organizaciones(...), y recién creada la

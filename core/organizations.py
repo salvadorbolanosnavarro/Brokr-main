@@ -29,15 +29,19 @@ async def get_org_context(user_id: str) -> Optional[dict[str, Any]]:
         {
             "user_id": f"eq.{user_id}",
             "activo": "eq.true",
-            "select": "org_id,rol_org,permisos,activo",
-            "limit": "1",
+            "select": "org_id,rol_org,permisos,activo,created_at",
+            "order": "created_at.desc",
         },
         timeout=10,
     )
     if not members:
         return None
 
-    member = members[0]
+    # Lo normal es una sola fila activa por usuario, pero cuentas migradas a
+    # empresa pueden arrastrar una fila vieja que nunca se desactivó. Ante la
+    # ambigüedad, gana la membresía de dueño (la cuenta que se convirtió a
+    # empresa); si ninguna es dueño, la más reciente.
+    member = next((m for m in members if m.get("rol_org") == "owner"), members[0])
     org: dict[str, Any] = {}
     org_id = member.get("org_id")
     if org_id:
