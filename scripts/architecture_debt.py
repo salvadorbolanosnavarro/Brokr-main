@@ -125,7 +125,12 @@ LARGE_FILE_MAX_BYTES = {
     # mismo bote de basura canónico que usa el resto de la app (antes traía
     # su propio dibujo distinto), pedido explícito de consistencia visual.
     "whatsapp.html": 132_296,
-    "routers/firmas.py": 119_193,
+    # Bumped 5,201 bytes: reemplazo de Mifiel por Firmame Bienes Raíces como
+    # PSC de NOM-151 (PR #149) más el endpoint POST
+    # /firmas/documentos/{documento_id}/nom151 para reintentar la emisión de
+    # la constancia a mano cuando el sellado automático falla (PR #150) —
+    # funcionalidad de producto real, no debt.
+    "routers/firmas.py": 124_394,
     # Bumped 80 bytes: se agregó la etapa "Futuro" al pipeline por defecto
     # (ETAPAS_DEFAULT) — un estatus nuevo para contactos/leads, no debt.
     # Bumped 18 bytes: se agregó "ajena" (inmueble de otro colega externo)
@@ -173,7 +178,12 @@ LARGE_FILE_MAX_BYTES = {
     # de Meta a partir del 1 de octubre de 2026 y el requisito de método de
     # pago en el WABA, deslindando a Broquer de la interrupción del
     # servicio si el Usuario no lo configura a tiempo — legal real, no debt.
-    "legal.html": 115_726,
+    # Bumped 1,213 bytes: cláusula 5.4 Bis sobre firma electrónica y la
+    # Constancia de Conservación NOM-151 (servicio adicional y opcional del
+    # PSC contratado, que no afecta la validez de la firma ya recabada ni
+    # genera responsabilidad de Broquer por sus actos u omisiones) — legal
+    # real, no debt.
+    "legal.html": 116_939,
     # Nuevo en el inventario: el detalle de usuario de la Consola de admin
     # incorporó "Acceso completo fuera del equipo" y "Módulos habilitados
     # para esta cuenta" (PR #79), lo que cruzó admin.html el umbral de
