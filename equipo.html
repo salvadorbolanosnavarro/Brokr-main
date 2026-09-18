@@ -315,8 +315,10 @@
       ${acciones ? '<div style="margin-top:var(--sp-3);">' + acciones + '</div>' : ''}
     `;
 
-    // Interruptores de permiso: uno por cada miembro del equipo (no el dueño).
-    if (conPermisos && !esOwner && !inactivo) {
+    // Interruptores de permiso: uno por cada agente del equipo. El dueño y
+    // los administradores ven todo por definición (el backend rechaza
+    // cambiarles permisos), así que ni se les ofrece el interruptor.
+    if (conPermisos && !esAdmin && !inactivo) {
       const cont = document.createElement('div');
       cont.className = 'eq-perms';
       cont.innerHTML = PERMISOS.map((p) => `
@@ -333,11 +335,13 @@
         </div>
       `).join('');
       card.appendChild(cont);
-    } else if (esOwner) {
+    } else if (esAdmin && !inactivo) {
       const nota = document.createElement('div');
       nota.className = 'eq-perms';
       nota.innerHTML = `<div class="bk-hint" style="margin:0;">
-        Como dueño de la cuenta, ves toda la información. Los permisos se controlan por cada miembro de tu equipo.
+        ${esOwner
+          ? 'Como dueño de la cuenta, ve toda la información. Los permisos se controlan por cada agente de tu equipo.'
+          : 'Como administrador, ve toda la información. Los permisos se controlan por cada agente de tu equipo.'}
       </div>`;
       card.appendChild(nota);
     }
