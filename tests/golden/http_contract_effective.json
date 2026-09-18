@@ -1,5 +1,5 @@
 {
-  "count": 261,
+  "count": 262,
   "operations": [
     {
       "body": false,
@@ -1533,6 +1533,18 @@
         "path:documento_id!"
       ],
       "path": "/firmas/documentos/{documento_id}/firmantes",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:documento_id!"
+      ],
+      "path": "/firmas/documentos/{documento_id}/nom151",
       "responses": [
         "200",
         "422"
