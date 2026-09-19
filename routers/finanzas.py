@@ -251,15 +251,23 @@ async def _cuentas_con_saldo(uid: str) -> List[dict]:
     if not cuentas:
         return []
     movs = await _sb_get("fin_movimientos",
-                         {"user_id": f"eq.{uid}", "select": "cuenta_id,tipo,monto",
+                         {"user_id": f"eq.{uid}",
+                          "select": "cuenta_id,cuenta_destino_id,tipo,monto",
                           "cuenta_id": "not.is.null", "limit": "100000"})
     delta: Dict[str, float] = {}
     for m in movs:
         cid = m.get("cuenta_id")
         if not cid:
             continue
+        monto = float(m.get("monto") or 0)
+        if m.get("tipo") == "transferencia":
+            delta[cid] = delta.get(cid, 0.0) - monto
+            destino = m.get("cuenta_destino_id")
+            if destino:
+                delta[destino] = delta.get(destino, 0.0) + monto
+            continue
         signo = 1 if m.get("tipo") == "ingreso" else -1
-        delta[cid] = delta.get(cid, 0.0) + signo * float(m.get("monto") or 0)
+        delta[cid] = delta.get(cid, 0.0) + signo * monto
     for c in cuentas:
         c["saldo"] = round(float(c.get("saldo_inicial") or 0) + delta.get(c["id"], 0.0), 2)
     return cuentas
@@ -373,7 +381,7 @@ async def listar_movimientos(request: Request,
                              f"fecha.lte.{_fecha(hasta).isoformat()})")
         else:
             params["fecha"] = f"lte.{_fecha(hasta).isoformat()}"
-    if tipo in ("ingreso", "gasto"):
+    if tipo in ("ingreso", "gasto", "transferencia"):
         params["tipo"] = f"eq.{tipo}"
     if categoria_id:
         params["categoria_id"] = f"eq.{categoria_id}"
@@ -397,6 +405,7 @@ class MovimientoIn(BaseModel):
     notas: Optional[str] = None
     categoria_id: Optional[str] = None
     cuenta_id: Optional[str] = None
+    cuenta_destino_id: Optional[str] = None
     propiedad_id: Optional[str] = None
     contacto_id: Optional[str] = None
     origen: str = "manual"
@@ -405,9 +414,15 @@ class MovimientoIn(BaseModel):
 @router.post("/movimientos")
 async def crear_movimiento(request: Request, body: MovimientoIn):
     uid = await _uid(request)
-    if body.tipo not in ("ingreso", "gasto"):
-        raise HTTPException(400, "El tipo debe ser ingreso o gasto.")
+    if body.tipo not in ("ingreso", "gasto", "transferencia"):
+        raise HTTPException(400, "El tipo debe ser ingreso, gasto o transferencia.")
     origen = body.origen if body.origen in ("manual", "ticket", "comision_auto") else "manual"
+    es_transferencia = body.tipo == "transferencia"
+    if es_transferencia:
+        if not body.cuenta_id or not body.cuenta_destino_id:
+            raise HTTPException(400, "Elige la cuenta de origen y la de destino.")
+        if body.cuenta_id == body.cuenta_destino_id:
+            raise HTTPException(400, "La cuenta de origen y destino no pueden ser la misma.")
     filas = await _sb_post("fin_movimientos", {
         "user_id": uid,
         "tipo": body.tipo,
@@ -415,10 +430,12 @@ async def crear_movimiento(request: Request, body: MovimientoIn):
         "fecha": _fecha(body.fecha, default=date.today()).isoformat(),
         "concepto": (body.concepto or "").strip()[:300],
         "notas": (body.notas or "").strip()[:2000] or None,
-        "categoria_id": body.categoria_id or None,
+        # Una transferencia no es categorizable ni se liga a propiedad/contacto.
+        "categoria_id": None if es_transferencia else (body.categoria_id or None),
         "cuenta_id": body.cuenta_id or None,
-        "propiedad_id": body.propiedad_id or None,
-        "contacto_id": body.contacto_id or None,
+        "cuenta_destino_id": body.cuenta_destino_id if es_transferencia else None,
+        "propiedad_id": None if es_transferencia else (body.propiedad_id or None),
+        "contacto_id": None if es_transferencia else (body.contacto_id or None),
         "origen": origen,
     })
     return {"movimiento": filas[0] if filas else None}
@@ -432,6 +449,7 @@ class MovimientoEdit(BaseModel):
     notas: Optional[str] = None
     categoria_id: Optional[str] = None
     cuenta_id: Optional[str] = None
+    cuenta_destino_id: Optional[str] = None
     propiedad_id: Optional[str] = None
     contacto_id: Optional[str] = None
 
@@ -443,9 +461,14 @@ async def editar_movimiento(request: Request, mov_id: str, body: MovimientoEdit)
     uid = await _uid(request)
     cambios: Dict[str, Any] = {"updated_at": datetime.now(timezone.utc).isoformat()}
     if body.tipo is not None:
-        if body.tipo not in ("ingreso", "gasto"):
-            raise HTTPException(400, "El tipo debe ser ingreso o gasto.")
+        if body.tipo not in ("ingreso", "gasto", "transferencia"):
+            raise HTTPException(400, "El tipo debe ser ingreso, gasto o transferencia.")
         cambios["tipo"] = body.tipo
+        if body.tipo == "transferencia":
+            # Una transferencia no es categorizable ni se liga a propiedad/contacto.
+            cambios["categoria_id"] = None
+            cambios["propiedad_id"] = None
+            cambios["contacto_id"] = None
     if body.monto is not None:
         cambios["monto"] = _monto(body.monto)
     if body.fecha is not None:
@@ -455,10 +478,21 @@ async def editar_movimiento(request: Request, mov_id: str, body: MovimientoEdit)
     if body.notas is not None:
         cambios["notas"] = body.notas.strip()[:2000] or None
     # Las ligas se pueden poner Y quitar (mandar "" las limpia).
-    for campo in ("categoria_id", "cuenta_id", "propiedad_id", "contacto_id"):
+    for campo in ("categoria_id", "cuenta_id", "cuenta_destino_id", "propiedad_id", "contacto_id"):
         v = getattr(body, campo)
-        if v is not None:
+        if v is not None and campo not in cambios:
             cambios[campo] = v or None
+    es_transferencia = cambios.get("tipo") == "transferencia"
+    if not es_transferencia and body.tipo is None:
+        actual = await _sb_get("fin_movimientos",
+                               {"id": f"eq.{mov_id}", "user_id": f"eq.{uid}",
+                                "select": "tipo", "limit": "1"})
+        es_transferencia = bool(actual) and actual[0].get("tipo") == "transferencia"
+    if es_transferencia:
+        cuenta_id = cambios.get("cuenta_id")
+        cuenta_destino_id = cambios.get("cuenta_destino_id")
+        if cuenta_id and cuenta_destino_id and cuenta_id == cuenta_destino_id:
+            raise HTTPException(400, "La cuenta de origen y destino no pueden ser la misma.")
     filas = await _sb_patch("fin_movimientos",
                             {"id": f"eq.{mov_id}", "user_id": f"eq.{uid}"}, cambios)
     if not filas:
@@ -705,8 +739,10 @@ def _agrupar(movs: List[dict], cats: List[dict]) -> Dict[str, Any]:
     por_mes: Dict[str, Dict[str, float]] = {}
     por_prop: Dict[str, Dict[str, float]] = {}
     for m in movs:
-        monto = float(m["monto"] or 0)
         lado = m["tipo"]
+        if lado not in ("ingreso", "gasto"):
+            continue  # las transferencias entre cuentas no son ingreso ni gasto real
+        monto = float(m["monto"] or 0)
         cid = m.get("categoria_id")
         etiqueta = nombre_cat.get(cid, "Sin categoría")
         por_cat.setdefault(etiqueta, {"ingreso": 0, "gasto": 0})[lado] += monto
@@ -960,7 +996,7 @@ async def reporte_csv(request: Request, desde: str, hasta: str):
 
     buf = io.StringIO()
     w = csv.writer(buf)
-    w.writerow(["Fecha", "Tipo", "Monto", "Concepto", "Categoría", "Cuenta", "Notas"])
+    w.writerow(["Fecha", "Tipo", "Monto", "Concepto", "Categoría", "Cuenta", "Cuenta destino", "Notas"])
     for m in movs:
         w.writerow([
             m.get("fecha") or "",
@@ -969,6 +1005,7 @@ async def reporte_csv(request: Request, desde: str, hasta: str):
             m.get("concepto") or "",
             nombre_cat.get(m.get("categoria_id"), ""),
             nombre_cta.get(m.get("cuenta_id"), ""),
+            nombre_cta.get(m.get("cuenta_destino_id"), ""),
             (m.get("notas") or "").replace("\n", " "),
         ])
     # BOM para que Excel en español abra los acentos bien.

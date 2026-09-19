@@ -175,6 +175,7 @@
         <option value="">Todos</option>
         <option value="ingreso">Ingresos</option>
         <option value="gasto">Gastos</option>
+        <option value="transferencia">Transferencias</option>
       </select>
     </div>
     <div id="fin-mov-lista"></div>
@@ -205,6 +206,7 @@
         <div class="bk-seg" role="radiogroup">
           <button type="button" class="bk-seg__btn" data-tipo="ingreso">Ingreso</button>
           <button type="button" class="bk-seg__btn" data-tipo="gasto">Gasto</button>
+          <button type="button" class="bk-seg__btn" data-tipo="transferencia">Transferencia</button>
         </div>
       </div>
       <div class="bk-field-row">
@@ -217,21 +219,26 @@
           <input class="bk-input" id="fin-f-fecha" type="date"/>
         </div>
       </div>
-      <div class="bk-field">
+      <div class="bk-field" id="fin-f-concepto-wrap">
         <label class="bk-label" for="fin-f-concepto">Concepto</label>
         <input class="bk-input" id="fin-f-concepto" type="text" placeholder="Ej. Sesión de fotos Casa Altozano"/>
       </div>
-      <div class="bk-field-row">
+      <div class="bk-field-row" id="fin-f-cat-cta-wrap">
         <div class="bk-field">
           <label class="bk-label" for="fin-f-cat">Categoría</label>
           <select class="bk-select" id="fin-f-cat"></select>
         </div>
         <div class="bk-field">
-          <label class="bk-label" for="fin-f-cta">Cuenta</label>
+          <label class="bk-label" id="fin-f-cta-label" for="fin-f-cta">Cuenta</label>
           <select class="bk-select" id="fin-f-cta"></select>
         </div>
       </div>
-      <div class="bk-field">
+      <div class="bk-field" id="fin-f-cta-destino-wrap" hidden>
+        <label class="bk-label" for="fin-f-cta-destino">Cuenta destino</label>
+        <select class="bk-select" id="fin-f-cta-destino"></select>
+        <div class="bk-hint">A dónde llega el dinero. No cuenta como ingreso ni gasto.</div>
+      </div>
+      <div class="bk-field" id="fin-f-prop-wrap">
         <label class="bk-label" for="fin-f-prop">Propiedad (opcional)</label>
         <select class="bk-select" id="fin-f-prop"></select>
         <div class="bk-hint">Liga el movimiento a una propiedad para ver su rentabilidad real.</div>
@@ -573,20 +580,31 @@
     });
     if (!movs.length) { lista.innerHTML = ''; vacio.hidden = false; return; }
     vacio.hidden = true;
+    function nombreCta(id) {
+      var c = estado.cuentas.find(function (x) { return x.id === id; });
+      return c ? c.nombre : '';
+    }
     lista.innerHTML = movs.map(function (m) {
+      var esTransferencia = m.tipo === 'transferencia';
       var esIn = m.tipo === 'ingreso';
-      var meta = [fechaCorta(m.fecha), nombreCat(m.categoria_id)].filter(Boolean).join(' · ');
-      var flecha = esIn
-        ? '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6"/></svg>'
-        : '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-6-6m6 6l6-6"/></svg>';
+      var meta = esTransferencia
+        ? [fechaCorta(m.fecha), (nombreCta(m.cuenta_id) || '?') + ' → ' + (nombreCta(m.cuenta_destino_id) || '?')].filter(Boolean).join(' · ')
+        : [fechaCorta(m.fecha), nombreCat(m.categoria_id)].filter(Boolean).join(' · ');
+      var flecha = esTransferencia
+        ? '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
+        : esIn
+          ? '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6"/></svg>'
+          : '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m0 0l-6-6m6 6l6-6"/></svg>';
+      var claseIco = esTransferencia ? '' : (esIn ? 'is-in' : 'is-out');
+      var claseMonto = esTransferencia ? '' : (esIn ? 'is-in' : 'is-out');
+      var signo = esTransferencia ? '' : (esIn ? '+' : '−');
       return '<div class="fin-mov" data-id="' + esc(m.id) + '" role="button" tabindex="0">' +
-        '<div class="fin-mov__ico ' + (esIn ? 'is-in' : 'is-out') + '">' + flecha + '</div>' +
+        '<div class="fin-mov__ico ' + claseIco + '">' + flecha + '</div>' +
         '<div class="fin-mov__info">' +
-          '<div class="fin-mov__concepto">' + (esc(m.concepto) || '<span style="color:var(--mute);">Sin concepto</span>') + '</div>' +
+          '<div class="fin-mov__concepto">' + (esTransferencia ? 'Transferencia' : (esc(m.concepto) || '<span style="color:var(--mute);">Sin concepto</span>')) + '</div>' +
           '<div class="fin-mov__meta">' + esc(meta) + '</div>' +
         '</div>' +
-        '<div class="fin-mov__monto ' + (esIn ? 'is-in' : 'is-out') + '">' +
-          (esIn ? '+' : '−') + esc(pesos(m.monto)) + '</div>' +
+        '<div class="fin-mov__monto ' + claseMonto + '">' + signo + esc(pesos(m.monto)) + '</div>' +
       '</div>';
     }).join('');
     Array.prototype.forEach.call(lista.querySelectorAll('.fin-mov'), function (el) {
@@ -645,11 +663,12 @@
       visibles.map(function (c) {
         return '<option value="' + esc(c.id) + '">' + esc(c.nombre) + '</option>';
       }).join('');
-    var cta = g('fin-f-cta');
-    cta.innerHTML = '<option value="">Sin cuenta</option>' +
+    var opcionesCta = '<option value="">Sin cuenta</option>' +
       estado.cuentas.filter(function (c) { return c.activa !== false; }).map(function (c) {
         return '<option value="' + esc(c.id) + '">' + esc(c.nombre) + '</option>';
       }).join('');
+    g('fin-f-cta').innerHTML = opcionesCta;
+    g('fin-f-cta-destino').innerHTML = opcionesCta;
     var prop = g('fin-f-prop');
     prop.innerHTML = '<option value="">Sin propiedad</option>' +
       estado.propiedades.map(function (p) {
@@ -663,6 +682,11 @@
       b.classList.toggle('is-active', b.getAttribute('data-tipo') === t);
     });
     pintarSelectores();
+    var esTransferencia = t === 'transferencia';
+    g('fin-f-cta-destino-wrap').hidden = !esTransferencia;
+    g('fin-f-prop-wrap').hidden = esTransferencia;
+    g('fin-f-cta-label').textContent = esTransferencia ? 'Cuenta origen' : 'Cuenta';
+    document.getElementById('fin-f-cat').closest('.bk-field').hidden = esTransferencia;
   }
   Array.prototype.forEach.call(document.querySelectorAll('#fin-ov-mov .bk-seg__btn'), function (b) {
     b.addEventListener('click', function () {
@@ -676,13 +700,15 @@
     estado.editando = (m && m.id) ? m : null;
     var borrador = m || {};
     g('fin-mov-titulo').textContent = estado.editando ? 'Editar movimiento' : 'Registrar movimiento';
-    setTipo(borrador.tipo === 'ingreso' ? 'ingreso' : 'gasto');
+    var tipoInicial = (borrador.tipo === 'ingreso' || borrador.tipo === 'transferencia') ? borrador.tipo : 'gasto';
+    setTipo(tipoInicial);
     g('fin-f-monto').value = (borrador.monto != null && borrador.monto !== '') ? borrador.monto : '';
     g('fin-f-fecha').value = borrador.fecha ? String(borrador.fecha).slice(0, 10) : iso(new Date());
     g('fin-f-concepto').value = borrador.concepto || '';
     g('fin-f-notas').value = borrador.notas || '';
     g('fin-f-cat').value = borrador.categoria_id || '';
     g('fin-f-cta').value = borrador.cuenta_id || '';
+    g('fin-f-cta-destino').value = borrador.cuenta_destino_id || '';
     g('fin-f-prop').value = borrador.propiedad_id || '';
     g('fin-f-borrar').hidden = !estado.editando;
     g('fin-f-comp-wrap').hidden = !estado.editando;
@@ -700,15 +726,22 @@
     var btn = this;
     var monto = parseFloat(g('fin-f-monto').value);
     if (isNaN(monto) || monto < 0) { toast('Escribe un monto válido.', 'error'); return; }
+    var esTransferencia = tipoSel === 'transferencia';
+    if (esTransferencia) {
+      var origenCta = g('fin-f-cta').value, destinoCta = g('fin-f-cta-destino').value;
+      if (!origenCta || !destinoCta) { toast('Elige la cuenta de origen y la de destino.', 'error'); return; }
+      if (origenCta === destinoCta) { toast('La cuenta de origen y destino no pueden ser la misma.', 'error'); return; }
+    }
     var payload = {
       tipo: tipoSel,
       monto: monto,
       fecha: g('fin-f-fecha').value || iso(new Date()),
       concepto: g('fin-f-concepto').value,
       notas: g('fin-f-notas').value,
-      categoria_id: g('fin-f-cat').value || '',
+      categoria_id: esTransferencia ? '' : (g('fin-f-cat').value || ''),
       cuenta_id: g('fin-f-cta').value || '',
-      propiedad_id: g('fin-f-prop').value || g('fin-ov-mov').getAttribute('data-prop-fija') || ''
+      cuenta_destino_id: esTransferencia ? g('fin-f-cta-destino').value : '',
+      propiedad_id: esTransferencia ? '' : (g('fin-f-prop').value || g('fin-ov-mov').getAttribute('data-prop-fija') || '')
     };
     btn.classList.add('is-loading');
     try {
