@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Inicio — vista previa "modo"</title>
+<link rel="stylesheet" href="modo-tokens.css"/>
+<style>
+  body{ margin:0; }
+  .saludo{ margin-bottom: 20px; }
+  .saludo h1{ font-size: var(--fs-screen-title); }
+  .saludo p{ color: var(--muted-ink); margin-top:6px; }
+
+  .visita{
+    background: var(--sky-soft); border-radius: var(--r-card); padding:16px;
+    display:flex; align-items:center; gap:12px; margin-bottom:24px;
+  }
+  .visita img{ width:48px; height:48px; border-radius:12px; object-fit:cover; background:var(--surface); }
+  .visita .hora{ font-weight:800; color: var(--sky-ink); font-size: var(--fs-tool-name); }
+  .visita .detalle{ font-size: var(--fs-desc); color: var(--sky-ink); }
+
+  .filtros{ display:flex; gap:8px; margin-bottom:16px; }
+  .filtro{
+    border:1px solid var(--line); background:var(--white); border-radius:999px;
+    padding: 8px 16px; font-size: var(--fs-desc); font-weight:700; color:var(--muted-ink);
+  }
+  .filtro[aria-pressed="true"]{ background: var(--ink); color: var(--white); border-color:var(--ink); }
+
+  @media (min-width: 1024px){
+    .layout{ display:grid; grid-template-columns: 1fr 360px; gap: 60px; align-items:start; }
+  }
+</style>
+</head>
+<body class="modo">
+  <div class="modo-preview-banner">Vista previa del sistema "modo" — datos de ejemplo, no conectados a Broquer real</div>
+  <div class="modo-app">
+    <header class="modo-header">
+      <a class="modo-brand" href="preview-inicio.html">
+        <img src="../logotipo-black.png" alt="Broquer"/>
+      </a>
+      <nav class="modo-nav-top" aria-label="Principal">
+        <a href="preview-inicio.html" aria-current="page">Inicio</a>
+        <a href="preview-campanas.html">Campañas</a>
+        <a href="preview-agenda.html">Agenda</a>
+      </nav>
+      <div class="modo-avatar">SB</div>
+    </header>
+
+    <main class="modo-main">
+      <div class="layout">
+        <div>
+          <div class="saludo">
+            <h1>Hola, Salvador</h1>
+            <p>Viernes 19 de septiembre</p>
+          </div>
+
+          <div class="visita" id="visita-movil">
+            <img src="" alt=""/>
+            <div>
+              <div class="hora">4:30 pm · Casa en Vista Bella</div>
+              <div class="detalle">Con María Fernanda — ver en Agenda</div>
+            </div>
+          </div>
+
+          <div class="filtros" role="group" aria-label="Filtrar herramientas">
+            <button class="filtro" aria-pressed="true">Todas</button>
+            <button class="filtro" aria-pressed="false">Favoritas</button>
+          </div>
+
+          <div class="modo-tools-grid">
+            <a class="modo-tool" href="#">
+              <div class="modo-tool__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+              </div>
+              <div class="modo-tool__name">Propiedades</div>
+              <div class="modo-tool__desc">Tu inventario</div>
+              <button class="modo-fav" aria-pressed="true" aria-label="Quitar de favoritas">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg>
+              </button>
+            </a>
+            <a class="modo-tool" href="#">
+              <div class="modo-tool__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div class="modo-tool__name">WhatsApp</div>
+              <div class="modo-tool__desc">Tus clientes</div>
+              <button class="modo-fav" aria-pressed="false" aria-label="Agregar a favoritas">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg>
+              </button>
+            </a>
+            <a class="modo-tool" href="#">
+              <div class="modo-tool__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+              </div>
+              <div class="modo-tool__name">Agenda</div>
+              <div class="modo-tool__desc">Tus citas</div>
+              <button class="modo-fav" aria-pressed="true" aria-label="Quitar de favoritas">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg>
+              </button>
+            </a>
+            <a class="modo-tool" href="#">
+              <div class="modo-tool__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"/></svg>
+              </div>
+              <div class="modo-tool__name">Campañas</div>
+              <div class="modo-tool__desc">Facebook Ads</div>
+              <button class="modo-fav" aria-pressed="false" aria-label="Agregar a favoritas">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg>
+              </button>
+            </a>
+            <a class="modo-tool" href="#">
+              <div class="modo-tool__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a5 5 0 0 0-5 5v3a5 5 0 0 0 10 0V7a5 5 0 0 0-5-5zM5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
+              </div>
+              <div class="modo-tool__name">Finanzas</div>
+              <div class="modo-tool__desc">Ingresos y gastos</div>
+              <button class="modo-fav" aria-pressed="false" aria-label="Agregar a favoritas">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg>
+              </button>
+            </a>
+            <a class="modo-tool" href="#">
+              <div class="modo-tool__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6M16 3h5v5M10 14L20.5 3.5"/></svg>
+              </div>
+              <div class="modo-tool__name">Contratos</div>
+              <div class="modo-tool__desc">Firma electrónica</div>
+              <button class="modo-fav" aria-pressed="false" aria-label="Agregar a favoritas">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17.3l-6.2 3.7 1.6-7-5.4-4.7 7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg>
+              </button>
+            </a>
+          </div>
+        </div>
+
+        <aside id="visita-desktop" style="display:none;">
+          <div class="visita" style="margin-bottom:0;">
+            <img src="" alt=""/>
+            <div>
+              <div class="hora">4:30 pm · Casa en Vista Bella</div>
+              <div class="detalle">Con María Fernanda — ver en Agenda</div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <nav class="modo-nav-bottom" aria-label="Principal">
+      <a href="preview-inicio.html" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>
+        Inicio
+      </a>
+      <a href="preview-campanas.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"/></svg>
+        Campañas
+      </a>
+      <a href="preview-agenda.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+        Agenda
+      </a>
+    </nav>
+  </div>
+  <script>
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+      document.getElementById('visita-movil').style.display = 'none';
+      document.getElementById('visita-desktop').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

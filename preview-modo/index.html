@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Vista previa — sistema "modo"</title>
+<link rel="stylesheet" href="modo-tokens.css"/>
+<style>
+  body{ margin:0; }
+  .wrap{ max-width: 720px; margin: 0 auto; padding: 48px 24px; }
+  .card{ border:1px solid var(--line); border-radius: var(--r-card); padding:20px; margin-bottom:16px; }
+  .card a{ text-decoration:none; }
+  ul{ padding-left: 20px; }
+</style>
+</head>
+<body class="modo">
+  <div class="wrap">
+    <span class="modo-badge">Vista previa — no es Broquer real</span>
+    <h1 style="margin-top:16px;">Sistema de diseño "modo"</h1>
+    <p style="color:var(--muted-ink); margin-top:8px;">
+      Estas 3 pantallas viven solo en <code>/preview-modo/</code>, en la rama
+      <code>diseno-modo-preview</code>. No tocan <code>brokr-theme.css</code>
+      ni ninguna página real de Broquer — es exclusivamente para comparar
+      antes de decidir si algo de esto se adopta.
+    </p>
+
+    <div class="card">
+      <h3><a href="preview-inicio.html">Inicio →</a></h3>
+      <p style="color:var(--muted-ink);font-size:14px;margin-top:6px;">Marca, próxima visita, herramientas favoritas.</p>
+    </div>
+    <div class="card">
+      <h3><a href="preview-campanas.html">Campañas →</a></h3>
+      <p style="color:var(--muted-ink);font-size:14px;margin-top:6px;">Con datos reales de Facebook Ads cuando hay sesión; si no, ejemplo etiquetado.</p>
+    </div>
+    <div class="card">
+      <h3><a href="preview-agenda.html">Agenda →</a></h3>
+      <p style="color:var(--muted-ink);font-size:14px;margin-top:6px;">No existe como módulo real en Broquer — ver nota dentro de la página.</p>
+    </div>
+
+    <h3 style="margin-top:32px;">Para comparar con el Broquer real</h3>
+    <ul style="color:var(--muted-ink); font-size:14px;">
+      <li><code>index.html</code> (Inicio real, tema Canon)</li>
+      <li><code>facebook-ads.html</code> (Campañas reales, tema Canon)</li>
+      <li><code>tareas.html</code> (lo más cercano a "Agenda" hoy, tema Canon)</li>
+    </ul>
+  </div>
+</body>
+</html>
