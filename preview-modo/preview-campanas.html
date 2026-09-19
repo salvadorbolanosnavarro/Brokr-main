@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Campañas — vista previa "modo"</title>
+<link rel="stylesheet" href="modo-tokens.css"/>
+<style>
+  body{ margin:0; }
+  .top{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+  .top h1{ font-size: var(--fs-screen-title); }
+
+  .kpis{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px; }
+  @media (min-width: 768px){ .kpis{ grid-template-columns: repeat(3,1fr); } }
+  .kpi{ border:1px solid var(--line); border-radius: var(--r-card); padding:16px; }
+  .kpi .label{ font-size: var(--fs-meta); color: var(--muted-ink); font-weight:700; }
+  .kpi .value{ font-size: 1.75rem; font-weight:800; margin-top:4px; }
+
+  .chart-card{ border:1px solid var(--line); border-radius: var(--r-card); padding:20px; margin-bottom:24px; }
+  .chart-card h2{ font-size: var(--fs-section-title); margin-bottom:16px; }
+  .bars{ display:flex; align-items:flex-end; gap:10px; height:160px; }
+  .bar-col{ flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .bar{ width:100%; max-width:32px; background: var(--sky); border-radius:8px 8px 0 0; }
+  .bar-val{ font-size: var(--fs-meta); font-weight:700; }
+  .bar-day{ font-size: var(--fs-meta); color: var(--muted-ink); }
+
+  .camp-list{ display:flex; flex-direction:column; gap:12px; }
+  .camp{ border:1px solid var(--line); border-radius: var(--r-card); padding:16px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  .camp .info h3{ font-size: var(--fs-tool-name); }
+  .camp .info p{ font-size: var(--fs-desc); color: var(--muted-ink); margin-top:2px; }
+  .camp .metrics{ display:flex; gap:20px; }
+  .camp .metrics div{ text-align:right; }
+  .camp .metrics .n{ font-weight:800; font-size: var(--fs-tool-name); }
+  .camp .metrics .l{ font-size: var(--fs-meta); color: var(--muted-ink); }
+  .camp .actions{ display:flex; gap:8px; }
+</style>
+</head>
+<body class="modo">
+  <div class="modo-preview-banner">Vista previa del sistema "modo" — el módulo real es facebook-ads.html (Meta Ads), aquí solo cambia la piel</div>
+  <div class="modo-app">
+    <header class="modo-header">
+      <a class="modo-brand" href="preview-inicio.html"><img src="../logotipo-black.png" alt="Broquer"/></a>
+      <nav class="modo-nav-top" aria-label="Principal">
+        <a href="preview-inicio.html">Inicio</a>
+        <a href="preview-campanas.html" aria-current="page">Campañas</a>
+        <a href="preview-agenda.html">Agenda</a>
+      </nav>
+      <div class="modo-avatar">SB</div>
+    </header>
+
+    <main class="modo-main">
+      <div class="top">
+        <h1>Campañas</h1>
+        <button class="modo-btn modo-btn--primary">+ Nueva campaña</button>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="label">Personas interesadas</div><div class="value">128</div></div>
+        <div class="kpi"><div class="label">Inversión (7 días)</div><div class="value">$1,840</div></div>
+        <div class="kpi"><div class="label">Costo por contacto</div><div class="value">$14.40</div></div>
+      </div>
+
+      <div class="chart-card">
+        <h2>Resultados de la semana</h2>
+        <div class="bars">
+          <div class="bar-col"><span class="bar-val">12</span><div class="bar" style="height:40%"></div><span class="bar-day">L</span></div>
+          <div class="bar-col"><span class="bar-val">18</span><div class="bar" style="height:60%"></div><span class="bar-day">M</span></div>
+          <div class="bar-col"><span class="bar-val">9</span><div class="bar" style="height:30%"></div><span class="bar-day">M</span></div>
+          <div class="bar-col"><span class="bar-val">22</span><div class="bar" style="height:74%"></div><span class="bar-day">J</span></div>
+          <div class="bar-col"><span class="bar-val">31</span><div class="bar" style="height:100%"></div><span class="bar-day">V</span></div>
+          <div class="bar-col"><span class="bar-val">20</span><div class="bar" style="height:65%"></div><span class="bar-day">S</span></div>
+          <div class="bar-col"><span class="bar-val">16</span><div class="bar" style="height:52%"></div><span class="bar-day">D</span></div>
+        </div>
+      </div>
+
+      <div class="camp-list">
+        <div class="camp">
+          <div class="info">
+            <h3>Casa en Vista Bella — leads</h3>
+            <p>Facebook · Instagram</p>
+          </div>
+          <div class="metrics">
+            <div><div class="n">64</div><div class="l">interesados</div></div>
+            <div><div class="n">$920</div><div class="l">invertido</div></div>
+          </div>
+          <div class="actions">
+            <span class="modo-badge modo-badge--live">Activa</span>
+            <button class="modo-btn modo-btn--ghost">Pausar</button>
+          </div>
+        </div>
+        <div class="camp">
+          <div class="info">
+            <h3>Departamento Roma Norte</h3>
+            <p>Facebook</p>
+          </div>
+          <div class="metrics">
+            <div><div class="n">41</div><div class="l">interesados</div></div>
+            <div><div class="n">$610</div><div class="l">invertido</div></div>
+          </div>
+          <div class="actions">
+            <span class="modo-badge modo-badge--paused">Pausada</span>
+            <button class="modo-btn modo-btn--ghost">Activar</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="modo-btn modo-btn--secondary">Exportar resultados</button>
+      </div>
+    </main>
+
+    <nav class="modo-nav-bottom" aria-label="Principal">
+      <a href="preview-inicio.html">Inicio</a>
+      <a href="preview-campanas.html" aria-current="page">Campañas</a>
+      <a href="preview-agenda.html">Agenda</a>
+    </nav>
+  </div>
+</body>
+</html>

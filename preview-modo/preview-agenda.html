@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Agenda — vista previa "modo"</title>
+<link rel="stylesheet" href="modo-tokens.css"/>
+<style>
+  body{ margin:0; }
+  .top{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+  .top h1{ font-size: var(--fs-screen-title); }
+
+  .aviso{ background: var(--surface); border:1px solid var(--line); border-radius: var(--r-card); padding:14px 16px; font-size: var(--fs-desc); color: var(--muted-ink); margin-bottom:20px; }
+  .aviso strong{ color: var(--ink); }
+
+  .semana{ display:flex; gap:8px; overflow-x:auto; margin-bottom:20px; padding-bottom:4px; }
+  .dia{
+    flex:0 0 auto; width:56px; text-align:center; padding:10px 0; border-radius: 14px;
+    border:1px solid var(--line); background: var(--white); cursor:pointer;
+  }
+  .dia .n{ font-weight:800; font-size: 1.1rem; }
+  .dia .d{ font-size: var(--fs-meta); color: var(--muted-ink); }
+  .dia[aria-current="true"]{ background: var(--ink); border-color: var(--ink); }
+  .dia[aria-current="true"] .n, .dia[aria-current="true"] .d{ color: var(--white); }
+
+  .citas{ display:flex; flex-direction:column; gap:10px; }
+  .cita{ display:flex; gap:14px; border:1px solid var(--line); border-radius: var(--r-card); padding:14px 16px; text-decoration:none; color:inherit; }
+  .cita .hora{ min-width:64px; font-weight:800; color: var(--sky-ink); }
+  .cita .info h3{ font-size: var(--fs-tool-name); }
+  .cita .info p{ font-size: var(--fs-desc); color: var(--muted-ink); margin-top:2px; }
+</style>
+</head>
+<body class="modo">
+  <div class="modo-preview-banner">
+    Vista previa del sistema "modo" — <strong>Agenda no existe hoy como módulo real en Broquer.</strong>
+    Esta pantalla se arma con datos de <code>tareas</code> que ya tienen fecha (citas agendadas por WhatsApp),
+    no con una tabla de calendario dedicada. Ver MODO-REGLAS-PARA-CLAUDE-CODE.md.
+  </div>
+  <div class="modo-app">
+    <header class="modo-header">
+      <a class="modo-brand" href="preview-inicio.html"><img src="../logotipo-black.png" alt="Broquer"/></a>
+      <nav class="modo-nav-top" aria-label="Principal">
+        <a href="preview-inicio.html">Inicio</a>
+        <a href="preview-campanas.html">Campañas</a>
+        <a href="preview-agenda.html" aria-current="page">Agenda</a>
+      </nav>
+      <div class="modo-avatar">SB</div>
+    </header>
+
+    <main class="modo-main">
+      <div class="top">
+        <h1>Agenda</h1>
+        <button class="modo-btn modo-btn--primary">+ Nueva cita</button>
+      </div>
+
+      <div class="aviso">
+        <strong>Nota de alcance:</strong> en el prototipo de ChatGPT, Agenda era una demo en memoria.
+        Aquí se muestra cómo se vería si se construye sobre datos reales de Tareas
+        (<code>tareas.fecha_entrega</code>) en vez de inventar un calendario aparte.
+      </div>
+
+      <div class="semana" role="group" aria-label="Días de la semana">
+        <button class="dia"><div class="d">L</div><div class="n">15</div></button>
+        <button class="dia"><div class="d">M</div><div class="n">16</div></button>
+        <button class="dia"><div class="d">M</div><div class="n">17</div></button>
+        <button class="dia"><div class="d">J</div><div class="n">18</div></button>
+        <button class="dia" aria-current="true"><div class="d">V</div><div class="n">19</div></button>
+        <button class="dia"><div class="d">S</div><div class="n">20</div></button>
+        <button class="dia"><div class="d">D</div><div class="n">21</div></button>
+      </div>
+
+      <div class="citas">
+        <a class="cita" href="#">
+          <div class="hora">10:00 am</div>
+          <div class="info">
+            <h3>Visita — Casa en Vista Bella</h3>
+            <p>Con María Fernanda · 45 min · Vista Bella, Morelia</p>
+          </div>
+        </a>
+        <a class="cita" href="#">
+          <div class="hora">4:30 pm</div>
+          <div class="info">
+            <h3>Llamada de seguimiento</h3>
+            <p>Con Jorge Torres · agendada desde WhatsApp</p>
+          </div>
+        </a>
+      </div>
+    </main>
+
+    <nav class="modo-nav-bottom" aria-label="Principal">
+      <a href="preview-inicio.html">Inicio</a>
+      <a href="preview-campanas.html">Campañas</a>
+      <a href="preview-agenda.html" aria-current="page">Agenda</a>
+    </nav>
+  </div>
+</body>
+</html>
