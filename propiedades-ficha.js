@@ -279,8 +279,8 @@ async function pdCargarBitacora() {
   }
 
   const entradas = acts.map(a => ({
-    tipo: a.tipo || 'nota', texto: a.texto || '', adjuntos: a.adjuntos, fecha: a.created_at,
-    categorias: catsPorActividad[a.id],
+    id: a.id, tipo: a.tipo || 'nota', texto: a.texto || '', adjuntos: a.adjuntos, fecha: a.created_at,
+    categorias: catsPorActividad[a.id], editado_en: a.editado_en,
   }));
   const p = allProps.find(x => String(x.id) === String(pid));
   if (p && p.created_at) {
@@ -299,6 +299,63 @@ async function pdCargarBitacora() {
 }
 
 let PD_NOTA_CATS = []; // categorías elegidas para la nota que se está redactando
+
+async function bkEditarNota(id) {
+  let fila;
+  try {
+    const rows = await sbFetch('actividades?id=eq.' + encodeURIComponent(id) + '&select=*');
+    fila = Array.isArray(rows) ? rows[0] : null;
+  } catch {}
+  if (!fila) { alert('No se pudo cargar la nota.'); return; }
+  const nuevoTexto = prompt('Editar nota:', fila.texto || '');
+  if (nuevoTexto === null) return;
+  const limpio = nuevoTexto.trim();
+  if (!limpio) { alert('La nota no puede quedar vacía. Para borrarla usa Eliminar.'); return; }
+  if (limpio === (fila.texto || '').trim()) return;
+  const uid = getCurrentUserId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  try {
+    await sbFetch('actividades_historial', 'POST', {
+      actividad_id: fila.id, org_id: fila.org_id || pOrgId, accion: 'editar', usuario_id: uid,
+      tipo: fila.tipo, texto_anterior: fila.texto, adjuntos_anterior: fila.adjuntos,
+      contacto_id: fila.contacto_id, propiedad_id: fila.propiedad_id,
+    });
+  } catch {}
+  try {
+    await sbFetch('actividades?id=eq.' + encodeURIComponent(fila.id), 'PATCH',
+      { texto: limpio, editado_en: new Date().toISOString(), editado_por: uid });
+    await pdCargarBitacora();
+    mostrarToast('Nota actualizada');
+  } catch (e) {
+    alert('No se pudo guardar la edición.\n\n' + (e.message || e));
+  }
+}
+
+async function bkEliminarNota(id) {
+  if (!confirm('¿Eliminar esta nota? No se puede deshacer.')) return;
+  let fila;
+  try {
+    const rows = await sbFetch('actividades?id=eq.' + encodeURIComponent(id) + '&select=*');
+    fila = Array.isArray(rows) ? rows[0] : null;
+  } catch {}
+  if (!fila) { alert('No se pudo cargar la nota.'); return; }
+  const uid = getCurrentUserId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  try {
+    await sbFetch('actividades_historial', 'POST', {
+      actividad_id: fila.id, org_id: fila.org_id || pOrgId, accion: 'eliminar', usuario_id: uid,
+      tipo: fila.tipo, texto_anterior: fila.texto, adjuntos_anterior: fila.adjuntos,
+      contacto_id: fila.contacto_id, propiedad_id: fila.propiedad_id,
+    });
+  } catch {}
+  try {
+    await sbFetch('actividades?id=eq.' + encodeURIComponent(fila.id), 'DELETE');
+    await pdCargarBitacora();
+    mostrarToast('Nota eliminada');
+  } catch (e) {
+    alert('No se pudo eliminar la nota.\n\n' + (e.message || e));
+  }
+}
 
 function pdPintarCategoriasNota() {
   const chipsEl = g('f-nota-cat-chips');
@@ -345,7 +402,7 @@ async function pdGuardarNota() {
   try {
     const rows = await sbFetch('actividades', 'POST', {
       user_id: uid, tipo: texto ? 'nota' : 'archivo', texto: texto,
-      adjuntos: adjuntos, propiedad_id: pid,
+      adjuntos: adjuntos, propiedad_id: pid, org_id: pOrgId,
     });
     const nueva = Array.isArray(rows) ? rows[0] : rows;
     if (nueva && nueva.id) {
@@ -377,7 +434,7 @@ async function pdArchivosSueltos(files) {
   const adjuntos = haTomarAdjuntosListos('f-suelto-preview');
   if (!adjuntos.length) { mostrarToast('No se pudo subir ningún archivo'); return; }
   try {
-    await sbFetch('actividades', 'POST', { user_id: uid, tipo: 'archivo', texto: '', adjuntos: adjuntos, propiedad_id: pid });
+    await sbFetch('actividades', 'POST', { user_id: uid, tipo: 'archivo', texto: '', adjuntos: adjuntos, propiedad_id: pid, org_id: pOrgId });
     if (currentDetailId === pid) await pdCargarBitacora();
     mostrarToast(adjuntos.length === 1 ? 'Archivo guardado' : adjuntos.length + ' archivos guardados');
   } catch (e) {
@@ -400,7 +457,7 @@ async function pdCambiarEstatus(v) {
     const uid = getCurrentUserId();
     if (uid) {
       sbFetch('actividades', 'POST', {
-        user_id: uid, tipo: 'cambio_estatus', propiedad_id: pid,
+        user_id: uid, tipo: 'cambio_estatus', propiedad_id: pid, org_id: pOrgId,
         texto: 'Estatus: ' + pfEstatusInfo(previo).l + ' → ' + pfEstatusInfo(v).l,
       }).then(() => { if (currentDetailId === pid && pdTabActual === 'bitacora') pdCargarBitacora(); }).catch(() => {});
     }
@@ -585,12 +642,13 @@ async function pdAgregarTarea() {
   const uid = getCurrentUserId();
   if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
   const fecha = g('pd-tarea-fecha').value;
+  const hora = g('pd-tarea-hora').value || '12:00';
   try {
     const creada = await sbFetch('tareas', 'POST', {
-      user_id: uid, titulo: titulo, propiedad_id: pid,
+      user_id: uid, org_id: pOrgId, titulo: titulo, propiedad_id: pid,
       // La columna es timestamptz: new Date(texto) lo lee en hora local y
       // toISOString() da el instante UTC correcto.
-      fecha_entrega: fecha ? new Date(fecha + 'T12:00:00').toISOString() : null,
+      fecha_entrega: fecha ? new Date(fecha + 'T' + hora + ':00').toISOString() : null,
     });
     const nueva = Array.isArray(creada) ? creada[0] : creada;
     if (nueva && nueva.id) {
@@ -598,6 +656,7 @@ async function pdAgregarTarea() {
     }
     inp.value = '';
     g('pd-tarea-fecha').value = '';
+    g('pd-tarea-hora').value = '';
     _pdTareasMin = null;
     await pdCargarTareas();
     mostrarToast('Tarea creada');
@@ -637,7 +696,7 @@ async function pdToggleTarea(tid) {
       const pid = currentDetailId;
       if (uid) {
         sbFetch('actividades', 'POST', {
-          user_id: uid, tipo: 'tarea_completada', texto: 'Tarea completada: ' + t.titulo, propiedad_id: pid,
+          user_id: uid, tipo: 'tarea_completada', texto: 'Tarea completada: ' + t.titulo, propiedad_id: pid, org_id: pOrgId,
         }).then(() => { if (currentDetailId === pid && pdTabActual === 'bitacora') pdCargarBitacora(); }).catch(() => {});
       }
     }

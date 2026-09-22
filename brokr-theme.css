@@ -524,6 +524,45 @@ html {
 }
 .bk-hint { font-size: var(--fs-xs); color: var(--mute); margin-top: var(--sp-1); }
 
+/* Buscador con sugerencias en vivo — reemplaza los <select> gigantes (cientos
+   de contactos/propiedades en orden alfabético, sin filtro) por un campo de
+   texto con resultados filtrados mientras se escribe. Ver bkCrearBuscador()
+   en ficha-comun.js. Antes vivía duplicado en clientes.html/contactos.html;
+   ahora es compartido para que cualquier página (Tareas, notas, filtros) lo
+   use igual. */
+.prop-buscador { position: relative; flex: 1; min-width: 160px; }
+.prop-buscador input {
+  width: 100%;
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 9px 11px;
+  font-family: inherit; font-size: var(--fs-sm);
+  color: var(--ink);
+  outline: none;
+}
+.prop-buscador input:disabled { color: var(--mute); cursor: not-allowed; }
+.prop-sugerencias {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
+  max-height: 260px; overflow-y: auto;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-md);
+}
+.prop-sugerencia {
+  display: block; width: 100%; text-align: left;
+  padding: 9px 11px; border: none; background: none; cursor: pointer;
+  font-family: inherit;
+  border-bottom: 1px solid var(--line);
+}
+.prop-sugerencia:last-child { border-bottom: none; }
+.prop-sugerencia:hover, .prop-sugerencia.is-hl { background: var(--paper-2); }
+.prop-sugerencia__n { display: block; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
+.prop-sugerencia__d { display: block; font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
+.prop-sugerencia--vacio { color: var(--mute); cursor: default; }
+.prop-sugerencia--vacio:hover { background: none; }
+
 /* Chips de categorías/vínculos — usado por Tareas, y por el selector de
    categorías del composer de notas en Contactos/Clientes/Inmuebles. */
 .tke-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
@@ -2396,6 +2435,7 @@ body.bk-sin-scroll { overflow: hidden; }
   padding: var(--sp-3) var(--sp-4);
 }
 .bk-bita__head { display: flex; align-items: baseline; gap: var(--sp-3); }
+.bk-bita__acciones { display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2); }
 .bk-bita__tipo {
   font-size: var(--fs-label-3); font-weight: 700;
   color: var(--ink-2);

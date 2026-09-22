@@ -359,7 +359,11 @@
       <span class="bk-eyebrow">Contactos vinculados</span>
       <div class="tke-chips" id="tke-contactos-chips" style="margin:var(--sp-2) 0;"></div>
       <div class="bk-field-row">
-        <select class="bk-select" id="tke-agregar-contacto"><option value="">Agregar contacto…</option></select>
+        <div class="prop-buscador">
+          <input type="text" class="bk-input" id="tke-agregar-contacto-buscar" placeholder="Buscar contacto…" autocomplete="off" oninput="tkeBuscarContactoInput()" onkeydown="tkeBuscarContactoKeydown(event)"/>
+          <input type="hidden" id="tke-agregar-contacto"/>
+          <div class="prop-sugerencias" id="tke-agregar-contacto-sug" hidden></div>
+        </div>
         <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tkAgregarContacto()">Agregar</button>
       </div>
 
@@ -367,7 +371,11 @@
       <span class="bk-eyebrow">Inmuebles vinculados</span>
       <div class="tke-chips" id="tke-propiedades-chips" style="margin:var(--sp-2) 0;"></div>
       <div class="bk-field-row">
-        <select class="bk-select" id="tke-agregar-propiedad"><option value="">Agregar inmueble…</option></select>
+        <div class="prop-buscador">
+          <input type="text" class="bk-input" id="tke-agregar-propiedad-buscar" placeholder="Buscar inmueble…" autocomplete="off" oninput="tkeBuscarPropInput()" onkeydown="tkeBuscarPropKeydown(event)"/>
+          <input type="hidden" id="tke-agregar-propiedad"/>
+          <div class="prop-sugerencias" id="tke-agregar-propiedad-sug" hidden></div>
+        </div>
         <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tkAgregarPropiedad()">Agregar</button>
       </div>
     </div>
@@ -408,7 +416,11 @@
       <span class="bk-eyebrow">Contactos vinculados</span>
       <div class="tke-chips" id="tkn-contactos-chips" style="margin:var(--sp-2) 0;"></div>
       <div class="bk-field-row">
-        <select class="bk-select" id="tkn-agregar-contacto"><option value="">Agregar contacto…</option></select>
+        <div class="prop-buscador">
+          <input type="text" class="bk-input" id="tkn-agregar-contacto-buscar" placeholder="Buscar contacto…" autocomplete="off" oninput="tknBuscarContactoInput()" onkeydown="tknBuscarContactoKeydown(event)"/>
+          <input type="hidden" id="tkn-agregar-contacto"/>
+          <div class="prop-sugerencias" id="tkn-agregar-contacto-sug" hidden></div>
+        </div>
         <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tknAgregarContacto()">Agregar</button>
       </div>
 
@@ -416,7 +428,11 @@
       <span class="bk-eyebrow">Inmuebles vinculados</span>
       <div class="tke-chips" id="tkn-propiedades-chips" style="margin:var(--sp-2) 0;"></div>
       <div class="bk-field-row">
-        <select class="bk-select" id="tkn-agregar-propiedad"><option value="">Agregar inmueble…</option></select>
+        <div class="prop-buscador">
+          <input type="text" class="bk-input" id="tkn-agregar-propiedad-buscar" placeholder="Buscar inmueble…" autocomplete="off" oninput="tknBuscarPropInput()" onkeydown="tknBuscarPropKeydown(event)"/>
+          <input type="hidden" id="tkn-agregar-propiedad"/>
+          <div class="prop-sugerencias" id="tkn-agregar-propiedad-sug" hidden></div>
+        </div>
         <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tknAgregarPropiedad()">Agregar</button>
       </div>
     </div>
@@ -430,6 +446,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="app-shell.js" defer></script>
+<script src="ficha-comun.js" defer></script>
 <script src="categorias.js" defer></script>
 
 <script>
@@ -828,6 +845,7 @@ async function toggleTarea(id) {
         texto: 'Tarea completada: ' + t.titulo,
         contacto_id: t.contacto_id || null,
         propiedad_id: t.propiedad_id || null,
+        org_id: tkOrgId,
       }).catch(() => {});
     }
     showToast(completar ? 'Tarea completada' : 'Tarea reabierta');
@@ -854,12 +872,42 @@ async function eliminarTarea(id) {
 /* ── Editar tarea (título, fecha/hora, notas, vínculos múltiples) ──── */
 let TKE_ID = null; // id de la tarea que se está editando
 
-function tkPintarSelectAgregar(selectId, opciones, yaVinculados) {
-  const sel = g(selectId);
-  const disponibles = opciones.filter(o => !yaVinculados.includes(String(o.id)));
-  sel.innerHTML = '<option value="">' + (disponibles.length ? 'Elegir…' : 'No hay más para agregar') + '</option>' +
-    disponibles.map(o => `<option value="${esc(String(o.id))}">${esc(o.label)}</option>`).join('');
+// Buscadores con sugerencias en vivo (bkCrearBuscador, ficha-comun.js) —
+// reemplazan los <select> que obligaban a scrollear cientos de contactos o
+// inmuebles uno por uno.
+let tkContactosDisponibles = [], tkPropsDisponibles = [];
+let tknContactosDisponibles = [], tknPropsDisponibles = [];
+// OJO: este <script> corre de inmediato al parsear (no lleva "defer"), y
+// ficha-comun.js SÍ lleva "defer" — se ejecuta después. Instanciar los
+// buscadores aquí arriba, a secas, tronaría con "bkBuscadorContactos is not
+// defined". Por eso se crean perezosamente, la primera vez que hacen falta.
+let _buscTkeContacto, _buscTkeProp, _buscTknContacto, _buscTknProp;
+function _asegurarBuscadoresTareas() {
+  if (_buscTkeContacto) return;
+  _buscTkeContacto = bkBuscadorContactos('tke-agregar-contacto-buscar', 'tke-agregar-contacto', 'tke-agregar-contacto-sug', 'No hay más contactos para agregar');
+  _buscTkeProp = bkBuscadorPropiedades('tke-agregar-propiedad-buscar', 'tke-agregar-propiedad', 'tke-agregar-propiedad-sug', 'No hay más inmuebles para agregar');
+  _buscTknContacto = bkBuscadorContactos('tkn-agregar-contacto-buscar', 'tkn-agregar-contacto', 'tkn-agregar-contacto-sug', 'No hay más contactos para agregar');
+  _buscTknProp = bkBuscadorPropiedades('tkn-agregar-propiedad-buscar', 'tkn-agregar-propiedad', 'tkn-agregar-propiedad-sug', 'No hay más inmuebles para agregar');
 }
+function tkeBuscarContactoInput() { _asegurarBuscadoresTareas(); _buscTkeContacto.onInput(tkContactosDisponibles); }
+function tkeBuscarContactoKeydown(ev) { _asegurarBuscadoresTareas(); _buscTkeContacto.onKeydown(ev); }
+function tkeBuscarPropInput() { _asegurarBuscadoresTareas(); _buscTkeProp.onInput(tkPropsDisponibles); }
+function tkeBuscarPropKeydown(ev) { _asegurarBuscadoresTareas(); _buscTkeProp.onKeydown(ev); }
+function tknBuscarContactoInput() { _asegurarBuscadoresTareas(); _buscTknContacto.onInput(tknContactosDisponibles); }
+function tknBuscarContactoKeydown(ev) { _asegurarBuscadoresTareas(); _buscTknContacto.onKeydown(ev); }
+function tknBuscarPropInput() { _asegurarBuscadoresTareas(); _buscTknProp.onInput(tknPropsDisponibles); }
+function tknBuscarPropKeydown(ev) { _asegurarBuscadoresTareas(); _buscTknProp.onKeydown(ev); }
+document.addEventListener('click', (ev) => {
+  if (!_buscTkeContacto) return; // nada que cerrar si nunca se han usado
+  if (_buscTkeContacto.manejarClick(ev.target)) return;
+  if (_buscTkeProp.manejarClick(ev.target)) return;
+  if (_buscTknContacto.manejarClick(ev.target)) return;
+  if (_buscTknProp.manejarClick(ev.target)) return;
+  _buscTkeContacto.cerrarSiClickAfuera(ev.target);
+  _buscTkeProp.cerrarSiClickAfuera(ev.target);
+  _buscTknContacto.cerrarSiClickAfuera(ev.target);
+  _buscTknProp.cerrarSiClickAfuera(ev.target);
+});
 
 function tkPintarChips() {
   const contactos = VINCULOS.contactos[TKE_ID] || [];
@@ -877,10 +925,12 @@ function tkPintarChips() {
         return `<span class="tke-chip">${esc(nombre)}<button onclick="tkQuitarPropiedad('${esc(String(pid))}')" title="Quitar">×</button></span>`;
       }).join('')
     : '<span class="bk-hint">Ninguno todavía.</span>';
-  tkPintarSelectAgregar('tke-agregar-contacto',
-    contactosMin.map(c => ({ id: c.id, label: c.nombre || 'Sin nombre' })), contactos);
-  tkPintarSelectAgregar('tke-agregar-propiedad',
-    propsMin.map(p => ({ id: p.id, label: p.clave_interna ? p.clave_interna + ' · ' + (p.titulo||'') : (p.titulo || 'Sin título') })), propiedades);
+  tkContactosDisponibles = contactosMin.filter(c => !contactos.includes(String(c.id)));
+  tkPropsDisponibles = propsMin.filter(p => !propiedades.includes(String(p.id)));
+  g('tke-agregar-contacto-buscar').value = '';
+  g('tke-agregar-contacto').value = '';
+  g('tke-agregar-propiedad-buscar').value = '';
+  g('tke-agregar-propiedad').value = '';
 }
 
 function tkAbrirEditar(id) {
@@ -1089,10 +1139,12 @@ function tknPintarChips() {
         return `<span class="tke-chip">${esc(nombre)}<button onclick="tknQuitarPropiedad('${esc(String(pid))}')" title="Quitar">×</button></span>`;
       }).join('')
     : '<span class="bk-hint">Ninguno todavía.</span>';
-  tkPintarSelectAgregar('tkn-agregar-contacto',
-    contactosMin.map(c => ({ id: c.id, label: c.nombre || 'Sin nombre' })), contactos);
-  tkPintarSelectAgregar('tkn-agregar-propiedad',
-    propsMin.map(p => ({ id: p.id, label: p.clave_interna ? p.clave_interna + ' · ' + (p.titulo||'') : (p.titulo || 'Sin título') })), propiedades);
+  tknContactosDisponibles = contactosMin.filter(c => !contactos.includes(String(c.id)));
+  tknPropsDisponibles = propsMin.filter(p => !propiedades.includes(String(p.id)));
+  g('tkn-agregar-contacto-buscar').value = '';
+  g('tkn-agregar-contacto').value = '';
+  g('tkn-agregar-propiedad-buscar').value = '';
+  g('tkn-agregar-propiedad').value = '';
   catPintarPicker({
     chipsEl: g('tkn-categorias-chips'),
     selectEl: g('tkn-agregar-categoria'),

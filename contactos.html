@@ -677,6 +677,21 @@ html, body { background: var(--paper); }
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--mute);"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
       <input type="search" id="search-input" placeholder="Buscar por nombre, teléfono o correo…" oninput="busquedaDebounced()"/>
     </div>
+    <select class="filtro-select" id="c-filtro-fecha" onchange="renderActual()">
+      <option value="">Fecha: todas</option>
+      <option value="hoy">Hoy</option>
+      <option value="semana">Esta semana</option>
+      <option value="mes">Este mes</option>
+      <option value="anio">Este año</option>
+    </select>
+    <select class="filtro-select" id="c-filtro-fuente" onchange="renderActual()">
+      <option value="">Fuente: todas</option>
+    </select>
+    <div class="prop-buscador" style="max-width:220px">
+      <input type="text" class="filtro-select" id="c-filtro-interes-buscar" placeholder="Propiedad de interés…" autocomplete="off" oninput="cBuscarInteresInput()" onkeydown="cBuscarInteresKeydown(event)" style="width:100%"/>
+      <input type="hidden" id="c-filtro-interes-sel"/>
+      <div class="prop-sugerencias" id="c-filtro-interes-sug" hidden></div>
+    </div>
     <div class="contacts-select-all" id="c-select-all" onclick="cToggleSelectAll()">
       <div class="check-box">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
@@ -961,6 +976,14 @@ html, body { background: var(--paper); }
             <select class="bk-select" id="f-nota-cat-sel"><option value="">Agregar categoría…</option></select>
             <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="ctNuevaCategoriaNota()">+ Nueva</button>
           </div>
+          <div class="bk-field-row" style="margin-bottom:6px;">
+            <div class="prop-buscador">
+              <input type="text" class="bk-input" id="f-nota-prop-buscar" placeholder="Adjuntar un inmueble…" autocomplete="off" oninput="ctBuscarPropNotaInput()" onkeydown="ctBuscarPropNotaKeydown(event)"/>
+              <input type="hidden" id="f-nota-prop-sel"/>
+              <div class="prop-sugerencias" id="f-nota-prop-sug" hidden></div>
+            </div>
+            <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="ctQuitarPropNota()">Quitar</button>
+          </div>
           <div class="bk-composer__pie">
             <input type="file" id="f-nota-adjuntos" multiple hidden
                    accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
@@ -1002,6 +1025,7 @@ html, body { background: var(--paper); }
         <div class="bk-forma">
           <input type="text" id="tarea-nueva-titulo" placeholder="¿Cuál es el siguiente paso con este contacto?" onkeydown="if(event.key==='Enter')crearTareaVinculada()"/>
           <input type="date" id="tarea-nueva-fecha" aria-label="Fecha límite"/>
+          <input type="time" id="tarea-nueva-hora" aria-label="Hora"/>
           <button class="bk-btn bk-btn--sm" onclick="crearTareaVinculada()">Crear</button>
         </div>
         <div class="bk-forma">
@@ -1227,15 +1251,82 @@ function fechaCorta(iso) {
 }
 
 /* ── Filtro de la lista ───────────────────────────────────────────── */
+// "Propiedad de interés": relación contactos_propiedades con relacion=interes.
+// Se carga una sola vez para toda la lista (no por ficha) para poder filtrar.
+let CT_INTERES = {}; // { contactoId: [propiedadId, ...] }
+async function cCargarInteresFiltro() {
+  try {
+    const rows = await restGet('contactos_propiedades?select=contacto_id,propiedad_id&relacion=eq.interes&limit=5000');
+    CT_INTERES = {};
+    (Array.isArray(rows) ? rows : []).forEach(r => {
+      (CT_INTERES[r.contacto_id] = CT_INTERES[r.contacto_id] || []).push(String(r.propiedad_id));
+    });
+  } catch { CT_INTERES = {}; }
+}
+
+// Buscador inteligente para el filtro (perezoso: ver nota en tareas.html
+// sobre por qué no se puede instanciar arriba, a secas).
+let _buscCInteres;
+function _asegurarBuscadorInteres() {
+  if (_buscCInteres) return;
+  _buscCInteres = bkBuscadorPropiedades('c-filtro-interes-buscar', 'c-filtro-interes-sel', 'c-filtro-interes-sug', 'No hay inmuebles todavía');
+  document.addEventListener('click', (ev) => {
+    if (_buscCInteres.manejarClick(ev.target)) { renderActual(); return; }
+    _buscCInteres.cerrarSiClickAfuera(ev.target);
+  });
+}
+async function cBuscarInteresInput() {
+  _asegurarBuscadorInteres();
+  const props = await cargarPropsMin();
+  _buscCInteres.onInput(props);
+}
+function cBuscarInteresKeydown(ev) { _asegurarBuscadorInteres(); _buscCInteres.onKeydown(ev); }
+
+function cPoblarFiltroFuente(lista) {
+  const sel = document.getElementById('c-filtro-fuente');
+  const actual = sel.value;
+  const fuentes = Array.from(new Set(lista.map(c => (c.fuente || '').trim()).filter(Boolean))).sort();
+  sel.innerHTML = '<option value="">Fuente: todas</option>' +
+    fuentes.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
+  if (fuentes.includes(actual)) sel.value = actual;
+}
+
+function cFechaEnRango(iso, preset) {
+  if (!preset) return true;
+  if (!iso) return false;
+  const d = new Date(iso);
+  const ahora = new Date();
+  if (preset === 'hoy') {
+    return d.toDateString() === ahora.toDateString();
+  }
+  if (preset === 'semana') {
+    const inicio = new Date(ahora); inicio.setDate(ahora.getDate() - ahora.getDay()); inicio.setHours(0,0,0,0);
+    return d >= inicio;
+  }
+  if (preset === 'mes') {
+    return d.getFullYear() === ahora.getFullYear() && d.getMonth() === ahora.getMonth();
+  }
+  if (preset === 'anio') {
+    return d.getFullYear() === ahora.getFullYear();
+  }
+  return true;
+}
+
 function contactosFiltrados() {
   const todos = cargar();
   const q = gv('search-input').toLowerCase();
+  const fuente = document.getElementById('c-filtro-fuente').value;
+  const fechaPreset = document.getElementById('c-filtro-fecha').value;
+  const interesId = document.getElementById('c-filtro-interes-sel').value;
   return todos.filter(c => {
     const okTipo = filtroActual === 'todos' || c.tipo === filtroActual;
     const okQ = !q || [c.nombre, c.telefono, c.email, c.empresa].some(v => (v||'').toLowerCase().includes(q));
     const okAgente = cFiltroAgente === 'todos'
       || (cFiltroAgente === 'nadie' ? !c.asignado_a : c.asignado_a === cFiltroAgente);
-    return okTipo && okQ && okAgente;
+    const okFuente = !fuente || (c.fuente || '') === fuente;
+    const okFecha = cFechaEnRango(c.created_at, fechaPreset);
+    const okInteres = !interesId || (CT_INTERES[c.id] || []).includes(String(interesId));
+    return okTipo && okQ && okAgente && okFuente && okFecha && okInteres;
   });
 }
 
@@ -1250,6 +1341,7 @@ function renderActual() {
   const badge = document.getElementById('count-badge');
   badge.textContent = todos.length;
   badge.style.display = todos.length ? '' : 'none';
+  cPoblarFiltroFuente(todos);
   // Soltar de la selección lo que ya no existe (borrados, filtros)
   const vivos = new Set(todos.map(c => String(c.id)));
   for (const id of Array.from(cSel)) if (!vivos.has(id)) cSel.delete(id);
@@ -2182,7 +2274,7 @@ function abrirWA(ev, tel) {
   // 3) Contactos + etapas (para el chip de estatus y el selector de la
   // ficha; el tablero del pipeline en sí vive en clientes.html)
   try {
-    await Promise.all([cargarRemoto(), cargarEtapas()]);
+    await Promise.all([cargarRemoto(), cargarEtapas(), cCargarInteresFiltro()]);
     await cCargarPermiso();
     renderActual();
     const params = new URLSearchParams(window.location.search);
