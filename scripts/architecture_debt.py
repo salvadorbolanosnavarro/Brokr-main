@@ -110,7 +110,10 @@ LARGE_FILE_MAX_BYTES = {
     # Baja 29,512 bytes: la ficha del inmueble salió a propiedades-ficha.js y
     # su CSS (cabecera, pestañas, bitácora, filas) al bloque FICHA de
     # brokr-theme.css, compartido con Clientes y Directorio. Deuda pagada.
-    "propiedades.html": 131_672,
+    # Bumped 705 bytes: selector de categorías (chips + "+ Nueva") en el
+    # composer de notas de la bitácora, para poder etiquetar notas igual que
+    # las tareas — funcionalidad de producto real, no debt.
+    "propiedades.html": 132_377,
     # Bumped 1,844 bytes for the "Revisar webhook de la app" button in
     # Administrar números (fija el webhook de WhatsApp a nivel app) — a real
     # product change, not debt to pay down.
@@ -196,7 +199,10 @@ LARGE_FILE_MAX_BYTES = {
     # por módulo— y a cambio los tres módulos encogieron mucho más de lo que
     # creció el theme. Entra al inventario para que no siga creciendo sin
     # revisión.
-    "brokr-theme.css": 104_393,
+    # Bumped 549 bytes: .tke-chips/.tke-chip — chips de categorías, usados
+    # por Tareas y por el selector de categorías del composer de notas en
+    # Contactos/Clientes/Inmuebles. Funcionalidad de producto real, no debt.
+    "brokr-theme.css": 104_942,
 }
 MAX_LARGE_CODE_FILES = len(LARGE_FILE_MAX_BYTES)
 
