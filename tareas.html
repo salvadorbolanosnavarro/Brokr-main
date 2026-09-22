@@ -617,17 +617,25 @@ async function cargarTodo() {
   const lista = g('tk-lista');
   lista.innerHTML = '<div class="tk-empty"><h3>Cargando tareas…</h3></div>';
   try {
-    const [t, c, p, vc, vp] = await Promise.all([
+    const [t, c, p] = await Promise.all([
       sbFetch('tareas?select=*&order=completada.asc,fecha_entrega.asc.nullslast,created_at.desc&limit=500'),
-      sbFetch('contactos?select=id,nombre&limit=1000'),
+      sbFetch('contactos?select=id,nombre&order=updated_at.desc&limit=1000'),
       sbFetch('propiedades?select=id,titulo,clave_interna&order=updated_at.desc&limit=1000'),
-      sbFetch('tareas_contactos?select=tarea_id,contacto_id&limit=2000').catch(() => []),
-      sbFetch('tareas_propiedades?select=tarea_id,propiedad_id&limit=2000').catch(() => []),
     ]);
     tareas = Array.isArray(t) ? t : [];
     contactosMin = Array.isArray(c) ? c : [];
     propsMin = Array.isArray(p) ? p : [];
-    VINCULOS = construirVinculos(tareas, Array.isArray(vc) ? vc : [], Array.isArray(vp) ? vp : []);
+    // Los vínculos se piden SOLO para las tareas cargadas. Antes se pedía
+    // la tabla completa con limit=2000, pero Supabase la recorta a 1000
+    // filas sin orden: a quien ya tenía muchas tareas ligadas a clientes
+    // se le "perdían" los vínculos de las más recientes en esta vista.
+    const ids = tareas.map(x => String(x.id));
+    const [vc, vp] = await Promise.all([
+      sbPorIds('tareas_contactos?select=tarea_id,contacto_id', 'tarea_id', ids),
+      sbPorIds('tareas_propiedades?select=tarea_id,propiedad_id', 'tarea_id', ids),
+    ]);
+    VINCULOS = construirVinculos(tareas, vc, vp);
+    await completarNombresVinculados();
     poblarSelectVinculo();
     renderTareas();
   } catch (e) {
@@ -635,7 +643,47 @@ async function cargarTodo() {
   }
 }
 
-const _cIdx = () => Object.fromEntries(contactosMin.map(c => [String(c.id), c]));
+// GET en tandas con "col=in.(...)" para no pasarse del largo de URL ni
+// del tope de filas de Supabase. Si una tanda falla se omite: la lista
+// se sigue viendo, solo sin esos vínculos.
+async function sbPorIds(base, col, ids) {
+  const unicos = [...new Set(ids.map(String))].filter(Boolean);
+  const tandas = [];
+  for (let i = 0; i < unicos.length; i += 80) tandas.push(unicos.slice(i, i + 80));
+  const res = await Promise.all(tandas.map(tanda => {
+    const lista = tanda.map(v => '"' + v.replace(/"/g, '') + '"').join(',');
+    return sbFetch(base + '&' + col + '=in.(' + encodeURIComponent(lista) + ')').catch(() => []);
+  }));
+  return res.flatMap(r => Array.isArray(r) ? r : []);
+}
+
+// Los contactos/inmuebles ligados a una tarea pueden no venir en la lista
+// general (se piden los 1000 más recientes): se traen aparte por id para
+// que el chip muestre el nombre del cliente y no un genérico "Contacto".
+async function completarNombresVinculados() {
+  const tieneC = new Set(contactosMin.map(c => String(c.id)));
+  const tieneP = new Set(propsMin.map(p => String(p.id)));
+  const faltanC = Object.values(VINCULOS.contactos).flat().filter(id => !tieneC.has(String(id)));
+  const faltanP = Object.values(VINCULOS.propiedades).flat().filter(id => !tieneP.has(String(id)));
+  const [c, p] = await Promise.all([
+    faltanC.length ? sbPorIds('contactos?select=id,nombre', 'id', faltanC) : [],
+    faltanP.length ? sbPorIds('propiedades?select=id,titulo,clave_interna', 'id', faltanP) : [],
+  ]);
+  contactosMin = contactosMin.concat(c);
+  propsMin = propsMin.concat(p);
+}
+
+// Nombres de todo lo vinculado a la tarea, para buscar "por cliente".
+function textoVinculos(t) {
+  const c = (VINCULOS.contactos[t.id] || []).map(id => (contactoIdx[String(id)] || {}).nombre || '');
+  const p = (VINCULOS.propiedades[t.id] || []).map(id => {
+    const x = propIdx[String(id)] || {};
+    return (x.clave_interna || '') + ' ' + (x.titulo || '');
+  });
+  return c.concat(p).join(' ').toLowerCase();
+}
+
+const _cIdx = () =>Object.fromEntries(contactosMin.map(c => [String(c.id), c]));
 const _pIdx = () => Object.fromEntries(propsMin.map(p => [String(p.id), p]));
 let contactoIdx = {}, propIdx = {};
 
@@ -666,15 +714,18 @@ function tareasFiltradas() {
   const hoy = new Date(); hoy.setHours(0,0,0,0);
 
   return tareas.filter(t => {
-    if (q && !(t.titulo || '').toLowerCase().includes(q)) return false;
+    if (q && !(t.titulo || '').toLowerCase().includes(q) && !textoVinculos(t).includes(q)) return false;
     const due = t.fecha_entrega ? new Date(t.fecha_entrega) : null;
     const vencida = due && !t.completada && due < hoy;
     if (estado === 'pendientes' && t.completada) return false;
     if (estado === 'completadas' && !t.completada) return false;
     if (estado === 'vencidas' && !vencida) return false;
-    if (vinculo === 'contacto' && !t.contacto_id) return false;
-    if (vinculo === 'propiedad' && !t.propiedad_id) return false;
-    if (vinculo === 'suelta' && (t.contacto_id || t.propiedad_id)) return false;
+    // Con los vínculos múltiples, no solo la columna vieja contacto_id/propiedad_id.
+    const nC = (VINCULOS.contactos[t.id] || []).length;
+    const nP = (VINCULOS.propiedades[t.id] || []).length;
+    if (vinculo === 'contacto' && !nC) return false;
+    if (vinculo === 'propiedad' && !nP) return false;
+    if (vinculo === 'suelta' && (nC || nP)) return false;
     if (asignado === 'yo' && t.asignado_a !== _uid) return false;
     if (asignado && asignado !== 'yo' && t.asignado_a !== asignado) return false;
     return true;
@@ -816,7 +867,18 @@ async function crearTarea() {
   try {
     const rows = await sbFetch('tareas', 'POST', payload);
     const nueva = Array.isArray(rows) ? rows[0] : rows;
-    if (nueva && nueva.id) tareas.unshift(nueva);
+    if (nueva && nueva.id) {
+      tareas.unshift(nueva);
+      // Sin esto el chip del cliente/inmueble no salía hasta recargar.
+      if (payload.contacto_id) {
+        (VINCULOS.contactos[nueva.id] = VINCULOS.contactos[nueva.id] || []).push(String(payload.contacto_id));
+        sbFetch('tareas_contactos', 'POST', { user_id: uid, tarea_id: nueva.id, contacto_id: payload.contacto_id }).catch(() => {});
+      }
+      if (payload.propiedad_id) {
+        (VINCULOS.propiedades[nueva.id] = VINCULOS.propiedades[nueva.id] || []).push(String(payload.propiedad_id));
+        sbFetch('tareas_propiedades', 'POST', { user_id: uid, tarea_id: nueva.id, propiedad_id: payload.propiedad_id }).catch(() => {});
+      }
+    }
     inp.value = '';
     g('tk-nueva-fecha').value = '';
     g('tk-nueva-vinculo').value = '';
