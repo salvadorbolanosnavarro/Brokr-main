@@ -196,6 +196,23 @@ async def _exigir_admin_org(request: Request) -> Dict[str, Any]:
     return ctx
 
 
+async def _exigir_miembro_org_empresa(request: Request) -> Dict[str, Any]:
+    """Verifica que quien pide sea miembro activo de una org de tipo empresa.
+    A diferencia de _exigir_admin_org, cualquier rol (owner/admin/agente) pasa:
+    asignar clientes es una tarea de equipo, no una acción administrativa.
+    """
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Inicia sesión.")
+    ctx = await get_org_context(user_id)
+    if not ctx or not ctx.get("activo"):
+        raise HTTPException(status_code=403, detail="No perteneces a ninguna cuenta.")
+    if ctx["org_tipo"] != "empresa":
+        raise HTTPException(status_code=403, detail="Asignar clientes solo está disponible para cuentas de empresa.")
+    ctx["user_id"] = user_id
+    return ctx
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # ENDPOINTS
 # ══════════════════════════════════════════════════════════════════════════
@@ -872,7 +889,7 @@ class AsignarReq(BaseModel):
 @router.post("/org/asignar")
 async def asignar_agente(req: AsignarReq, request: Request):
     """Asigna (o desasigna con agente_user_id=null) registros a un agente."""
-    ctx = await _exigir_admin_org(request)
+    ctx = await _exigir_miembro_org_empresa(request)
 
     if req.tabla not in _TABLAS_ASIGNABLES:
         raise HTTPException(status_code=400, detail="Tabla no válida.")

@@ -72,15 +72,10 @@ function clRenderAsignacion(c) {
   wrap.hidden = false;
   const sel = document.getElementById('f-asignado-sel');
   const txt = document.getElementById('f-asignado-txt');
-  if (cEsAdminOrg) {
-    sel.hidden = false; txt.hidden = true;
-    sel.innerHTML = '<option value="">Sin asignar</option>' +
-      cMiembros.map(m => `<option value="${esc(m.user_id)}">${esc(m.nombre || m.email)}</option>`).join('');
-    sel.value = c.asignado_a || '';
-  } else {
-    sel.hidden = true; txt.hidden = false;
-    txt.textContent = c.asignado_a ? cNombreAgente(c.asignado_a) : 'Sin asignar';
-  }
+  sel.hidden = false; txt.hidden = true;
+  sel.innerHTML = '<option value="">Sin asignar</option>' +
+    cMiembros.map(m => `<option value="${esc(m.user_id)}">${esc(m.nombre || m.email)}</option>`).join('');
+  sel.value = c.asignado_a || '';
 }
 
 /* ══════════════════════════════════════════════════════════════════
