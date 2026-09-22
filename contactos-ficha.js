@@ -64,6 +64,7 @@ function ctDescartarBorrador() {
   if (comp) comp.hidden = true;
   const ta = document.getElementById('f-nota-texto');
   if (ta) ta.value = '';
+  CT_NOTA_CATS = [];
 }
 
 function ctRenderAsignacion(c) {
@@ -308,8 +309,21 @@ async function cargarBitacora() {
   } catch { acts = []; }
   if (!detContacto || detContacto.id !== cid) return;
 
+  let catsPorActividad = {};
+  if (acts.length) {
+    try {
+      const ids = acts.map(a => '"' + a.id + '"').join(',');
+      const links = await restGet('actividades_categorias?select=actividad_id,categoria_id&actividad_id=in.(' + ids + ')');
+      (Array.isArray(links) ? links : []).forEach(l => {
+        const cat = cCategorias.find(c => String(c.id) === String(l.categoria_id));
+        if (cat) (catsPorActividad[l.actividad_id] = catsPorActividad[l.actividad_id] || []).push(cat.nombre);
+      });
+    } catch {}
+  }
+
   const entradas = acts.map(a => ({
     tipo: a.tipo || 'nota', texto: a.texto || '', adjuntos: a.adjuntos, fecha: a.created_at,
+    categorias: catsPorActividad[a.id],
   }));
 
   // Las operaciones históricas traen la fecha como texto libre: sólo entran
@@ -346,9 +360,36 @@ async function cargarBitacora() {
   feed.innerHTML = html;
 }
 
+let CT_NOTA_CATS = []; // categorías elegidas para la nota que se está redactando
+
+function ctPintarCategoriasNota() {
+  const chipsEl = document.getElementById('f-nota-cat-chips');
+  const selectEl = document.getElementById('f-nota-cat-sel');
+  if (!chipsEl || !selectEl) return;
+  catPintarPicker({
+    chipsEl, selectEl, catalogo: cCategorias, seleccionadas: CT_NOTA_CATS,
+    onQuitar: id => { CT_NOTA_CATS = CT_NOTA_CATS.filter(x => x !== String(id)); ctPintarCategoriasNota(); },
+    onAgregar: id => { if (!CT_NOTA_CATS.includes(String(id))) CT_NOTA_CATS.push(String(id)); ctPintarCategoriasNota(); },
+  });
+}
+
+async function ctNuevaCategoriaNota() {
+  const nombre = prompt('Nombre de la nueva categoría:');
+  if (!nombre || !nombre.trim()) return;
+  const uid = await _userId();
+  if (!uid || !cOrgId) return;
+  const cat = await catCrear(cOrgId, uid, nombre);
+  if (!cat) { alert('No se pudo crear la categoría.'); return; }
+  if (!cCategorias.some(c => String(c.id) === String(cat.id))) cCategorias.push(cat);
+  if (!CT_NOTA_CATS.includes(String(cat.id))) CT_NOTA_CATS.push(String(cat.id));
+  ctPintarCategoriasNota();
+}
+
 function ctAbrirNota() {
   document.getElementById('f-composer').hidden = false;
   document.getElementById('f-nota-texto').focus();
+  CT_NOTA_CATS = [];
+  ctPintarCategoriasNota();
 }
 
 function ctCancelarNota() { ctDescartarBorrador(); }
@@ -363,10 +404,15 @@ async function ctGuardarNota() {
   const adjuntos = haTomarAdjuntosListos('f-nota-preview');
   btn.disabled = true;
   try {
-    await restPost('actividades', {
+    const rows = await restPost('actividades', {
       tipo: texto ? 'nota' : 'archivo', texto: texto, adjuntos: adjuntos, contacto_id: detContacto.id,
     });
+    const nueva = Array.isArray(rows) ? rows[0] : rows;
+    if (nueva && nueva.id) {
+      for (const catId of CT_NOTA_CATS) await catVincular('actividades_categorias', 'actividad_id', nueva.id, catId);
+    }
     ta.value = '';
+    CT_NOTA_CATS = [];
     document.getElementById('f-composer').hidden = true;
     await cargarBitacora();
     showToast(texto ? 'Nota guardada' : 'Archivos guardados');

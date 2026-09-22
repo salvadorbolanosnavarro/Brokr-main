@@ -524,6 +524,16 @@ html {
 }
 .bk-hint { font-size: var(--fs-xs); color: var(--mute); margin-top: var(--sp-1); }
 
+/* Chips de categorías/vínculos — usado por Tareas, y por el selector de
+   categorías del composer de notas en Contactos/Clientes/Inmuebles. */
+.tke-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.tke-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: var(--r-pill);
+  background: var(--paper-2); font-size: var(--fs-xs); font-weight: 600;
+}
+.tke-chip button { background: none; border: 0; cursor: pointer; color: var(--mute); font-size: var(--fs-sm); line-height: 1; padding: 0; }
+
 .bk-input,
 .bk-textarea,
 .bk-select {

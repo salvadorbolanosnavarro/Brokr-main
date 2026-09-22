@@ -1176,6 +1176,11 @@
         <div class="bk-composer" id="f-composer" hidden>
           <textarea id="f-nota-texto" rows="3" placeholder="¿Qué pasó? La visita, lo que pidió el dueño, el cambio de precio…"></textarea>
           <div class="ha-preview" id="f-nota-preview"></div>
+          <div class="tke-chips" id="f-nota-cat-chips" style="margin:6px 0;"></div>
+          <div class="bk-field-row" style="margin-bottom:6px;">
+            <select class="bk-select" id="f-nota-cat-sel"><option value="">Agregar categoría…</option></select>
+            <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="pdNuevaCategoriaNota()">+ Nueva</button>
+          </div>
           <div class="bk-composer__pie">
             <input type="file" id="f-nota-adjuntos" multiple hidden
                    accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
@@ -1260,6 +1265,8 @@ let puedeEliminar = false;
 let pEsEmpresa = false;      // la cuenta es Broquer para Empresas
 let pEsAdminOrg = false;     // quien navega es owner/admin
 let pMiembros = [];          // equipo activo [{user_id, nombre, email}]
+let pOrgId = null;           // toda cuenta tiene una org, incluso las individuales
+let pCategorias = [];        // [{id, nombre}] catálogo de categorías de la cuenta
 function pNombreAgente(uid) {
   if (!uid) return '';
   const m = pMiembros.find(x => x.user_id === uid);
@@ -1274,6 +1281,8 @@ async function cargarPermisoEliminar() {
     const org = await r.json();
     pEsEmpresa = org.es_empresa === true;
     pEsAdminOrg = org.es_admin === true;
+    pOrgId = org.org_id || null;
+    if (pOrgId) pCategorias = await catCargar(pOrgId);
     puedeEliminar = !org.es_empresa || org.es_admin === true;
     if (pEsEmpresa) {
       try {
@@ -2777,6 +2786,7 @@ else { window.addEventListener('brokr-shell-ready', () => { loadProps(); _preloa
 <script src="propiedades-editor.js" defer></script>
 <script src="historial-adjuntos.js" defer></script>
 <script src="ficha-comun.js" defer></script>
+<script src="categorias.js" defer></script>
 <script src="propiedades-ficha.js" defer></script>
 <script src="app-shell.js" defer></script>
 </body>

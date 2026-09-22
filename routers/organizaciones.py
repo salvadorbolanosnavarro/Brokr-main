@@ -877,7 +877,7 @@ async def listar_organizaciones(request: Request):
 # Supabase sobre `contactos`).
 # ═══════════════════════════════════════════════════════════════════════════
 
-_TABLAS_ASIGNABLES = ("contactos", "propiedades")
+_TABLAS_ASIGNABLES = ("contactos", "propiedades", "tareas")
 
 
 class AsignarReq(BaseModel):

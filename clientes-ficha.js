@@ -63,6 +63,7 @@ function clDescartarBorrador() {
   if (comp) comp.hidden = true;
   const ta = document.getElementById('f-nota-texto');
   if (ta) ta.value = '';
+  CL_NOTA_CATS = [];
 }
 
 /* Asignación de agente (solo cuentas Broquer para Empresas). */
@@ -290,11 +291,24 @@ async function cargarBitacora() {
   } catch { acts = []; }
   if (!detContacto || detContacto.id !== cid) return;
 
+  let catsPorActividad = {};
+  if (acts.length) {
+    try {
+      const ids = acts.map(a => '"' + a.id + '"').join(',');
+      const links = await restGet('actividades_categorias?select=actividad_id,categoria_id&actividad_id=in.(' + ids + ')');
+      (Array.isArray(links) ? links : []).forEach(l => {
+        const cat = cCategorias.find(c => String(c.id) === String(l.categoria_id));
+        if (cat) (catsPorActividad[l.actividad_id] = catsPorActividad[l.actividad_id] || []).push(cat.nombre);
+      });
+    } catch {}
+  }
+
   const entradas = acts.map(a => ({
     tipo: a.tipo || 'nota',
     texto: a.texto || '',
     adjuntos: a.adjuntos,
     fecha: a.created_at,
+    categorias: catsPorActividad[a.id],
   }));
 
   // Operaciones históricas del contacto: su fecha es texto libre, así que
@@ -337,10 +351,37 @@ async function cargarBitacora() {
    Dos caminos, ninguno de ellos un campo de texto permanente robando
    espacio al historial: "Nota" abre el editor, "Archivo" abre
    directamente el selector y guarda la entrada en cuanto suben. */
+let CL_NOTA_CATS = []; // categorías elegidas para la nota que se está redactando
+
+function clPintarCategoriasNota() {
+  const chipsEl = document.getElementById('f-nota-cat-chips');
+  const selectEl = document.getElementById('f-nota-cat-sel');
+  if (!chipsEl || !selectEl) return;
+  catPintarPicker({
+    chipsEl, selectEl, catalogo: cCategorias, seleccionadas: CL_NOTA_CATS,
+    onQuitar: id => { CL_NOTA_CATS = CL_NOTA_CATS.filter(x => x !== String(id)); clPintarCategoriasNota(); },
+    onAgregar: id => { if (!CL_NOTA_CATS.includes(String(id))) CL_NOTA_CATS.push(String(id)); clPintarCategoriasNota(); },
+  });
+}
+
+async function clNuevaCategoriaNota() {
+  const nombre = prompt('Nombre de la nueva categoría:');
+  if (!nombre || !nombre.trim()) return;
+  const uid = await _userId();
+  if (!uid || !cOrgId) return;
+  const cat = await catCrear(cOrgId, uid, nombre);
+  if (!cat) { alert('No se pudo crear la categoría.'); return; }
+  if (!cCategorias.some(c => String(c.id) === String(cat.id))) cCategorias.push(cat);
+  if (!CL_NOTA_CATS.includes(String(cat.id))) CL_NOTA_CATS.push(String(cat.id));
+  clPintarCategoriasNota();
+}
+
 function clAbrirNota() {
   const comp = document.getElementById('f-composer');
   comp.hidden = false;
   document.getElementById('f-nota-texto').focus();
+  CL_NOTA_CATS = [];
+  clPintarCategoriasNota();
 }
 
 function clCancelarNota() {
@@ -357,13 +398,18 @@ async function clGuardarNota() {
   const adjuntos = haTomarAdjuntosListos('f-nota-preview');
   btn.disabled = true;
   try {
-    await restPost('actividades', {
+    const rows = await restPost('actividades', {
       tipo: texto ? 'nota' : 'archivo',
       texto: texto,
       adjuntos: adjuntos,
       contacto_id: detContacto.id,
     });
+    const nueva = Array.isArray(rows) ? rows[0] : rows;
+    if (nueva && nueva.id) {
+      for (const catId of CL_NOTA_CATS) await catVincular('actividades_categorias', 'actividad_id', nueva.id, catId);
+    }
     ta.value = '';
+    CL_NOTA_CATS = [];
     document.getElementById('f-composer').hidden = true;
     await cargarBitacora();
     showToast(texto ? 'Nota guardada' : 'Archivos guardados');
