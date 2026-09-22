@@ -723,6 +723,11 @@ html, body { background: var(--paper); }
         <div class="bk-composer" id="f-composer" hidden>
           <textarea id="f-nota-texto" rows="3" placeholder="¿Qué pasó? La llamada, la visita, lo que te pidió…"></textarea>
           <div class="ha-preview" id="f-nota-preview"></div>
+          <div class="tke-chips" id="f-nota-cat-chips" style="margin:6px 0;"></div>
+          <div class="bk-field-row" style="margin-bottom:6px;">
+            <select class="bk-select" id="f-nota-cat-sel"><option value="">Agregar categoría…</option></select>
+            <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="clNuevaCategoriaNota()">+ Nueva</button>
+          </div>
           <div class="bk-composer__pie">
             <input type="file" id="f-nota-adjuntos" multiple hidden
                    accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
@@ -857,6 +862,7 @@ html, body { background: var(--paper); }
 
 <script src="historial-adjuntos.js" defer></script>
 <script src="ficha-comun.js" defer></script>
+<script src="categorias.js" defer></script>
 <script src="clientes-ficha.js" defer></script>
 <script src="app-shell.js" defer></script>
 
@@ -1054,6 +1060,8 @@ const C_API = 'https://api.broquer.app';
 let cEsEmpresa = false;      // la cuenta es Broquer para Empresas
 let cEsAdminOrg = false;     // quien navega es owner/admin de la empresa
 let cMiembros = [];          // [{user_id, nombre, email, activo}] del equipo
+let cOrgId = null;           // toda cuenta tiene una org, incluso las individuales
+let cCategorias = [];        // [{id, nombre}] catálogo de categorías de la cuenta
 function cNombreAgente(uid) {
   if (!uid) return '';
   const m = cMiembros.find(x => x.user_id === uid);
@@ -1068,6 +1076,8 @@ async function cCargarPermiso() {
     const org = await r.json();
     cEsEmpresa = org.es_empresa === true;
     cEsAdminOrg = org.es_admin === true;
+    cOrgId = org.org_id || null;
+    if (cOrgId) cCategorias = await catCargar(cOrgId);
     // En empresas, cargamos el equipo para el selector y filtro de agente
     if (cEsEmpresa) {
       try {

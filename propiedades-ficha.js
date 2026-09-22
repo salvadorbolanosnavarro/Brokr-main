@@ -95,6 +95,7 @@ function pfDescartarBorrador() {
   if (comp) comp.hidden = true;
   const ta = g('f-nota-texto');
   if (ta) ta.value = '';
+  PD_NOTA_CATS = [];
 }
 
 function pfRenderAsignacion(p) {
@@ -265,8 +266,21 @@ async function pdCargarBitacora() {
   } catch { acts = []; }
   if (currentDetailId !== pid) return;
 
+  let catsPorActividad = {};
+  if (acts.length) {
+    try {
+      const ids = acts.map(a => '"' + a.id + '"').join(',');
+      const links = await sbFetch('actividades_categorias?select=actividad_id,categoria_id&actividad_id=in.(' + ids + ')');
+      (Array.isArray(links) ? links : []).forEach(l => {
+        const cat = pCategorias.find(c => String(c.id) === String(l.categoria_id));
+        if (cat) (catsPorActividad[l.actividad_id] = catsPorActividad[l.actividad_id] || []).push(cat.nombre);
+      });
+    } catch {}
+  }
+
   const entradas = acts.map(a => ({
     tipo: a.tipo || 'nota', texto: a.texto || '', adjuntos: a.adjuntos, fecha: a.created_at,
+    categorias: catsPorActividad[a.id],
   }));
   const p = allProps.find(x => String(x.id) === String(pid));
   if (p && p.created_at) {
@@ -284,9 +298,36 @@ async function pdCargarBitacora() {
   feed.innerHTML = bkRenderBitacora(entradas, { alta: 'Alta del inmueble' });
 }
 
+let PD_NOTA_CATS = []; // categorías elegidas para la nota que se está redactando
+
+function pdPintarCategoriasNota() {
+  const chipsEl = g('f-nota-cat-chips');
+  const selectEl = g('f-nota-cat-sel');
+  if (!chipsEl || !selectEl) return;
+  catPintarPicker({
+    chipsEl, selectEl, catalogo: pCategorias, seleccionadas: PD_NOTA_CATS,
+    onQuitar: id => { PD_NOTA_CATS = PD_NOTA_CATS.filter(x => x !== String(id)); pdPintarCategoriasNota(); },
+    onAgregar: id => { if (!PD_NOTA_CATS.includes(String(id))) PD_NOTA_CATS.push(String(id)); pdPintarCategoriasNota(); },
+  });
+}
+
+async function pdNuevaCategoriaNota() {
+  const nombre = prompt('Nombre de la nueva categoría:');
+  if (!nombre || !nombre.trim()) return;
+  const uid = getCurrentUserId();
+  if (!uid || !pOrgId) return;
+  const cat = await catCrear(pOrgId, uid, nombre);
+  if (!cat) { alert('No se pudo crear la categoría.'); return; }
+  if (!pCategorias.some(c => String(c.id) === String(cat.id))) pCategorias.push(cat);
+  if (!PD_NOTA_CATS.includes(String(cat.id))) PD_NOTA_CATS.push(String(cat.id));
+  pdPintarCategoriasNota();
+}
+
 function pdAbrirNota() {
   g('f-composer').hidden = false;
   g('f-nota-texto').focus();
+  PD_NOTA_CATS = [];
+  pdPintarCategoriasNota();
 }
 function pdCancelarNota() { pfDescartarBorrador(); }
 
@@ -302,11 +343,16 @@ async function pdGuardarNota() {
   const adjuntos = haTomarAdjuntosListos('f-nota-preview');
   btn.disabled = true;
   try {
-    await sbFetch('actividades', 'POST', {
+    const rows = await sbFetch('actividades', 'POST', {
       user_id: uid, tipo: texto ? 'nota' : 'archivo', texto: texto,
       adjuntos: adjuntos, propiedad_id: pid,
     });
+    const nueva = Array.isArray(rows) ? rows[0] : rows;
+    if (nueva && nueva.id) {
+      for (const catId of PD_NOTA_CATS) await catVincular('actividades_categorias', 'actividad_id', nueva.id, catId);
+    }
     ta.value = '';
+    PD_NOTA_CATS = [];
     g('f-composer').hidden = true;
     await pdCargarBitacora();
     mostrarToast(texto ? 'Nota guardada' : 'Archivos guardados');

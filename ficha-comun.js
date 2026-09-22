@@ -167,13 +167,19 @@ function bkRenderBitacora(entradas, titulos) {
       texto: bkSinPrefijo(e.tipo, e.texto),
       hora: bkHora(e.fecha),
       adjuntos: e.adjuntos,
+      categorias: e.categorias,
     });
   });
   return html;
 }
 
-function bkItemBitacora({ tipo, titulo, texto, hora, adjuntos }) {
+function bkItemBitacora({ tipo, titulo, texto, hora, adjuntos, categorias }) {
   const adj = (typeof haRenderAdjuntos === 'function') ? haRenderAdjuntos(adjuntos) : '';
+  const cats = (categorias && categorias.length)
+    ? '<div class="tke-chips" style="margin-top:6px">' +
+      categorias.map(n => '<span class="tke-chip" style="cursor:default">' + bkEsc(n) + '</span>').join('') +
+      '</div>'
+    : '';
   return `<article class="bk-bita__item">
     <span class="bk-bita__ico bk-bita__ico--${bkEsc(tipo)}">${BK_BITA_ICONOS[tipo] || BK_BITA_ICONOS.nota}</span>
     <div class="bk-bita__cuerpo">
@@ -182,6 +188,7 @@ function bkItemBitacora({ tipo, titulo, texto, hora, adjuntos }) {
         <time class="bk-bita__hora">${bkEsc(hora)}</time>
       </header>
       ${texto ? `<p class="bk-bita__txt">${bkEsc(texto)}</p>` : ''}
+      ${cats}
       ${adj}
     </div>
   </article>`;
