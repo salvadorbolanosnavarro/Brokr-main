@@ -1211,7 +1211,11 @@
 
       <div id="f-pane-int" role="tabpanel" aria-labelledby="f-tab-int" hidden>
         <div class="bk-forma">
-          <select id="pd-int-contacto" aria-label="Contacto a ligar"></select>
+          <div class="prop-buscador">
+            <input type="text" id="pd-int-contacto-buscar" placeholder="Busca por nombre, teléfono…" autocomplete="off" oninput="pdBuscarContactoInput()" onfocus="pdBuscarContactoInput()" onkeydown="pdBuscarContactoKeydown(event)"/>
+            <input type="hidden" id="pd-int-contacto"/>
+            <div class="prop-sugerencias" id="pd-int-contacto-sug" hidden></div>
+          </div>
           <select id="pd-int-rel" aria-label="Relación con el inmueble">
             <option value="interes">Le interesa</option>
             <option value="propietario">Es el propietario</option>

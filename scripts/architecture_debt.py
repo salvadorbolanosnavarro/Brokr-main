@@ -117,7 +117,11 @@ LARGE_FILE_MAX_BYTES = {
     # ficha; botones "Editar"/"Eliminar" en cada nota de la bitácora, con su
     # registro en actividades_historial; filtro de fecha de alta — mismo
     # criterio del resto de este inventario, funcionalidad de producto real.
-    "propiedades.html": 133_542,
+    # Bumped 349 bytes: el <select> de "Interesados" (hasta 500 contactos en
+    # orden de fecha, sin filtro) se reemplazó por el mismo buscador con
+    # sugerencias en vivo que ya usa Tareas — arregla una usabilidad real
+    # reportada, no es deuda.
+    "propiedades.html": 133_891,
     # Bumped 1,844 bytes for the "Revisar webhook de la app" button in
     # Administrar números (fija el webhook de WhatsApp a nivel app) — a real
     # product change, not debt to pay down.
