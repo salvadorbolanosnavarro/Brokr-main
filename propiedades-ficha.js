@@ -482,6 +482,22 @@ async function pdCargarContactosMin() {
   return _pdContactosMin;
 }
 
+// Buscador con sugerencias en vivo (bkBuscadorContactos, ficha-comun.js) —
+// perezoso: este <script> corre antes que ficha-comun.js porque no lleva
+// "defer" (ver la misma nota en tareas.html).
+let _pdIntDisponibles = [];
+let _buscPdIntContacto;
+function _asegurarBuscadorPdInt() {
+  if (_buscPdIntContacto) return;
+  _buscPdIntContacto = bkBuscadorContactos('pd-int-contacto-buscar', 'pd-int-contacto', 'pd-int-contacto-sug', 'No tienes más contactos para ligar');
+  document.addEventListener('click', (ev) => {
+    if (_buscPdIntContacto.manejarClick(ev.target)) return;
+    _buscPdIntContacto.cerrarSiClickAfuera(ev.target);
+  });
+}
+function pdBuscarContactoInput() { _asegurarBuscadorPdInt(); _buscPdIntContacto.onInput(_pdIntDisponibles); }
+function pdBuscarContactoKeydown(ev) { _asegurarBuscadorPdInt(); _buscPdIntContacto.onKeydown(ev); }
+
 async function pdCargarInteresados() {
   const pid = currentDetailId; if (!pid) return;
   const feed = g('pd-int-feed');
@@ -497,13 +513,14 @@ async function pdCargarInteresados() {
 
   const yaLigados = new Set(vinculos.map(v => String(v.contacto_id)));
   const disponibles = contactos.filter(c => !yaLigados.has(String(c.id)));
-  // Sin nadie a quién ligar, la barra entera sobra: un desplegable
-  // deshabilitado que sólo dice "no hay" es un renglón muerto.
-  const sel = g('pd-int-contacto');
-  sel.innerHTML = '<option value="">Elige a quién ligar…</option>' +
-    disponibles.map(c => `<option value="${esc(String(c.id))}">${esc(c.nombre)}</option>`).join('');
-  sel.value = '';
-  sel.closest('.bk-forma').hidden = !disponibles.length;
+  _pdIntDisponibles = disponibles;
+  // Sin nadie a quién ligar, la barra entera sobra: un buscador vacío que
+  // sólo dice "no hay" es un renglón muerto.
+  const buscador = g('pd-int-contacto-buscar');
+  buscador.value = '';
+  g('pd-int-contacto').value = '';
+  g('pd-int-contacto-sug').hidden = true;
+  buscador.closest('.bk-forma').hidden = !disponibles.length;
 
   const porId = Object.fromEntries(contactos.map(c => [String(c.id), c]));
   feed.innerHTML = vinculos.length
