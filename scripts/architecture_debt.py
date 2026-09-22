@@ -113,7 +113,11 @@ LARGE_FILE_MAX_BYTES = {
     # Bumped 705 bytes: selector de categorías (chips + "+ Nueva") en el
     # composer de notas de la bitácora, para poder etiquetar notas igual que
     # las tareas — funcionalidad de producto real, no debt.
-    "propiedades.html": 132_377,
+    # Bumped 1,165 bytes: hora (además de fecha) al crear una tarea desde la
+    # ficha; botones "Editar"/"Eliminar" en cada nota de la bitácora, con su
+    # registro en actividades_historial; filtro de fecha de alta — mismo
+    # criterio del resto de este inventario, funcionalidad de producto real.
+    "propiedades.html": 133_542,
     # Bumped 1,844 bytes for the "Revisar webhook de la app" button in
     # Administrar números (fija el webhook de WhatsApp a nivel app) — a real
     # product change, not debt to pay down.
@@ -202,7 +206,19 @@ LARGE_FILE_MAX_BYTES = {
     # Bumped 549 bytes: .tke-chips/.tke-chip — chips de categorías, usados
     # por Tareas y por el selector de categorías del composer de notas en
     # Contactos/Clientes/Inmuebles. Funcionalidad de producto real, no debt.
-    "brokr-theme.css": 104_942,
+    # Bumped 1,809 bytes: .prop-buscador/.prop-sugerencias/.prop-sugerencia*
+    # (buscador con sugerencias en vivo, generalizado del que ya traía
+    # Clientes para propiedades — reemplaza los <select> de cientos de
+    # contactos/inmuebles sin filtro) y .bk-bita__acciones (botones
+    # Editar/Eliminar de cada nota de la bitácora). Funcionalidad de
+    # producto real, no debt.
+    "brokr-theme.css": 106_751,
+    # Nuevo en el inventario: los filtros de fecha/fuente y el buscador de
+    # "propiedad de interés" en el toolbar de Contactos, más el buscador de
+    # inmuebles del composer de notas, cruzaron contactos.html el umbral de
+    # 100 KB. Funcionalidad de producto real, no deuda por pagar; queda
+    # registrada con techo para que no siga creciendo sin revisión.
+    "contactos.html": 101_242,
 }
 MAX_LARGE_CODE_FILES = len(LARGE_FILE_MAX_BYTES)
 
