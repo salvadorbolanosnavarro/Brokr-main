@@ -162,23 +162,39 @@ function bkRenderBitacora(entradas, titulos) {
       html += `<div class="bk-bita__dia">${bkEsc(dia)}</div>`;
     }
     html += bkItemBitacora({
+      id: e.id,
       tipo: e.tipo,
       titulo: nombres[e.tipo] || 'Actividad',
       texto: bkSinPrefijo(e.tipo, e.texto),
       hora: bkHora(e.fecha),
       adjuntos: e.adjuntos,
       categorias: e.categorias,
+      editadoEn: e.editado_en,
     });
   });
   return html;
 }
 
-function bkItemBitacora({ tipo, titulo, texto, hora, adjuntos, categorias }) {
+// Editar/eliminar solo aplica a notas y archivos escritos a mano — los
+// demás tipos (alta, cambio de etapa, tarea completada) son un registro
+// automático de lo que pasó, no algo que tenga sentido "corregir".
+const BK_TIPOS_EDITABLES = ['nota', 'archivo'];
+
+function bkItemBitacora({ id, tipo, titulo, texto, hora, adjuntos, categorias, editadoEn }) {
   const adj = (typeof haRenderAdjuntos === 'function') ? haRenderAdjuntos(adjuntos) : '';
   const cats = (categorias && categorias.length)
     ? '<div class="tke-chips" style="margin-top:6px">' +
       categorias.map(n => '<span class="tke-chip" style="cursor:default">' + bkEsc(n) + '</span>').join('') +
       '</div>'
+    : '';
+  const editable = id && BK_TIPOS_EDITABLES.includes(tipo) &&
+    typeof bkEditarNota === 'function' && typeof bkEliminarNota === 'function';
+  const acciones = editable
+    ? `<div class="bk-bita__acciones">
+        ${editadoEn ? '<span class="bk-hint" title="Editada">(editada)</span>' : ''}
+        <button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="bkEditarNota('${bkEsc(String(id))}')">Editar</button>
+        <button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="bkEliminarNota('${bkEsc(String(id))}')">Eliminar</button>
+      </div>`
     : '';
   return `<article class="bk-bita__item">
     <span class="bk-bita__ico bk-bita__ico--${bkEsc(tipo)}">${BK_BITA_ICONOS[tipo] || BK_BITA_ICONOS.nota}</span>
@@ -189,6 +205,7 @@ function bkItemBitacora({ tipo, titulo, texto, hora, adjuntos, categorias }) {
       </header>
       ${texto ? `<p class="bk-bita__txt">${bkEsc(texto)}</p>` : ''}
       ${cats}
+      ${acciones}
       ${adj}
     </div>
   </article>`;
@@ -223,4 +240,116 @@ function bkContador(id, n) {
   if (!el) return;
   el.textContent = n;
   el.hidden = !n;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Buscador con sugerencias en vivo — reemplaza los <select> con cientos
+   de opciones en orden alfabético, sin filtro, por un campo de texto
+   que filtra mientras se escribe (mismo mecanismo que ya traía el
+   buscador de propiedades de Clientes, generalizado para cualquier
+   lista: contactos, propiedades, lo que sea).
+
+   opciones = {
+     filtro(item, q)  → true/false si "item" coincide con la búsqueda q
+     render(item)     → { titulo, sub } para pintar la sugerencia
+     vacioTexto       → texto cuando no hay nada que ofrecer
+     limite           → máximo de sugerencias (default 8)
+   }
+   Devuelve { onInput(disponibles), onKeydown(ev), manejarClick(target),
+              cerrarSiClickAfuera(target) } — mismo contrato que el
+   buscador de propiedades original, para no tener que tocar quien ya
+   lo usaba.
+   ══════════════════════════════════════════════════════════════════ */
+function bkCrearBuscador(inputId, hiddenId, cajaId, opciones) {
+  const { filtro, render, vacioTexto, limite } = opciones;
+  const tope = limite || 8;
+  let sugCache = [];
+  let hl = -1;
+  const inputEl = () => document.getElementById(inputId);
+  const hiddenEl = () => document.getElementById(hiddenId);
+  const cajaEl = () => document.getElementById(cajaId);
+
+  function filtrar(q, disponibles) {
+    q = (q || '').toLowerCase().trim();
+    if (!q) return disponibles.slice(0, tope);
+    return disponibles.filter(item => filtro(item, q)).slice(0, tope);
+  }
+  function pintar(lista, disponibles) {
+    sugCache = lista;
+    hl = -1;
+    const caja = cajaEl();
+    if (!lista.length) {
+      caja.innerHTML = '<div class="prop-sugerencia prop-sugerencia--vacio">' +
+        (disponibles.length ? 'Sin coincidencias' : (vacioTexto || 'Nada para elegir')) + '</div>';
+      caja.hidden = false;
+      return;
+    }
+    caja.innerHTML = lista.map((item, i) => {
+      const { titulo, sub } = render(item);
+      return `<button type="button" class="prop-sugerencia" data-idx="${i}">
+        <span class="prop-sugerencia__n">${bkEsc(titulo || 'Sin nombre')}</span>
+        ${sub ? `<span class="prop-sugerencia__d">${bkEsc(sub)}</span>` : ''}
+      </button>`;
+    }).join('');
+    caja.hidden = false;
+  }
+  function onInput(disponibles) {
+    hiddenEl().value = '';
+    pintar(filtrar(inputEl().value, disponibles), disponibles);
+  }
+  function elegir(idx) {
+    const item = sugCache[idx];
+    if (!item) return null;
+    hiddenEl().value = item.id;
+    inputEl().value = render(item).titulo || '';
+    cajaEl().hidden = true;
+    return item;
+  }
+  function resaltar() {
+    const caja = cajaEl();
+    Array.from(caja.querySelectorAll('.prop-sugerencia[data-idx]')).forEach((el, i) => {
+      el.classList.toggle('is-hl', i === hl);
+      if (i === hl) el.scrollIntoView({ block: 'nearest' });
+    });
+  }
+  function onKeydown(ev) {
+    const caja = cajaEl();
+    if (!caja || caja.hidden) return;
+    const n = sugCache.length;
+    if (ev.key === 'ArrowDown' && n) { ev.preventDefault(); hl = Math.min(hl + 1, n - 1); resaltar(); }
+    else if (ev.key === 'ArrowUp' && n) { ev.preventDefault(); hl = Math.max(hl - 1, 0); resaltar(); }
+    else if (ev.key === 'Enter') { ev.preventDefault(); elegir(hl >= 0 ? hl : 0); }
+    else if (ev.key === 'Escape') { caja.hidden = true; }
+  }
+  function manejarClick(target) {
+    const btn = target.closest('.prop-sugerencia[data-idx]');
+    if (btn && cajaEl().contains(btn)) { elegir(Number(btn.dataset.idx)); return true; }
+    return false;
+  }
+  function cerrarSiClickAfuera(target) {
+    if (!target.closest('#' + inputId) && !target.closest('#' + cajaId)) cajaEl().hidden = true;
+  }
+  return { onInput, onKeydown, manejarClick, cerrarSiClickAfuera, elegir };
+}
+
+// Atajo: buscador de propiedades por título/colonia/ciudad/tipo — el caso
+// más común (Tareas, notas, filtros de "propiedad de interés"…).
+function bkBuscadorPropiedades(inputId, hiddenId, cajaId, vacioTexto) {
+  return bkCrearBuscador(inputId, hiddenId, cajaId, {
+    vacioTexto,
+    filtro: (p, q) => ((p.titulo||'') + ' ' + (p.colonia||'') + ' ' + (p.ciudad||'') + ' ' + (p.tipo||'')).toLowerCase().includes(q),
+    render: (p) => ({
+      titulo: p.titulo || 'Sin título',
+      sub: (typeof propSubtitulo === 'function') ? propSubtitulo(p) : (p.clave_interna || p.colonia || ''),
+    }),
+  });
+}
+
+// Atajo: buscador de contactos por nombre/teléfono/correo.
+function bkBuscadorContactos(inputId, hiddenId, cajaId, vacioTexto) {
+  return bkCrearBuscador(inputId, hiddenId, cajaId, {
+    vacioTexto,
+    filtro: (c, q) => ((c.nombre||'') + ' ' + (c.telefono||'') + ' ' + (c.email||'')).toLowerCase().includes(q),
+    render: (c) => ({ titulo: c.nombre || 'Sin nombre', sub: c.telefono || c.email || '' }),
+  });
 }

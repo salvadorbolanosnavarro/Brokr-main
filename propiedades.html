@@ -933,6 +933,15 @@
           <option value="desc">Mayor a menor</option>
         </select>
 
+        <!-- Filtro por fecha de alta -->
+        <select id="props-filter-fecha" onchange="filterProps()">
+          <option value="">Fecha: todas</option>
+          <option value="hoy">Hoy</option>
+          <option value="semana">Esta semana</option>
+          <option value="mes">Este mes</option>
+          <option value="anio">Este año</option>
+        </select>
+
         <!-- Filtro por etiqueta (se muestra solo si hay etiquetas) -->
         <select id="props-filter-tag" onchange="filterProps()" style="display:none">
           <option value="">Todas las etiquetas</option>
@@ -1217,6 +1226,7 @@
         <div class="bk-forma">
           <input type="text" id="pd-tarea-input" placeholder="¿Qué falta con este inmueble?" onkeydown="if(event.key==='Enter')pdAgregarTarea()"/>
           <input type="date" id="pd-tarea-fecha" aria-label="Fecha límite"/>
+          <input type="time" id="pd-tarea-hora" aria-label="Hora"/>
           <button class="bk-btn bk-btn--sm" onclick="pdAgregarTarea()">Crear</button>
         </div>
         <div class="bk-forma">
@@ -1604,6 +1614,20 @@ function filterPropsDebounced() {
   _filtT = setTimeout(filterProps, 200);
 }
 
+function pFechaEnRango(iso, preset) {
+  if (!iso) return false;
+  const d = new Date(iso);
+  const ahora = new Date();
+  if (preset === 'hoy') return d.toDateString() === ahora.toDateString();
+  if (preset === 'semana') {
+    const inicio = new Date(ahora); inicio.setDate(ahora.getDate() - ahora.getDay()); inicio.setHours(0,0,0,0);
+    return d >= inicio;
+  }
+  if (preset === 'mes') return d.getFullYear() === ahora.getFullYear() && d.getMonth() === ahora.getMonth();
+  if (preset === 'anio') return d.getFullYear() === ahora.getFullYear();
+  return true;
+}
+
 function filterProps() {
   const q = g('props-search').value.toLowerCase();
   const op = g('props-filter-op').value;
@@ -1612,6 +1636,7 @@ function filterProps() {
   const precioMin = parsePrecio(g('props-price-min').value);
   const precioMax = parsePrecio(g('props-price-max').value);
   const sort = g('props-sort-precio').value;
+  const fechaPreset = g('props-filter-fecha') ? g('props-filter-fecha').value : '';
 
   updateEstLabel();
   const tag = g('props-filter-tag') ? g('props-filter-tag').value : '';
@@ -1627,6 +1652,7 @@ function filterProps() {
     if (precioMax !== null && (p.precio == null || Number(p.precio) > precioMax)) return false;
     if (tag && !(Array.isArray(p.etiquetas) && p.etiquetas.includes(tag))) return false;
     if (agente && (agente === 'nadie' ? !!p.asignado_a : p.asignado_a !== agente)) return false;
+    if (fechaPreset && !pFechaEnRango(p.created_at, fechaPreset)) return false;
     return true;
   });
 
