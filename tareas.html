@@ -189,7 +189,7 @@
 .tk-due { font-size: var(--fs-caption); color: var(--mute); }
 .tk-due.is-overdue { color: var(--danger); font-weight: 600; }
 .tk-link {
-  display: inline-flex; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; gap: 5px; font-family: inherit;
   font-size: var(--fs-caption); font-weight: 500;
   padding: 2px 9px;
   border-radius: var(--r-pill);
@@ -378,6 +378,16 @@
         </div>
         <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tkAgregarPropiedad()">Agregar</button>
       </div>
+
+      <div class="bk-divider"></div>
+      <span class="bk-eyebrow">Archivos adjuntos</span>
+      <div class="tke-chips" id="tke-adjuntos" style="margin:var(--sp-2) 0;"></div>
+      <div style="display:flex;align-items:center;gap:var(--sp-3);">
+        <input type="file" id="tke-adj-input" multiple hidden onchange="haAgregarArchivos(this.files,'tke-adj-preview');this.value=''"/>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="g('tke-adj-input').click()">Adjuntar archivos</button>
+        <span class="bk-hint" style="margin:0">Fotos, videos, PDF… hasta 25 MB c/u</span>
+      </div>
+      <div class="ha-preview" id="tke-adj-preview" style="margin-top:var(--sp-2)"></div>
     </div>
     <div class="bk-modal__foot">
       <button class="bk-btn bk-btn--danger" onclick="tkEliminarDesdeModal()">Eliminar tarea</button>
@@ -387,67 +397,13 @@
   </div>
 </div>
 
-<!-- ═══ Modal: nueva tarea ═══ -->
-<div class="bk-overlay" id="tk-modal-nueva">
-  <div class="bk-modal">
-    <div class="bk-modal__head"><span class="bk-modal__title">Nueva tarea</span></div>
-    <div class="bk-modal__body">
-      <div class="bk-field"><label class="bk-label">Título</label><input class="bk-input" id="tkn-titulo" placeholder="Ej. Llamar a Pedro para agendar visita"/></div>
-      <div class="bk-field-row">
-        <div class="bk-field"><label class="bk-label">Fecha</label><input class="bk-input" type="date" id="tkn-fecha"/></div>
-        <div class="bk-field"><label class="bk-label">Hora</label><input class="bk-input" type="time" id="tkn-hora"/></div>
-      </div>
-      <div class="bk-field"><label class="bk-label">Notas</label><textarea class="bk-textarea" id="tkn-notas" rows="2"></textarea></div>
-
-      <div class="bk-field" id="tkn-asignado-wrap" hidden>
-        <label class="bk-label">Asignado a</label>
-        <select class="bk-select" id="tkn-asignado-sel"><option value="">Sin asignar</option></select>
-      </div>
-
-      <div class="bk-divider"></div>
-      <span class="bk-eyebrow">Categorías</span>
-      <div class="tke-chips" id="tkn-categorias-chips" style="margin:var(--sp-2) 0;"></div>
-      <div class="bk-field-row">
-        <select class="bk-select" id="tkn-agregar-categoria"><option value="">Agregar categoría…</option></select>
-        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tknNuevaCategoria()">+ Nueva</button>
-      </div>
-
-      <div class="bk-divider"></div>
-      <span class="bk-eyebrow">Contactos vinculados</span>
-      <div class="tke-chips" id="tkn-contactos-chips" style="margin:var(--sp-2) 0;"></div>
-      <div class="bk-field-row">
-        <div class="prop-buscador">
-          <input type="text" class="bk-input" id="tkn-agregar-contacto-buscar" placeholder="Buscar contacto…" autocomplete="off" oninput="tknBuscarContactoInput()" onkeydown="tknBuscarContactoKeydown(event)"/>
-          <input type="hidden" id="tkn-agregar-contacto"/>
-          <div class="prop-sugerencias" id="tkn-agregar-contacto-sug" hidden></div>
-        </div>
-        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tknAgregarContacto()">Agregar</button>
-      </div>
-
-      <div class="bk-divider"></div>
-      <span class="bk-eyebrow">Inmuebles vinculados</span>
-      <div class="tke-chips" id="tkn-propiedades-chips" style="margin:var(--sp-2) 0;"></div>
-      <div class="bk-field-row">
-        <div class="prop-buscador">
-          <input type="text" class="bk-input" id="tkn-agregar-propiedad-buscar" placeholder="Buscar inmueble…" autocomplete="off" oninput="tknBuscarPropInput()" onkeydown="tknBuscarPropKeydown(event)"/>
-          <input type="hidden" id="tkn-agregar-propiedad"/>
-          <div class="prop-sugerencias" id="tkn-agregar-propiedad-sug" hidden></div>
-        </div>
-        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tknAgregarPropiedad()">Agregar</button>
-      </div>
-    </div>
-    <div class="bk-modal__foot">
-      <button class="bk-btn bk-btn--ghost" onclick="tknCerrar()">Cancelar</button>
-      <button class="bk-btn bk-btn--forest" id="tkn-crear-btn" onclick="tknCrearTarea()">Crear tarea</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script src="app-shell.js" defer></script>
 <script src="ficha-comun.js" defer></script>
 <script src="categorias.js" defer></script>
+<script src="historial-adjuntos.js" defer></script>
+<script src="tarea-nueva.js" defer></script>
 
 <script>
 function g(id) { return document.getElementById(id); }
@@ -534,7 +490,7 @@ function tkPintarControlesEquipo() {
   }
   const opts = '<option value="">Sin asignar</option>' +
     tkMiembros.map(m => `<option value="${esc(m.user_id)}">${esc(m.nombre || m.email)}</option>`).join('');
-  ['tkn', 'tke'].forEach(pref => {
+  ['tke'].forEach(pref => {
     g(pref + '-asignado-wrap').hidden = !mostrar;
     if (mostrar) g(pref + '-asignado-sel').innerHTML = opts;
   });
@@ -771,6 +727,15 @@ function vinculoChip(t) {
   return html;
 }
 
+function adjuntosChip(t) {
+  const n = Array.isArray(t.adjuntos) ? t.adjuntos.length : 0;
+  if (!n) return '';
+  return `<button type="button" class="tk-link" style="cursor:pointer" onclick="tkAbrirEditar('${esc(String(t.id))}')" title="Ver archivos adjuntos">
+      <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17.5 8.5l-7.1 7.1a2.5 2.5 0 003.5 3.5l7.1-7.1a4.5 4.5 0 00-6.4-6.4l-7.1 7.1a6.5 6.5 0 009.2 9.2"/></svg>
+      <span>${n} ${n === 1 ? 'archivo' : 'archivos'}</span>
+    </button>`;
+}
+
 function filaTarea(t, mostrarVencida) {
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   const due = t.fecha_entrega ? new Date(t.fecha_entrega) : null;
@@ -787,6 +752,7 @@ function filaTarea(t, mostrarVencida) {
         ${due ? `<span class="tk-due${vencida ? ' is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${fechaCorta(t.fecha_entrega)} · ${horaCorta(t.fecha_entrega)}</span>` : ''}
         ${asignadoHtml}
         ${vinculoChip(t)}
+        ${adjuntosChip(t)}
       </div>
       ${catChipsSoloLectura(TAREA_CATS[t.id], tkCategorias)}
     </div>
@@ -938,37 +904,26 @@ let TKE_ID = null; // id de la tarea que se está editando
 // reemplazan los <select> que obligaban a scrollear cientos de contactos o
 // inmuebles uno por uno.
 let tkContactosDisponibles = [], tkPropsDisponibles = [];
-let tknContactosDisponibles = [], tknPropsDisponibles = [];
 // OJO: este <script> corre de inmediato al parsear (no lleva "defer"), y
 // ficha-comun.js SÍ lleva "defer" — se ejecuta después. Instanciar los
 // buscadores aquí arriba, a secas, tronaría con "bkBuscadorContactos is not
 // defined". Por eso se crean perezosamente, la primera vez que hacen falta.
-let _buscTkeContacto, _buscTkeProp, _buscTknContacto, _buscTknProp;
+let _buscTkeContacto, _buscTkeProp;
 function _asegurarBuscadoresTareas() {
   if (_buscTkeContacto) return;
   _buscTkeContacto = bkBuscadorContactos('tke-agregar-contacto-buscar', 'tke-agregar-contacto', 'tke-agregar-contacto-sug', 'No hay más contactos para agregar');
   _buscTkeProp = bkBuscadorPropiedades('tke-agregar-propiedad-buscar', 'tke-agregar-propiedad', 'tke-agregar-propiedad-sug', 'No hay más inmuebles para agregar');
-  _buscTknContacto = bkBuscadorContactos('tkn-agregar-contacto-buscar', 'tkn-agregar-contacto', 'tkn-agregar-contacto-sug', 'No hay más contactos para agregar');
-  _buscTknProp = bkBuscadorPropiedades('tkn-agregar-propiedad-buscar', 'tkn-agregar-propiedad', 'tkn-agregar-propiedad-sug', 'No hay más inmuebles para agregar');
 }
 function tkeBuscarContactoInput() { _asegurarBuscadoresTareas(); _buscTkeContacto.onInput(tkContactosDisponibles); }
 function tkeBuscarContactoKeydown(ev) { _asegurarBuscadoresTareas(); _buscTkeContacto.onKeydown(ev); }
 function tkeBuscarPropInput() { _asegurarBuscadoresTareas(); _buscTkeProp.onInput(tkPropsDisponibles); }
 function tkeBuscarPropKeydown(ev) { _asegurarBuscadoresTareas(); _buscTkeProp.onKeydown(ev); }
-function tknBuscarContactoInput() { _asegurarBuscadoresTareas(); _buscTknContacto.onInput(tknContactosDisponibles); }
-function tknBuscarContactoKeydown(ev) { _asegurarBuscadoresTareas(); _buscTknContacto.onKeydown(ev); }
-function tknBuscarPropInput() { _asegurarBuscadoresTareas(); _buscTknProp.onInput(tknPropsDisponibles); }
-function tknBuscarPropKeydown(ev) { _asegurarBuscadoresTareas(); _buscTknProp.onKeydown(ev); }
 document.addEventListener('click', (ev) => {
   if (!_buscTkeContacto) return; // nada que cerrar si nunca se han usado
   if (_buscTkeContacto.manejarClick(ev.target)) return;
   if (_buscTkeProp.manejarClick(ev.target)) return;
-  if (_buscTknContacto.manejarClick(ev.target)) return;
-  if (_buscTknProp.manejarClick(ev.target)) return;
   _buscTkeContacto.cerrarSiClickAfuera(ev.target);
   _buscTkeProp.cerrarSiClickAfuera(ev.target);
-  _buscTknContacto.cerrarSiClickAfuera(ev.target);
-  _buscTknProp.cerrarSiClickAfuera(ev.target);
 });
 
 function tkPintarChips() {
@@ -1016,7 +971,25 @@ function tkAbrirEditar(id) {
   if (tkEsEmpresa && tkMiembros.length) g('tke-asignado-sel').value = t.asignado_a || '';
   tkPintarChips();
   tkPintarCategoriasEdit();
+  TKE_ADJ = Array.isArray(t.adjuntos) ? t.adjuntos.slice() : [];
+  TKE_ADJ_CAMBIO = false;
+  haTomarAdjuntosListos('tke-adj-preview'); // limpia lo de otra tarea
+  tkPintarAdjuntos();
   g('tk-modal-editar').classList.add('is-open');
+}
+
+// Archivos ya guardados en la tarea (tareas.adjuntos). Quitar uno solo se
+// aplica al darle Guardar, igual que el resto de los campos del modal.
+let TKE_ADJ = [], TKE_ADJ_CAMBIO = false;
+function tkPintarAdjuntos() {
+  g('tke-adjuntos').innerHTML = TKE_ADJ.length
+    ? TKE_ADJ.map((a, i) => `<span class="tke-chip"><a href="${esc(a.url)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(a.nombre || 'Archivo')}</a><button onclick="tkQuitarAdjunto(${i})" title="Quitar">×</button></span>`).join('')
+    : '<span class="bk-hint">Ninguno todavía.</span>';
+}
+function tkQuitarAdjunto(i) {
+  TKE_ADJ.splice(i, 1);
+  TKE_ADJ_CAMBIO = true;
+  tkPintarAdjuntos();
 }
 
 function tkPintarCategoriasEdit() {
@@ -1075,6 +1048,7 @@ async function tkeCambiarAsignado() {
 
 function tkCerrarEditar() {
   g('tk-modal-editar').classList.remove('is-open');
+  haTomarAdjuntosListos('tke-adj-preview');
   TKE_ID = null;
 }
 
@@ -1097,6 +1071,11 @@ async function tkGuardarEdicion() {
     // muda para siempre — nunca vuelve a avisar aunque tenga fecha nueva.
     recordatorio_enviado: false,
   };
+  if (haHaySubiendoPendiente('tke-adj-preview')) { alert('Espera a que terminen de subirse los archivos.'); return; }
+  const nuevosAdj = haAdjuntosListos('tke-adj-preview');
+  // Solo se manda la columna si cambió: así editar sigue funcionando aunque
+  // aún no se haya corrido migracion-tareas-adjuntos.sql.
+  if (nuevosAdj.length || TKE_ADJ_CAMBIO) cambios.adjuntos = TKE_ADJ.concat(nuevosAdj);
   const btn = g('tke-guardar-btn');
   const prevTxt = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
@@ -1140,6 +1119,13 @@ async function tkQuitarContacto(cid) {
   if (!TKE_ID) return;
   try {
     await sbFetch('tareas_contactos?tarea_id=eq.' + encodeURIComponent(TKE_ID) + '&contacto_id=eq.' + encodeURIComponent(cid), 'DELETE');
+    // Si también estaba en la columna vieja contacto_id, se limpia: si no,
+    // el vínculo "regresaba" al recargar.
+    const t = tareas.find(x => String(x.id) === TKE_ID);
+    if (t && String(t.contacto_id) === String(cid)) {
+      await sbFetch('tareas?id=eq.' + encodeURIComponent(TKE_ID), 'PATCH', { contacto_id: null });
+      t.contacto_id = null;
+    }
     VINCULOS.contactos[TKE_ID] = (VINCULOS.contactos[TKE_ID] || []).filter(x => x !== String(cid));
     tkPintarChips();
     renderTareas();
@@ -1169,6 +1155,11 @@ async function tkQuitarPropiedad(pid) {
   if (!TKE_ID) return;
   try {
     await sbFetch('tareas_propiedades?tarea_id=eq.' + encodeURIComponent(TKE_ID) + '&propiedad_id=eq.' + encodeURIComponent(pid), 'DELETE');
+    const t = tareas.find(x => String(x.id) === TKE_ID);
+    if (t && String(t.propiedad_id) === String(pid)) {
+      await sbFetch('tareas?id=eq.' + encodeURIComponent(TKE_ID), 'PATCH', { propiedad_id: null });
+      t.propiedad_id = null;
+    }
     VINCULOS.propiedades[TKE_ID] = (VINCULOS.propiedades[TKE_ID] || []).filter(x => x !== String(pid));
     tkPintarChips();
     renderTareas();
@@ -1178,165 +1169,28 @@ async function tkQuitarPropiedad(pid) {
   }
 }
 
-/* ── Nueva tarea (modal completo, con vínculos desde la creación) ──── */
-// El id de la tarea aún no existe al abrir este modal (a diferencia de
-// Clientes, aquí el id lo genera la base de datos), así que los vínculos
-// elegidos se guardan en TKN_PENDIENTE y solo se mandan al backend DESPUÉS
-// de crear la tarea y conocer su id real.
-let TKN_PENDIENTE = { contactos: [], propiedades: [], categorias: [] };
-
-function tknPintarChips() {
-  const contactos = TKN_PENDIENTE.contactos;
-  const propiedades = TKN_PENDIENTE.propiedades;
-  g('tkn-contactos-chips').innerHTML = contactos.length
-    ? contactos.map(cid => {
-        const c = contactoIdx[String(cid)];
-        return `<span class="tke-chip">${esc(c ? c.nombre : 'Contacto')}<button onclick="tknQuitarContacto('${esc(String(cid))}')" title="Quitar">×</button></span>`;
-      }).join('')
-    : '<span class="bk-hint">Ninguno todavía.</span>';
-  g('tkn-propiedades-chips').innerHTML = propiedades.length
-    ? propiedades.map(pid => {
-        const p = propIdx[String(pid)];
-        const nombre = p ? (p.clave_interna || p.titulo || 'Inmueble') : 'Inmueble';
-        return `<span class="tke-chip">${esc(nombre)}<button onclick="tknQuitarPropiedad('${esc(String(pid))}')" title="Quitar">×</button></span>`;
-      }).join('')
-    : '<span class="bk-hint">Ninguno todavía.</span>';
-  tknContactosDisponibles = contactosMin.filter(c => !contactos.includes(String(c.id)));
-  tknPropsDisponibles = propsMin.filter(p => !propiedades.includes(String(p.id)));
-  g('tkn-agregar-contacto-buscar').value = '';
-  g('tkn-agregar-contacto').value = '';
-  g('tkn-agregar-propiedad-buscar').value = '';
-  g('tkn-agregar-propiedad').value = '';
-  catPintarPicker({
-    chipsEl: g('tkn-categorias-chips'),
-    selectEl: g('tkn-agregar-categoria'),
-    catalogo: tkCategorias,
-    seleccionadas: TKN_PENDIENTE.categorias,
-    onQuitar: tknQuitarCategoria,
-    onAgregar: tknAgregarCategoria,
-  });
-}
-
-function tknAgregarCategoria(catId) {
-  if (!catId || TKN_PENDIENTE.categorias.includes(String(catId))) return;
-  TKN_PENDIENTE.categorias.push(String(catId));
-  tknPintarChips();
-}
-
-function tknQuitarCategoria(catId) {
-  TKN_PENDIENTE.categorias = TKN_PENDIENTE.categorias.filter(x => x !== String(catId));
-  tknPintarChips();
-}
-
-async function tknNuevaCategoria() {
-  const nombre = prompt('Nombre de la nueva categoría:');
-  if (!nombre || !nombre.trim()) return;
-  const uid = await userId();
-  if (!uid || !tkOrgId) return;
-  const cat = await catCrear(tkOrgId, uid, nombre);
-  if (!cat) { alert('No se pudo crear la categoría.'); return; }
-  if (!tkCategorias.some(c => String(c.id) === String(cat.id))) tkCategorias.push(cat);
-  tknAgregarCategoria(cat.id);
-}
-
+/* ── Nueva tarea ────────────────────────────────────────────── */
+// El formulario vive en tarea-nueva.js y es el mismo que se abre desde la
+// ficha de un cliente: aquí solo se le pasan los datos ya cargados y se
+// refleja la tarea creada en la lista sin recargar.
 function tknAbrir() {
-  TKN_PENDIENTE = { contactos: [], propiedades: [], categorias: [] };
-  g('tkn-titulo').value = '';
-  g('tkn-fecha').value = '';
-  g('tkn-hora').value = '';
-  g('tkn-notas').value = '';
-  if (tkEsEmpresa && tkMiembros.length) g('tkn-asignado-sel').value = '';
-  tknPintarChips();
-  g('tk-modal-nueva').classList.add('is-open');
-  setTimeout(() => g('tkn-titulo').focus(), 0);
-}
-
-function tknCerrar() {
-  g('tk-modal-nueva').classList.remove('is-open');
-  TKN_PENDIENTE = { contactos: [], propiedades: [], categorias: [] };
-}
-
-function tknAgregarContacto() {
-  const cid = g('tkn-agregar-contacto').value;
-  if (!cid) return;
-  TKN_PENDIENTE.contactos.push(String(cid));
-  tknPintarChips();
-}
-
-function tknQuitarContacto(cid) {
-  TKN_PENDIENTE.contactos = TKN_PENDIENTE.contactos.filter(x => x !== String(cid));
-  tknPintarChips();
-}
-
-function tknAgregarPropiedad() {
-  const pid = g('tkn-agregar-propiedad').value;
-  if (!pid) return;
-  TKN_PENDIENTE.propiedades.push(String(pid));
-  tknPintarChips();
-}
-
-function tknQuitarPropiedad(pid) {
-  TKN_PENDIENTE.propiedades = TKN_PENDIENTE.propiedades.filter(x => x !== String(pid));
-  tknPintarChips();
-}
-
-async function tknCrearTarea() {
-  const titulo = g('tkn-titulo').value.trim();
-  if (!titulo) { alert('El título es obligatorio.'); g('tkn-titulo').focus(); return; }
-  const uid = await userId();
-  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
-  const fecha = g('tkn-fecha').value;
-  const hora = g('tkn-hora').value || '12:00';
-  const payload = {
-    user_id: uid,
-    org_id: tkOrgId,
-    titulo,
-    // Mismo arreglo que en tkGuardarEdicion(): construir con Date (hora LOCAL
-    // del navegador) y toISOString() para el instante UTC real.
-    fecha_entrega: fecha ? new Date(fecha + 'T' + hora + ':00').toISOString() : null,
-    notas: g('tkn-notas').value.trim() || null,
-    asignado_a: (tkEsEmpresa && tkMiembros.length) ? (g('tkn-asignado-sel').value || null) : null,
-  };
-  const btn = g('tkn-crear-btn');
-  const prevTxt = btn ? btn.textContent : '';
-  if (btn) { btn.disabled = true; btn.textContent = 'Creando…'; }
-  try {
-    const rows = await sbFetch('tareas', 'POST', payload);
-    const nueva = Array.isArray(rows) ? rows[0] : rows;
-    if (!nueva || !nueva.id) throw new Error('Respuesta inesperada del servidor.');
-    const tareaId = String(nueva.id);
-    tareas.unshift(nueva);
-
-    const pendContactos = TKN_PENDIENTE.contactos.slice();
-    const pendPropiedades = TKN_PENDIENTE.propiedades.slice();
-    let vinculosFallidos = 0;
-    for (const cid of pendContactos) {
-      try {
-        await sbFetch('tareas_contactos', 'POST', { user_id: uid, tarea_id: tareaId, contacto_id: cid });
-        (VINCULOS.contactos[tareaId] = VINCULOS.contactos[tareaId] || []).push(String(cid));
-      } catch (e) { vinculosFallidos++; }
-    }
-    for (const pid of pendPropiedades) {
-      try {
-        await sbFetch('tareas_propiedades', 'POST', { user_id: uid, tarea_id: tareaId, propiedad_id: pid });
-        (VINCULOS.propiedades[tareaId] = VINCULOS.propiedades[tareaId] || []).push(String(pid));
-      } catch (e) { vinculosFallidos++; }
-    }
-    for (const catId of TKN_PENDIENTE.categorias.slice()) {
-      const ok = await catVincular('tareas_categorias', 'tarea_id', tareaId, catId);
-      if (ok) (TAREA_CATS[tareaId] = TAREA_CATS[tareaId] || []).push(String(catId));
-    }
-
-    tknCerrar();
-    renderTareas();
-    showToast(vinculosFallidos
-      ? 'Tarea creada, pero ' + vinculosFallidos + ' vínculo(s) no se pudieron guardar'
-      : 'Tarea creada');
-  } catch (e) {
-    alert('No se pudo crear la tarea.\n\n' + (e.message || e));
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = prevTxt; }
-  }
+  bkTareaNueva.abrir({
+    ctx: {
+      orgId: tkOrgId, esEmpresa: tkEsEmpresa, miembros: tkMiembros,
+      categorias: tkCategorias, contactos: contactosMin, propiedades: propsMin,
+    },
+    onCreada(nueva, vinc, fallidos) {
+      const id = String(nueva.id);
+      tareas.unshift(nueva);
+      if (vinc.contactos.length) VINCULOS.contactos[id] = vinc.contactos.slice();
+      if (vinc.propiedades.length) VINCULOS.propiedades[id] = vinc.propiedades.slice();
+      if (vinc.categorias.length) TAREA_CATS[id] = vinc.categorias.slice();
+      renderTareas();
+      showToast(fallidos
+        ? 'Tarea creada, pero ' + fallidos + ' vínculo(s) no se pudieron guardar'
+        : 'Tarea creada');
+    },
+  });
 }
 
 /* ── Tab Actividad (lazy: carga al abrir el tab) ─────────────── */

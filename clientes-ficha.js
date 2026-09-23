@@ -689,6 +689,7 @@ function renderTareas() {
           <div class="bk-fila__cuerpo">
             <span class="bk-fila__t">${esc(t.titulo)}</span>
             ${due ? `<span class="bk-fila__d${vencida ? ' bk-fila__d--alerta' : ''}">${vencida ? 'Venció el ' : 'Para el '}${esc(fechaCorta(t.fecha_entrega))}</span>` : ''}
+            ${Array.isArray(t.adjuntos) && t.adjuntos.length ? haRenderAdjuntos(t.adjuntos) : ''}
           </div>
           <button class="bk-quitar" title="Quitar de este cliente" aria-label="Quitar de este cliente" onclick="quitarVinculoTarea('${esc(String(t.id))}')">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
@@ -699,37 +700,32 @@ function renderTareas() {
   bkContador('f-n-tareas', _tareas.filter(t => !t.completada).length);
 }
 
-async function crearTareaVinculada() {
+// "Crear" abre el mismo formulario completo de Tareas (tarea-nueva.js):
+// fecha y hora, notas, asignado, categorías, más contactos, inmuebles y
+// archivos, con este cliente ya vinculado y lo que se haya escrito en el
+// renglón rápido de arriba como punto de partida.
+function crearTareaVinculada() {
   if (!detContacto) return;
+  const cid = detContacto.id;
   const inp = document.getElementById('tarea-nueva-titulo');
-  const titulo = (inp.value || '').trim();
-  if (!titulo) { inp.focus(); return; }
-  const uid = await _userId();
-  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
-  const fecha = document.getElementById('tarea-nueva-fecha').value;
-  const hora = document.getElementById('tarea-nueva-hora').value || '12:00';
-  try {
-    const creada = await restPost('tareas', {
-      user_id: uid, org_id: cOrgId, titulo: titulo, contacto_id: detContacto.id,
-      // OJO: nunca mandar "fecha+'T'+hora" pelón — la columna es timestamptz y
-      // Postgres lo toma como si YA fuera UTC. new Date(...) interpreta el
-      // texto en la hora LOCAL del navegador, y toISOString() sí da el
-      // instante UTC correcto.
-      fecha_entrega: fecha ? new Date(fecha + 'T' + hora + ':00').toISOString() : null,
-    });
-    const nueva = Array.isArray(creada) ? creada[0] : creada;
-    if (nueva && nueva.id) {
-      await restPost('tareas_contactos', { user_id: uid, tarea_id: nueva.id, contacto_id: detContacto.id }).catch(() => {});
-    }
-    inp.value = '';
-    document.getElementById('tarea-nueva-fecha').value = '';
-    document.getElementById('tarea-nueva-hora').value = '';
-    _tareasMin = null;
-    await cargarTareasVinculadas();
-    showToast('Tarea creada');
-  } catch (e) {
-    alert('No se pudo crear la tarea.\n\n' + (e.message || e));
-  }
+  bkTareaNueva.abrir({
+    titulo: (inp.value || '').trim(),
+    fecha: document.getElementById('tarea-nueva-fecha').value,
+    hora: document.getElementById('tarea-nueva-hora').value,
+    contactos: [cid],
+    ctx: {
+      orgId: cOrgId, esEmpresa: cEsEmpresa, miembros: cMiembros, categorias: cCategorias,
+      contactos: (typeof _contactosMem !== 'undefined' && _contactosMem.length) ? _contactosMem : undefined,
+    },
+    async onCreada(nueva, vinc, fallidos) {
+      inp.value = '';
+      document.getElementById('tarea-nueva-fecha').value = '';
+      document.getElementById('tarea-nueva-hora').value = '';
+      _tareasMin = null;
+      if (detContacto && detContacto.id === cid) await cargarTareasVinculadas();
+      showToast(fallidos ? 'Tarea creada, pero ' + fallidos + ' vínculo(s) no se pudieron guardar' : 'Tarea creada');
+    },
+  });
 }
 
 async function vincularTareaExistente(tareaId) {
