@@ -200,6 +200,15 @@ function haHayPendientesConError(previewElId) {
   return lista.some((it) => it.estado === 'error');
 }
 
+// Los adjuntos ya subidos, en el mismo formato que haTomarAdjuntosListos,
+// pero SIN limpiar nada (para guardar y, solo si sale bien, limpiar).
+function haAdjuntosListos(previewElId) {
+  const lista = _haPendientesPorPreview.get(previewElId) || [];
+  return lista.filter((it) => it.estado === 'ok').map((it) => ({
+    url: it.url, nombre: it.nombre, tipo: it.tipo, tamano: it.tamano, categoria: it.categoria,
+  }));
+}
+
 // Se llama al guardar la nota: regresa los adjuntos listos (subidos con
 // éxito) en el formato que va a actividades.adjuntos, y limpia el estado y
 // la previsualización para la siguiente nota.

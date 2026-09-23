@@ -888,6 +888,7 @@ html, body { background: var(--paper); }
 <script src="ficha-comun.js" defer></script>
 <script src="categorias.js" defer></script>
 <script src="clientes-ficha.js" defer></script>
+<script src="tarea-nueva.js" defer></script>
 <script src="app-shell.js" defer></script>
 
 <script>
@@ -1238,7 +1239,7 @@ async function abrirModal(id = null) {
     sv('m-descripcion-privada', c.descripcion_privada);
     sv('m-fuente', c.fuente);
     sv('m-etiquetas', Array.isArray(c.etiquetas) ? c.etiquetas.join(', ') : '');
-    document.getElementById('m-tipo').value = c.tipo || 'arrendador';
+    document.getElementById('m-tipo').value = c.tipo || 'comprador';
     const sx = c.sexo || 'M';
     sexoActual = sx;
     document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === sx));
@@ -1247,7 +1248,7 @@ async function abrirModal(id = null) {
     document.getElementById('modal-title').textContent = 'Nuevo cliente';
     ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-descripcion-privada','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
     sv('m-mpio','MORELIA, MICHOACÁN');
-    document.getElementById('m-tipo').value = 'arrendador';
+    document.getElementById('m-tipo').value = 'comprador'; // el caso más común al dar de alta un cliente
     sexoActual = 'M';
     document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === 'M'));
     document.getElementById('btn-del').style.display = 'none';
