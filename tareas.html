@@ -712,14 +712,14 @@ function vinculoChip(t) {
   let html = '';
   for (const cid of contactos) {
     const c = contactoIdx[String(cid)];
-    html += `<a class="tk-link" href="contactos.html?id=${encodeURIComponent(String(cid))}" title="Ver en Contactos">
+    html += `<a class="tk-link" href="contactos.html?id=${encodeURIComponent(String(cid))}" title="Ver en Contactos" onclick="event.stopPropagation()">
       <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.5-1.632z"/></svg>
       <span>${esc(c ? c.nombre : 'Contacto')}</span>
     </a>`;
   }
   for (const pid of propiedades) {
     const p = propIdx[String(pid)];
-    html += `<a class="tk-link" href="propiedades.html?id=${encodeURIComponent(String(pid))}" title="Ver en Inmuebles">
+    html += `<a class="tk-link" href="propiedades.html?id=${encodeURIComponent(String(pid))}" title="Ver en Inmuebles" onclick="event.stopPropagation()">
       <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>
       <span>${esc(p ? (p.clave_interna || p.titulo || 'Inmueble') : 'Inmueble')}</span>
     </a>`;
@@ -730,7 +730,7 @@ function vinculoChip(t) {
 function adjuntosChip(t) {
   const n = Array.isArray(t.adjuntos) ? t.adjuntos.length : 0;
   if (!n) return '';
-  return `<button type="button" class="tk-link" style="cursor:pointer" onclick="tkAbrirEditar('${esc(String(t.id))}')" title="Ver archivos adjuntos">
+  return `<button type="button" class="tk-link" style="cursor:pointer" onclick="event.stopPropagation();tkAbrirEditar('${esc(String(t.id))}')" title="Ver archivos adjuntos">
       <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17.5 8.5l-7.1 7.1a2.5 2.5 0 003.5 3.5l7.1-7.1a4.5 4.5 0 00-6.4-6.4l-7.1 7.1a6.5 6.5 0 009.2 9.2"/></svg>
       <span>${n} ${n === 1 ? 'archivo' : 'archivos'}</span>
     </button>`;
@@ -743,10 +743,10 @@ function filaTarea(t, mostrarVencida) {
   const asignadoHtml = (tkEsEmpresa && t.asignado_a)
     ? `<span class="tk-link" style="cursor:default" title="Asignado a">${esc(tkNombreAgente(t.asignado_a))}</span>` : '';
   return `<div class="tk-item${t.completada ? ' is-done' : ''}">
-    <button class="tk-check" onclick="toggleTarea('${esc(String(t.id))}')" title="${t.completada ? 'Reabrir' : 'Completar'}">
+    <button class="tk-check" onclick="event.stopPropagation();toggleTarea('${esc(String(t.id))}')" title="${t.completada ? 'Reabrir' : 'Completar'}">
       <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
     </button>
-    <div class="tk-main">
+    <div class="tk-main" onclick="tkAbrirEditar('${esc(String(t.id))}')" style="cursor:pointer" title="Abrir tarea">
       <div class="tk-title">${esc(t.titulo)}</div>
       <div class="tk-meta">
         ${due ? `<span class="tk-due${vencida ? ' is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${fechaCorta(t.fecha_entrega)} · ${horaCorta(t.fecha_entrega)}</span>` : ''}
@@ -756,10 +756,10 @@ function filaTarea(t, mostrarVencida) {
       </div>
       ${catChipsSoloLectura(TAREA_CATS[t.id], tkCategorias)}
     </div>
-    <button class="tk-edit" title="Editar tarea" onclick="tkAbrirEditar('${esc(String(t.id))}')">
+    <button class="tk-edit" title="Editar tarea" onclick="event.stopPropagation();tkAbrirEditar('${esc(String(t.id))}')">
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg>
     </button>
-    <button class="tk-x" title="Eliminar tarea" onclick="eliminarTarea('${esc(String(t.id))}')">×</button>
+    <button class="tk-x" title="Eliminar tarea" onclick="event.stopPropagation();eliminarTarea('${esc(String(t.id))}')">×</button>
   </div>`;
 }
 
