@@ -45,3 +45,20 @@ select polname, polcmd
   from pg_policy
  where polrelid = 'public.tareas'::regclass
  order by polname;
+
+-- 5) SEGUIMIENTO: texto exacto y tipo (permisiva/restrictiva) de cada
+--    política de "tareas". Esto es lo que realmente decide qué filas ves.
+--    Si "org_acceso" (o cualquier otra) sale con permissive = false
+--    (RESTRICTIVE), se combina con AND, no con OR, y puede estar tapando
+--    la política de equipo aunque esta exista.
+select
+  polname,
+  case polcmd when 'r' then 'select' when 'a' then 'insert'
+              when 'w' then 'update' when 'd' then 'delete'
+              else 'all' end as comando,
+  polpermissive as es_permisiva,
+  pg_get_expr(polqual, polrelid) as condicion_using,
+  pg_get_expr(polwithcheck, polrelid) as condicion_with_check
+from pg_policy
+where polrelid = 'public.tareas'::regclass
+order by polname;
