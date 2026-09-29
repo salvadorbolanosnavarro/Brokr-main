@@ -1254,7 +1254,12 @@ async function abrirModal(id = null) {
     document.getElementById('btn-del').style.display = 'none';
   }
   document.getElementById('modal-ov').classList.add('open');
-  setTimeout(() => document.getElementById('m-nombre').focus(), 100);
+  // Solo con teclado físico. En celular, enfocar al abrir saca el teclado
+  // de inmediato y la ventana se abre encogida en vez de a pantalla completa
+  // (iPhone ignora este enfoque automático; Android no).
+  if (!matchMedia('(pointer: coarse)').matches) {
+    setTimeout(() => document.getElementById('m-nombre').focus(), 100);
+  }
 
   // Propiedades de interés: se pueden agregar desde aquí mismo, sin
   // esperar a guardar y entrar luego a la ficha. El id del cliente ya se

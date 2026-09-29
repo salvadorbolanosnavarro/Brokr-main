@@ -4795,11 +4795,23 @@ body[data-app="facebook-ads"]{--page-max:980px}
     candidatos.forEach(function (el) {
       var cs = window.getComputedStyle(el);
       if (cs.position !== 'fixed') return;
-      if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return;
-      var r = el.getBoundingClientRect();
-      // Solo tocar overlays de pantalla completa (alto y ancho grandes) —
-      // así no se mete con badges, tooltips o botones flotantes fijos.
-      if (r.width < window.innerWidth * 0.6 || r.height < window.innerHeight * 0.6) return;
+      var oculto = cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0;
+      // Uno cerrado que ya se había ajustado se actualiza igual: si no, al
+      // reabrirlo arrancaría con el alto que tenía cuando estaba el teclado.
+      if (oculto && !el.dataset.vvhAjuste) return;
+      // Un overlay que ya se ajustó una vez se sigue ajustando SIEMPRE. Antes
+      // se volvía a medir: con el teclado arriba quedaba "chico" y al cerrarse
+      // el teclado ya no pasaba el filtro de tamaño, así que se quedaba
+      // encogido a media pantalla (en Android el teclado ocupa más de 40% de
+      // la pantalla; en iPhone, de milagro, no). Eso partía la pantalla en
+      // dos: el formulario arriba y la lista de clientes asomándose debajo.
+      if (!el.dataset.vvhAjuste) {
+        var r = el.getBoundingClientRect();
+        // Solo tocar overlays de pantalla completa (alto y ancho grandes) —
+        // así no se mete con badges, tooltips o botones flotantes fijos.
+        if (r.width < window.innerWidth * 0.6 || r.height < window.innerHeight * 0.6) return;
+        el.dataset.vvhAjuste = '1';
+      }
       el.style.top = arriba + 'px';
       el.style.height = alto + 'px';
       el.style.bottom = 'auto';
