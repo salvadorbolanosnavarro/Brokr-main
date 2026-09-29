@@ -1,5 +1,5 @@
 {
-  "count": 271,
+  "count": 272,
   "operations": [
     {
       "body": false,
@@ -2066,6 +2066,18 @@
       "method": "PUT",
       "params": [],
       "path": "/pld/config",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:documento_id!"
+      ],
+      "path": "/pld/documentos/{documento_id}",
       "responses": [
         "200",
         "422"

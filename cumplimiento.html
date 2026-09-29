@@ -1326,7 +1326,33 @@
         '<button class="bk-btn bk-btn--ghost bk-btn--sm" data-subir="' + esc(r[0]) + '" type="button">' +
         (ok ? 'Reemplazar' : 'Subir') + '</button>' +
         '</div>';
-    }).join('');
+    }).join('') + pintarExtras();
+  }
+
+  // Documentos que no exige la ley pero el agente quiere guardar (acta de
+  // matrimonio, factura, avalúo…). Máximo 5; no cuentan para la completitud.
+  var MAX_EXTRAS = 5;
+  function pintarExtras() {
+    var extras = {};
+    docsActual.forEach(function (d) {
+      if (String(d.tipo || '').indexOf('adicional:') !== 0) return;
+      if (!extras[d.tipo] || String(d.created_at) > String(extras[d.tipo].created_at)) extras[d.tipo] = d;
+    });
+    var lista = Object.keys(extras).map(function (k) { return extras[k]; });
+    return '<div class="cp-bloque__t" style="margin-top:var(--sp-5);">Documentos adicionales (opcional)</div>' +
+      '<div class="cp-bloque__d">Hasta ' + MAX_EXTRAS + '. No los exige la ley, pero puedes guardarlos aquí: acta de matrimonio, factura, avalúo…</div>' +
+      lista.map(function (d) {
+        return '<div class="cp-doc is-ok"><span class="cp-doc__txt"><span class="cp-doc__n">' +
+          esc(d.tipo.slice(10)) + '</span><span class="cp-doc__e">Agregado el ' + fechaCorta(d.created_at) + '</span></span>' +
+          '<button class="bk-btn bk-btn--quiet bk-btn--sm" data-ver="' + esc(d.id) + '" type="button">Ver</button>' +
+          '<button class="bk-btn bk-btn--ghost bk-btn--sm" data-subir="' + esc(d.tipo) + '" type="button">Reemplazar</button>' +
+          '<button class="bk-btn bk-btn--quiet bk-btn--sm" data-quitar-doc="' + esc(d.id) + '" type="button">Quitar</button></div>';
+      }).join('') +
+      (lista.length < MAX_EXTRAS
+        ? '<div class="bk-cluster" style="margin-top:var(--sp-3);">' +
+          '<input class="bk-input" id="e-extra-nombre" type="text" maxlength="60" placeholder="Nombre (ej. Acta de matrimonio)" style="flex:1;min-width:200px;"/>' +
+          '<button class="bk-btn bk-btn--ghost bk-btn--sm" data-extra="1" type="button">Agregar documento</button></div>'
+        : '<div class="cp-sub" style="margin-top:var(--sp-3);">Ya tienes ' + MAX_EXTRAS + ' documentos adicionales. Quita uno para agregar otro.</div>');
   }
 
   function alternarTipo() {
@@ -1587,6 +1613,11 @@
     expediente_creado: 'Expediente creado',
     config_actualizada: 'Ajustes modificados',
     documento_subido: 'Documento agregado',
+    documento_quitado: 'Documento adicional quitado',
+    aviso_subido: 'Aviso subido al SAT',
+    aviso_rechazado: 'Aviso rechazado por el SAT',
+    aviso_descartado: 'Aviso rehecho',
+    aviso_modificatorio: 'Aviso modificatorio',
     documento_consultado: 'Documento consultado',
     liga_enviada: 'Liga enviada al cliente',
     cliente_actualizo: 'El cliente capturó datos',
@@ -1779,6 +1810,26 @@
         if (!expActual || !expActual.id) { toast('Guarda el expediente antes de subir documentos.', 'error'); return; }
         tipoPendiente = subir.dataset.subir;
         g('e-file').click();
+        return;
+      }
+      if (ev.target.closest('[data-extra]')) {
+        if (!expActual || !expActual.id) { toast('Guarda el expediente antes de subir documentos.', 'error'); return; }
+        var nombre = (val('e-extra-nombre') || '').trim();
+        if (!nombre) { toast('Escribe el nombre del documento.', 'error'); g('e-extra-nombre').focus(); return; }
+        tipoPendiente = 'adicional:' + nombre;
+        g('e-file').click();
+        return;
+      }
+      var quitar = ev.target.closest('[data-quitar-doc]');
+      if (quitar) {
+        if (!window.confirm('¿Quitar este documento adicional del expediente?')) return;
+        try {
+          await api('/pld/documentos/' + encodeURIComponent(quitar.dataset.quitarDoc), { method: 'DELETE' });
+          var q = docsActual.filter(function (x) { return x.id === quitar.dataset.quitarDoc; })[0];
+          docsActual = docsActual.filter(function (x) { return !q || x.tipo !== q.tipo; });
+          pintarDocs();
+          toast('Documento quitado.', 'success');
+        } catch (e) { toast(e.message, 'error'); }
         return;
       }
       var ver = ev.target.closest('[data-ver]');
