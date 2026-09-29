@@ -1634,12 +1634,8 @@ function abrirModal(id = null) {
     document.getElementById('btn-del').style.display = 'none';
   }
   document.getElementById('modal-ov').classList.add('open');
-  // Solo con teclado físico. En celular, enfocar al abrir saca el teclado
-  // de inmediato y la ventana se abre encogida en vez de a pantalla completa
-  // (iPhone ignora este enfoque automático; Android no).
-  if (!matchMedia('(pointer: coarse)').matches) {
-    setTimeout(() => document.getElementById('m-nombre').focus(), 100);
-  }
+  // En celular no: abre el teclado y encoge la ventana (Android).
+  if (!matchMedia('(pointer: coarse)').matches) setTimeout(() => document.getElementById('m-nombre').focus(), 100);
 }
 
 function cerrarModal() {
@@ -2098,12 +2094,8 @@ async function cargarPropsMin() {
   return _propsMin;
 }
 
-// Buscador de propiedades para vincular: en vez de un <select> con hasta
-// 500 opciones en orden de fecha (ir "una por una" hasta dar con la
-// correcta), un campo de texto con sugerencias por título, colonia,
-// ciudad o tipo. _propsDisponibles son las que aún no están vinculadas
-// a este contacto; _propSugCache guarda la lista mostrada para que el
-// click/teclado puedan resolver el id sin volver a filtrar.
+// Buscador de propiedades para vincular (título, colonia, ciudad o tipo).
+// _propsDisponibles: aún no vinculadas; _propSugCache: lista mostrada.
 let _propsDisponibles = [];
 let _propSugCache = [];
 let _propSugHL = -1;
