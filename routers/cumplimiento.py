@@ -20,11 +20,11 @@
 #   desde una pantalla; este archivo no se vuelve a tocar.
 #
 # SOBRE EL XML DEL AVISO
-#   El SPPLD del SAT valida contra un XSD publicado que cambia entre
-#   versiones. Este módulo arma el XML con la estructura del aviso de la
-#   fracción V y lo marca como BORRADOR. Antes del primer envío real hay
-#   que cotejarlo contra el XSD vigente y ajustar SCHEMA_VERSION. Está
-#   escrito para que ese ajuste sea cambiar constantes, no lógica.
+#   Lo arma core/pld_inm.py siguiendo el XSD oficial de la UIF para
+#   inmuebles (core/pld/inm.xsd, clave INM) con los catálogos de la
+#   plantilla oficial del SPPLD, y lo VALIDA contra ese XSD antes de
+#   entregarlo. Si faltan datos, no se genera nada: se le dice al agente
+#   qué falta y en qué operación.
 #
 # Depende de: migracion-pld.sql ya corrido.
 #
@@ -37,7 +37,6 @@ import re
 import json
 import secrets
 import logging
-import xml.etree.ElementTree as ET
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime, date, timedelta, timezone
 from typing import Optional, Dict, Any, List
@@ -50,6 +49,7 @@ from core.auth import require_user_id
 from core.config import settings
 from core.database import get_rows, patch_rows, post_rows
 from core.storage import create_signed_object_url, upload_object
+from core.pld_inm import catalogos, construir_xml, validar_xsd
 
 router = APIRouter(prefix="/pld", tags=["cumplimiento"])
 log = logging.getLogger("broquer.pld")
@@ -60,9 +60,8 @@ APP_URL = settings.app_url
 
 BUCKET = "pld-expedientes"
 
-# Versión del esquema del aviso. Cotejar contra el XSD vigente del SPPLD
-# antes del primer envío real y actualizar aquí si cambió.
-SCHEMA_VERSION = "1.0"
+# Esquema del aviso: XSD oficial de la UIF para inmuebles (core/pld/inm.xsd).
+SCHEMA_VERSION = "INM"
 
 # Vigencia de la liga que se le manda al cliente para llenar su expediente.
 LIGA_DIAS_VIGENCIA = 14
@@ -259,6 +258,8 @@ class ConfigIn(BaseModel):
     responsable_nombre: Optional[str] = None
     responsable_email: Optional[str] = None
     responsable_rfc: Optional[str] = None
+    rfc_sujeto_obligado: Optional[str] = None
+    clave_entidad_colegiada: Optional[str] = None
     valor_uma: Optional[float] = None
     vigencia_uma: Optional[str] = None
     umbral_aviso_uma: Optional[float] = None
@@ -450,6 +451,7 @@ class OperacionIn(BaseModel):
     inusual_motivo: Optional[str] = None
     estatus: Optional[str] = "abierta"
     notas: Optional[str] = None
+    aviso_datos: Optional[Dict[str, Any]] = None
 
 
 @router.post("/operaciones/simular")
@@ -777,111 +779,6 @@ def fecha_limite(periodo: str, dia: int = 17) -> date:
     return date(anio, mes, min(dia, 28))
 
 
-def _txt(v) -> str:
-    return "" if v is None else str(v).strip()
-
-
-def _nodo(padre, etiqueta: str, valor=None):
-    e = ET.SubElement(padre, etiqueta)
-    if valor is not None and _txt(valor) != "":
-        e.text = _txt(valor)
-    return e
-
-
-def construir_xml(cfg: dict, aviso: dict, operaciones: List[dict],
-                  expedientes: Dict[str, dict]) -> str:
-    """Arma el XML del aviso.
-
-    ADVERTENCIA DELIBERADA: el SPPLD valida contra un XSD publicado por el
-    SAT. Esta función produce la estructura del aviso de la fracción V con
-    los nombres de nodo documentados, pero NO sustituye la validación contra
-    el XSD vigente. El módulo marca el archivo como borrador hasta que se
-    haya cotejado una vez. Ajustar aquí es cambiar etiquetas, no lógica.
-    """
-    raiz = ET.Element("archivo", {"version": SCHEMA_VERSION})
-
-    inf = ET.SubElement(raiz, "informe")
-    _nodo(inf, "mes_reportado", aviso.get("periodo", "").replace("-", ""))
-    _nodo(inf, "sujeto_obligado", _txt(cfg.get("folio_padron")))
-    _nodo(inf, "clave_actividad", _txt(cfg.get("fraccion") or "V"))
-    _nodo(inf, "referencia_aviso", _txt(aviso.get("referencia") or aviso.get("id")))
-
-    resp = ET.SubElement(inf, "responsable")
-    _nodo(resp, "nombre", cfg.get("responsable_nombre"))
-    _nodo(resp, "rfc", cfg.get("responsable_rfc"))
-    _nodo(resp, "correo", cfg.get("responsable_email"))
-
-    avisos = ET.SubElement(raiz, "avisos")
-
-    for op in operaciones:
-        exp = expedientes.get(op.get("expediente_id")) or {}
-        a = ET.SubElement(avisos, "aviso")
-
-        _nodo(a, "referencia_operacion", op.get("id"))
-        _nodo(a, "prioridad", "1" if op.get("inusual") else "2")
-
-        al = ET.SubElement(a, "alerta")
-        _nodo(al, "tipo_alerta", {"umbral": "1", "acumulacion": "2",
-                                  "inusual": "3"}.get(op.get("motivo_aviso") or "", "2"))
-        _nodo(al, "descripcion_alerta", op.get("inusual_motivo") or "")
-
-        pa = ET.SubElement(a, "persona_aviso")
-        if (exp.get("tipo_persona") or "fisica") == "fisica":
-            pf = ET.SubElement(pa, "persona_fisica")
-            _nodo(pf, "nombre", exp.get("nombre"))
-            _nodo(pf, "apellido_paterno", exp.get("apellido_paterno"))
-            _nodo(pf, "apellido_materno", exp.get("apellido_materno"))
-            _nodo(pf, "fecha_nacimiento", exp.get("fecha_nacimiento"))
-            _nodo(pf, "rfc", exp.get("rfc"))
-            _nodo(pf, "curp", exp.get("curp"))
-            _nodo(pf, "pais_nacionalidad", exp.get("nacionalidad"))
-            _nodo(pf, "actividad_economica", exp.get("actividad_economica") or exp.get("ocupacion"))
-        else:
-            pm = ET.SubElement(pa, "persona_moral")
-            _nodo(pm, "denominacion_razon", exp.get("razon_social"))
-            _nodo(pm, "fecha_constitucion", exp.get("fecha_constitucion"))
-            _nodo(pm, "rfc", exp.get("rfc_moral"))
-            _nodo(pm, "folio_mercantil", exp.get("folio_mercantil"))
-            _nodo(pm, "giro_mercantil", exp.get("giro_mercantil"))
-            rep = ET.SubElement(pm, "representante")
-            _nodo(rep, "nombre", exp.get("rep_nombre"))
-            _nodo(rep, "apellido_paterno", exp.get("rep_apellido_paterno"))
-            _nodo(rep, "apellido_materno", exp.get("rep_apellido_materno"))
-            _nodo(rep, "curp", exp.get("rep_curp"))
-            _nodo(rep, "rfc", exp.get("rep_rfc"))
-
-        dom = ET.SubElement(pa, "domicilio")
-        _nodo(dom, "colonia", exp.get("dom_colonia"))
-        _nodo(dom, "calle", exp.get("dom_calle"))
-        _nodo(dom, "numero_exterior", exp.get("dom_num_ext"))
-        _nodo(dom, "numero_interior", exp.get("dom_num_int"))
-        _nodo(dom, "codigo_postal", exp.get("dom_cp"))
-        _nodo(dom, "pais", exp.get("dom_pais") or "MX")
-
-        _nodo(pa, "telefono", exp.get("telefono"))
-        _nodo(pa, "correo", exp.get("email"))
-        _nodo(pa, "es_pep", "1" if exp.get("es_pep") else "0")
-
-        if not exp.get("bc_es_el_mismo", True):
-            bc = ET.SubElement(a, "dueno_beneficiario")
-            _nodo(bc, "nombre", exp.get("bc_nombre"))
-            _nodo(bc, "apellido_paterno", exp.get("bc_apellido_paterno"))
-            _nodo(bc, "apellido_materno", exp.get("bc_apellido_materno"))
-            _nodo(bc, "fecha_nacimiento", exp.get("bc_fecha_nacimiento"))
-            _nodo(bc, "curp", exp.get("bc_curp"))
-            _nodo(bc, "rfc", exp.get("bc_rfc"))
-
-        det = ET.SubElement(a, "detalle_operaciones")
-        do = ET.SubElement(det, "datos_operacion")
-        _nodo(do, "fecha_operacion", op.get("fecha_operacion"))
-        _nodo(do, "tipo_operacion", op.get("tipo_operacion"))
-        _nodo(do, "moneda", op.get("moneda") or "MXN")
-        _nodo(do, "monto_operacion", f"{_d(op.get('monto')):.2f}")
-        _nodo(do, "instrumento_monetario", op.get("instrumento_monetario") or op.get("forma_pago"))
-
-    return ET.tostring(raiz, encoding="unicode")
-
-
 class AvisoIn(BaseModel):
     periodo: str                       # '2026-03'
     tipo: Optional[str] = "normal"     # normal | en_ceros | inusual_24h
@@ -896,10 +793,10 @@ async def generar_aviso(request: Request, body: AvisoIn):
     if not re.match(r"^\d{4}-\d{2}$", body.periodo or ""):
         raise HTTPException(400, "El periodo debe ir como 2026-03.")
 
-    if not cfg.get("folio_padron"):
+    if not cfg.get("rfc_sujeto_obligado"):
         raise HTTPException(400,
-            "Antes de generar un aviso necesitas capturar tu folio del padrón del SAT "
-            "y los datos de tu encargado de cumplimiento en Ajustes del módulo.")
+            "Antes de generar un aviso necesitas capturar en Ajustes del módulo tu RFC "
+            "con homoclave como sujeto obligado: es la clave con la que el SAT te identifica.")
 
     inicio = f"{body.periodo}-01"
     fin = fecha_limite(body.periodo, 1).replace(day=1).isoformat()
@@ -936,6 +833,26 @@ async def generar_aviso(request: Request, body: AvisoIn):
                    for i in exp_ids
                    if expedientes.get(i, {}).get("estatus") != "completo"]
 
+    # Contrapartes capturadas como expediente propio (vendedor/comprador).
+    faltan_contra = sorted({o.get("contraparte_exp_id") for o in ops
+                            if o.get("contraparte_exp_id") and o.get("contraparte_exp_id") not in expedientes})
+    if faltan_contra:
+        filas = await _sb_get("pld_expedientes", {
+            "id": f"in.({','.join(faltan_contra)})", "user_id": f"eq.{uid}", "select": "*"})
+        expedientes.update({f["id"]: f for f in filas})
+
+    # Primero se arma y se valida; solo si pasa se registra el aviso. Antes
+    # se guardaba un aviso "generado" con un XML que el SAT iba a rechazar.
+    xml, problemas = construir_xml(cfg, body.periodo, ops, expedientes)
+    if problemas:
+        raise HTTPException(422, "Faltan datos para que el SAT acepte el aviso:\n• "
+                                 + "\n• ".join(problemas))
+    errores_xsd = validar_xsd(xml)
+    if errores_xsd:
+        log.error("aviso INM no pasó el XSD oficial: %s", errores_xsd)
+        raise HTTPException(500, "El archivo no pasó la validación del esquema oficial del SAT. "
+                                 "Avísanos a soporte; no lo subas así. Detalle: " + errores_xsd[0])
+
     limite = fecha_limite(body.periodo, int(cfg.get("dia_limite_aviso") or 17))
     total = sum(_d(o.get("monto")) for o in ops)
     referencia = f"{body.periodo.replace('-', '')}-{secrets.token_hex(4).upper()}"
@@ -949,7 +866,6 @@ async def generar_aviso(request: Request, body: AvisoIn):
     aviso = filas[0] if filas else {}
     aviso_id = aviso.get("id")
 
-    xml = construir_xml(cfg, aviso, ops, expedientes)
     ruta = f"{uid}/avisos/aviso-{body.periodo}-{referencia}.xml"
 
     try:
@@ -987,9 +903,7 @@ async def generar_aviso(request: Request, body: AvisoIn):
         "fecha_limite": limite.isoformat(),
         "xml": xml,
         "expedientes_incompletos": incompletos,
-        "advertencia": ("Este archivo es un borrador. Antes de tu primer envío, súbelo al "
-                        "SPPLD en modo de prueba o pídele a tu especialista PLD que lo coteje "
-                        "contra el esquema vigente del SAT.") if SCHEMA_VERSION == "1.0" else "",
+        "validado": True,
     }
 
 
@@ -1085,7 +999,7 @@ async def resumen(request: Request):
         "periodos_pendientes": lista_periodos,
         "inusuales_urgentes": urgentes,
         "avisos": avisos,
-        "listo_para_avisar": bool(cfg.get("folio_padron") and cfg.get("responsable_nombre")),
+        "listo_para_avisar": bool(cfg.get("rfc_sujeto_obligado") and cfg.get("responsable_nombre")),
     }
 
 
@@ -1097,6 +1011,14 @@ async def leer_bitacora(request: Request, expediente_id: Optional[str] = None, l
     if expediente_id:
         params["expediente_id"] = f"eq.{expediente_id}"
     return {"eventos": await _sb_get("pld_bitacora", params)}
+
+
+@router.get("/catalogos")
+async def catalogos_uif(request: Request):
+    """Catálogos oficiales de la UIF para el aviso de inmuebles (para los
+    selectores de la pantalla). Vienen de la plantilla oficial del SPPLD."""
+    await _uid(request)
+    return catalogos()
 
 
 @router.get("/salud")
