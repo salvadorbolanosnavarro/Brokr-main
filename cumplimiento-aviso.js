@@ -273,7 +273,254 @@
     return !!(ins.numero && ins.fecha && ins.notario && ins.entidad);
   }
 
-  window.cpAviso = { pintarOp: pintarOp, leerOp: leerOp, setExp: setExp, opCompleta: opCompleta };
+  /* ══ CICLO DEL AVISO: pasos, alertas, estados y acciones ══════════
+     Broquer no puede subir el aviso ni ver la respuesta del SAT: el agente
+     lo sube al SPPLD y registra aquí cada paso. Esta parte le dice siempre
+     en qué paso va cada aviso y qué sigue. */
+  function host() { return window.cpHost || {}; }
+
+  var ESTADOS = {
+    generado: ['Por subir al SAT', 'bk-badge--warn'],
+    subido: ['En revisión del SAT', 'bk-badge--info'],
+    presentado: ['Aceptado', 'bk-badge--success'],
+    rechazado: ['Rechazado', 'bk-badge--danger'],
+    borrador: ['Borrador', '']
+  };
+
+  function siguientePaso(a) {
+    if (a.formato !== 'INM' && a.estatus !== 'presentado' && a.estatus !== 'rechazado') {
+      return 'Formato anterior: no lo subas. Tócale «Rehacer aviso».';
+    }
+    return {
+      generado: 'Descarga el XML, súbelo al portal del SAT con tu e.firma y marca «Ya lo subí».',
+      subido: 'Revisa en el portal del SAT si lo aceptaron y registra el acuse o el rechazo.',
+      presentado: a.acuse_folio ? 'Acuse ' + a.acuse_folio + '.' : '',
+      rechazado: (a.motivo_rechazo ? 'Motivo: ' + a.motivo_rechazo + '. ' : '') +
+        'Corrige la operación y vuelve a generar el aviso del periodo.',
+      borrador: 'Vuelve a generar el aviso.'
+    }[a.estatus] || '';
+  }
+
+  function boton(txt, accion, id, fuerte) {
+    return '<button class="bk-btn ' + (fuerte ? 'bk-btn--forest' : 'bk-btn--quiet') + ' bk-btn--sm" type="button" ' +
+      'data-av="' + accion + '" data-id="' + esc(id) + '">' + esc(txt) + '</button>';
+  }
+
+  function diasDesde(iso) {
+    if (!iso) return 0;
+    return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  }
+
+  function pintarAvisos(resumen, operaciones) {
+    var cuerpo = g('cp-avisos-body');
+    if (!cuerpo) return;
+    OPS = operaciones || [];
+    var avisos = resumen.avisos || [];
+    AVISOS = avisos;
+    if (!avisos.length) {
+      cuerpo.innerHTML = '<tr><td colspan="5"><span class="cp-sub">Todavía no generas avisos.</span></td></tr>';
+      return;
+    }
+    cuerpo.innerHTML = avisos.map(function (a) {
+      var viejo = a.formato !== 'INM' && a.estatus !== 'presentado' && a.estatus !== 'rechazado';
+      var e = viejo ? ['Formato anterior', 'bk-badge--danger'] : (ESTADOS[a.estatus] || [a.estatus || '', '']);
+      var acciones = '';
+      if (viejo) {
+        acciones = boton('Rehacer aviso', 'rehacer', a.id, true);
+      } else if (a.estatus === 'generado') {
+        acciones = boton('Descargar XML', 'descargar', a.id) + boton('Ya lo subí', 'subido', a.id, true) +
+          boton('Rehacer aviso', 'rehacer', a.id);
+      } else if (a.estatus === 'subido') {
+        acciones = boton('Registrar acuse', 'acuse', a.id, true) + boton('Registrar rechazo', 'rechazo', a.id) +
+          boton('Descargar XML', 'descargar', a.id);
+      } else if (a.estatus === 'presentado') {
+        acciones = boton('Descargar XML', 'descargar', a.id) +
+          (a.tipo !== 'modificatorio' && diasDesde(a.presentado_at || a.subido_at) <= 30
+            ? boton('Corregir (modificatorio)', 'modificatorio', a.id) : '');
+      }
+      var tipo = a.tipo === 'modificatorio' ? ' <span class="bk-badge">Modificatorio</span>' : '';
+      return '<tr><td style="white-space:nowrap;">' + esc(a.periodo) + '</td>' +
+        '<td><span class="cp-sub">' + esc(a.referencia || '') + '</span></td>' +
+        '<td class="num">' + (a.num_operaciones || 0) + '</td>' +
+        '<td><span class="bk-badge ' + e[1] + '">' + esc(e[0]) + '</span>' + tipo +
+        '<div class="cp-sub" style="margin-top:var(--sp-2);max-width:360px;">' + esc(siguientePaso(a)) + '</div></td>' +
+        '<td style="text-align:right;"><div class="bk-cluster" style="justify-content:flex-end;">' + acciones + '</div></td></tr>';
+    }).join('');
+  }
+
+  var OPS = [], AVISOS = [];
+
+  function pintarCiclo(resumen) {
+    // Guía de pasos, siempre visible en la pestaña Avisos.
+    var pasos = resumen.pasos || [];
+    var caja = g('cp-pasos');
+    if (caja && pasos.length) {
+      caja.innerHTML = '<div class="bk-card bk-card--pad">' +
+        '<div class="cp-bloque__t">Cómo presentar tu aviso</div>' +
+        '<div class="cp-bloque__d">Broquer arma el archivo con el formato oficial; subirlo al portal del SAT lo haces tú con tu e.firma, porque el SAT no permite que otro sistema lo envíe.</div>' +
+        '<ol style="margin:var(--sp-3) 0 0;padding-left:var(--sp-6);font-size:var(--fs-sm);line-height:var(--lh);">' +
+        pasos.map(function (p) { return '<li style="margin-top:var(--sp-2);">' + esc(p) + '</li>'; }).join('') +
+        '</ol><div class="cp-sub" style="margin-top:var(--sp-3);">Portal del SAT: ' +
+        '<a href="https://sppld.sat.gob.mx" target="_blank" rel="noopener">sppld.sat.gob.mx</a></div></div>';
+    }
+
+    // Alertas arriba del módulo.
+    var alertas = resumen.alertas || [];
+    var zona = g('cp-alertas');
+    if (!zona) return;
+    zona.innerHTML = alertas.map(function (a) {
+      var clase = a.nivel === 'urgente' ? 'bk-alert--error' : (a.nivel === 'aviso' ? 'bk-alert--warn' : 'bk-alert--info');
+      return '<div class="bk-alert ' + clase + '" style="margin-bottom:var(--sp-3);">' +
+        '<div style="flex:1;"><div style="font-weight:700;">' + esc(a.titulo) + '</div>' +
+        '<div style="font-size:var(--fs-sm);margin-top:var(--sp-1);line-height:var(--lh);">' + esc(a.detalle) + '</div></div>' +
+        '<button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" data-ir-avisos="1">' +
+        (a.paso === 1 ? 'Ver' : 'Ir a Avisos') + '</button></div>';
+    }).join('');
+  }
+
+  /* ── Ventanas pequeñas (motivo de rechazo, folios, modificatorio) ── */
+  function ventana(titulo, cuerpoHtml, textoOk, alAceptar) {
+    var ov = document.createElement('div');
+    ov.className = 'bk-overlay is-open';
+    ov.innerHTML = '<div class="bk-modal" style="max-width:560px;">' +
+      '<div class="bk-modal__head"><div class="bk-modal__title">' + esc(titulo) + '</div></div>' +
+      '<div class="bk-modal__body">' + cuerpoHtml + '</div>' +
+      '<div class="bk-modal__foot"><div class="bk-cluster" style="margin-left:auto;">' +
+      '<button class="bk-btn bk-btn--ghost" type="button" data-cerrar-v="1">Cancelar</button>' +
+      '<button class="bk-btn bk-btn--forest" type="button" data-ok-v="1">' + esc(textoOk) + '</button>' +
+      '</div></div></div>';
+    document.body.appendChild(ov);
+    function cerrar() { ov.remove(); }
+    ov.addEventListener('click', async function (ev) {
+      if (ev.target === ov || ev.target.closest('[data-cerrar-v]')) { cerrar(); return; }
+      var ok = ev.target.closest('[data-ok-v]');
+      if (!ok) return;
+      ok.disabled = true;
+      try {
+        if (await alAceptar(ov) !== false) cerrar();
+      } catch (e) {
+        host().toast(e.message, 'error');
+      } finally { ok.disabled = false; }
+    });
+  }
+
+  function opsDe(aviso) {
+    if (aviso.tipo === 'modificatorio') return OPS.filter(function (o) { return o.id === aviso.operacion_id; });
+    return OPS.filter(function (o) { return o.aviso_id === aviso.id; });
+  }
+
+  async function descargar(id) {
+    var r = await host().api('/pld/avisos/' + encodeURIComponent(id) + '/xml');
+    var resp = await fetch(r.url);
+    var blob = await resp.blob();
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = r.nombre || 'aviso.xml';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  async function accion(tipo, id) {
+    var h = host();
+    var aviso = AVISOS.filter(function (a) { return a.id === id; })[0] || {};
+    var ruta = '/pld/avisos/' + encodeURIComponent(id);
+
+    if (tipo === 'descargar') { await descargar(id); return; }
+
+    if (tipo === 'subido') {
+      if (!window.confirm('¿Ya subiste este archivo al portal del SAT (SPPLD)? Queda en revisión y te ' +
+          'recordaremos registrar el acuse cuando el SAT responda.')) return;
+      await h.api(ruta + '/subido', { method: 'POST' });
+      h.toast('Listo. Cuando el SAT responda, registra aquí el acuse o el rechazo.', 'success');
+      return h.recargar();
+    }
+
+    if (tipo === 'rehacer') {
+      if (!window.confirm('Se descarta este archivo (no lo subas al SAT) y sus operaciones quedan libres ' +
+          'para completar sus datos y volver a generar el aviso. ¿Continuar?')) return;
+      var r = await h.api(ruta + '/descartar', { method: 'POST' });
+      h.toast('Aviso descartado. Completa los datos de la operación y genera de nuevo el periodo ' +
+        (r.periodo || '') + '.', 'success');
+      return h.recargar();
+    }
+
+    if (tipo === 'rechazo') {
+      ventana('Registrar rechazo del SAT',
+        '<p class="cp-sub" style="margin:0 0 var(--sp-4);">Copia el motivo que te dio el portal del SAT. Las operaciones del aviso quedan libres para que las corrijas y generes el aviso de nuevo.</p>' +
+        '<div class="bk-field"><label class="bk-label" for="av-motivo">Motivo del rechazo</label>' +
+        '<textarea class="bk-textarea" id="av-motivo" rows="3"></textarea></div>',
+        'Registrar rechazo', async function () {
+          var motivo = v('av-motivo');
+          if (!motivo) { h.toast('Escribe el motivo.', 'error'); return false; }
+          await h.api(ruta + '/rechazado', { method: 'POST', json: { motivo: motivo } });
+          h.toast('Rechazo registrado. Corrige la operación y vuelve a generar el aviso.', 'success');
+          h.recargar();
+        });
+      return;
+    }
+
+    if (tipo === 'acuse') {
+      var ops = opsDe(aviso);
+      var filas = ops.length > 1 ? ops.map(function (o, i) {
+        return '<div class="bk-field"><label class="bk-label" for="av-folio-' + i + '">Folio de la operación del ' +
+          esc(h.fechaCorta(o.fecha_operacion)) + ' por ' + esc(h.pesos(o.monto)) + '</label>' +
+          '<input class="bk-input" id="av-folio-' + i + '" type="text" placeholder="2026-1234"/></div>';
+      }).join('') : '';
+      ventana('Registrar acuse del SAT',
+        '<p class="cp-sub" style="margin:0 0 var(--sp-4);">Captura el folio que aparece en tu acuse del SPPLD. Se guarda porque es el que se usa si algún día necesitas corregir el aviso.</p>' +
+        '<div class="bk-field"><label class="bk-label" for="av-acuse">Folio del acuse</label>' +
+        '<input class="bk-input" id="av-acuse" type="text" placeholder="2026-1234"/></div>' + filas,
+        'Registrar acuse', async function () {
+          var acuse = v('av-acuse');
+          if (!acuse) { h.toast('Captura el folio del acuse.', 'error'); return false; }
+          var folios = {};
+          ops.forEach(function (o, i) { var f = v('av-folio-' + i); if (f) folios[o.id] = f; });
+          await h.api(ruta + '/presentado', { method: 'POST', json: { acuse_folio: acuse, folios: folios } });
+          h.toast('Aviso aceptado y registrado.', 'success');
+          h.recargar();
+        });
+      return;
+    }
+
+    if (tipo === 'modificatorio') {
+      var candidatas = opsDe(aviso).filter(function (o) { return !o.modificado_at; });
+      if (!candidatas.length) { h.toast('Las operaciones de este aviso ya tienen modificatorio.', 'error'); return; }
+      ventana('Corregir con aviso modificatorio',
+        '<p class="cp-sub" style="margin:0 0 var(--sp-4);">Primero corrige los datos de la operación en la pestaña Operaciones. ' +
+        'Después genera aquí el modificatorio: el SAT solo lo acepta una vez por aviso y dentro de los 30 días siguientes a su envío.</p>' +
+        '<div class="bk-field"><label class="bk-label" for="av-mod-op">Operación</label><select class="bk-select" id="av-mod-op">' +
+        candidatas.map(function (o) {
+          return '<option value="' + esc(o.id) + '">' + esc(h.fechaCorta(o.fecha_operacion)) + ' · ' + esc(h.pesos(o.monto)) +
+            (o.folio_uif ? ' · folio ' + esc(o.folio_uif) : ' · sin folio registrado') + '</option>';
+        }).join('') + '</select></div>' +
+        '<div class="bk-field"><label class="bk-label" for="av-mod-desc">¿Qué se corrige?</label>' +
+        '<textarea class="bk-textarea" id="av-mod-desc" rows="3" placeholder="Se corrige el código postal del inmueble"></textarea></div>',
+        'Generar modificatorio', async function () {
+          var desc = v('av-mod-desc');
+          if (!desc) { h.toast('Describe qué se corrige.', 'error'); return false; }
+          await h.api(ruta + '/modificatorio', { method: 'POST', json: { operacion_id: v('av-mod-op'), descripcion: desc } });
+          h.toast('Modificatorio generado. Descárgalo, súbelo al SAT y marca «Ya lo subí».', 'success');
+          h.recargar();
+        });
+    }
+  }
+
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-av]');
+    if (b && g('cp-avisos-body') && g('cp-avisos-body').contains(b)) {
+      b.disabled = true;
+      Promise.resolve(accion(b.getAttribute('data-av'), b.getAttribute('data-id')))
+        .catch(function (e) { host().toast(e.message, 'error'); })
+        .then(function () { b.disabled = false; });
+      return;
+    }
+    if (ev.target.closest('[data-ir-avisos]')) host().irA && host().irA('avisos');
+  });
+
+  window.cpAviso = {
+    pintarOp: pintarOp, leerOp: leerOp, setExp: setExp, opCompleta: opCompleta,
+    pintarAvisos: pintarAvisos, pintarCiclo: pintarCiclo
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cargarCatalogos);
   else cargarCatalogos();

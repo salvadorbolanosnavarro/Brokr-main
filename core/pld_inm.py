@@ -453,6 +453,19 @@ def construir_xml(cfg: dict, periodo: str, operaciones: List[dict],
         ad = op.get("aviso_datos") or {}
         a = _nodo(inf, "aviso")
         _nodo(a, "referencia_aviso", _referencia(op.get("id")) or "1")
+        # Aviso modificatorio: corrige uno ya aceptado. Lleva el folio que la
+        # UIF le dio en el acuse (AAAA-999999999) y qué se cambió.
+        mod = op.get("_modificatorio")
+        if mod:
+            folio = str(mod.get("folio") or "").strip()
+            desc = _limpia(mod.get("descripcion"), _DESCRIPCION, 3000)
+            if not re.fullmatch(r"\d{4}-[1-9]\d{0,8}", folio):
+                faltan.append("el folio del aviso original como aparece en tu acuse (ej. 2026-1234)")
+            if not desc:
+                faltan.append("qué se corrige en el aviso modificatorio")
+            m = _nodo(a, "modificatorio")
+            _nodo(m, "folio_modificacion", folio if re.fullmatch(r"\d{4}-[1-9]\d{0,8}", folio) else "0000-1")
+            _nodo(m, "descripcion_modificacion", desc or "X")
         prioridad = "2" if op.get("inusual") else "1"
         _nodo(a, "prioridad", prioridad)
         al = _nodo(a, "alerta")
