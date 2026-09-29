@@ -1,5 +1,5 @@
 {
-  "count": 263,
+  "count": 264,
   "operations": [
     {
       "body": false,
@@ -1910,6 +1910,18 @@
       "method": "POST",
       "params": [],
       "path": "/org/tareas/contactos-vinculados",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:tarea_id!"
+      ],
+      "path": "/org/tareas/{tarea_id}",
       "responses": [
         "200",
         "422"

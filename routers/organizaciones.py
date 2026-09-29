@@ -1004,3 +1004,52 @@ async def contactos_de_mis_tareas(req: TareasContactosReq, request: Request):
         salida.append({k: c.get(k) for k in ("id", "nombre", "telefono", "wa", "email", "tipo")})
     return {"contactos": salida}
 
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# BORRAR UNA TAREA
+# Las tareas son del equipo (cualquiera las ve y las edita), pero la política
+# de RLS de DELETE en `tareas` solo deja borrar a quien la creó. Cuando otro
+# miembro la borraba desde el navegador, Postgres no borraba nada y aun así
+# respondía 200: la tarea desaparecía de la pantalla y "revivía" al recargar.
+# Aquí se decide el permiso en Python, se borra con la service key y se
+# COMPRUEBA que ya no exista antes de contestar que sí.
+# Pueden borrar: quien la creó, a quien se le asignó y el owner/admin.
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.delete("/org/tareas/{tarea_id}")
+async def borrar_tarea(tarea_id: str, request: Request):
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Inicia sesión.")
+    if not _ID_SEGURO.match(tarea_id or ""):
+        raise HTTPException(status_code=404, detail="Esa tarea no existe.")
+
+    filas = await _sb_get("tareas", {
+        "id": f"eq.{tarea_id}", "select": "id,user_id,org_id,asignado_a", "limit": "1"})
+    if not filas:
+        # Ya no existe: para quien la quería borrar, eso es éxito.
+        return {"ok": True, "ya_no_existia": True}
+    t = filas[0]
+
+    permitido = t.get("user_id") == user_id
+    if not permitido:
+        ctx = await get_org_context(user_id)
+        misma_org = bool(ctx and ctx.get("activo") and t.get("org_id")
+                         and t.get("org_id") == ctx.get("org_id"))
+        permitido = misma_org and (
+            t.get("asignado_a") == user_id or ctx.get("rol_org") in ("owner", "admin"))
+    if not permitido:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo pueden borrar esta tarea quien la creó, la persona a quien se le "
+                   "asignó o el administrador de la cuenta. Puedes marcarla como completada.")
+
+    try:
+        await delete_rows("tareas", {"id": f"eq.{tarea_id}"}, timeout=10)
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=500, detail="No se pudo borrar la tarea. Intenta de nuevo.") from exc
+
+    if await _sb_get("tareas", {"id": f"eq.{tarea_id}", "select": "id", "limit": "1"}):
+        raise HTTPException(status_code=500, detail="La tarea no se borró. Intenta de nuevo.")
+    return {"ok": True}
