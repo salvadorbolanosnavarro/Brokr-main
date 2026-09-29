@@ -50,6 +50,7 @@
 # ──────────────────────────────────────────────────────────────────────────
 
 import asyncio
+import os
 import re
 import io
 import json
@@ -68,7 +69,7 @@ from core.auth import require_user_id
 from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
 from core.storage import create_signed_object_url, delete_object, download_object, upload_object
-from core.subscriptions import require_paid_feature_access
+from core.subscriptions import has_paid_feature_access, require_paid_feature_access
 from core.firmas_utils import _email_ok, _fecha_larga, _folio, _le_toca, _limpio, _mail_layout, _mask_email, _mask_tel, _resumen_estado, _tel
 from core.firmas_policy import ROLES, TIPOS, TIPOS_CON_AGENTE
 
@@ -84,7 +85,6 @@ SUPABASE_SERVICE_KEY = settings.supabase_service_key
 APP_URL = settings.app_url
 RESEND_API_KEY = settings.resend_api_key
 RESEND_FROM = settings.resend_from
-WA_PLANTILLA_OTP = settings.wa_plantilla_otp
 FIRMAME_API_KEY = settings.firmame_api_key
 FIRMAME_BASE_URL = settings.firmame_base_url
 
@@ -367,70 +367,11 @@ async def _mail(para: str, asunto: str, cuerpo_html: str) -> Tuple[bool, str]:
         return False, f"No se pudo contactar al servicio de correo: {e}"
 
 
-async def _wa_numero(user_id: str) -> Optional[dict]:
-    """El primer número de WhatsApp conectado del agente, si tiene."""
-    try:
-        filas = await _sb_get("wa2_numeros", {
-            "user_id": f"eq.{user_id}", "select": "*",
-            "order": "created_at.asc", "limit": "1"})
-        return filas[0] if filas else None
-    except Exception:
-        return None
-
-
-async def _wa_texto(numero: dict, telefono: str, texto: str) -> bool:
-    """Texto libre por WhatsApp. Solo llega si hay ventana de 24 horas abierta,
-    o sea si esa persona ya le escribió al agente. Para un comprador que nunca
-    ha escrito, esto falla con el código 131047 y hay que caer a correo."""
-    if not numero or not numero.get("access_token"):
-        return False
-    try:
-        async with httpx.AsyncClient(timeout=20) as c:
-            r = await c.post(
-                f"https://graph.facebook.com/v21.0/{numero['phone_number_id']}/messages",
-                headers={"Authorization": f"Bearer {numero['access_token']}"},
-                json={"messaging_product": "whatsapp", "to": telefono.lstrip("+"),
-                      "type": "text", "text": {"body": texto, "preview_url": False}})
-        if r.status_code >= 400:
-            log.info("wa texto rechazado: %s", r.text[:180])
-            return False
-        return True
-    except Exception as e:
-        log.warning("wa texto falló: %s", e)
-        return False
-
-
-async def _wa_plantilla_otp(numero: dict, telefono: str, codigo: str) -> bool:
-    """Plantilla categoría AUTHENTICATION. Es la única vía que sí llega a un
-    número frío. Requiere que el agente la tenga aprobada en su WABA y que su
-    nombre esté en la env var WA_PLANTILLA_OTP."""
-    if not WA_PLANTILLA_OTP or not numero or not numero.get("access_token"):
-        return False
-    try:
-        async with httpx.AsyncClient(timeout=20) as c:
-            r = await c.post(
-                f"https://graph.facebook.com/v21.0/{numero['phone_number_id']}/messages",
-                headers={"Authorization": f"Bearer {numero['access_token']}"},
-                json={"messaging_product": "whatsapp", "to": telefono.lstrip("+"),
-                      "type": "template",
-                      "template": {
-                          "name": WA_PLANTILLA_OTP,
-                          "language": {"code": "es_MX"},
-                          "components": [
-                              {"type": "body",
-                               "parameters": [{"type": "text", "text": codigo}]},
-                              {"type": "button", "sub_type": "url", "index": "0",
-                               "parameters": [{"type": "text", "text": codigo}]},
-                          ]}})
-        if r.status_code >= 400:
-            log.info("wa plantilla rechazada: %s", r.text[:180])
-            return False
-        return True
-    except Exception as e:
-        log.warning("wa plantilla falló: %s", e)
-        return False
-
-
+# WhatsApp NO se manda desde el servidor. El WhatsApp de Broquer (API de
+# Meta) obliga a usar plantillas aprobadas para escribirle a alguien que no
+# ha escrito primero, que es justo el caso de un comprador o un inquilino.
+# Todo lo automático sale por correo; el WhatsApp lo manda el agente desde
+# su propio WhatsApp (personal o Business) con el botón de la app móvil.
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -485,7 +426,7 @@ async def listar_documentos(request: Request, estado: str = "", limite: int = 10
     ids = ",".join(d["id"] for d in docs)
     firmantes = await _sb_get("firma_firmantes", {
         "documento_id": f"in.({ids})",
-        "select": "id,documento_id,nombre,rol,orden,estado,obligatorio,firmado_at"})
+        "select": "id,documento_id,nombre,rol,orden,estado,obligatorio,firmado_at,email,telefono"})
     por_doc: Dict[str, List[dict]] = {}
     for f in firmantes:
         por_doc.setdefault(f["documento_id"], []).append(f)
@@ -495,6 +436,9 @@ async def listar_documentos(request: Request, estado: str = "", limite: int = 10
         fs = por_doc.get(d["id"], [])
         salida.append({
             **d,
+            # El estado guardado no se entera solo de un rechazo o de que la
+            # invitación venció; el calculado sí. Es el que debe ver el agente.
+            "estado_calculado": _resumen_estado(d, fs),
             "firmantes": fs,
             "total_firmantes": len(fs),
             "ya_firmaron": sum(1 for f in fs if f.get("estado") == "firmado"),
@@ -556,6 +500,9 @@ async def ver_documento(request: Request, documento_id: str):
     for f in firmantes:
         f["identificado"] = bool(f.get("expediente_id") and f["expediente_id"] in completos)
         f["le_toca"] = _le_toca(f, firmantes)
+        # La liga se arma aquí, con APP_URL. Armarla en el navegador con
+        # location.origin daba una liga rota desde la app de iOS.
+        f["liga"] = _liga_de(f) if f.get("token") else None
 
     return {"documento": doc, "firmantes": firmantes, "eventos": eventos,
             "estado_calculado": _resumen_estado(doc, firmantes)}
@@ -972,9 +919,9 @@ async def agregar_firmante(request: Request, documento_id: str, body: FirmanteIn
     telefono = _tel(body.telefono or "")
     if not nombre:
         raise HTTPException(400, "Falta el nombre del firmante.")
-    if not email and not telefono:
-        raise HTTPException(400, "Necesito al menos un correo o un WhatsApp para mandarle la liga y el código.")
-    if email and not _email_ok(email):
+    if not email:
+        raise HTTPException(400, "Falta el correo: por ahí le llegan la invitación y el código para firmar.")
+    if not _email_ok(email):
         raise HTTPException(400, "Ese correo no se ve bien. Revísalo.")
 
     rol = (body.rol or "otro").strip()
@@ -1029,7 +976,9 @@ async def editar_firmante(request: Request, firmante_id: str, body: FirmanteIn):
         cambios["nombre"] = body.nombre.strip()[:160]
     if body.email is not None:
         e = body.email.strip().lower()
-        if e and not _email_ok(e):
+        if not e:
+            raise HTTPException(400, "El correo es obligatorio: por ahí le llega el código para firmar.")
+        if not _email_ok(e):
             raise HTTPException(400, "Ese correo no se ve bien. Revísalo.")
         cambios["email"] = e or None
     if body.telefono is not None:
@@ -1064,60 +1013,52 @@ async def quitar_firmante(request: Request, firmante_id: str):
 # ENVIAR A FIRMA
 # ══════════════════════════════════════════════════════════════════════════
 
-async def _liga_de(firmante: dict) -> str:
+def _liga_de(firmante: dict) -> str:
     return f"{APP_URL}/firmar.html?t={firmante.get('token') or ''}"
 
 
-async def _invitar(doc: dict, firmante: dict, agente: str) -> Tuple[bool, str, str]:
-    """Manda la liga. Devuelve (llegó, por dónde, motivo si no llegó).
-    Se intenta WhatsApp primero porque es donde la gente sí lee, y se cae a
-    correo sin drama."""
-    url = await _liga_de(firmante)
+async def _invitar(doc: dict, firmante: dict, agente: str,
+                   recordatorio: bool = False) -> Tuple[bool, str, str]:
+    """Manda la liga por correo. Devuelve (llegó, por dónde, motivo si no
+    llegó). Por WhatsApp la manda el agente desde la app móvil."""
+    url = _liga_de(firmante)
     tipo_label = TIPOS.get(doc.get("tipo") or "otro", "Documento")
     rol_label = ROLES.get(firmante.get("rol") or "otro", "Firmante")
+    # El "mensaje para los firmantes" que escribe el agente antes solo se
+    # veía al abrir la liga. Tiene que ir en la invitación misma.
+    mensaje = (doc.get("mensaje") or "").strip()
     canales = []
     fallas = []
 
-    if firmante.get("telefono"):
-        numero = await _wa_numero(doc["user_id"])
-        if not numero:
-            fallas.append("no tienes ningún número de WhatsApp conectado")
-        else:
-            texto = (
-                f"Hola {firmante.get('nombre', '')}.\n\n"
-                f"{agente} te comparte un documento para firmar: "
-                f"{doc.get('titulo')} ({tipo_label}).\n"
-                f"Firmas como: {rol_label}.\n\n"
-                f"Ábrelo aquí:\n{url}\n\n"
-                f"Folio {doc.get('folio')}. No compartas esta liga: es solo tuya."
-            )
-            if await _wa_texto(numero, firmante["telefono"], texto):
-                canales.append("whatsapp")
-            else:
-                fallas.append("por WhatsApp no salió porque esa persona nunca te ha escrito "
-                              "(la ventana de 24 horas está cerrada)")
-
     if firmante.get("email"):
+        intro = ("Te recordamos que tienes un documento pendiente de firmar."
+                 if recordatorio else
+                 f"<strong>{html.escape(agente)}</strong> te comparte un documento para firmar.")
         cuerpo = (
-            f"<p><strong>{html.escape(agente)}</strong> te comparte un documento para firmar.</p>"
+            f"<p>Hola {html.escape(firmante.get('nombre') or '')}. {intro}</p>"
             f"<p style='background:#F4F6F8;border-radius:10px;padding:16px;margin:18px 0;'>"
             f"<strong>{html.escape(doc.get('titulo') or '')}</strong><br/>"
             f"{html.escape(tipo_label)}<br/>"
             f"Firmas como: <strong>{html.escape(rol_label)}</strong><br/>"
             f"Folio: {html.escape(doc.get('folio') or '')}</p>"
-            f"<p>Al abrir la liga podrás leer el documento completo antes de decidir. "
-            f"Te pediremos un código de verificación para confirmar que eres tú.</p>"
-            f"<p style='font-size:13px;color:#8A97A6;'>No compartas esta liga: es solo tuya.</p>"
+            + (f"<p><strong>Mensaje de {html.escape(agente)}:</strong><br/>"
+               f"{html.escape(mensaje)}</p>" if mensaje else "")
+            + "<p>Firmar toma unos 3 minutos: abres la liga, lees el documento, "
+            "trazas tu firma con el dedo y confirmas con un código que te mandamos. "
+            "No necesitas crear cuenta ni instalar nada.</p>"
+            "<p style='font-size:13px;color:#8A97A6;'>No compartas esta liga: es solo tuya.</p>"
         )
+        asunto = (f"Recordatorio: documento pendiente de firma — {doc.get('titulo')}"
+                  if recordatorio else f"Documento para firmar — {doc.get('titulo')}")
         ok_mail, motivo_mail = await _mail(
-            firmante["email"], f"Documento para firmar — {doc.get('titulo')}",
-            _mail_layout("Tienes un documento para firmar", cuerpo, "Abrir y revisar", url))
+            firmante["email"], asunto,
+            _mail_layout("Tienes un documento para firmar", cuerpo, "Revisar y firmar", url))
         if ok_mail:
             canales.append("correo")
         else:
             fallas.append(motivo_mail)
-    elif not firmante.get("telefono"):
-        fallas.append("no tiene correo ni WhatsApp capturado")
+    else:
+        fallas.append("no tiene correo capturado")
 
     return (bool(canales),
             " y ".join(canales) if canales else "",
@@ -1149,6 +1090,27 @@ async def enviar_a_firma(request: Request, documento_id: str):
         raise HTTPException(400, "Agrega por lo menos un firmante.")
     if not any(f.get("obligatorio", True) for f in firmantes):
         raise HTTPException(400, "Al menos un firmante tiene que ser obligatorio.")
+    # Sobre todo pasa con los que llegan desde el módulo de contratos: el nombre
+    # no coincidió con ningún contacto y la parte quedó sin correo. Sin correo
+    # no le llega ni la invitación ni el código, y la firma se atora.
+    sin_correo = [f.get("nombre") or "?" for f in firmantes if not f.get("email")]
+    if sin_correo:
+        raise HTTPException(400, "Falta el correo de: " + ", ".join(sin_correo) +
+                                 ". Edítalos antes de enviar.")
+
+    # La vigencia corre desde que sale a firma, no desde que se creó el
+    # borrador: un borrador que se quedó un mes en espera salía ya vencido.
+    dias = VIGENCIA_DIAS
+    try:
+        creado = datetime.fromisoformat(str(doc.get("created_at")).replace("Z", "+00:00"))
+        vence = datetime.fromisoformat(str(doc.get("vence_at")).replace("Z", "+00:00"))
+        dias = max(1, min(365, round((vence - creado).total_seconds() / 86400)))
+    except Exception:
+        pass
+    vence_at = (datetime.now(timezone.utc) + timedelta(days=dias)).isoformat()
+    await _sb_patch("firma_documentos", {"id": f"eq.{documento_id}"},
+                    {"vence_at": vence_at, "updated_at": _ahora()})
+    doc["vence_at"] = vence_at
 
     agente = await _nombre_agente(uid)
     resultados = []
@@ -1160,11 +1122,12 @@ async def enviar_a_firma(request: Request, documento_id: str):
         # A quien no le toca todavía se le crea la liga pero no se le avisa:
         # recibir "firma esto" cuando no puede firmar solo genera llamadas.
         if not _le_toca(f, firmantes):
-            resultados.append({"firmante": f["nombre"], "enviado": False, "canal": "en espera de turno"})
+            resultados.append({"firmante": f["nombre"], "enviado": False,
+                               "en_espera": True, "canal": "en espera de turno"})
             continue
         ok, canal, motivo = await _invitar(doc, f, agente)
         resultados.append({"firmante": f["nombre"], "enviado": ok,
-                           "canal": canal, "motivo": motivo})
+                           "canal": canal, "motivo": motivo, "liga": _liga_de(f)})
         await evento(uid, "enviado",
                      f"Invitación a {f['nombre']}" +
                      (f" por {canal}." if ok else f" NO se pudo entregar: {motivo}"),
@@ -1194,7 +1157,7 @@ async def recordar(request: Request, firmante_id: str):
     if not _le_toca(f, todos):
         raise HTTPException(409, "Todavía no le toca a esta persona: faltan firmas anteriores.")
 
-    ok, canal, motivo = await _invitar(doc, f, await _nombre_agente(uid))
+    ok, canal, motivo = await _invitar(doc, f, await _nombre_agente(uid), recordatorio=True)
     await evento(uid, "recordatorio",
                  f"Recordatorio a {f['nombre']}" +
                  (f" por {canal}." if ok else f" NO se pudo entregar: {motivo}"),
@@ -1223,7 +1186,7 @@ async def _por_token(token: str) -> Tuple[dict, dict, List[dict]]:
     doc = docs[0]
 
     if doc.get("estado") == "cancelado":
-        raise HTTPException(410, "Tu asesor canceló este documento. Ponte en contacto con él.")
+        raise HTTPException(410, "Tu asesor canceló este documento. Ponte en contacto con tu asesor.")
     vence = doc.get("vence_at")
     if vence and firmante.get("estado") != "firmado":
         try:
@@ -1400,20 +1363,9 @@ async def publico_pedir_codigo(request: Request, token: str, canal: str = Form("
     codigo = "".join(secrets.choice("0123456789") for _ in range(OTP_DIGITOS))
     expira = datetime.now(timezone.utc) + timedelta(minutes=OTP_MINUTOS)
 
-    prefiere_wa = (canal or "").strip() == "whatsapp" or not firmante.get("email")
+    # Solo por correo. Mandarlo por el WhatsApp del agente no sirve: el
+    # agente vería el código y dejaría de probar que firmó la persona.
     usado = ""
-
-    if firmante.get("telefono") and prefiere_wa:
-        numero = await _wa_numero(doc["user_id"])
-        if numero:
-            if await _wa_plantilla_otp(numero, firmante["telefono"], codigo):
-                usado = "whatsapp"
-            else:
-                texto = (f"Tu código para firmar «{doc.get('titulo')}» es: {codigo}\n\n"
-                         f"Vence en {OTP_MINUTOS} minutos. No se lo compartas a nadie, "
-                         f"ni siquiera a tu asesor.")
-                if await _wa_texto(numero, firmante["telefono"], texto):
-                    usado = "whatsapp"
 
     if not usado and firmante.get("email"):
         cuerpo = (
@@ -1438,13 +1390,13 @@ async def publico_pedir_codigo(request: Request, token: str, canal: str = Form("
                      documento_id=doc["id"], firmante_id=firmante["id"],
                      actor="sistema", ip=_ip(request), ua=_ua(request))
         raise HTTPException(502, "No pudimos enviarte el código. Avísale a tu asesor para que revise "
-                                 "tu correo o tu número.")
+                                 "tu correo.")
 
     await _sb_patch("firma_firmantes", {"id": f"eq.{firmante['id']}"}, {
         "otp_hash": _hash_otp(token, codigo),
         "otp_expira_at": expira.isoformat(),
         "otp_intentos": 0,
-        "otp_canal": "whatsapp" if usado == "whatsapp" else "email",
+        "otp_canal": "email",
         "otp_enviado_at": _ahora(),
     })
     await evento(doc["user_id"], "otp_enviado",
@@ -1452,8 +1404,7 @@ async def publico_pedir_codigo(request: Request, token: str, canal: str = Form("
                  documento_id=doc["id"], firmante_id=firmante["id"],
                  actor="sistema", ip=_ip(request), ua=_ua(request))
     return {"ok": True, "canal": usado, "minutos": OTP_MINUTOS,
-            "destino": _mask_tel(firmante.get("telefono") or "") if usado == "whatsapp"
-                       else _mask_email(firmante.get("email") or "")}
+            "destino": _mask_email(firmante.get("email") or "")}
 
 
 # ── Firmar ────────────────────────────────────────────────────────────────
@@ -1606,6 +1557,9 @@ async def publico_rechazar(request: Request, token: str, body: RechazarIn):
     doc, firmante, _ = await _por_token(token)
     if firmante.get("estado") == "firmado":
         raise HTTPException(409, "Ya firmaste este documento.")
+    if firmante.get("estado") == "rechazado":
+        # Sin esto, un doble toque le mandaba dos correos de rechazo al agente.
+        return {"ok": True}
 
     await _sb_patch("firma_firmantes", {"id": f"eq.{firmante['id']}"}, {
         "estado": "rechazado",
@@ -1679,18 +1633,35 @@ async def _avisar_cierre(documento_id: str) -> None:
     firmantes = await _firmantes(documento_id)
     verificar = f"{APP_URL}/verificar-firma.html?f={doc.get('folio')}"
 
+    # Cada parte recibe por correo su propia liga, que ya entrega el PDF
+    # firmado (antes el botón llevaba a la página de verificación).
     for f in firmantes:
-        if not f.get("email"):
+        if f.get("estado") != "firmado":
             continue
-        cuerpo = (
-            f"<p>El documento <strong>{html.escape(doc.get('titulo') or '')}</strong> "
-            f"quedó firmado por todas las partes.</p>"
-            f"<p>Folio: <strong>{html.escape(doc.get('folio') or '')}</strong></p>"
-            f"<p>Puedes descargar tu copia con la constancia de firma desde la misma liga "
-            f"que usaste para firmar. Consérvala.</p>"
-        )
-        await _mail(f["email"], f"Documento firmado — {doc.get('titulo')}",
-                    _mail_layout("Listo, quedó firmado", cuerpo, "Verificar documento", verificar))
+        liga = _liga_de(f) if f.get("token") else verificar
+        canales: List[str] = []
+        fallas: List[str] = []
+        if f.get("email"):
+            cuerpo = (
+                f"<p>El documento <strong>{html.escape(doc.get('titulo') or '')}</strong> "
+                f"quedó firmado por todas las partes.</p>"
+                f"<p>Folio: <strong>{html.escape(doc.get('folio') or '')}</strong></p>"
+                f"<p>Descarga tu copia con la constancia de firma y consérvala. "
+                f"Cualquier persona puede comprobar que es auténtica en "
+                f"<a href=\"{html.escape(verificar)}\">{html.escape(verificar)}</a>.</p>"
+            )
+            ok_mail, motivo_mail = await _mail(
+                f["email"], f"Documento firmado — {doc.get('titulo')}",
+                _mail_layout("Listo, quedó firmado", cuerpo, "Descargar mi copia", liga))
+            if ok_mail:
+                canales.append("correo")
+            else:
+                fallas.append(motivo_mail)
+        await evento(doc["user_id"], "enviado",
+                     f"Copia final a {f.get('nombre')}" +
+                     (f" por {' y '.join(canales)}." if canales
+                      else f" NO se pudo entregar: {' · '.join(x for x in fallas if x) or 'no tiene correo'}"),
+                     documento_id=documento_id, firmante_id=f.get("id"), actor="sistema")
 
     agente_mail = await _correo_agente(doc["user_id"])
     if agente_mail:
@@ -2645,7 +2616,7 @@ async def probar_correo(request: Request, body: PruebaCorreoIn):
 async def mi_acceso(request: Request):
     """Le dice a la pantalla si este agente puede mandar documentos a firma."""
     uid = await _uid(request)
-    return {"activa": await _suscripcion_activa(uid)}
+    return {"activa": await has_paid_feature_access(uid)}
 
 
 @router.get("/salud")
@@ -2660,7 +2631,6 @@ async def salud():
         "ok": True,
         "supabase": bool(SUPABASE_URL and SUPABASE_SERVICE_KEY),
         "correo": bool(RESEND_API_KEY),
-        "plantilla_whatsapp_otp": bool(WA_PLANTILLA_OTP),
         "pypdf": ok_pdf,
         "nivel_maximo": "simple",
         "psc_nom151": _nom151_configurado(),

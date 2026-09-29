@@ -310,6 +310,33 @@
     margin-bottom: var(--sp-4);
   }
 
+  /* Guía de pasos del borrador. Antes la pantalla mostraba todo a la vez
+     y no quedaba claro qué faltaba para poder enviar. */
+  .fr-guia {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-3); margin-bottom: var(--sp-6);
+  }
+  @media (max-width: 680px) { .fr-guia { grid-template-columns: 1fr; } }
+  .fr-guia__p {
+    display: flex; gap: var(--sp-3); align-items: flex-start;
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: var(--r-lg); padding: var(--sp-4);
+  }
+  .fr-guia__n {
+    width: 26px; height: 26px; border-radius: 50%; flex: none;
+    background: var(--line-2); color: var(--ink-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--fs-label-3); font-weight: 700;
+  }
+  .fr-guia__p.is-hecho .fr-guia__n { background: var(--forest); color: #fff; }
+  .fr-guia__p.is-sig { border-color: var(--sky-blue); }
+  .fr-guia__t { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
+  .fr-guia__d { font-size: var(--fs-label-3); color: var(--mute); margin-top: var(--sp-1); line-height: var(--lh); }
+
+  /* Resultado del envío, persona por persona. */
+  .fr-res { list-style: none; margin: var(--sp-3) 0 0; padding: 0; }
+  .fr-res li { font-size: var(--fs-sm); line-height: var(--lh); padding: var(--sp-1) 0; }
+
   .fr-oculto { display: none; }
 </style>
 </head>
@@ -388,15 +415,19 @@
       <div class="bk-cluster" id="fr-d-acciones"></div>
     </div>
 
+    <div class="fr-guia fr-oculto" id="fr-guia"></div>
+
+    <div class="bk-alert bk-alert--info fr-oculto" id="fr-sigue"
+         style="margin-bottom:var(--sp-6);"></div>
+
     <div class="bk-alert bk-alert--error fr-oculto" id="fr-aviso"
          style="margin-bottom:var(--sp-6);">
       <div style="flex:1;">
         <div style="font-weight:700;" id="fr-aviso-t"></div>
-        <div style="font-size:var(--fs-sm);margin-top:var(--sp-2);line-height:var(--lh);"
-             id="fr-aviso-d"></div>
-        <div style="font-size:var(--fs-label-3);margin-top:var(--sp-3);">
-          Mientras lo resuelves, usa «Copiar liga» en cada parte y mándasela tú
-          por WhatsApp. La firma funciona igual.
+        <ul class="fr-res" id="fr-aviso-d"></ul>
+        <div style="font-size:var(--fs-label-3);margin-top:var(--sp-3);" id="fr-aviso-pista">
+          Revisa que su correo esté bien escrito («Corregir contacto») y toca
+          «Recordar». También puedes usar «Copiar liga» y mandársela tú.
         </div>
       </div>
       <button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" id="fr-aviso-x">Cerrar</button>
@@ -459,9 +490,71 @@
           </div>
         </div>
 
+        <div class="bk-card bk-card--pad">
+          <div class="bk-section-header"><h2>Quién firma</h2></div>
+          <div class="bk-hint" id="fr-agente-nota" style="margin-bottom:var(--sp-4);"></div>
+
+          <div id="fr-firmantes"></div>
+
+          <div id="fr-alta-firmante">
+            <div class="fr-alta-caja" id="fr-alta-caja">
+              <div class="fr-alta-caja__t" id="fr-alta-t">Agregar a una parte</div>
+              <div class="fr-nuevo-firmante">
+                <div class="bk-field">
+                  <label class="bk-label" for="fr-f-nom">Nombre completo</label>
+                  <input class="bk-input" id="fr-f-nom" type="text" list="fr-contactos"
+                         placeholder="Juan Pérez García" autocomplete="off"/>
+                  <datalist id="fr-contactos"></datalist>
+                </div>
+                <div class="bk-field">
+                  <label class="bk-label" for="fr-f-rol">Firma como</label>
+                  <select class="bk-select" id="fr-f-rol"></select>
+                </div>
+                <div class="bk-field">
+                  <label class="bk-label" for="fr-f-mail">Correo (obligatorio)</label>
+                  <input class="bk-input" id="fr-f-mail" type="email"
+                         placeholder="juan.perez@correo.com" autocomplete="off"/>
+                </div>
+                <div class="bk-field">
+                  <label class="bk-label" for="fr-f-wa">WhatsApp (opcional)</label>
+                  <input class="bk-input" id="fr-f-wa" type="tel"
+                         placeholder="443 123 4567" autocomplete="off"/>
+                </div>
+                <div class="fr-nuevo-firmante__pie">
+                  <div class="bk-hint" style="margin:0;">
+                    Por correo le llegan la invitación y el código para firmar.
+                    Con su WhatsApp, desde la app de Broquer en tu celular puedes
+                    mandarle la liga con tu propio WhatsApp.
+                  </div>
+                  <div class="bk-cluster">
+                    <button class="bk-btn bk-btn--quiet fr-oculto" type="button" id="fr-f-cancelar">
+                      Cancelar
+                    </button>
+                    <button class="bk-btn bk-btn--forest" type="button" id="fr-f-add">
+                      Agregar parte
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="fr-cascada-caja">
+            <label class="bk-check" style="margin-top:var(--sp-5);">
+              <input type="checkbox" id="fr-cascada"/>
+              <span class="bk-check__box"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>
+              <span>Firmar en orden, uno tras otro</span>
+            </label>
+            <div class="bk-hint">
+              Útil cuando hay fiador: solo se le avisa cuando los principales ya firmaron.
+              El orden es el de la lista de arriba.
+            </div>
+            </div>
+          </div>
+        </div>
+
         <div class="bk-card bk-card--pad fr-oculto" id="fr-d-colocar">
           <div class="bk-section-header">
-            <h2>Dónde firman</h2>
+            <h2>Dónde firman <span style="font-weight:400;color:var(--mute);">(opcional)</span></h2>
             <a href="#" id="fr-colocar-toggle">Mostrar hojas</a>
           </div>
 
@@ -482,62 +575,10 @@
 
           <div class="fr-oculto" id="fr-colocar-caja">
             <div style="font-size:var(--fs-label-3);font-weight:700;color:var(--mute);margin-bottom:var(--sp-3);">
-              Elige de quién es la firma y toca la hoja donde va
+              Elige de quién es la firma y toca la hoja donde va. Toca un recuadro para quitarlo.
             </div>
             <div class="fr-quien-coloca" id="fr-plumas"></div>
             <div class="fr-hojas" id="fr-hojas"></div>
-          </div>
-        </div>
-
-        <div class="bk-card bk-card--pad">
-          <div class="bk-section-header"><h2>Quién firma</h2></div>
-          <div class="bk-hint" id="fr-agente-nota" style="margin-bottom:var(--sp-4);"></div>
-
-          <div id="fr-firmantes"></div>
-
-          <div id="fr-alta-firmante">
-            <div class="fr-alta-caja">
-              <div class="fr-alta-caja__t">Agregar a una parte</div>
-              <div class="fr-nuevo-firmante">
-                <div class="bk-field">
-                  <label class="bk-label" for="fr-f-nom">Nombre completo</label>
-                  <input class="bk-input" id="fr-f-nom" type="text" list="fr-contactos"
-                         placeholder="Juan Pérez García" autocomplete="off"/>
-                  <datalist id="fr-contactos"></datalist>
-                </div>
-                <div class="bk-field">
-                  <label class="bk-label" for="fr-f-rol">Firma como</label>
-                  <select class="bk-select" id="fr-f-rol"></select>
-                </div>
-                <div class="bk-field">
-                  <label class="bk-label" for="fr-f-mail">Correo</label>
-                  <input class="bk-input" id="fr-f-mail" type="email"
-                         placeholder="juan.perez@correo.com" autocomplete="off"/>
-                </div>
-                <div class="bk-field">
-                  <label class="bk-label" for="fr-f-wa">WhatsApp</label>
-                  <input class="bk-input" id="fr-f-wa" type="tel"
-                         placeholder="443 123 4567" autocomplete="off"/>
-                </div>
-                <div class="fr-nuevo-firmante__pie">
-                  <div class="bk-hint" style="margin:0;">
-                    Con el correo basta para empezar.
-                  </div>
-                  <button class="bk-btn bk-btn--forest" type="button" id="fr-f-add">
-                    Agregar parte
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <label class="bk-check" style="margin-top:var(--sp-5);">
-              <input type="checkbox" id="fr-cascada"/>
-              <span class="bk-check__box"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>
-              <span>Firmar en orden, uno tras otro</span>
-            </label>
-            <div class="bk-hint">
-              Útil cuando hay fiador: solo se le avisa cuando los principales ya firmaron.
-            </div>
           </div>
         </div>
 
@@ -628,8 +669,25 @@
     ['conyuge', 'Cónyuge'],
     ['propietario', 'Propietario'],
     ['agente_mediador', 'Asesor inmobiliario'],
+    ['testigo', 'Testigo'],
     ['otro', 'Firmante']
   ];
+  // Solo los roles que tienen sentido en cada tipo de contrato, en el orden
+  // en que normalmente se agregan. Antes salían los once siempre y el primero
+  // era "Promitente vendedor" aunque fuera un arrendamiento.
+  var ROLES_POR_TIPO = {
+    promesa: ['promitente_vendedor', 'promitente_comprador', 'conyuge', 'copropietario',
+              'fiador', 'obligado_solidario', 'testigo', 'otro'],
+    arrendamiento: ['arrendador', 'arrendatario', 'fiador', 'obligado_solidario',
+                    'conyuge', 'copropietario', 'testigo', 'otro'],
+    exclusiva: ['propietario', 'agente_mediador', 'copropietario', 'conyuge', 'testigo', 'otro'],
+    convenio: ['agente_mediador', 'otro'],
+    carta_intencion: ['promitente_comprador', 'promitente_vendedor', 'propietario',
+                      'arrendatario', 'otro']
+  };
+  function rolLabel(clave) {
+    return (ROLES.filter(function (r) { return r[0] === clave; })[0] || ['', 'Firmante'])[1];
+  }
   var TIPOS = {
     promesa: 'Promesa de compraventa',
     arrendamiento: 'Contrato de arrendamiento',
@@ -683,15 +741,31 @@
     setTimeout(function () { t.remove(); }, 4400);
   }
 
-  /* Un toast se va solo en 4 segundos y el motivo de una falla de envío
-     hay que poder leerlo con calma. Este se queda hasta que lo cierres. */
-  function avisoFalla(titulo, detalle) {
+  /* Un toast se va solo en 4 segundos y el resultado del envío hay que
+     poder leerlo con calma, persona por persona. Este se queda hasta que
+     lo cierres. */
+  function mostrarResultado(resultados) {
     var caja = g('fr-aviso');
-    g('fr-aviso-t').textContent = titulo;
-    g('fr-aviso-d').textContent = detalle;
+    var fallaron = resultados.filter(function (x) { return !x.enviado && !x.en_espera; });
+    g('fr-aviso-t').textContent = fallaron.length
+      ? (fallaron.length === 1 ? 'A 1 persona no le llegó la invitación'
+                               : 'A ' + fallaron.length + ' personas no les llegó la invitación')
+      : 'Listo: el documento salió a firma';
+    g('fr-aviso-d').innerHTML = resultados.map(function (x) {
+      if (x.en_espera) return '<li><b>' + esc(x.firmante) + '</b>: en espera, se le avisa cuando le toque su turno.</li>';
+      if (x.enviado) return '<li><b>' + esc(x.firmante) + '</b>: enviado por ' + esc(x.canal) + '.</li>';
+      return '<li><b>' + esc(x.firmante) + '</b>: NO le llegó. ' + esc(x.motivo || 'Motivo desconocido.') + '</li>';
+    }).join('');
+    caja.classList.toggle('bk-alert--error', fallaron.length > 0);
+    caja.classList.toggle('bk-alert--success', fallaron.length === 0);
+    ver('fr-aviso-pista', fallaron.length > 0);
     caja.classList.remove('fr-oculto');
     caja.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
+
+  // El estado guardado no se entera de un rechazo o de un vencimiento; el
+  // calculado por el servidor sí.
+  function estadoDe(d) { return d.estado_calculado || d.estado; }
 
   /* "Failed to fetch" es lo que avienta el navegador cuando la conexión
      se cae antes de llegar al servidor (deploy en curso, wifi que parpadea,
@@ -751,7 +825,7 @@
 
   function pintarKpis() {
     var pend = DOCS.filter(function (d) {
-      return d.estado === 'enviado' || d.estado === 'parcial';
+      return estadoDe(d) === 'enviado' || estadoDe(d) === 'parcial';
     }).length;
     var mes = new Date(); mes.setDate(1); mes.setHours(0, 0, 0, 0);
     var delMes = DOCS.filter(function (d) {
@@ -764,9 +838,10 @@
   }
 
   function pasaFiltro(d) {
+    var est = estadoDe(d);
     if (FILTRO === 'pendiente') {
-      if (d.estado !== 'enviado' && d.estado !== 'parcial') return false;
-    } else if (FILTRO && d.estado !== FILTRO) {
+      if (est !== 'enviado' && est !== 'parcial') return false;
+    } else if (FILTRO && est !== FILTRO) {
       return false;
     }
     if (!BUSCA) return true;
@@ -795,7 +870,7 @@
       'stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>';
 
     g('fr-lista').innerHTML = visibles.map(function (d) {
-      var e = ESTADOS[d.estado] || ['—', ''];
+      var e = ESTADOS[estadoDe(d)] || ['—', ''];
       var total = d.total_firmantes || 0;
       var hechas = d.ya_firmaron || 0;
       var pct = total ? Math.round((hechas / total) * 100) : 0;
@@ -804,8 +879,7 @@
       var chips = (d.firmantes || []).map(function (f) {
         var cls = f.estado === 'firmado' ? ' is-firmado'
                 : (f.estado === 'rechazado' ? ' is-rechazado' : '');
-        var rol = (ROLES.filter(function (r) { return r[0] === f.rol; })[0] || ['', ''])[1];
-        return '<span class="fr-parte-chip' + cls + '" title="' + esc(rol) + '">' +
+        return '<span class="fr-parte-chip' + cls + '" title="' + esc(rolLabel(f.rol)) + '">' +
           '<span class="fr-parte-chip__p">' +
             (f.estado === 'firmado' ? ICO_PALOMA : '') + '</span>' +
           esc(f.nombre) + '</span>';
@@ -849,6 +923,7 @@
       var r = await api('/firmas/documentos/' + encodeURIComponent(id));
       if (!ACTUAL || ACTUAL.documento.id !== id) { HOJAS = []; HOJAS_ABIERTAS = false; }
       ACTUAL = r;
+      EDITANDO = null;
       pintarDetalle();
       g('fr-vista-lista').classList.add('is-oculto');
       g('fr-vista-det').classList.add('is-abierto');
@@ -887,7 +962,10 @@
     ['fr-d-tit', 'fr-d-tipo', 'fr-d-msg', 'fr-d-ine'].forEach(function (id) {
       g(id).disabled = !esBorrador;
     });
-    ver('fr-alta-firmante', esBorrador);
+    g('fr-cascada').checked = fs.some(function (f) { return !!f.orden; });
+    salirDeEdicion();
+    pintarRoles();
+    pintarGuia(d, fs, esBorrador);
 
     if (d.archivo_nombre) {
       g('fr-zona').classList.add('is-listo');
@@ -903,9 +981,7 @@
     }
     g('fr-zona').style.cursor = esBorrador ? 'pointer' : 'default';
 
-    g('fr-agente-nota').textContent = TIPOS_CON_AGENTE[d.tipo]
-      ? 'En este tipo de contrato tú sí eres parte: agrégate como firmante.'
-      : 'Aquí firman las partes del contrato, no tú. Eres el intermediario.';
+    pintarNotaAgente();
 
     g('fr-d-hash-o').textContent = d.hash_original || 'Se calcula al subir el PDF';
     g('fr-d-hash-f').textContent = d.hash_firmado || 'Se genera al completarse la firma';
@@ -917,6 +993,122 @@
     pintarBitacora(ACTUAL.eventos || []);
   }
 
+  function pintarNotaAgente() {
+    g('fr-agente-nota').textContent = TIPOS_CON_AGENTE[g('fr-d-tipo').value]
+      ? 'En este tipo de contrato tú sí eres parte: agrégate como firmante.'
+      : 'Aquí firman las partes del contrato, no tú. Eres el intermediario.';
+  }
+
+  function pintarRoles(elegido) {
+    var tipo = g('fr-d-tipo').value || 'otro';
+    var claves = ROLES_POR_TIPO[tipo] || ROLES.map(function (r) { return r[0]; })
+      .filter(function (k) { return k !== 'agente_mediador'; });
+    if (elegido && claves.indexOf(elegido) < 0) claves = claves.concat([elegido]);
+    g('fr-f-rol').innerHTML = claves.map(function (k) {
+      return '<option value="' + k + '">' + esc(rolLabel(k)) + '</option>';
+    }).join('');
+    // Se sugiere el primer rol principal que todavía nadie tiene: después
+    // del vendedor, el comprador; después del arrendador, el arrendatario.
+    if (!elegido) {
+      var usados = ((ACTUAL && ACTUAL.firmantes) || []).map(function (f) { return f.rol; });
+      elegido = claves.slice(0, 2).filter(function (k) { return usados.indexOf(k) < 0; })[0] || claves[0];
+    }
+    g('fr-f-rol').value = elegido;
+  }
+
+  var ICO_OK = '<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" ' +
+    'stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>';
+
+  /* Qué falta para poder enviar (borrador) o qué sigue (ya enviado). */
+  function pintarGuia(d, fs, esBorrador) {
+    ver('fr-guia', esBorrador);
+    if (esBorrador) {
+      var sinMedio = fs.filter(function (f) { return !f.email; });
+      var pasos = [
+        [!!d.archivo_ruta, 'Sube el documento',
+         d.archivo_ruta ? 'Listo: ' + (d.paginas || '?') + ' páginas.' : 'PDF o Word. Abajo, en «El documento».'],
+        [fs.length > 0 && !sinMedio.length, 'Agrega a quienes firman',
+         !fs.length ? 'Nombre y correo de cada parte.'
+           : (sinMedio.length ? 'A ' + sinMedio.map(function (f) { return f.nombre; }).join(', ') +
+                                ' le falta el correo. Toca «Editar».'
+                              : fs.length + (fs.length === 1 ? ' parte lista.' : ' partes listas.'))],
+        [false, 'Envía a firma',
+         'Botón «Enviar a firma», arriba. Cada parte recibe su liga por correo.']
+      ];
+      var sig = -1;
+      for (var i = 0; i < pasos.length; i++) { if (!pasos[i][0]) { sig = i; break; } }
+      g('fr-guia').innerHTML = pasos.map(function (p, i) {
+        return '<div class="fr-guia__p' + (p[0] ? ' is-hecho' : '') + (i === sig ? ' is-sig' : '') + '">' +
+          '<span class="fr-guia__n">' + (p[0] ? ICO_OK : (i + 1)) + '</span>' +
+          '<div><div class="fr-guia__t">' + esc(p[1]) + '</div>' +
+          '<div class="fr-guia__d">' + esc(p[2]) + '</div></div></div>';
+      }).join('');
+    }
+
+    var est = ACTUAL.estado_calculado || d.estado;
+    var hechas = fs.filter(function (f) { return f.estado === 'firmado'; }).length;
+    var rech = fs.filter(function (f) { return f.estado === 'rechazado'; })
+      .map(function (f) { return f.nombre; });
+    var txt = {
+      enviado: 'Esperando firmas: ' + hechas + ' de ' + fs.length + '. En la bitácora ves por dónde ' +
+               'le llegó la liga a cada parte. Si alguien no la encuentra, usa «Recordar» o ' +
+               '«Copiar liga» en su tarjeta.',
+      parcial: 'Van ' + hechas + ' de ' + fs.length + ' firmas. Si alguien no la encuentra, ' +
+               'usa «Recordar» o «Copiar liga» en su tarjeta.',
+      completo: d.firmado_ruta
+        ? 'Todas las partes firmaron. Descarga el documento firmado con el botón de arriba; ' +
+          'a cada parte le mandamos su copia.'
+        : 'Todas las partes firmaron, pero el PDF final no se terminó de armar. ' +
+          'Toca «Rearmar documento».',
+      rechazado: (rech.join(', ') || 'Alguien') + ' decidió no firmar (el motivo está en su tarjeta). ' +
+                 'Corrige lo necesario, cancela este documento y crea uno nuevo.',
+      vencido: 'La invitación venció sin que firmaran todos. Cancela este documento y crea uno nuevo.',
+      cancelado: 'Documento cancelado. Las ligas ya no funcionan.'
+    }[est];
+    if (txt && (est === 'enviado' || est === 'parcial') && esApp()) {
+      txt += ' Desde aquí también puedes mandarle su liga con tu WhatsApp («Enviar por WhatsApp»).';
+    }
+    g('fr-sigue').textContent = txt || '';
+    ver('fr-sigue', !esBorrador && !!txt);
+  }
+
+  /* Editar una parte reutiliza el mismo formulario de alta. Sirve sobre
+     todo para completar el correo de quienes llegan desde Contratos y para
+     corregir un correo mal escrito antes de mandar un recordatorio. */
+  var EDITANDO = null;
+
+  function editarFirmante(id) {
+    var f = ((ACTUAL && ACTUAL.firmantes) || []).filter(function (x) { return x.id === id; })[0];
+    if (!f) return;
+    EDITANDO = id;
+    var esBorrador = ACTUAL.documento.estado === 'borrador';
+    g('fr-f-nom').value = f.nombre || '';
+    g('fr-f-mail').value = f.email || '';
+    g('fr-f-wa').value = f.telefono || '';
+    pintarRoles(f.rol || 'otro');
+    g('fr-f-rol').disabled = !esBorrador;
+    g('fr-alta-t').textContent = 'Editar a ' + (f.nombre || 'la parte');
+    g('fr-f-add').textContent = 'Guardar cambios';
+    ver('fr-f-cancelar', true);
+    ver('fr-alta-firmante', true);
+    ver('fr-cascada-caja', esBorrador);
+    g('fr-alta-caja').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    g('fr-f-mail').focus();
+  }
+
+  function salirDeEdicion() {
+    var esBorrador = !!ACTUAL && ACTUAL.documento.estado === 'borrador';
+    EDITANDO = null;
+    ['fr-f-nom', 'fr-f-wa', 'fr-f-mail'].forEach(function (id) { g(id).value = ''; });
+    g('fr-f-rol').disabled = false;
+    g('fr-alta-t').textContent = 'Agregar a una parte';
+    g('fr-f-add').textContent = 'Agregar parte';
+    ver('fr-f-cancelar', false);
+    ver('fr-alta-firmante', esBorrador);
+    ver('fr-cascada-caja', esBorrador);
+    if (ACTUAL) pintarRoles();
+  }
+
   function pintarFirmantes(fs, esBorrador) {
     if (!fs.length) {
       g('fr-firmantes').innerHTML =
@@ -925,7 +1117,7 @@
       return;
     }
     g('fr-firmantes').innerHTML = fs.map(function (f) {
-      var rol = (ROLES.filter(function (r) { return r[0] === f.rol; })[0] || ['', 'Firmante'])[1];
+      var rol = rolLabel(f.rol);
       var ini = (f.nombre || '?').trim().charAt(0).toUpperCase();
       var firmo = f.estado === 'firmado';
 
@@ -939,8 +1131,8 @@
       var extra = [];
       if (f.email) extra.push('<span><b>Correo:</b> ' + esc(f.email) + '</span>');
       if (f.telefono) extra.push('<span><b>WhatsApp:</b> ' + esc(f.telefono) + '</span>');
-      if (!f.email && !f.telefono) {
-        extra.push('<span><b>Sin correo ni WhatsApp.</b> No se le puede avisar.</span>');
+      if (!f.email) {
+        extra.push('<span><b>Sin correo.</b> No le llegará la invitación ni el código.</span>');
       }
       if (f.identificado) extra.push('<span>Ya tiene expediente de cumplimiento completo</span>');
       else if (f.ine_frente_ruta) extra.push('<span>Subió su identificación</span>');
@@ -950,14 +1142,28 @@
       }
 
       var btns = '';
+      var vivo = ['cancelado', 'completo', 'vencido'].indexOf(ACTUAL.estado_calculado) < 0;
       if (esBorrador) {
-        btns = '<button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" ' +
+        btns = '<button class="bk-btn bk-btn--ghost bk-btn--sm" type="button" ' +
+               'data-editar="' + esc(f.id) + '">Editar</button>' +
+               '<button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" ' +
                'data-quitar="' + esc(f.id) + '">Quitar</button>';
-      } else if (!firmo && f.estado !== 'rechazado' && f.le_toca) {
+      } else if (vivo && !firmo && f.estado !== 'rechazado' && f.le_toca) {
         btns = '<button class="bk-btn bk-btn--ghost bk-btn--sm" type="button" ' +
                'data-recordar="' + esc(f.id) + '">Recordar</button>' +
                '<button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" ' +
-               'data-copiar="' + esc(f.id) + '">Copiar liga</button>';
+               'data-copiar="' + esc(f.id) + '">Copiar liga</button>' +
+               // WhatsApp solo en la app móvil, y desde el WhatsApp del propio
+               // agente (personal o Business): nunca desde el de Broquer, que
+               // obligaría a usar plantillas.
+               (esApp() && f.liga && f.telefono
+                 ? '<button class="bk-btn bk-btn--ghost bk-btn--sm" type="button" ' +
+                   'data-wa="' + esc(f.id) + '">Enviar por WhatsApp</button>' : '') +
+               (esApp() && f.liga && navigator.share
+                 ? '<button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" ' +
+                   'data-compartir="' + esc(f.id) + '">Compartir…</button>' : '') +
+               '<button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" ' +
+               'data-editar="' + esc(f.id) + '">Corregir contacto</button>';
       }
 
       return '' +
@@ -975,11 +1181,20 @@
     }).join('');
 
     var caja = g('fr-firmantes');
+    Array.prototype.forEach.call(caja.querySelectorAll('[data-editar]'), function (b) {
+      b.addEventListener('click', function () { editarFirmante(b.getAttribute('data-editar')); });
+    });
     Array.prototype.forEach.call(caja.querySelectorAll('[data-quitar]'), function (b) {
       b.addEventListener('click', function () { quitarFirmante(b.getAttribute('data-quitar')); });
     });
     Array.prototype.forEach.call(caja.querySelectorAll('[data-recordar]'), function (b) {
       b.addEventListener('click', function () { recordar(b.getAttribute('data-recordar'), b); });
+    });
+    Array.prototype.forEach.call(caja.querySelectorAll('[data-wa]'), function (b) {
+      b.addEventListener('click', function () { enviarWhatsApp(b.getAttribute('data-wa')); });
+    });
+    Array.prototype.forEach.call(caja.querySelectorAll('[data-compartir]'), function (b) {
+      b.addEventListener('click', function () { compartirLiga(b.getAttribute('data-compartir')); });
     });
     Array.prototype.forEach.call(caja.querySelectorAll('[data-copiar]'), function (b) {
       b.addEventListener('click', function () { copiarLiga(b.getAttribute('data-copiar')); });
@@ -1311,10 +1526,24 @@
     var wa = (g('fr-f-wa').value || '').trim();
     var mail = (g('fr-f-mail').value || '').trim();
     if (!nom) { toast('Falta el nombre.', 'error'); return; }
-    if (!wa && !mail) { toast('Pon al menos un WhatsApp o un correo.', 'error'); return; }
+    if (!mail) { toast('Falta el correo: por ahí le llegan la invitación y el código.', 'error'); return; }
+
+    if (EDITANDO) {
+      var cambios = { nombre: nom, telefono: wa, email: mail };
+      if (ACTUAL.documento.estado === 'borrador') cambios.rol = g('fr-f-rol').value;
+      try {
+        await api('/firmas/firmantes/' + encodeURIComponent(EDITANDO), { method: 'PATCH', json: cambios });
+        toast(ACTUAL.documento.estado === 'borrador' ? 'Guardado.'
+              : 'Guardado. Toca «Recordar» para mandarle la liga al contacto corregido.', 'success');
+        await abrir(ACTUAL.documento.id);
+      } catch (e) { toast(e.message, 'error'); }
+      return;
+    }
 
     var orden = null;
-    if (g('fr-cascada').checked) orden = (ACTUAL.firmantes || []).length + 1;
+    if (g('fr-cascada').checked) {
+      orden = (ACTUAL.firmantes || []).reduce(function (m, f) { return Math.max(m, f.orden || 0); }, 0) + 1;
+    }
 
     // Si el nombre coincide con un contacto del CRM, se amarra: así hereda
     // el expediente de cumplimiento si ya lo tiene.
@@ -1337,6 +1566,26 @@
     } catch (e) { toast(e.message, 'error'); }
   }
 
+  /* Antes la casilla solo afectaba a quien se agregara DESPUÉS de marcarla:
+     si ya estaban todos capturados, no hacía nada. Ahora ordena a todos. */
+  async function cambiarCascada() {
+    if (!ACTUAL) return;
+    var activar = g('fr-cascada').checked;
+    var fs = ACTUAL.firmantes || [];
+    try {
+      for (var i = 0; i < fs.length; i++) {
+        await api('/firmas/firmantes/' + encodeURIComponent(fs[i].id), {
+          method: 'PATCH', json: { orden: activar ? i + 1 : 0 }
+        });
+      }
+      await abrir(ACTUAL.documento.id);
+      if (fs.length) toast(activar ? 'Firmarán en el orden de la lista.' : 'Firmarán todos a la vez.', 'success');
+    } catch (e) {
+      toast(e.message, 'error');
+      g('fr-cascada').checked = !activar;
+    }
+  }
+
   async function quitarFirmante(id) {
     try {
       await api('/firmas/firmantes/' + encodeURIComponent(id), { method: 'DELETE' });
@@ -1348,7 +1597,21 @@
     if (!ACTUAL) return;
     var d = ACTUAL.documento;
     if (!d.archivo_ruta) { toast('Primero sube el PDF.', 'error'); return; }
-    if (!(ACTUAL.firmantes || []).length) { toast('Agrega por lo menos un firmante.', 'error'); return; }
+    var fs = ACTUAL.firmantes || [];
+    if (!fs.length) { toast('Agrega por lo menos un firmante.', 'error'); return; }
+    var sinMedio = fs.filter(function (f) { return !f.email; });
+    if (sinMedio.length) {
+      toast('A ' + sinMedio.map(function (f) { return f.nombre; }).join(', ') +
+            ' le falta el correo. Toca «Editar».', 'error');
+      return;
+    }
+
+    // Una última revisión: después de enviar ya no se puede cambiar nada.
+    var lista = fs.map(function (f) {
+      return '• ' + f.nombre + ' (' + rolLabel(f.rol) + ') — ' + f.email;
+    }).join('\n');
+    if (!window.confirm('Se enviará por correo «' + (g('fr-d-tit').value || d.titulo) + '» a:\n\n' + lista +
+        '\n\nDespués ya no podrás cambiar el documento ni las partes. ¿Enviar?')) return;
 
     var btn = g('fr-a-enviar');
     btn.disabled = true;
@@ -1357,19 +1620,11 @@
       await guardarSilencioso();
       var r = await api('/firmas/documentos/' + encodeURIComponent(d.id) + '/enviar',
                         { method: 'POST' });
-      var fallaron = (r.resultados || []).filter(function (x) {
-        return !x.enviado && x.canal !== 'en espera de turno';
-      });
-      if (fallaron.length) {
-        // El motivo real, no un "no se pudo" que deja adivinando.
-        var det = fallaron.map(function (x) {
-          return x.firmante + ': ' + (x.motivo || 'motivo desconocido');
-        }).join('  |  ');
-        avisoFalla('No se pudo entregar la invitación', det);
-      } else {
-        toast('Documento enviado a firma.', 'success');
-      }
+      // Primero se repinta y DESPUÉS se muestra el resultado: antes el
+      // repintado escondía el aviso de falla en el mismo instante y el
+      // agente nunca se enteraba de a quién no le llegó.
       await abrir(d.id);
+      mostrarResultado(r.resultados || []);
     } catch (e) {
       toast(e.message, 'error');
       btn.disabled = false;
@@ -1402,10 +1657,48 @@
     } finally { btn.disabled = false; }
   }
 
+  /* ══ WHATSAPP DESDE LA APP MÓVIL ═════════════════════════════
+     Solo en la app nativa (iOS/Android). Abre el WhatsApp del celular del
+     agente con el mensaje ya escrito: él elige si lo manda desde su
+     WhatsApp personal o su WhatsApp Business. En la web no aparece. */
+  function esApp() {
+    try {
+      if (window.__BROQUER_IOS_NATIVE__) return true;
+      return !!(window.Capacitor && window.Capacitor.isNativePlatform &&
+                window.Capacitor.isNativePlatform());
+    } catch (e) { return false; }
+  }
+
+  function textoWhatsApp(f) {
+    var d = ACTUAL.documento;
+    return 'Hola ' + (f.nombre || '') + '. Te comparto «' + (d.titulo || 'el documento') +
+      '» para que lo revises y lo firmes desde tu celular:\n\n' + f.liga +
+      '\n\nAl final te llega un código a tu correo (' + (f.email || '') +
+      ') para confirmar que eres tú. Folio ' + (d.folio || '') + '.';
+  }
+
+  function enviarWhatsApp(id) {
+    if (!esApp()) return;
+    var f = (ACTUAL.firmantes || []).filter(function (x) { return x.id === id; })[0];
+    if (!f || !f.liga) { toast('Esa liga todavía no existe.', 'error'); return; }
+    var num = String(f.telefono || '').replace(/\D/g, '');
+    if (num.length === 10) num = '52' + num;
+    // wa.me lo abre el sistema: en Android pregunta si WhatsApp o WhatsApp
+    // Business; en iPhone abre el que esté instalado. Para elegir a mano,
+    // está «Compartir…».
+    location.href = 'https://wa.me/' + num + '?text=' + encodeURIComponent(textoWhatsApp(f));
+  }
+
+  function compartirLiga(id) {
+    var f = (ACTUAL.firmantes || []).filter(function (x) { return x.id === id; })[0];
+    if (!f || !f.liga || !navigator.share) return;
+    navigator.share({ text: textoWhatsApp(f) }).catch(function () { /* canceló */ });
+  }
+
   function copiarLiga(id) {
     var f = (ACTUAL.firmantes || []).filter(function (x) { return x.id === id; })[0];
-    if (!f || !f.token) { toast('Esa liga todavía no existe.', 'error'); return; }
-    var url = location.origin + '/firmar.html?t=' + f.token;
+    if (!f || !f.liga) { toast('Esa liga todavía no existe.', 'error'); return; }
+    var url = f.liga;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).then(function () {
         toast('Liga copiada. Mándasela solo a ' + f.nombre + '.', 'success');
@@ -1514,6 +1807,12 @@
     g('fr-vacio-btn').addEventListener('click', crear);
     g('fr-volver').addEventListener('click', cerrar);
     g('fr-f-add').addEventListener('click', agregarFirmante);
+    g('fr-f-cancelar').addEventListener('click', salirDeEdicion);
+    g('fr-cascada').addEventListener('change', cambiarCascada);
+    g('fr-d-tipo').addEventListener('change', function () {
+      if (!EDITANDO) pintarRoles();
+      pintarNotaAgente();
+    });
     g('fr-f-nom').addEventListener('change', autollenarContacto);
     g('fr-f-nom').addEventListener('blur', autollenarContacto);
 
