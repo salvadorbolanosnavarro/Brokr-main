@@ -85,7 +85,6 @@ SUPABASE_SERVICE_KEY = settings.supabase_service_key
 APP_URL = settings.app_url
 RESEND_API_KEY = settings.resend_api_key
 RESEND_FROM = settings.resend_from
-WA_PLANTILLA_OTP = settings.wa_plantilla_otp
 FIRMAME_API_KEY = settings.firmame_api_key
 FIRMAME_BASE_URL = settings.firmame_base_url
 
@@ -368,70 +367,11 @@ async def _mail(para: str, asunto: str, cuerpo_html: str) -> Tuple[bool, str]:
         return False, f"No se pudo contactar al servicio de correo: {e}"
 
 
-async def _wa_numero(user_id: str) -> Optional[dict]:
-    """El primer número de WhatsApp conectado del agente, si tiene."""
-    try:
-        filas = await _sb_get("wa2_numeros", {
-            "user_id": f"eq.{user_id}", "select": "*",
-            "order": "created_at.asc", "limit": "1"})
-        return filas[0] if filas else None
-    except Exception:
-        return None
-
-
-async def _wa_texto(numero: dict, telefono: str, texto: str) -> bool:
-    """Texto libre por WhatsApp. Solo llega si hay ventana de 24 horas abierta,
-    o sea si esa persona ya le escribió al agente. Para un comprador que nunca
-    ha escrito, esto falla con el código 131047 y hay que caer a correo."""
-    if not numero or not numero.get("access_token"):
-        return False
-    try:
-        async with httpx.AsyncClient(timeout=20) as c:
-            r = await c.post(
-                f"https://graph.facebook.com/v21.0/{numero['phone_number_id']}/messages",
-                headers={"Authorization": f"Bearer {numero['access_token']}"},
-                json={"messaging_product": "whatsapp", "to": telefono.lstrip("+"),
-                      "type": "text", "text": {"body": texto, "preview_url": False}})
-        if r.status_code >= 400:
-            log.info("wa texto rechazado: %s", r.text[:180])
-            return False
-        return True
-    except Exception as e:
-        log.warning("wa texto falló: %s", e)
-        return False
-
-
-async def _wa_plantilla_otp(numero: dict, telefono: str, codigo: str) -> bool:
-    """Plantilla categoría AUTHENTICATION. Es la única vía que sí llega a un
-    número frío. Requiere que el agente la tenga aprobada en su WABA y que su
-    nombre esté en la env var WA_PLANTILLA_OTP."""
-    if not WA_PLANTILLA_OTP or not numero or not numero.get("access_token"):
-        return False
-    try:
-        async with httpx.AsyncClient(timeout=20) as c:
-            r = await c.post(
-                f"https://graph.facebook.com/v21.0/{numero['phone_number_id']}/messages",
-                headers={"Authorization": f"Bearer {numero['access_token']}"},
-                json={"messaging_product": "whatsapp", "to": telefono.lstrip("+"),
-                      "type": "template",
-                      "template": {
-                          "name": WA_PLANTILLA_OTP,
-                          "language": {"code": "es_MX"},
-                          "components": [
-                              {"type": "body",
-                               "parameters": [{"type": "text", "text": codigo}]},
-                              {"type": "button", "sub_type": "url", "index": "0",
-                               "parameters": [{"type": "text", "text": codigo}]},
-                          ]}})
-        if r.status_code >= 400:
-            log.info("wa plantilla rechazada: %s", r.text[:180])
-            return False
-        return True
-    except Exception as e:
-        log.warning("wa plantilla falló: %s", e)
-        return False
-
-
+# WhatsApp NO se manda desde el servidor. El WhatsApp de Broquer (API de
+# Meta) obliga a usar plantillas aprobadas para escribirle a alguien que no
+# ha escrito primero, que es justo el caso de un comprador o un inquilino.
+# Todo lo automático sale por correo; el WhatsApp lo manda el agente desde
+# su propio WhatsApp (personal o Business) con el botón de la app móvil.
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -979,9 +919,9 @@ async def agregar_firmante(request: Request, documento_id: str, body: FirmanteIn
     telefono = _tel(body.telefono or "")
     if not nombre:
         raise HTTPException(400, "Falta el nombre del firmante.")
-    if not email and not telefono:
-        raise HTTPException(400, "Necesito al menos un correo o un WhatsApp para mandarle la liga y el código.")
-    if email and not _email_ok(email):
+    if not email:
+        raise HTTPException(400, "Falta el correo: por ahí le llegan la invitación y el código para firmar.")
+    if not _email_ok(email):
         raise HTTPException(400, "Ese correo no se ve bien. Revísalo.")
 
     rol = (body.rol or "otro").strip()
@@ -1036,7 +976,9 @@ async def editar_firmante(request: Request, firmante_id: str, body: FirmanteIn):
         cambios["nombre"] = body.nombre.strip()[:160]
     if body.email is not None:
         e = body.email.strip().lower()
-        if e and not _email_ok(e):
+        if not e:
+            raise HTTPException(400, "El correo es obligatorio: por ahí le llega el código para firmar.")
+        if not _email_ok(e):
             raise HTTPException(400, "Ese correo no se ve bien. Revísalo.")
         cambios["email"] = e or None
     if body.telefono is not None:
@@ -1077,9 +1019,8 @@ def _liga_de(firmante: dict) -> str:
 
 async def _invitar(doc: dict, firmante: dict, agente: str,
                    recordatorio: bool = False) -> Tuple[bool, str, str]:
-    """Manda la liga. Devuelve (llegó, por dónde, motivo si no llegó).
-    Se intenta WhatsApp primero porque es donde la gente sí lee, y se cae a
-    correo sin drama."""
+    """Manda la liga por correo. Devuelve (llegó, por dónde, motivo si no
+    llegó). Por WhatsApp la manda el agente desde la app móvil."""
     url = _liga_de(firmante)
     tipo_label = TIPOS.get(doc.get("tipo") or "otro", "Documento")
     rol_label = ROLES.get(firmante.get("rol") or "otro", "Firmante")
@@ -1088,27 +1029,6 @@ async def _invitar(doc: dict, firmante: dict, agente: str,
     mensaje = (doc.get("mensaje") or "").strip()
     canales = []
     fallas = []
-
-    if firmante.get("telefono"):
-        numero = await _wa_numero(doc["user_id"])
-        if not numero:
-            fallas.append("no tienes ningún número de WhatsApp conectado")
-        else:
-            texto = (
-                f"Hola {firmante.get('nombre', '')}.\n\n"
-                + ("Te recordamos que tienes pendiente de firmar " if recordatorio
-                   else f"{agente} te comparte un documento para firmar: ")
-                + f"{doc.get('titulo')} ({tipo_label}).\n"
-                f"Firmas como: {rol_label}.\n"
-                + (f"\nMensaje de {agente}: {mensaje}\n" if mensaje else "")
-                + f"\nÁbrelo aquí:\n{url}\n\n"
-                f"Folio {doc.get('folio')}. No compartas esta liga: es solo tuya."
-            )
-            if await _wa_texto(numero, firmante["telefono"], texto):
-                canales.append("whatsapp")
-            else:
-                fallas.append("por WhatsApp no salió porque esa persona nunca te ha escrito "
-                              "(la ventana de 24 horas está cerrada)")
 
     if firmante.get("email"):
         intro = ("Te recordamos que tienes un documento pendiente de firmar."
@@ -1137,8 +1057,8 @@ async def _invitar(doc: dict, firmante: dict, agente: str,
             canales.append("correo")
         else:
             fallas.append(motivo_mail)
-    elif not firmante.get("telefono"):
-        fallas.append("no tiene correo ni WhatsApp capturado")
+    else:
+        fallas.append("no tiene correo capturado")
 
     return (bool(canales),
             " y ".join(canales) if canales else "",
@@ -1171,12 +1091,11 @@ async def enviar_a_firma(request: Request, documento_id: str):
     if not any(f.get("obligatorio", True) for f in firmantes):
         raise HTTPException(400, "Al menos un firmante tiene que ser obligatorio.")
     # Sobre todo pasa con los que llegan desde el módulo de contratos: el nombre
-    # no coincidió con ningún contacto y la parte quedó sin correo ni WhatsApp.
-    # Mandar así deja a alguien sin invitación y la firma se atora sin aviso.
-    sin_medio = [f.get("nombre") or "?" for f in firmantes
-                 if not f.get("email") and not f.get("telefono")]
-    if sin_medio:
-        raise HTTPException(400, "Falta el correo o WhatsApp de: " + ", ".join(sin_medio) +
+    # no coincidió con ningún contacto y la parte quedó sin correo. Sin correo
+    # no le llega ni la invitación ni el código, y la firma se atora.
+    sin_correo = [f.get("nombre") or "?" for f in firmantes if not f.get("email")]
+    if sin_correo:
+        raise HTTPException(400, "Falta el correo de: " + ", ".join(sin_correo) +
                                  ". Edítalos antes de enviar.")
 
     # La vigencia corre desde que sale a firma, no desde que se creó el
@@ -1444,20 +1363,9 @@ async def publico_pedir_codigo(request: Request, token: str, canal: str = Form("
     codigo = "".join(secrets.choice("0123456789") for _ in range(OTP_DIGITOS))
     expira = datetime.now(timezone.utc) + timedelta(minutes=OTP_MINUTOS)
 
-    prefiere_wa = (canal or "").strip() == "whatsapp" or not firmante.get("email")
+    # Solo por correo. Mandarlo por el WhatsApp del agente no sirve: el
+    # agente vería el código y dejaría de probar que firmó la persona.
     usado = ""
-
-    if firmante.get("telefono") and prefiere_wa:
-        numero = await _wa_numero(doc["user_id"])
-        if numero:
-            if await _wa_plantilla_otp(numero, firmante["telefono"], codigo):
-                usado = "whatsapp"
-            else:
-                texto = (f"Tu código para firmar «{doc.get('titulo')}» es: {codigo}\n\n"
-                         f"Vence en {OTP_MINUTOS} minutos. No se lo compartas a nadie, "
-                         f"ni siquiera a tu asesor.")
-                if await _wa_texto(numero, firmante["telefono"], texto):
-                    usado = "whatsapp"
 
     if not usado and firmante.get("email"):
         cuerpo = (
@@ -1482,13 +1390,13 @@ async def publico_pedir_codigo(request: Request, token: str, canal: str = Form("
                      documento_id=doc["id"], firmante_id=firmante["id"],
                      actor="sistema", ip=_ip(request), ua=_ua(request))
         raise HTTPException(502, "No pudimos enviarte el código. Avísale a tu asesor para que revise "
-                                 "tu correo o tu número.")
+                                 "tu correo.")
 
     await _sb_patch("firma_firmantes", {"id": f"eq.{firmante['id']}"}, {
         "otp_hash": _hash_otp(token, codigo),
         "otp_expira_at": expira.isoformat(),
         "otp_intentos": 0,
-        "otp_canal": "whatsapp" if usado == "whatsapp" else "email",
+        "otp_canal": "email",
         "otp_enviado_at": _ahora(),
     })
     await evento(doc["user_id"], "otp_enviado",
@@ -1496,8 +1404,7 @@ async def publico_pedir_codigo(request: Request, token: str, canal: str = Form("
                  documento_id=doc["id"], firmante_id=firmante["id"],
                  actor="sistema", ip=_ip(request), ua=_ua(request))
     return {"ok": True, "canal": usado, "minutos": OTP_MINUTOS,
-            "destino": _mask_tel(firmante.get("telefono") or "") if usado == "whatsapp"
-                       else _mask_email(firmante.get("email") or "")}
+            "destino": _mask_email(firmante.get("email") or "")}
 
 
 # ── Firmar ────────────────────────────────────────────────────────────────
@@ -1725,12 +1632,9 @@ async def _avisar_cierre(documento_id: str) -> None:
     doc = docs[0]
     firmantes = await _firmantes(documento_id)
     verificar = f"{APP_URL}/verificar-firma.html?f={doc.get('folio')}"
-    numero_wa = None
 
-    # Antes solo se avisaba por correo, y el botón llevaba a la página de
-    # verificación, no a la copia. Quien firmó solo con WhatsApp se quedaba
-    # sin enterarse. Ahora cada parte recibe su propia liga, que ya entrega
-    # el PDF firmado, por correo y, si no se pudo, por WhatsApp.
+    # Cada parte recibe por correo su propia liga, que ya entrega el PDF
+    # firmado (antes el botón llevaba a la página de verificación).
     for f in firmantes:
         if f.get("estado") != "firmado":
             continue
@@ -1753,20 +1657,10 @@ async def _avisar_cierre(documento_id: str) -> None:
                 canales.append("correo")
             else:
                 fallas.append(motivo_mail)
-        if not canales and f.get("telefono"):
-            if numero_wa is None:
-                numero_wa = await _wa_numero(doc["user_id"]) or {}
-            texto = (f"Hola {f.get('nombre', '')}. «{doc.get('titulo')}» quedó firmado por "
-                     f"todas las partes (folio {doc.get('folio')}).\n\n"
-                     f"Descarga tu copia firmada aquí:\n{liga}")
-            if await _wa_texto(numero_wa, f["telefono"], texto):
-                canales.append("whatsapp")
-            else:
-                fallas.append("WhatsApp no salió (ventana de 24 horas cerrada o sin número conectado)")
         await evento(doc["user_id"], "enviado",
                      f"Copia final a {f.get('nombre')}" +
                      (f" por {' y '.join(canales)}." if canales
-                      else f" NO se pudo entregar: {' · '.join(x for x in fallas if x) or 'sin correo ni WhatsApp'}"),
+                      else f" NO se pudo entregar: {' · '.join(x for x in fallas if x) or 'no tiene correo'}"),
                      documento_id=documento_id, firmante_id=f.get("id"), actor="sistema")
 
     agente_mail = await _correo_agente(doc["user_id"])
@@ -2737,7 +2631,6 @@ async def salud():
         "ok": True,
         "supabase": bool(SUPABASE_URL and SUPABASE_SERVICE_KEY),
         "correo": bool(RESEND_API_KEY),
-        "plantilla_whatsapp_otp": bool(WA_PLANTILLA_OTP),
         "pypdf": ok_pdf,
         "nivel_maximo": "simple",
         "psc_nom151": _nom151_configurado(),

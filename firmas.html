@@ -426,8 +426,8 @@
         <div style="font-weight:700;" id="fr-aviso-t"></div>
         <ul class="fr-res" id="fr-aviso-d"></ul>
         <div style="font-size:var(--fs-label-3);margin-top:var(--sp-3);" id="fr-aviso-pista">
-          A quien no le llegó, usa «Copiar liga» en su tarjeta y mándasela tú
-          por WhatsApp. La firma funciona igual.
+          Revisa que su correo esté bien escrito («Corregir contacto») y toca
+          «Recordar». También puedes usar «Copiar liga» y mandársela tú.
         </div>
       </div>
       <button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" id="fr-aviso-x">Cerrar</button>
@@ -511,19 +511,20 @@
                   <select class="bk-select" id="fr-f-rol"></select>
                 </div>
                 <div class="bk-field">
-                  <label class="bk-label" for="fr-f-mail">Correo</label>
+                  <label class="bk-label" for="fr-f-mail">Correo (obligatorio)</label>
                   <input class="bk-input" id="fr-f-mail" type="email"
                          placeholder="juan.perez@correo.com" autocomplete="off"/>
                 </div>
                 <div class="bk-field">
-                  <label class="bk-label" for="fr-f-wa">WhatsApp</label>
+                  <label class="bk-label" for="fr-f-wa">WhatsApp (opcional)</label>
                   <input class="bk-input" id="fr-f-wa" type="tel"
                          placeholder="443 123 4567" autocomplete="off"/>
                 </div>
                 <div class="fr-nuevo-firmante__pie">
                   <div class="bk-hint" style="margin:0;">
-                    Con el correo basta. El WhatsApp solo llega si esa persona
-                    ya te ha escrito antes.
+                    Por correo le llegan la invitación y el código para firmar.
+                    Con su WhatsApp, desde la app de Broquer en tu celular puedes
+                    mandarle la liga con tu propio WhatsApp.
                   </div>
                   <div class="bk-cluster">
                     <button class="bk-btn bk-btn--quiet fr-oculto" type="button" id="fr-f-cancelar">
@@ -1022,17 +1023,17 @@
   function pintarGuia(d, fs, esBorrador) {
     ver('fr-guia', esBorrador);
     if (esBorrador) {
-      var sinMedio = fs.filter(function (f) { return !f.email && !f.telefono; });
+      var sinMedio = fs.filter(function (f) { return !f.email; });
       var pasos = [
         [!!d.archivo_ruta, 'Sube el documento',
          d.archivo_ruta ? 'Listo: ' + (d.paginas || '?') + ' páginas.' : 'PDF o Word. Abajo, en «El documento».'],
         [fs.length > 0 && !sinMedio.length, 'Agrega a quienes firman',
-         !fs.length ? 'Nombre y correo o WhatsApp de cada parte.'
+         !fs.length ? 'Nombre y correo de cada parte.'
            : (sinMedio.length ? 'A ' + sinMedio.map(function (f) { return f.nombre; }).join(', ') +
-                                ' le falta correo o WhatsApp. Toca «Editar».'
+                                ' le falta el correo. Toca «Editar».'
                               : fs.length + (fs.length === 1 ? ' parte lista.' : ' partes listas.'))],
         [false, 'Envía a firma',
-         'Botón «Enviar a firma», arriba. Cada parte recibe su propia liga.']
+         'Botón «Enviar a firma», arriba. Cada parte recibe su liga por correo.']
       ];
       var sig = -1;
       for (var i = 0; i < pasos.length; i++) { if (!pasos[i][0]) { sig = i; break; } }
@@ -1064,6 +1065,9 @@
       vencido: 'La invitación venció sin que firmaran todos. Cancela este documento y crea uno nuevo.',
       cancelado: 'Documento cancelado. Las ligas ya no funcionan.'
     }[est];
+    if (txt && (est === 'enviado' || est === 'parcial') && esApp()) {
+      txt += ' Desde aquí también puedes mandarle su liga con tu WhatsApp («Enviar por WhatsApp»).';
+    }
     g('fr-sigue').textContent = txt || '';
     ver('fr-sigue', !esBorrador && !!txt);
   }
@@ -1127,8 +1131,8 @@
       var extra = [];
       if (f.email) extra.push('<span><b>Correo:</b> ' + esc(f.email) + '</span>');
       if (f.telefono) extra.push('<span><b>WhatsApp:</b> ' + esc(f.telefono) + '</span>');
-      if (!f.email && !f.telefono) {
-        extra.push('<span><b>Sin correo ni WhatsApp.</b> No se le puede avisar.</span>');
+      if (!f.email) {
+        extra.push('<span><b>Sin correo.</b> No le llegará la invitación ni el código.</span>');
       }
       if (f.identificado) extra.push('<span>Ya tiene expediente de cumplimiento completo</span>');
       else if (f.ine_frente_ruta) extra.push('<span>Subió su identificación</span>');
@@ -1149,6 +1153,15 @@
                'data-recordar="' + esc(f.id) + '">Recordar</button>' +
                '<button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" ' +
                'data-copiar="' + esc(f.id) + '">Copiar liga</button>' +
+               // WhatsApp solo en la app móvil, y desde el WhatsApp del propio
+               // agente (personal o Business): nunca desde el de Broquer, que
+               // obligaría a usar plantillas.
+               (esApp() && f.liga && f.telefono
+                 ? '<button class="bk-btn bk-btn--ghost bk-btn--sm" type="button" ' +
+                   'data-wa="' + esc(f.id) + '">Enviar por WhatsApp</button>' : '') +
+               (esApp() && f.liga && navigator.share
+                 ? '<button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" ' +
+                   'data-compartir="' + esc(f.id) + '">Compartir…</button>' : '') +
                '<button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" ' +
                'data-editar="' + esc(f.id) + '">Corregir contacto</button>';
       }
@@ -1176,6 +1189,12 @@
     });
     Array.prototype.forEach.call(caja.querySelectorAll('[data-recordar]'), function (b) {
       b.addEventListener('click', function () { recordar(b.getAttribute('data-recordar'), b); });
+    });
+    Array.prototype.forEach.call(caja.querySelectorAll('[data-wa]'), function (b) {
+      b.addEventListener('click', function () { enviarWhatsApp(b.getAttribute('data-wa')); });
+    });
+    Array.prototype.forEach.call(caja.querySelectorAll('[data-compartir]'), function (b) {
+      b.addEventListener('click', function () { compartirLiga(b.getAttribute('data-compartir')); });
     });
     Array.prototype.forEach.call(caja.querySelectorAll('[data-copiar]'), function (b) {
       b.addEventListener('click', function () { copiarLiga(b.getAttribute('data-copiar')); });
@@ -1507,7 +1526,7 @@
     var wa = (g('fr-f-wa').value || '').trim();
     var mail = (g('fr-f-mail').value || '').trim();
     if (!nom) { toast('Falta el nombre.', 'error'); return; }
-    if (!wa && !mail) { toast('Pon al menos un WhatsApp o un correo.', 'error'); return; }
+    if (!mail) { toast('Falta el correo: por ahí le llegan la invitación y el código.', 'error'); return; }
 
     if (EDITANDO) {
       var cambios = { nombre: nom, telefono: wa, email: mail };
@@ -1580,21 +1599,18 @@
     if (!d.archivo_ruta) { toast('Primero sube el PDF.', 'error'); return; }
     var fs = ACTUAL.firmantes || [];
     if (!fs.length) { toast('Agrega por lo menos un firmante.', 'error'); return; }
-    var sinMedio = fs.filter(function (f) { return !f.email && !f.telefono; });
+    var sinMedio = fs.filter(function (f) { return !f.email; });
     if (sinMedio.length) {
       toast('A ' + sinMedio.map(function (f) { return f.nombre; }).join(', ') +
-            ' le falta correo o WhatsApp. Toca «Editar».', 'error');
+            ' le falta el correo. Toca «Editar».', 'error');
       return;
     }
 
     // Una última revisión: después de enviar ya no se puede cambiar nada.
     var lista = fs.map(function (f) {
-      var medios = [];
-      if (f.email) medios.push(f.email);
-      if (f.telefono) medios.push('WhatsApp ' + f.telefono);
-      return '• ' + f.nombre + ' (' + rolLabel(f.rol) + ') — ' + medios.join(' / ');
+      return '• ' + f.nombre + ' (' + rolLabel(f.rol) + ') — ' + f.email;
     }).join('\n');
-    if (!window.confirm('Se enviará «' + (g('fr-d-tit').value || d.titulo) + '» a:\n\n' + lista +
+    if (!window.confirm('Se enviará por correo «' + (g('fr-d-tit').value || d.titulo) + '» a:\n\n' + lista +
         '\n\nDespués ya no podrás cambiar el documento ni las partes. ¿Enviar?')) return;
 
     var btn = g('fr-a-enviar');
@@ -1639,6 +1655,44 @@
     } catch (e) {
       toast(e.message, 'error');
     } finally { btn.disabled = false; }
+  }
+
+  /* ══ WHATSAPP DESDE LA APP MÓVIL ═════════════════════════════
+     Solo en la app nativa (iOS/Android). Abre el WhatsApp del celular del
+     agente con el mensaje ya escrito: él elige si lo manda desde su
+     WhatsApp personal o su WhatsApp Business. En la web no aparece. */
+  function esApp() {
+    try {
+      if (window.__BROQUER_IOS_NATIVE__) return true;
+      return !!(window.Capacitor && window.Capacitor.isNativePlatform &&
+                window.Capacitor.isNativePlatform());
+    } catch (e) { return false; }
+  }
+
+  function textoWhatsApp(f) {
+    var d = ACTUAL.documento;
+    return 'Hola ' + (f.nombre || '') + '. Te comparto «' + (d.titulo || 'el documento') +
+      '» para que lo revises y lo firmes desde tu celular:\n\n' + f.liga +
+      '\n\nAl final te llega un código a tu correo (' + (f.email || '') +
+      ') para confirmar que eres tú. Folio ' + (d.folio || '') + '.';
+  }
+
+  function enviarWhatsApp(id) {
+    if (!esApp()) return;
+    var f = (ACTUAL.firmantes || []).filter(function (x) { return x.id === id; })[0];
+    if (!f || !f.liga) { toast('Esa liga todavía no existe.', 'error'); return; }
+    var num = String(f.telefono || '').replace(/\D/g, '');
+    if (num.length === 10) num = '52' + num;
+    // wa.me lo abre el sistema: en Android pregunta si WhatsApp o WhatsApp
+    // Business; en iPhone abre el que esté instalado. Para elegir a mano,
+    // está «Compartir…».
+    location.href = 'https://wa.me/' + num + '?text=' + encodeURIComponent(textoWhatsApp(f));
+  }
+
+  function compartirLiga(id) {
+    var f = (ACTUAL.firmantes || []).filter(function (x) { return x.id === id; })[0];
+    if (!f || !f.liga || !navigator.share) return;
+    navigator.share({ text: textoWhatsApp(f) }).catch(function () { /* canceló */ });
   }
 
   function copiarLiga(id) {
