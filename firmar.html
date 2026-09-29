@@ -331,8 +331,9 @@
 
       <button class="bk-btn bk-btn--forest bk-btn--block bk-btn--lg" type="button"
               id="fm-pedir-codigo" style="margin-top:var(--sp-5);" disabled>
-        Continuar
+        Continuar: enviarme el código
       </button>
+      <div class="fm-otp-info" id="fm-falta">Para continuar, traza tu firma y marca la casilla.</div>
 
       <div style="text-align:center;margin-top:var(--sp-5);">
         <button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" id="fm-rechazar">No quiero firmar</button>
@@ -341,7 +342,7 @@
 
     <!-- PASO 4 · CÓDIGO -->
     <section class="fm-tarjeta fm-oculto" id="fm-s-codigo">
-      <div class="fm-tarjeta__t">4. Confirma que eres tú</div>
+      <div class="fm-tarjeta__t" id="fm-codigo-t">4. Confirma que eres tú</div>
       <div class="fm-tarjeta__d" id="fm-codigo-d"></div>
 
       <div class="bk-field">
@@ -484,15 +485,27 @@
   }
 
   /* ── Progreso ─────────────────────────────────────────────────── */
-  var NOMBRES_PASO = [
-    'Paso 1 de 4 — Lee el documento',
-    'Paso 2 de 4 — Tu identificación',
-    'Paso 3 de 4 — Tu firma',
-    'Paso 4 de 4 — Confirma que eres tú'
-  ];
+  // Los pasos se cuentan según lo que de verdad le toca: si no se le pide
+  // identificación son 3, no 4. Antes decía "Paso 3 de 4 — Tu firma" arriba
+  // y "2. Tu firma" en la tarjeta.
+  function nombresPaso() {
+    var conIne = !!(DATOS && DATOS.documento.exige_ine && !DATOS.firmante.tiene_ine);
+    var n = ['Lee el documento'];
+    if (conIne) n.push('Tu identificación');
+    n.push('Tu firma', 'Confirma que eres tú');
+    return n;
+  }
   function paso(n) {
-    for (var i = 1; i <= 4; i++) g('fm-p' + i).classList.toggle('is-hecho', i <= n);
-    g('fm-paso-nom').textContent = NOMBRES_PASO[Math.min(n, 4) - 1] || '';
+    var nombres = nombresPaso();
+    var total = nombres.length;
+    // n llega en la numeración de 4 pasos; sin identificación se recorre.
+    var real = (total === 3 && n >= 3) ? n - 1 : n;
+    for (var i = 1; i <= 4; i++) {
+      ver('fm-p' + i, i <= total);
+      g('fm-p' + i).classList.toggle('is-hecho', i <= real);
+    }
+    real = Math.min(Math.max(real, 1), total);
+    g('fm-paso-nom').textContent = 'Paso ' + real + ' de ' + total + ' — ' + nombres[real - 1];
   }
 
   /* ── El recuadro de firma ─────────────────────────────────────── */
@@ -557,6 +570,11 @@
   function revisarListo() {
     var ok = TRAZADO && g('fm-acepto').checked;
     g('fm-pedir-codigo').disabled = !ok;
+    // Un botón gris sin explicación es lo que más confunde: se dice qué falta.
+    g('fm-falta').textContent = ok ? '' :
+      (!TRAZADO && !g('fm-acepto').checked ? 'Para continuar, traza tu firma y marca la casilla.'
+       : (!TRAZADO ? 'Para continuar, traza tu firma en el recuadro.'
+                   : 'Para continuar, marca la casilla de aceptación.'));
   }
 
   /* ── Identificación ───────────────────────────────────────────── */
@@ -804,7 +822,8 @@
         g('fm-s-ine').scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else {
         if (doc.exige_ine) { INE.frente = true; INE.reverso = true; }
-        g('fm-firma-t').textContent = doc.exige_ine ? '3. Tu firma' : '2. Tu firma';
+        g('fm-firma-t').textContent = '2. Tu firma';
+        g('fm-codigo-t').textContent = '3. Confirma que eres tú';
         ver('fm-s-firma', true);
         paso(3);
         g('fm-s-firma').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -843,15 +862,25 @@
     // Si gira el teléfono, el canvas cambia de ancho y el trazo se
     // deforma. Se vuelve a preparar y se pide firmar de nuevo: mejor
     // eso que guardar una firma estirada.
+    //
+    // Solo cuando cambia el ANCHO. En el celular, "resize" también se
+    // dispara al abrir el teclado (justo al escribir el código) y al
+    // esconderse la barra del navegador al hacer scroll; antes eso borraba
+    // la firma y luego "Firmar documento" respondía que faltaba la firma.
     var t = null;
     window.addEventListener('resize', function () {
       if (!cv || g('fm-s-firma').classList.contains('fm-oculto')) return;
       clearTimeout(t);
       t = setTimeout(function () {
+        var ancho = Math.round(cv.getBoundingClientRect().width * (window.devicePixelRatio || 1));
+        if (Math.abs(ancho - cv.width) < 4) return;
         var tenia = TRAZADO;
         prepararCanvas();
         limpiarCanvas();
-        if (tenia) toast('Gira el teléfono cambió el recuadro. Vuelve a firmar.', 'error');
+        if (tenia) {
+          toast('Al girar el teléfono cambió el recuadro. Vuelve a firmar.', 'error');
+          g('fm-s-firma').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }, 260);
     });
   }
