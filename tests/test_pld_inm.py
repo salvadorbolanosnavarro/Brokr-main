@@ -114,3 +114,192 @@ class AvisoInmTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ModificatorioXmlTests(unittest.TestCase):
+    def test_modificatorio_pasa_el_xsd(self):
+        op = _op(_modificatorio={"folio": "2026-1234", "descripcion": "Se corrige el código postal"})
+        xml, problemas = pld_inm.construir_xml(CFG, "2026-09", [op], {"e1": EXP_FISICA})
+        self.assertEqual(problemas, [])
+        self.assertEqual(pld_inm.validar_xsd(xml), [])
+        self.assertIn("<folio_modificacion>2026-1234</folio_modificacion>", xml)
+        self.assertIn("SE CORRIGE EL CODIGO POSTAL", xml)
+
+    def test_modificatorio_sin_folio_valido_se_reporta(self):
+        op = _op(_modificatorio={"folio": "1234", "descripcion": "x"})
+        _, problemas = pld_inm.construir_xml(CFG, "2026-09", [op], {"e1": EXP_FISICA})
+        self.assertIn("folio del aviso original", " ".join(problemas))
+
+
+class CicloAvisoTests(unittest.TestCase):
+    """Endpoints del ciclo con la base de datos simulada."""
+
+    def _correr(self, fn, aviso, *args, ops=None):
+        import asyncio
+        from unittest import mock
+        from routers import cumplimiento as c
+        self.patches = []
+        self.posts = []
+
+        async def uid(_r):
+            return "u1"
+
+        async def cfg(_u):
+            return dict(CFG)
+
+        async def get(tabla, params):
+            if tabla == "pld_avisos":
+                return [aviso] if aviso else []
+            if tabla == "pld_operaciones":
+                return ops if ops is not None else [{"id": "o1", "inusual": False}]
+            if tabla == "pld_expedientes":
+                return [EXP_FISICA]
+            return []
+
+        async def patch(tabla, params, payload):
+            self.patches.append((tabla, params, payload))
+            return [{"id": "o1"}] if tabla == "pld_operaciones" else [aviso]
+
+        async def post(tabla, payload):
+            self.posts.append((tabla, payload))
+            return [dict(payload, id="nuevo")]
+
+        async def bit(*a, **k):
+            return None
+
+        async def subir(*a, **k):
+            return None
+
+        class R:
+            headers = {}
+            client = None
+
+        with mock.patch.object(c, "_uid", uid), mock.patch.object(c, "_config", cfg), \
+             mock.patch.object(c, "_sb_get", get), mock.patch.object(c, "_sb_patch", patch), \
+             mock.patch.object(c, "_sb_post", post), mock.patch.object(c, "bitacora", bit), \
+             mock.patch.object(c, "upload_object", subir):
+            return asyncio.run(getattr(c, fn)(R(), "a1", *args))
+
+    def test_rehacer_libera_operaciones(self):
+        r = self._correr("descartar_aviso", {"id": "a1", "estatus": "generado", "periodo": "2026-09"})
+        self.assertEqual(r["operaciones_liberadas"], 1)
+        self.assertEqual(self.patches[0][2]["aviso_id"], None)
+        self.assertEqual(self.patches[1][2]["estatus"], "descartado")
+
+    def test_rehacer_un_aceptado_no_se_permite(self):
+        from fastapi import HTTPException
+        with self.assertRaises(HTTPException) as e:
+            self._correr("descartar_aviso", {"id": "a1", "estatus": "presentado"})
+        self.assertEqual(e.exception.status_code, 409)
+
+    def test_ya_lo_subi(self):
+        self._correr("marcar_subido", {"id": "a1", "estatus": "generado"})
+        self.assertEqual(self.patches[0][2]["estatus"], "subido")
+        self.assertIn("subido_at", self.patches[0][2])
+
+    def test_rechazo_libera_y_guarda_motivo(self):
+        from routers import cumplimiento as c
+        r = self._correr("marcar_rechazado", {"id": "a1", "estatus": "subido", "periodo": "2026-09"},
+                         c.RechazoIn(motivo="CP inexistente"))
+        self.assertEqual(r["operaciones_liberadas"], 1)
+        final = self.patches[-1][2]
+        self.assertEqual((final["estatus"], final["motivo_rechazo"]), ("rechazado", "CP inexistente"))
+
+    def test_acuse_guarda_folio_de_la_operacion(self):
+        from routers import cumplimiento as c
+        self._correr("marcar_presentado", {"id": "a1", "estatus": "subido"},
+                     c.PresentadoIn(acuse_folio="2026-77"), ops=[{"id": "o1", "inusual": True}])
+        op_patch = [p for p in self.patches if p[0] == "pld_operaciones"][0][2]
+        self.assertEqual(op_patch["folio_uif"], "2026-77")
+        self.assertIn("inusual_reportada_at", op_patch)
+
+    def test_modificatorio_valido(self):
+        from datetime import datetime, timezone
+        from routers import cumplimiento as c
+        op = _op(aviso_id="a1", folio_uif="2026-77")
+        r = self._correr("generar_modificatorio",
+                         {"id": "a1", "estatus": "presentado", "periodo": "2026-09", "referencia": "R",
+                          "presentado_at": datetime.now(timezone.utc).isoformat()},
+                         c.ModificatorioIn(operacion_id=op["id"], descripcion="Se corrige el CP"), ops=[op])
+        self.assertTrue(r["validado"])
+        self.assertIn("<folio_modificacion>2026-77</folio_modificacion>", r["xml"])
+        self.assertEqual(self.posts[0][1]["tipo"], "modificatorio")
+
+    def test_modificatorio_fuera_de_30_dias(self):
+        from fastapi import HTTPException
+        from routers import cumplimiento as c
+        with self.assertRaises(HTTPException) as e:
+            self._correr("generar_modificatorio",
+                         {"id": "a1", "estatus": "presentado", "presentado_at": "2026-01-01T00:00:00+00:00"},
+                         c.ModificatorioIn(operacion_id="x", descripcion="y"))
+        self.assertEqual(e.exception.status_code, 409)
+
+
+class AlertasTests(unittest.TestCase):
+    def _alertas(self, **kw):
+        from datetime import date
+        from core.pld_alertas import alertas_pld
+        from routers.cumplimiento import fecha_limite
+        base = dict(cfg={"dias_aviso_previo": 7}, hoy=date(2026, 10, 12), pendientes=[], avisos=[], inusuales=[])
+        base.update(kw)
+        return alertas_pld(base["cfg"], base["hoy"], base["pendientes"], base["avisos"],
+                           base["inusuales"], fecha_limite)
+
+    def test_periodo_pendiente_cerca_de_la_fecha_limite_es_urgente(self):
+        a = self._alertas(pendientes=[{"fecha_operacion": "2026-09-12"}])[0]
+        self.assertEqual((a["nivel"], a["push"]), ("urgente", True))
+        self.assertIn("septiembre 2026", a["titulo"])
+        self.assertIn("vence en 5 días", a["titulo"])
+
+    def test_formato_anterior_pide_rehacer(self):
+        a = self._alertas(avisos=[{"id": "v", "estatus": "generado", "periodo": "2026-09"}])[0]
+        self.assertIn("formato anterior", a["titulo"])
+
+    def test_por_subir_y_en_revision(self):
+        al = self._alertas(avisos=[
+            {"id": "1", "estatus": "generado", "formato": "INM", "periodo": "2026-09"},
+            {"id": "2", "estatus": "subido", "formato": "INM", "periodo": "2026-08",
+             "subido_at": "2026-10-01T10:00:00+00:00"}])
+        titulos = " | ".join(a["titulo"] for a in al)
+        self.assertIn("Sube tu aviso de septiembre 2026", titulos)
+        self.assertIn("Revisa en el portal del SAT", titulos)
+        self.assertTrue(all(a["push"] for a in al))
+
+    def test_aceptado_y_descartado_no_alertan(self):
+        self.assertEqual(self._alertas(avisos=[{"id": "1", "estatus": "presentado"},
+                                               {"id": "2", "estatus": "descartado"}]), [])
+
+
+class PushAlertasTests(unittest.TestCase):
+    def test_manda_una_vez_al_dia_y_en_horario(self):
+        import asyncio, sys, types
+        from datetime import datetime, timezone
+        from unittest import mock
+        from routers import cumplimiento as c
+        enviados, guardado = [], {}
+
+        async def push(uid, titulo, cuerpo, datos=None):
+            enviados.append(titulo)
+            return True
+        falso = types.ModuleType("push")
+        falso.enviar_push = push
+
+        async def get(tabla, params):
+            if tabla == "pld_config":
+                return [{"user_id": "u1", "dias_aviso_previo": 7, "alertas_enviadas": dict(guardado)}]
+            if tabla == "pld_operaciones" and "genera_aviso" in params:
+                return [{"id": "o1", "fecha_operacion": "2026-09-12"}]
+            return []
+
+        async def patch(tabla, params, payload):
+            guardado.clear()
+            guardado.update(payload["alertas_enviadas"])
+            return []
+
+        with mock.patch.dict(sys.modules, {"push": falso}), \
+             mock.patch.object(c, "_sb_get", get), mock.patch.object(c, "_sb_patch", patch):
+            mediodia = datetime(2026, 10, 12, 18, 0, tzinfo=timezone.utc)   # 12:00 en CDMX
+            self.assertEqual(asyncio.run(c.revisar_alertas_pld(mediodia)), 1)
+            self.assertEqual(asyncio.run(c.revisar_alertas_pld(mediodia)), 0)   # ya se mandó hoy
+            madrugada = datetime(2026, 10, 13, 8, 0, tzinfo=timezone.utc)   # 2:00 en CDMX
+            self.assertEqual(asyncio.run(c.revisar_alertas_pld(madrugada)), 0)

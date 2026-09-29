@@ -1,5 +1,5 @@
 {
-  "count": 266,
+  "count": 271,
   "operations": [
     {
       "body": false,
@@ -1959,12 +1959,72 @@
       ]
     },
     {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:aviso_id!"
+      ],
+      "path": "/pld/avisos/{aviso_id}/descartar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [
+        "path:aviso_id!"
+      ],
+      "path": "/pld/avisos/{aviso_id}/modificatorio",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
       "body": true,
       "method": "POST",
       "params": [
         "path:aviso_id!"
       ],
       "path": "/pld/avisos/{aviso_id}/presentado",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [
+        "path:aviso_id!"
+      ],
+      "path": "/pld/avisos/{aviso_id}/rechazado",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:aviso_id!"
+      ],
+      "path": "/pld/avisos/{aviso_id}/subido",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:aviso_id!"
+      ],
+      "path": "/pld/avisos/{aviso_id}/xml",
       "responses": [
         "200",
         "422"

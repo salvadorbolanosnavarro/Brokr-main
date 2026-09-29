@@ -33,6 +33,7 @@
 #   app.include_router(pld_router)
 # ──────────────────────────────────────────────────────────────────────────
 
+import asyncio
 import re
 import json
 import secrets
@@ -50,6 +51,7 @@ from core.config import settings
 from core.database import get_rows, patch_rows, post_rows
 from core.storage import create_signed_object_url, upload_object
 from core.pld_inm import catalogos, construir_xml, validar_xsd
+from core.pld_alertas import PASOS, alertas_pld
 
 router = APIRouter(prefix="/pld", tags=["cumplimiento"])
 log = logging.getLogger("broquer.pld")
@@ -859,31 +861,15 @@ async def generar_aviso(request: Request, body: AvisoIn):
 
     filas = await _sb_post("pld_avisos", {
         "user_id": uid, "periodo": body.periodo, "tipo": body.tipo,
-        "referencia": referencia, "estatus": "borrador",
+        "referencia": referencia, "estatus": "borrador", "formato": "INM",
         "fecha_limite": limite.isoformat(),
         "num_operaciones": len(ops), "monto_total": _money(total),
     })
     aviso = filas[0] if filas else {}
     aviso_id = aviso.get("id")
 
-    ruta = f"{uid}/avisos/aviso-{body.periodo}-{referencia}.xml"
-
-    try:
-        await upload_object(
-            BUCKET,
-            ruta,
-            xml.encode("utf-8"),
-            content_type="application/xml",
-            timeout=30,
-        )
-    except Exception as exc:
-        log.warning("upload XML PLD falló: %s", exc)
-        raise HTTPException(500, "Se armó el aviso pero no se pudo guardar el archivo.") from exc
-
+    ruta = await _guardar_xml(uid, aviso_id, body.periodo, referencia, xml)
     ahora = datetime.now(timezone.utc).isoformat()
-    await _sb_patch("pld_avisos", {"id": f"eq.{aviso_id}"},
-                    {"xml_ruta": ruta, "xml_generado_at": ahora,
-                     "estatus": "generado", "updated_at": ahora})
 
     if aviso_id and ops:
         ids = ",".join(o["id"] for o in ops)
@@ -907,27 +893,244 @@ async def generar_aviso(request: Request, body: AvisoIn):
     }
 
 
+# ══════════════════════════════════════════════════════════════════════════
+# CICLO DEL AVISO: descargar → subir al SPPLD → aceptado (acuse) o rechazado
+# Broquer no puede subir el archivo ni consultar el resultado (el SAT no da
+# una conexión para eso). Por eso cada paso lo registra el agente, y las
+# alertas (core/pld_alertas.py) no lo dejan olvidar ninguno.
+# ══════════════════════════════════════════════════════════════════════════
+
+_FOLIO_UIF = re.compile(r"^\d{4}-[1-9]\d{0,8}$")
+
+
+async def _aviso_propio(uid: str, aviso_id: str) -> dict:
+    filas = await _sb_get("pld_avisos",
+                          {"id": f"eq.{aviso_id}", "user_id": f"eq.{uid}", "limit": "1"})
+    if not filas:
+        raise HTTPException(404, "No encontré ese aviso.")
+    return filas[0]
+
+
+async def _liberar(uid: str, aviso: dict, ahora: str) -> int:
+    """Suelta las operaciones del aviso para poder volver a generarlo."""
+    if aviso.get("tipo") == "modificatorio":
+        if aviso.get("operacion_id"):
+            await _sb_patch("pld_operaciones",
+                            {"id": f"eq.{aviso['operacion_id']}", "user_id": f"eq.{uid}"},
+                            {"modificado_at": None, "updated_at": ahora})
+        return 1 if aviso.get("operacion_id") else 0
+    liberadas = await _sb_patch("pld_operaciones",
+                                {"aviso_id": f"eq.{aviso['id']}", "user_id": f"eq.{uid}"},
+                                {"aviso_id": None, "updated_at": ahora})
+    return len(liberadas)
+
+
+async def _guardar_xml(uid: str, aviso_id: str, periodo: str, referencia: str, xml: str) -> str:
+    ruta = f"{uid}/avisos/aviso-{periodo}-{referencia}.xml"
+    try:
+        await upload_object(BUCKET, ruta, xml.encode("utf-8"),
+                            content_type="application/xml", timeout=30)
+    except Exception as exc:
+        log.warning("upload XML PLD falló: %s", exc)
+        raise HTTPException(500, "Se armó el aviso pero no se pudo guardar el archivo.") from exc
+    ahora = datetime.now(timezone.utc).isoformat()
+    await _sb_patch("pld_avisos", {"id": f"eq.{aviso_id}"},
+                    {"xml_ruta": ruta, "xml_generado_at": ahora,
+                     "estatus": "generado", "updated_at": ahora})
+    return ruta
+
+
+@router.get("/avisos/{aviso_id}/xml")
+async def descargar_xml(request: Request, aviso_id: str):
+    """Liga temporal para descargar el XML de un aviso ya generado."""
+    uid = await _uid(request)
+    aviso = await _aviso_propio(uid, aviso_id)
+    if not aviso.get("xml_ruta"):
+        raise HTTPException(404, "Este aviso no tiene archivo.")
+    if aviso.get("formato") != "INM" and aviso.get("estatus") != "presentado":
+        raise HTTPException(409, "Este aviso tiene el formato anterior y el SAT lo rechazaría. "
+                                 "Tócale «Rehacer aviso» y vuelve a generarlo.")
+    url = await create_signed_object_url(BUCKET, aviso["xml_ruta"], expires_in=300, timeout=15)
+    if not aviso.get("descargado_at"):
+        await _sb_patch("pld_avisos", {"id": f"eq.{aviso_id}"},
+                        {"descargado_at": datetime.now(timezone.utc).isoformat()})
+    return {"url": url, "nombre": f"aviso-{aviso.get('periodo')}-{aviso.get('referencia')}.xml"}
+
+
+@router.post("/avisos/{aviso_id}/subido")
+async def marcar_subido(request: Request, aviso_id: str):
+    """El agente avisa que ya lo subió al SPPLD: queda en revisión del SAT."""
+    uid = await _uid(request)
+    aviso = await _aviso_propio(uid, aviso_id)
+    if aviso.get("estatus") != "generado":
+        raise HTTPException(409, "Solo se marca como subido un aviso generado que no se ha presentado.")
+    ahora = datetime.now(timezone.utc).isoformat()
+    await _sb_patch("pld_avisos", {"id": f"eq.{aviso_id}"},
+                    {"estatus": "subido", "subido_at": ahora, "updated_at": ahora})
+    await bitacora(uid, "aviso_subido",
+                   f"Aviso {aviso.get('referencia')} del periodo {aviso.get('periodo')} subido al SPPLD. "
+                   f"En espera de que el SAT lo acepte.", aviso_id=aviso_id, ip=_ip(request))
+    return {"ok": True}
+
+
 class PresentadoIn(BaseModel):
     acuse_folio: str
     presentado_at: Optional[str] = None
+    # Folio que la UIF le dio a cada operación (cada una es un aviso dentro
+    # del archivo). Hace falta para un aviso modificatorio.
+    folios: Optional[Dict[str, str]] = None
 
 
 @router.post("/avisos/{aviso_id}/presentado")
 async def marcar_presentado(request: Request, aviso_id: str, body: PresentadoIn):
     uid = await _uid(request)
-    filas = await _sb_get("pld_avisos",
-                          {"id": f"eq.{aviso_id}", "user_id": f"eq.{uid}", "limit": "1"})
-    if not filas:
-        raise HTTPException(404, "No encontré ese aviso.")
-    ahora = body.presentado_at or datetime.now(timezone.utc).isoformat()
+    aviso = await _aviso_propio(uid, aviso_id)
+    if aviso.get("estatus") in ("descartado", "rechazado"):
+        raise HTTPException(409, "Ese aviso ya no está vigente.")
+    folio_acuse = (body.acuse_folio or "").strip()
+    if not folio_acuse:
+        raise HTTPException(400, "Captura el folio del acuse.")
+    ahora = datetime.now(timezone.utc).isoformat()
     await _sb_patch("pld_avisos", {"id": f"eq.{aviso_id}"}, {
-        "estatus": "presentado", "acuse_folio": body.acuse_folio,
-        "presentado_at": ahora, "updated_at": datetime.now(timezone.utc).isoformat()})
+        "estatus": "presentado", "acuse_folio": folio_acuse,
+        "presentado_at": body.presentado_at or ahora, "updated_at": ahora})
+
+    if aviso.get("tipo") == "modificatorio":
+        ops = [{"id": aviso.get("operacion_id")}] if aviso.get("operacion_id") else []
+    else:
+        ops = await _sb_get("pld_operaciones", {"aviso_id": f"eq.{aviso_id}", "user_id": f"eq.{uid}",
+                                                 "select": "id,inusual"})
+    folios = {k: (v or "").strip() for k, v in (body.folios or {}).items()}
+    if len(ops) == 1 and not folios and _FOLIO_UIF.match(folio_acuse):
+        folios = {ops[0]["id"]: folio_acuse}
+    for o in ops:
+        cambios: Dict[str, Any] = {"updated_at": ahora}
+        if _FOLIO_UIF.match(folios.get(o["id"], "")):
+            cambios["folio_uif"] = folios[o["id"]]
+        if o.get("inusual"):
+            cambios["inusual_reportada_at"] = ahora
+        if len(cambios) > 1:
+            await _sb_patch("pld_operaciones", {"id": f"eq.{o['id']}", "user_id": f"eq.{uid}"}, cambios)
+
     await bitacora(uid, "aviso_presentado",
-                   f"Aviso {filas[0].get('referencia')} presentado ante el SPPLD. "
-                   f"Acuse {body.acuse_folio}.",
+                   f"Aviso {aviso.get('referencia')} aceptado por el SAT. Acuse {folio_acuse}.",
                    aviso_id=aviso_id, ip=_ip(request))
     return {"ok": True}
+
+
+class RechazoIn(BaseModel):
+    motivo: str
+
+
+@router.post("/avisos/{aviso_id}/rechazado")
+async def marcar_rechazado(request: Request, aviso_id: str, body: RechazoIn):
+    """El SAT no aceptó el aviso: queda como rechazado y sus operaciones se
+    liberan para corregirlas y generarlo de nuevo."""
+    uid = await _uid(request)
+    aviso = await _aviso_propio(uid, aviso_id)
+    if aviso.get("estatus") not in ("generado", "subido"):
+        raise HTTPException(409, "Solo se registra el rechazo de un aviso que se subió y no se ha aceptado.")
+    motivo = (body.motivo or "").strip()[:1000]
+    if not motivo:
+        raise HTTPException(400, "Escribe el motivo que te dio el SAT: sirve para corregirlo.")
+    ahora = datetime.now(timezone.utc).isoformat()
+    liberadas = await _liberar(uid, aviso, ahora)
+    await _sb_patch("pld_avisos", {"id": f"eq.{aviso_id}"},
+                    {"estatus": "rechazado", "rechazado_at": ahora, "motivo_rechazo": motivo,
+                     "updated_at": ahora})
+    await bitacora(uid, "aviso_rechazado",
+                   f"El SAT rechazó el aviso {aviso.get('referencia')} del periodo "
+                   f"{aviso.get('periodo')}: {motivo}", aviso_id=aviso_id, ip=_ip(request))
+    return {"ok": True, "operaciones_liberadas": liberadas, "periodo": aviso.get("periodo")}
+
+
+@router.post("/avisos/{aviso_id}/descartar")
+async def descartar_aviso(request: Request, aviso_id: str):
+    """«Rehacer aviso»: descarta uno que NO se ha presentado y libera sus
+    operaciones para volver a generarlo (formato anterior, datos corregidos)."""
+    uid = await _uid(request)
+    aviso = await _aviso_propio(uid, aviso_id)
+    if aviso.get("estatus") == "presentado":
+        raise HTTPException(409, "Ese aviso ya lo aceptó el SAT. Para corregirlo se presenta un "
+                                 "aviso modificatorio; no se puede rehacer.")
+    ahora = datetime.now(timezone.utc).isoformat()
+    liberadas = await _liberar(uid, aviso, ahora)
+    await _sb_patch("pld_avisos", {"id": f"eq.{aviso_id}"},
+                    {"estatus": "descartado", "updated_at": ahora})
+    await bitacora(uid, "aviso_descartado",
+                   f"Aviso {aviso.get('referencia')} del periodo {aviso.get('periodo')} descartado "
+                   f"sin presentar; {liberadas} operación(es) liberadas para volver a generarlo.",
+                   aviso_id=aviso_id, ip=_ip(request))
+    return {"ok": True, "operaciones_liberadas": liberadas, "periodo": aviso.get("periodo")}
+
+
+class ModificatorioIn(BaseModel):
+    operacion_id: str
+    descripcion: str
+
+
+@router.post("/avisos/{aviso_id}/modificatorio")
+async def generar_modificatorio(request: Request, aviso_id: str, body: ModificatorioIn):
+    """Corrige una operación de un aviso que el SAT ya aceptó. Reglas de la
+    UIF: una sola vez por aviso y dentro de los 30 días naturales siguientes
+    a su envío (VC321R3, VC321R4)."""
+    uid = await _uid(request)
+    cfg = await _config(uid)
+    aviso = await _aviso_propio(uid, aviso_id)
+    if aviso.get("estatus") != "presentado" or aviso.get("tipo") == "modificatorio":
+        raise HTTPException(409, "Solo se corrige con modificatorio un aviso que el SAT ya aceptó.")
+    enviado = aviso.get("presentado_at") or aviso.get("subido_at")
+    try:
+        dias = (date.today() - datetime.fromisoformat(str(enviado).replace("Z", "+00:00")).date()).days
+    except Exception:
+        dias = 0
+    if dias > 30:
+        raise HTTPException(409, "Ya pasaron más de 30 días desde que se envió el aviso: el SAT no "
+                                 "acepta modificatorios después de ese plazo.")
+    ops = await _sb_get("pld_operaciones", {"id": f"eq.{body.operacion_id}", "user_id": f"eq.{uid}",
+                                            "aviso_id": f"eq.{aviso_id}", "select": "*", "limit": "1"})
+    if not ops:
+        raise HTTPException(404, "Esa operación no pertenece a este aviso.")
+    op = ops[0]
+    if op.get("modificado_at"):
+        raise HTTPException(409, "Ya se generó un modificatorio de esta operación. El SAT solo "
+                                 "permite modificar cada aviso una vez.")
+    if not _FOLIO_UIF.match(str(op.get("folio_uif") or "")):
+        raise HTTPException(400, "Registra primero el folio que el SAT le dio a esta operación en el "
+                                 "acuse (ej. 2026-1234).")
+    ids = [i for i in (op.get("expediente_id"), op.get("contraparte_exp_id")) if i]
+    exps = {f["id"]: f for f in await _sb_get("pld_expedientes", {
+        "id": f"in.({','.join(ids)})", "user_id": f"eq.{uid}", "select": "*"})} if ids else {}
+    op_mod = dict(op, _modificatorio={"folio": op.get("folio_uif"), "descripcion": body.descripcion})
+    xml, problemas = construir_xml(cfg, aviso.get("periodo") or "", [op_mod], exps)
+    if problemas:
+        raise HTTPException(422, "Faltan datos para que el SAT acepte el modificatorio:\n• "
+                                 + "\n• ".join(problemas))
+    errores = validar_xsd(xml)
+    if errores:
+        log.error("modificatorio INM no pasó el XSD: %s", errores)
+        raise HTTPException(500, "El archivo no pasó la validación del esquema oficial del SAT. "
+                                 "Avísanos a soporte. Detalle: " + errores[0])
+
+    referencia = f"{str(aviso.get('periodo') or '').replace('-', '')}-M{secrets.token_hex(3).upper()}"
+    filas = await _sb_post("pld_avisos", {
+        "user_id": uid, "periodo": aviso.get("periodo"), "tipo": "modificatorio",
+        "referencia": referencia, "estatus": "borrador", "formato": "INM",
+        "aviso_origen_id": aviso_id, "operacion_id": op["id"],
+        "descripcion_modificacion": body.descripcion[:3000],
+        "fecha_limite": aviso.get("fecha_limite"),
+        "num_operaciones": 1, "monto_total": _money(_d(op.get("monto"))),
+    })
+    nuevo = filas[0] if filas else {}
+    ruta = await _guardar_xml(uid, nuevo.get("id"), aviso.get("periodo") or "", referencia, xml)
+    ahora = datetime.now(timezone.utc).isoformat()
+    await _sb_patch("pld_operaciones", {"id": f"eq.{op['id']}", "user_id": f"eq.{uid}"},
+                    {"modificado_at": ahora, "updated_at": ahora})
+    await bitacora(uid, "aviso_modificatorio",
+                   f"Modificatorio {referencia} del aviso {aviso.get('referencia')} (folio "
+                   f"{op.get('folio_uif')}): {body.descripcion[:300]}",
+                   aviso_id=nuevo.get("id"), operacion_id=op["id"], ip=_ip(request))
+    return {"aviso": {**nuevo, "xml_ruta": ruta, "estatus": "generado"}, "xml": xml, "validado": True}
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -951,8 +1154,9 @@ async def resumen(request: Request):
     inusuales = await _sb_get("pld_operaciones", {
         "user_id": f"eq.{uid}", "inusual": "eq.true", "inusual_reportada_at": "is.null",
         "select": "id,inusual_detectada_at,inusual_motivo,expediente_id"})
-    avisos = await _sb_get("pld_avisos", {
-        "user_id": f"eq.{uid}", "select": "*", "order": "periodo.desc", "limit": "12"})
+    avisos = [a for a in await _sb_get("pld_avisos", {
+        "user_id": f"eq.{uid}", "select": "*", "order": "periodo.desc", "limit": "24"})
+        if a.get("estatus") != "descartado"][:12]
 
     # Periodos con operaciones pendientes de reportar y su fecha límite.
     periodos: Dict[str, Dict[str, Any]] = {}
@@ -999,6 +1203,8 @@ async def resumen(request: Request):
         "periodos_pendientes": lista_periodos,
         "inusuales_urgentes": urgentes,
         "avisos": avisos,
+        "alertas": alertas_pld(cfg, hoy, pendientes, avisos, inusuales, fecha_limite),
+        "pasos": PASOS,
         "listo_para_avisar": bool(cfg.get("rfc_sujeto_obligado") and cfg.get("responsable_nombre")),
     }
 
@@ -1024,3 +1230,77 @@ async def catalogos_uif(request: Request):
 @router.get("/salud")
 async def salud():
     return {"ok": True, "modulo": "cumplimiento", "schema_aviso": SCHEMA_VERSION}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# ALERTAS AL CELULAR
+# Las alertas urgentes del ciclo del aviso (fecha límite cerca, aviso por
+# subir, aviso subido sin acuse, formato anterior, operación inusual) llegan
+# como notificación. Una vez al día por pendiente y solo en horario de
+# oficina (hora del centro de México), para que avise sin estorbar.
+# ══════════════════════════════════════════════════════════════════════════
+
+_HORARIO_PUSH = range(9, 21)
+
+
+async def revisar_alertas_pld(ahora_utc: Optional[datetime] = None) -> int:
+    """Manda las notificaciones pendientes del día. Devuelve cuántas envió."""
+    ahora_utc = ahora_utc or datetime.now(timezone.utc)
+    local = ahora_utc - timedelta(hours=6)
+    if local.hour not in _HORARIO_PUSH:
+        return 0
+    try:
+        from push import enviar_push
+    except Exception:
+        return 0
+    hoy = local.date()
+    hoy_txt = hoy.isoformat()
+    enviadas = 0
+    for cfg in await _sb_get("pld_config", {"alertas_activas": "eq.true", "select": "*"}):
+        uid = cfg.get("user_id")
+        if not uid:
+            continue
+        pendientes = await _sb_get("pld_operaciones", {
+            "user_id": f"eq.{uid}", "genera_aviso": "eq.true", "aviso_id": "is.null",
+            "estatus": "neq.cancelada", "select": "id,fecha_operacion"})
+        inusuales = await _sb_get("pld_operaciones", {
+            "user_id": f"eq.{uid}", "inusual": "eq.true", "inusual_reportada_at": "is.null",
+            "select": "id,inusual_detectada_at"})
+        avisos = await _sb_get("pld_avisos", {
+            "user_id": f"eq.{uid}", "estatus": "in.(borrador,generado,subido)", "select": "*"})
+        alertas = [a for a in alertas_pld(cfg, hoy, pendientes, avisos, inusuales, fecha_limite)
+                   if a["push"]]
+        ya = cfg.get("alertas_enviadas") or {}
+        nuevas = {}
+        for a in alertas:
+            if ya.get(a["clave"]) == hoy_txt:
+                nuevas[a["clave"]] = hoy_txt
+                continue
+            try:
+                if await enviar_push(uid, a["titulo"], a["detalle"],
+                                     datos={"tipo": "cumplimiento", "url": "cumplimiento.html"}):
+                    enviadas += 1
+            except Exception as e:
+                log.warning("push PLD falló para %s: %s", uid, e)
+            nuevas[a["clave"]] = hoy_txt
+        if nuevas != ya:
+            try:
+                await _sb_patch("pld_config", {"user_id": f"eq.{uid}"}, {"alertas_enviadas": nuevas})
+            except HTTPException:
+                pass
+    return enviadas
+
+
+async def _alertas_pld_loop():
+    while True:
+        try:
+            await revisar_alertas_pld()
+        except Exception as e:
+            log.error("Falló el ciclo de alertas de cumplimiento: %s", e)
+        await asyncio.sleep(3600)
+
+
+@router.on_event("startup")
+async def _iniciar_alertas_pld():
+    if getattr(settings, "reminders_enabled", False):
+        asyncio.create_task(_alertas_pld_loop())

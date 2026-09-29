@@ -289,6 +289,9 @@
     <span>Falta capturar en Ajustes tu RFC como sujeto obligado y tu encargado de cumplimiento. Sin eso no se puede generar un aviso.</span>
   </div>
 
+  <!-- Alertas del ciclo del aviso (cumplimiento-aviso.js) -->
+  <div id="cp-alertas"></div>
+
   <!-- Tarjetas de estado -->
   <div class="cp-kpis" id="cp-kpis">
     <article class="bk-card cp-kpi">
@@ -394,6 +397,7 @@
 
   <!-- ═══════════════ AVISOS ═══════════════ -->
   <section id="v-avisos" class="cp-oculto">
+    <div id="cp-pasos" style="margin-bottom:var(--sp-8);"></div>
     <div class="bk-section-header"><h2>Periodos por presentar</h2></div>
     <div id="cp-periodos" style="display:grid;gap:var(--sp-4);margin-bottom:var(--sp-8);"></div>
 
@@ -1012,6 +1016,7 @@
       pintarKpis();
       pintarPeriodos();
       pintarAvisos();
+      if (window.cpAviso) window.cpAviso.pintarCiclo(RESUMEN);
       llenarAjustes();
     } catch (e) {
       toast(e.message, 'error');
@@ -1525,25 +1530,9 @@
     }).join('');
   }
 
+  // Lista de avisos con su estado y siguiente paso: cumplimiento-aviso.js.
   function pintarAvisos() {
-    var avisos = (RESUMEN && RESUMEN.avisos) || [];
-    g('cp-avisos-body').innerHTML = avisos.map(function (a) {
-      var badge = {
-        borrador: '<span class="bk-badge">Borrador</span>',
-        generado: '<span class="bk-badge bk-badge--warn">Por presentar</span>',
-        presentado: '<span class="bk-badge bk-badge--success">Presentado</span>',
-        rechazado: '<span class="bk-badge bk-badge--danger">Rechazado</span>'
-      }[a.estatus] || '<span class="bk-badge">' + esc(a.estatus || '') + '</span>';
-      return '<tr><td>' + esc(a.periodo) + '</td>' +
-        '<td><span class="cp-sub">' + esc(a.referencia || '') + '</span></td>' +
-        '<td class="num">' + (a.num_operaciones || 0) + '</td>' +
-        '<td>' + badge + '</td>' +
-        '<td style="text-align:right;">' +
-        (a.estatus !== 'presentado'
-          ? '<button class="bk-btn bk-btn--quiet bk-btn--sm" data-acuse="' + esc(a.id) + '" type="button">Registrar acuse</button>'
-          : '<span class="cp-sub">' + esc(a.acuse_folio || '') + '</span>') +
-        '</td></tr>';
-    }).join('');
+    if (window.cpAviso) window.cpAviso.pintarAvisos(RESUMEN || {}, OPERACIONES);
   }
 
   async function generarAviso(periodo) {
@@ -1570,7 +1559,8 @@
             '</span></div>'
           : '') +
         '<p style="font-size:var(--fs-caption);color:var(--mute);margin-top:var(--sp-4);">' +
-        'Descarga el archivo y súbelo al portal del SAT. Cuando tengas el acuse, regístralo aquí.</p>';
+        '<b>Siguientes pasos:</b> descarga el XML, súbelo al portal del SAT (SPPLD) con tu e.firma y ' +
+        'después, en la pestaña Avisos, marca «Ya lo subí». Cuando el SAT responda, registra el acuse o el rechazo.</p>';
       abrirModal('m-aviso');
       cargar();
     } catch (e) {
@@ -1590,17 +1580,6 @@
         'y vuelve a generar el aviso.</p>';
       abrirModal('m-aviso');
     }
-  }
-
-  async function registrarAcuse(id) {
-    var folio = window.prompt('Folio del acuse que te dio el portal del SAT:');
-    if (!folio) return;
-    try {
-      await api('/pld/avisos/' + encodeURIComponent(id) + '/presentado',
-                { method: 'POST', json: { acuse_folio: folio } });
-      toast('Acuse registrado.', 'success');
-      cargar();
-    } catch (e) { toast(e.message, 'error'); }
   }
 
   /* ══════════════ BITÁCORA ══════════════ */
@@ -1687,6 +1666,21 @@
       cargar();
     } catch (e) { toast(e.message, 'error'); }
   }
+
+  // Lo que cumplimiento-aviso.js necesita de esta pantalla.
+  window.cpHost = {
+    api: function (p, o) { return api(p, o); }, toast: function (m, t) { toast(m, t); },
+    recargar: function () { return cargar(); }, fechaCorta: function (d) { return fechaCorta(d); },
+    pesos: function (n) { return pesos(n); },
+    irA: function (vista) {
+      var b = g('cp-tabs').querySelector('[data-vista="' + vista + '"]');
+      if (b) b.click();
+    },
+    editarOperacion: function (id) {
+      var tr = g('cp-op-body').querySelector('[data-op="' + id + '"]');
+      if (tr) tr.click();
+    }
+  };
 
   /* ══════════════ EVENTOS ══════════════ */
   function conectar() {
@@ -1884,10 +1878,6 @@
     g('cp-periodos').addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-generar]');
       if (b) generarAviso(b.dataset.generar);
-    });
-    g('cp-avisos-body').addEventListener('click', function (ev) {
-      var b = ev.target.closest('[data-acuse]');
-      if (b) registrarAcuse(b.dataset.acuse);
     });
     g('a-descargar').addEventListener('click', function () {
       if (!xmlActual) return;
