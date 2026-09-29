@@ -627,6 +627,31 @@ async function completarNombresVinculados() {
   ]);
   contactosMin = contactosMin.concat(c);
   propsMin = propsMin.concat(p);
+
+  // Si un compañero te asignó una tarea ligada a SU cliente y no tienes
+  // permiso de ver los contactos del equipo, la base no te deja leerlo y el
+  // chip decía solo "Contacto". El servidor devuelve nombre y teléfono de
+  // esos clientes (solo de tareas que te asignaron o que creaste).
+  const yaC = new Set(contactosMin.map(x => String(x.id)));
+  const sigue = Object.entries(VINCULOS.contactos)
+    .filter(([, ids]) => ids.some(id => !yaC.has(String(id))))
+    .map(([tid]) => tid);
+  if (sigue.length) {
+    try {
+      const tok = await window.brokrSb.ensureToken();
+      const r = tok && await fetch(TK_API + '/org/tareas/contactos-vinculados', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+        body: JSON.stringify({ tarea_ids: sigue.slice(0, 500) }),
+      });
+      if (r && r.ok) {
+        const d = await r.json();
+        const nuevos = (d.contactos || []).filter(x => !yaC.has(String(x.id)))
+          .map(x => Object.assign({}, x, { ajeno: true }));
+        contactosMin = contactosMin.concat(nuevos);
+      }
+    } catch { /* sin nombre se muestra "Cliente de otro asesor" */ }
+  }
 }
 
 // Nombres de todo lo vinculado a la tarea, para buscar "por cliente".
@@ -650,7 +675,7 @@ function poblarSelectVinculo() {
   let html = '<option value="">Sin vínculo</option>';
   if (contactosMin.length) {
     html += '<optgroup label="Contactos">' +
-      contactosMin.map(c => `<option value="c:${esc(String(c.id))}">${esc(c.nombre || 'Sin nombre')}</option>`).join('') +
+      contactosMin.filter(c => !c.ajeno).map(c => `<option value="c:${esc(String(c.id))}">${esc(c.nombre || 'Sin nombre')}</option>`).join('') +
       '</optgroup>';
   }
   if (propsMin.length) {
@@ -712,9 +737,25 @@ function vinculoChip(t) {
   let html = '';
   for (const cid of contactos) {
     const c = contactoIdx[String(cid)];
+    const ICO = `<svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.5-1.632z"/></svg>`;
+    if (c && c.ajeno) {
+      // Cliente de otro asesor que no puedes abrir: se muestra quién es y
+      // cómo contactarlo, que es lo que hace falta para trabajar la tarea.
+      const tel = String(c.wa || c.telefono || '').replace(/\D/g, '');
+      html += `<span class="tk-link" title="Cliente de otro asesor del equipo">${ICO}
+        <span>${esc(c.nombre || 'Sin nombre')}</span></span>`;
+      if (tel) {
+        html += `<a class="tk-link" href="tel:${esc(tel)}" title="Llamar" onclick="event.stopPropagation()">
+          <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106a1.125 1.125 0 00-1.173.417l-.97 1.293a12.035 12.035 0 01-7.143-7.143l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+          <span>${esc(c.wa || c.telefono)}</span></a>`;
+      } else if (c.email) {
+        html += `<a class="tk-link" href="mailto:${esc(c.email)}" onclick="event.stopPropagation()"><span>${esc(c.email)}</span></a>`;
+      }
+      continue;
+    }
     html += `<a class="tk-link" href="contactos.html?id=${encodeURIComponent(String(cid))}" title="Ver en Contactos" onclick="event.stopPropagation()">
-      <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.5-1.632z"/></svg>
-      <span>${esc(c ? c.nombre : 'Contacto')}</span>
+      ${ICO}
+      <span>${esc(c ? c.nombre : 'Cliente de otro asesor')}</span>
     </a>`;
   }
   for (const pid of propiedades) {
@@ -932,7 +973,7 @@ function tkPintarChips() {
   g('tke-contactos-chips').innerHTML = contactos.length
     ? contactos.map(cid => {
         const c = contactoIdx[String(cid)];
-        return `<span class="tke-chip">${esc(c ? c.nombre : 'Contacto')}<button onclick="tkQuitarContacto('${esc(String(cid))}')" title="Quitar">×</button></span>`;
+        return `<span class="tke-chip">${esc(c ? c.nombre : 'Cliente de otro asesor')}<button onclick="tkQuitarContacto('${esc(String(cid))}')" title="Quitar">×</button></span>`;
       }).join('')
     : '<span class="bk-hint">Ninguno todavía.</span>';
   g('tke-propiedades-chips').innerHTML = propiedades.length
@@ -942,7 +983,7 @@ function tkPintarChips() {
         return `<span class="tke-chip">${esc(nombre)}<button onclick="tkQuitarPropiedad('${esc(String(pid))}')" title="Quitar">×</button></span>`;
       }).join('')
     : '<span class="bk-hint">Ninguno todavía.</span>';
-  tkContactosDisponibles = contactosMin.filter(c => !contactos.includes(String(c.id)));
+  tkContactosDisponibles = contactosMin.filter(c => !c.ajeno && !contactos.includes(String(c.id)));
   tkPropsDisponibles = propsMin.filter(p => !propiedades.includes(String(p.id)));
   g('tke-agregar-contacto-buscar').value = '';
   g('tke-agregar-contacto').value = '';

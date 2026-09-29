@@ -16,6 +16,7 @@
 # Depende de: migracion-empresas.sql (paso 1) ya corrido.
 # ──────────────────────────────────────────────────────────────────────────
 
+import re
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
@@ -920,3 +921,86 @@ async def asignar_agente(req: AsignarReq, request: Request):
         "updated_at": datetime.now(timezone.utc).isoformat(),
     })
     return {"ok": True, "asignados": len(ids)}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CLIENTES LIGADOS A TAREAS DE OTRO MIEMBRO DEL EQUIPO
+# Cuando un compañero te asigna una tarea ligada a SU cliente y tú no tienes
+# permiso de "ver contactos del equipo", la base de datos (RLS) no te deja
+# leer ese contacto y la tarea mostraba un genérico "Contacto": nunca sabías
+# de quién se trataba. Esto devuelve lo mínimo para trabajar la tarea
+# (nombre y medios de contacto) SOLO de los clientes ligados a tareas de tu
+# empresa que te asignaron a ti o que tú creaste. No abre nada más.
+# La visibilidad completa de la ficha la da la política de
+# migracion-tareas-contactos-visibles.sql.
+# ═══════════════════════════════════════════════════════════════════════════
+
+_ID_SEGURO = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+
+class TareasContactosReq(BaseModel):
+    tarea_ids: List[str]
+
+
+def _tandas(ids: List[str], tam: int = 80) -> List[List[str]]:
+    return [ids[i:i + tam] for i in range(0, len(ids), tam)]
+
+
+def _en(ids: List[str]) -> str:
+    return "in.(" + ",".join(f'"{i}"' for i in ids) + ")"
+
+
+@router.post("/org/tareas/contactos-vinculados")
+async def contactos_de_mis_tareas(req: TareasContactosReq, request: Request):
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Inicia sesión.")
+    ctx = await get_org_context(user_id)
+    if not ctx or not ctx.get("org_id"):
+        return {"contactos": []}
+    org_id = ctx["org_id"]
+
+    ids = list(dict.fromkeys(str(i).strip() for i in (req.tarea_ids or [])))
+    ids = [i for i in ids if _ID_SEGURO.match(i)][:500]
+    if not ids:
+        return {"contactos": []}
+
+    # Solo tareas de MI empresa que me asignaron o que yo creé.
+    tareas: List[dict] = []
+    for tanda in _tandas(ids):
+        tareas += await _sb_get("tareas", {
+            "id": _en(tanda), "org_id": f"eq.{org_id}",
+            "select": "id,user_id,asignado_a,contacto_id",
+        })
+    mias = [t for t in tareas if user_id in (t.get("asignado_a"), t.get("user_id"))]
+    if not mias:
+        return {"contactos": []}
+
+    contacto_ids = {str(t["contacto_id"]) for t in mias if t.get("contacto_id")}
+    for tanda in _tandas([str(t["id"]) for t in mias]):
+        for v in await _sb_get("tareas_contactos", {
+                "tarea_id": _en(tanda), "select": "contacto_id"}):
+            if v.get("contacto_id"):
+                contacto_ids.add(str(v["contacto_id"]))
+    contacto_ids = {c for c in contacto_ids if _ID_SEGURO.match(c)}
+    if not contacto_ids:
+        return {"contactos": []}
+
+    contactos: List[dict] = []
+    for tanda in _tandas(sorted(contacto_ids)):
+        contactos += await _sb_get("contactos", {
+            "id": _en(tanda),
+            "select": "id,nombre,telefono,wa,email,tipo,user_id,org_id",
+        })
+
+    # Un vínculo lo puede crear cualquiera del equipo: solo se devuelven
+    # clientes que de verdad son de la empresa (por org o por su dueño).
+    miembros = {m.get("user_id") for m in await _sb_get("organizacion_miembros", {
+        "org_id": f"eq.{org_id}", "select": "user_id"})}
+    salida = []
+    for c in contactos:
+        if c.get("org_id") != org_id and c.get("user_id") not in miembros:
+            continue
+        salida.append({k: c.get(k) for k in ("id", "nombre", "telefono", "wa", "email", "tipo")})
+    return {"contactos": salida}
+
