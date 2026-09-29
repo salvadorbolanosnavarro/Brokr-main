@@ -353,3 +353,39 @@ function bkBuscadorContactos(inputId, hiddenId, cajaId, vacioTexto) {
     render: (c) => ({ titulo: c.nombre || 'Sin nombre', sub: c.telefono || c.email || '' }),
   });
 }
+
+/* ── Guardar cambios de un contacto, comprobando que se guardaron ──
+   Antes se mandaba el PATCH con "return=minimal": si el cliente era de un
+   compañero, la base (RLS) no actualizaba nada, respondía 200 igual y la
+   pantalla decía "Etapa: Descartado" aunque al recargar volvía a la de antes.
+   Ahora se pide la fila de vuelta; si no se actualizó ninguna y el cambio es
+   solo de etapa/probabilidad, lo hace el servidor (que revisa permisos del
+   equipo). Cualquier otro caso se reporta como error, nunca como éxito. */
+async function bkPatchContacto(id, fields) {
+  const sb = window.brokrSb;
+  const r = await sb.fetch('rest/v1/contactos?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+    body: JSON.stringify(fields),
+  });
+  if (!r.ok) throw new Error('Error ' + r.status);
+  const filas = await r.json().catch(() => []);
+  if (Array.isArray(filas) && filas.length) return;
+
+  const soloEtapa = Object.keys(fields).every(k => ['estatus', 'probabilidad', 'updated_at'].includes(k));
+  if (!soloEtapa) throw new Error('No tienes permiso para modificar este contacto.');
+  const tok = await sb.ensureToken();
+  const cuerpo = {};
+  if ('estatus' in fields) cuerpo.estatus = fields.estatus;
+  if ('probabilidad' in fields) cuerpo.probabilidad = fields.probabilidad;
+  const r2 = await fetch((window.API_BASE || 'https://api.broquer.app') + '/org/contactos/' +
+    encodeURIComponent(id) + '/etapa', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+    body: JSON.stringify(cuerpo),
+  });
+  if (!r2.ok) {
+    const j = await r2.json().catch(() => ({}));
+    throw new Error(j.detail || ('Error ' + r2.status));
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "count": 264,
+  "count": 265,
   "operations": [
     {
       "body": false,
@@ -1808,6 +1808,18 @@
       "method": "POST",
       "params": [],
       "path": "/org/asignar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "PATCH",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/org/contactos/{contacto_id}/etapa",
       "responses": [
         "200",
         "422"
