@@ -929,7 +929,18 @@ async function toggleTarea(id) {
 async function eliminarTarea(id) {
   if (!confirm('¿Eliminar esta tarea?')) return;
   try {
-    await sbFetch('tareas?id=eq.' + encodeURIComponent(id), 'DELETE');
+    // Por el servidor, no directo a la base: si la tarea la creó otro
+    // compañero, la base "aceptaba" el borrado sin borrar nada y la tarea
+    // reaparecía al recargar. El servidor revisa el permiso y confirma.
+    const tok = await window.brokrSb.ensureToken();
+    if (!tok) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+    const r = await fetch(TK_API + '/org/tareas/' + encodeURIComponent(id), {
+      method: 'DELETE', headers: { Authorization: 'Bearer ' + tok },
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.detail || ('HTTP ' + r.status));
+    }
     tareas = tareas.filter(t => String(t.id) !== id);
     renderTareas();
     showToast('Tarea eliminada');
