@@ -1,5 +1,5 @@
 {
-  "count": 265,
+  "count": 266,
   "operations": [
     {
       "body": false,
@@ -1981,6 +1981,15 @@
       "responses": [
         "200",
         "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/pld/catalogos",
+      "responses": [
+        "200"
       ]
     },
     {

@@ -24,14 +24,15 @@ class CumplimientoCoreRegressionTests(unittest.TestCase):
         self.assertIn("await create_signed_object_url(", source)
 
         # Legal/business rules remain explicit invariants of this router.
-        self.assertIn('SCHEMA_VERSION = "1.0"', source)
+        self.assertIn('SCHEMA_VERSION = "INM"', source)
         self.assertIn('"valor_uma": 117.31, "umbral_aviso_uma": 8025', source)
         self.assertIn('"umbral_identifica_uma": 8025, "meses_acumulacion": 6', source)
         self.assertIn('"retencion_anios": 10, "dia_limite_aviso": 17', source)
         self.assertIn("def umbral_pesos(", source)
         self.assertIn("async def evaluar_operacion(", source)
         self.assertIn("def fecha_limite(", source)
-        self.assertIn("def construir_xml(", source)
+        self.assertIn("from core.pld_inm import catalogos, construir_xml, validar_xsd", source)
+        self.assertIn("errores_xsd = validar_xsd(xml)", source)
         compile(source, "routers/cumplimiento.py", "exec")
 
 
