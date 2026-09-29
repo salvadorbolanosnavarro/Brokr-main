@@ -1,5 +1,5 @@
 {
-  "count": 262,
+  "count": 263,
   "operations": [
     {
       "body": false,
@@ -1900,6 +1900,16 @@
       "method": "POST",
       "params": [],
       "path": "/org/nombre",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/org/tareas/contactos-vinculados",
       "responses": [
         "200",
         "422"
