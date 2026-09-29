@@ -13,8 +13,8 @@ class CumplimientoCoreRegressionTests(unittest.TestCase):
 
         self.assertIn("from core.auth import require_user_id", source)
         self.assertIn("from core.config import settings", source)
-        self.assertIn("from core.database import get_rows, patch_rows, post_rows", source)
-        self.assertIn("from core.storage import create_signed_object_url, upload_object", source)
+        self.assertIn("from core.database import delete_rows, get_rows, patch_rows, post_rows", source)
+        self.assertIn("from core.storage import create_signed_object_url, delete_object, upload_object", source)
         self.assertNotIn("os.getenv", source)
         self.assertNotIn("SUPABASE_SERVICE_KEY =", source)
         self.assertNotIn("async def get_user_id_from_token", source)

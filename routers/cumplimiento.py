@@ -48,8 +48,8 @@ from pydantic import BaseModel
 
 from core.auth import require_user_id
 from core.config import settings
-from core.database import get_rows, patch_rows, post_rows
-from core.storage import create_signed_object_url, upload_object
+from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.storage import create_signed_object_url, delete_object, upload_object
 from core.pld_inm import catalogos, construir_xml, validar_xsd
 from core.pld_alertas import PASOS, alertas_pld
 
@@ -670,6 +670,27 @@ async def publico_guardar(request: Request, token: str):
 # DOCUMENTOS — bucket privado, ligas firmadas que caducan
 # ══════════════════════════════════════════════════════════════════════════
 
+# Además de los que exige la ley, el agente puede guardar hasta 5 documentos
+# propios en el expediente (acta de matrimonio, factura, avalúo…). Son
+# opcionales: no cuentan para la completitud. Se guardan con tipo
+# "adicional:<nombre que les puso>".
+MAX_ADICIONALES = 5
+_PREFIJO_ADICIONAL = "adicional:"
+_TIPOS_LEY = {t for docs in DOCS_REQUERIDOS.values() for t, _ in docs}
+
+
+def _tipo_documento(tipo: str, permitir_adicional: bool) -> str:
+    t = (tipo or "").strip()
+    if t in _TIPOS_LEY:
+        return t
+    if permitir_adicional and t.lower().startswith(_PREFIJO_ADICIONAL):
+        nombre = re.sub(r"\s+", " ", t[len(_PREFIJO_ADICIONAL):]).strip()[:60]
+        if nombre:
+            return _PREFIJO_ADICIONAL + nombre
+        raise HTTPException(400, "Ponle nombre al documento adicional.")
+    raise HTTPException(400, "Ese tipo de documento no es válido.")
+
+
 def _limpio(nombre: str) -> str:
     base = re.sub(r"[^A-Za-z0-9._-]+", "_", (nombre or "documento").strip())[:80]
     return base or "documento"
@@ -687,7 +708,7 @@ async def _subir(user_id: str, expediente_id: str, tipo: str,
         raise HTTPException(415, "Solo se aceptan fotos (JPG, PNG, WEBP) o archivos PDF.")
 
     sello = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-    ruta = f"{user_id}/{expediente_id}/{tipo}-{sello}-{_limpio(archivo.filename)}"
+    ruta = f"{user_id}/{expediente_id}/{_limpio(tipo)}-{sello}-{_limpio(archivo.filename)}"
 
     try:
         await upload_object(
@@ -717,6 +738,15 @@ async def subir_documento(request: Request, expediente_id: str,
                          {"id": f"eq.{expediente_id}", "user_id": f"eq.{uid}", "limit": "1"})
     if not exps:
         raise HTTPException(404, "No encontré ese expediente.")
+    tipo = _tipo_documento(tipo, permitir_adicional=True)
+    if tipo.startswith(_PREFIJO_ADICIONAL):
+        existentes = await _sb_get("pld_documentos", {
+            "expediente_id": f"eq.{expediente_id}", "user_id": f"eq.{uid}",
+            "tipo": f"like.{_PREFIJO_ADICIONAL}*", "select": "tipo"})
+        otros = {d.get("tipo") for d in existentes} - {tipo}
+        if len(otros) >= MAX_ADICIONALES:
+            raise HTTPException(409, f"Puedes agregar hasta {MAX_ADICIONALES} documentos adicionales. "
+                                     "Quita uno para agregar otro.")
     doc = await _subir(uid, expediente_id, tipo, archivo, "agente")
     await bitacora(uid, "documento_subido", f"Documento «{tipo}» agregado al expediente.",
                    expediente_id=expediente_id, ip=_ip(request))
@@ -728,6 +758,7 @@ async def subir_documento(request: Request, expediente_id: str,
 async def subir_documento_cliente(request: Request, token: str,
                                   tipo: str = Form(...), archivo: UploadFile = File(...)):
     exp = await _por_token(token)
+    tipo = _tipo_documento(tipo, permitir_adicional=False)
     doc = await _subir(exp["user_id"], exp["id"], tipo, archivo, "cliente")
     await bitacora(exp["user_id"], "documento_subido",
                    f"El cliente subió su documento «{tipo}».",
@@ -738,6 +769,39 @@ async def subir_documento_cliente(request: Request, token: str,
         rev = {}
     return {"documento": {"tipo": doc.get("tipo"), "nombre_archivo": doc.get("nombre_archivo")},
             "revision": rev}
+
+
+@router.delete("/documentos/{documento_id}")
+async def quitar_documento(request: Request, documento_id: str):
+    """Solo los documentos adicionales se pueden quitar. Los que exige la ley
+    se reemplazan, nunca se borran: son la evidencia del expediente."""
+    uid = await _uid(request)
+    filas = await _sb_get("pld_documentos", {"id": f"eq.{documento_id}", "user_id": f"eq.{uid}",
+                                             "select": "*", "limit": "1"})
+    if not filas:
+        raise HTTPException(404, "No encontré ese documento.")
+    doc = filas[0]
+    if not str(doc.get("tipo") or "").startswith(_PREFIJO_ADICIONAL):
+        raise HTTPException(409, "Los documentos que exige la ley no se quitan; súbelo de nuevo para reemplazarlo.")
+    # Todas las versiones de ese mismo documento adicional.
+    versiones = await _sb_get("pld_documentos", {
+        "expediente_id": f"eq.{doc['expediente_id']}", "user_id": f"eq.{uid}",
+        "tipo": f"eq.{doc['tipo']}", "select": "id,ruta"})
+    for v in versiones:
+        try:
+            await delete_object(BUCKET, v["ruta"], timeout=20, ignore_missing=True)
+        except Exception as exc:
+            log.warning("no se pudo borrar %s: %s", v.get("ruta"), exc)
+    try:
+        await delete_rows("pld_documentos", {"expediente_id": f"eq.{doc['expediente_id']}",
+                                             "user_id": f"eq.{uid}", "tipo": f"eq.{doc['tipo']}"},
+                          timeout=20)
+    except Exception as exc:
+        raise HTTPException(500, "No se pudo quitar el documento. Intenta de nuevo.") from exc
+    await bitacora(uid, "documento_quitado",
+                   f"Documento adicional «{doc['tipo'][len(_PREFIJO_ADICIONAL):]}» quitado del expediente.",
+                   expediente_id=doc["expediente_id"], ip=_ip(request))
+    return {"ok": True}
 
 
 @router.get("/documentos/{documento_id}/ver")
