@@ -1053,3 +1053,81 @@ async def borrar_tarea(tarea_id: str, request: Request):
     if await _sb_get("tareas", {"id": f"eq.{tarea_id}", "select": "id", "limit": "1"}):
         raise HTTPException(status_code=500, detail="La tarea no se borró. Intenta de nuevo.")
     return {"ok": True}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CAMBIAR LA ETAPA / PROBABILIDAD DE UN CLIENTE
+# En empresas, el pipeline muestra también los clientes de los compañeros
+# (permiso "ver contactos del equipo", prendido por defecto) y se pueden
+# arrastrar de columna o cambiar de etapa desde la ficha. Pero la política
+# de RLS de UPDATE en `contactos` solo deja escribir al dueño: si el cliente
+# era de otro, Postgres no actualizaba nada y aun así respondía 200. La
+# pantalla mostraba "Etapa: Descartado" y al recargar volvía a la anterior.
+# El navegador intenta primero directo (dueño) y, si no se actualizó ninguna
+# fila, cae aquí. Solo se tocan estatus y probabilidad, y se COMPRUEBA que
+# hayan quedado guardados antes de responder.
+# ═══════════════════════════════════════════════════════════════════════════
+
+_PROBABILIDADES = {"baja", "media", "alta"}
+
+
+@router.patch("/org/contactos/{contacto_id}/etapa")
+async def cambiar_etapa_contacto(contacto_id: str, request: Request):
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Inicia sesión.")
+    if not _ID_SEGURO.match(contacto_id or ""):
+        raise HTTPException(status_code=404, detail="Ese cliente no existe.")
+    try:
+        body = await request.json()
+    except Exception:
+        body = None
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="Solicitud inválida.")
+
+    cambios: Dict[str, Any] = {}
+    if "estatus" in body:
+        v = body.get("estatus")
+        v = str(v).strip().lower()[:40] if v not in (None, "") else None
+        cambios["estatus"] = v
+    if "probabilidad" in body:
+        v = body.get("probabilidad")
+        v = str(v).strip().lower() if v not in (None, "") else None
+        if v is not None and v not in _PROBABILIDADES:
+            raise HTTPException(status_code=400, detail="Probabilidad no válida.")
+        cambios["probabilidad"] = v
+    if not cambios:
+        raise HTTPException(status_code=400, detail="No hay nada que cambiar.")
+
+    filas = await _sb_get("contactos", {
+        "id": f"eq.{contacto_id}", "select": "id,user_id,org_id,asignado_a", "limit": "1"})
+    if not filas:
+        raise HTTPException(status_code=404, detail="Ese cliente ya no existe.")
+    c = filas[0]
+
+    permitido = c.get("user_id") == user_id
+    if not permitido:
+        ctx = await get_org_context(user_id)
+        if ctx and ctx.get("activo") and ctx.get("org_id"):
+            misma_org = c.get("org_id") == ctx["org_id"]
+            if not misma_org and not c.get("org_id") and c.get("user_id"):
+                # Contactos viejos sin org: cuentan si su dueño es del equipo.
+                misma_org = bool(await _sb_get("organizacion_miembros", {
+                    "org_id": f"eq.{ctx['org_id']}", "user_id": f"eq.{c['user_id']}",
+                    "select": "user_id", "limit": "1"}))
+            permitido = misma_org and (
+                c.get("asignado_a") == user_id
+                or ctx.get("rol_org") in ("owner", "admin")
+                or permiso_efectivo(ctx, "ver_contactos_equipo"))
+    if not permitido:
+        raise HTTPException(status_code=403,
+                            detail="No tienes permiso para cambiar la etapa de este cliente.")
+
+    cambios["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await _sb_patch("contactos", {"id": f"eq.{contacto_id}"}, cambios)
+
+    campos = ",".join(k for k in cambios if k != "updated_at")
+    despues = await _sb_get("contactos", {"id": f"eq.{contacto_id}", "select": campos, "limit": "1"})
+    if not despues or any(despues[0].get(k) != v for k, v in cambios.items() if k != "updated_at"):
+        raise HTTPException(status_code=500, detail="No se pudo guardar. Intenta de nuevo.")
+    return {"ok": True, **{k: v for k, v in cambios.items() if k != "updated_at"}}

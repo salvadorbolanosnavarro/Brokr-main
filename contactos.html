@@ -1138,19 +1138,6 @@ async function upsertRemoto(contacto) {
   return r.json();
 }
 
-/* Actualización parcial de un contacto (ej. solo el estatus) */
-async function patchRemoto(id, cambios) {
-  const r = await _sb().fetch('rest/v1/contactos?id=eq.' + encodeURIComponent(id), {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-    body: JSON.stringify(cambios),
-  });
-  if (!r.ok && r.status !== 204) {
-    const txt = await r.text().catch(()=> '');
-    throw new Error('Supabase: ' + r.status + ' ' + txt);
-  }
-}
-
 /* Elimina un contacto del servidor */
 async function eliminarRemoto(id) {
   const r = await _sb().fetch('rest/v1/contactos?id=eq.' + encodeURIComponent(id), {
@@ -2074,14 +2061,10 @@ const PROBS = [
 /* Guarda un campo del contacto en Supabase y actualiza la memoria local */
 async function patchContacto(id, fields) {
   fields.updated_at = new Date().toISOString();
-  const r = await _sb().fetch('rest/v1/contactos?id=eq.' + encodeURIComponent(id), {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-    body: JSON.stringify(fields),
-  });
-  if (!r.ok) throw new Error('Error ' + r.status);
+  await bkPatchContacto(id, fields); // ficha-comun.js: confirma que sí se guardó
   const c = _contactosMem.find(x => String(x.id) === String(id));
   if (c) Object.assign(c, fields);
+  try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
 }
 
 /* ── Tab Propiedades ─────────────────────────────────────────────── */
@@ -2188,7 +2171,7 @@ window.addEventListener('message', async (e) => {
   c.operaciones.unshift(e.data.op);
   c.updated_at = new Date().toISOString();
   try {
-    await upsertRemoto(c);
+    await patchContacto(c.id, { operaciones: c.operaciones }); // no reescribir la etapa con datos viejos
     await cargarRemoto();
     renderActual();
   } catch (err) {

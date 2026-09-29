@@ -152,7 +152,7 @@ async function setEtapa(v) {
   } catch (e) {
     detContacto.estatus = prev;
     clRenderEstado(detContacto);
-    showToast('No se pudo guardar la etapa');
+    showToast(e.message || 'No se pudo guardar la etapa');
   }
 }
 
@@ -170,7 +170,7 @@ async function setProbabilidad(v) {
   } catch (e) {
     detContacto.probabilidad = prev;
     clRenderEstado(detContacto);
-    showToast('No se pudo guardar la probabilidad');
+    showToast(e.message || 'No se pudo guardar la probabilidad');
   }
 }
 
