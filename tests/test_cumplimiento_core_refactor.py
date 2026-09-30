@@ -31,7 +31,7 @@ class CumplimientoCoreRegressionTests(unittest.TestCase):
         self.assertIn("def umbral_pesos(", source)
         self.assertIn("async def evaluar_operacion(", source)
         self.assertIn("def fecha_limite(", source)
-        self.assertIn("from core.pld_inm import catalogos, construir_xml, validar_xsd", source)
+        self.assertIn("from core.pld_inm import TIPOS_BROQUER_INM, catalogos, construir_xml, validar_xsd", source)
         self.assertIn("errores_xsd = validar_xsd(xml)", source)
         compile(source, "routers/cumplimiento.py", "exec")
 
