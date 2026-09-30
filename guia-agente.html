@@ -130,6 +130,7 @@
 }
 .guide-contact-btn:active { transform: translateY(0); }
 .guide-contact-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+.guide-contact-mail { color: var(--paper); font-weight: 600; text-decoration: underline; }
 
 /* Variante: Eliminar cuenta — fondo claro, look profesional sereno */
 .guide-danger {
@@ -760,12 +761,12 @@
   <div class="guide-contact">
     <div>
       <h3>¿Necesitas ayuda?</h3>
-      <p>Escríbenos directamente. Responderemos en un plazo de 48 horas hábiles.</p>
+      <p>Escríbenos desde aquí o a <a class="guide-contact-mail" href="mailto:hola@broquer.app">hola@broquer.app</a>. Responderemos en un plazo de 48 horas hábiles.</p>
     </div>
-    <a href="mailto:hola@broquer.app" class="guide-contact-btn">
+    <button type="button" data-soporte-abrir class="guide-contact-btn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
       Contactar soporte
-    </a>
+    </button>
   </div>
 
   <!-- Eliminar cuenta -->
@@ -821,5 +822,6 @@ async function confirmEliminarCuenta() {
   }
 }
 </script>
+<script src="soporte-form.js" defer></script>
 </body>
 </html>

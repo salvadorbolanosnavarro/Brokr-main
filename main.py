@@ -333,6 +333,14 @@ try:
 except Exception as _e:
     print(f"[firmas] No se pudo montar el router de firma electrónica: {_e}")
 
+# Soporte: formulario dentro de Broquer que manda el mensaje (y una imagen
+# opcional) a soporte con los datos de la cuenta. Mismo import defensivo.
+try:
+    from routers.soporte import router as soporte_router
+    app.include_router(soporte_router)
+except Exception as _e:
+    print(f"[soporte] No se pudo montar el router de soporte: {_e}")
+
 # Video de ficha: arma un recorrido con ffmpeg a partir de las fotos que ya
 # viven en la propiedad. Mismo import defensivo: si falla, el resto del
 # backend sigue vivo.
