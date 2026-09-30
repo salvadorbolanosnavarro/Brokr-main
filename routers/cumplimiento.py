@@ -50,7 +50,7 @@ from core.auth import require_user_id
 from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
 from core.storage import create_signed_object_url, delete_object, upload_object
-from core.pld_inm import catalogos, construir_xml, validar_xsd
+from core.pld_inm import TIPOS_BROQUER_INM, catalogos, construir_xml, validar_xsd
 from core.pld_alertas import PASOS, alertas_pld
 
 router = APIRouter(prefix="/pld", tags=["cumplimiento"])
@@ -882,10 +882,18 @@ async def generar_aviso(request: Request, body: AvisoIn):
         permitidos = set(body.operacion_ids)
         ops = [o for o in ops if o.get("id") in permitidos]
 
+    # El arrendamiento es otra actividad vulnerable (fracción XV) con su propio
+    # formato: no va en el aviso de inmuebles. Antes una sola operación de
+    # arrendamiento bloqueaba el aviso de todo el periodo.
+    fuera = [o for o in ops if (o.get("tipo_operacion") or "compraventa") not in TIPOS_BROQUER_INM]
+    ops = [o for o in ops if o not in fuera]
+    nota_fuera = (f"{len(fuera)} operación(es) de arrendamiento no se incluyeron: el arrendamiento "
+                  f"se reporta en otra actividad (fracción XV), no en el aviso de inmuebles.") if fuera else ""
+
     if not ops and body.tipo != "en_ceros":
-        raise HTTPException(400,
+        raise HTTPException(400, nota_fuera or (
             "No hay operaciones que reportar en ese periodo. Si necesitas presentar "
-            "aviso sin operaciones, genera uno en ceros.")
+            "aviso sin operaciones, genera uno en ceros."))
 
     exp_ids = sorted({o.get("expediente_id") for o in ops if o.get("expediente_id")})
     expedientes: Dict[str, dict] = {}
@@ -931,8 +939,19 @@ async def generar_aviso(request: Request, body: AvisoIn):
     })
     aviso = filas[0] if filas else {}
     aviso_id = aviso.get("id")
+    if not aviso_id:
+        raise HTTPException(500, "No se pudo registrar el aviso. Intenta de nuevo.")
 
-    ruta = await _guardar_xml(uid, aviso_id, body.periodo, referencia, xml)
+    try:
+        ruta = await _guardar_xml(uid, aviso_id, body.periodo, referencia, xml)
+    except HTTPException:
+        # Sin archivo el aviso no sirve: se descarta para que no quede un
+        # borrador colgado en la lista y el periodo siga pendiente.
+        try:
+            await _sb_patch("pld_avisos", {"id": f"eq.{aviso_id}"}, {"estatus": "descartado"})
+        except HTTPException:
+            pass
+        raise
     ahora = datetime.now(timezone.utc).isoformat()
 
     if aviso_id and ops:
@@ -953,6 +972,7 @@ async def generar_aviso(request: Request, body: AvisoIn):
         "fecha_limite": limite.isoformat(),
         "xml": xml,
         "expedientes_incompletos": incompletos,
+        "excluidas": nota_fuera,
         "validado": True,
     }
 
@@ -1210,11 +1230,12 @@ async def resumen(request: Request):
     exps = await _sb_get("pld_expedientes", {
         "user_id": f"eq.{uid}", "select": "id,estatus,completitud,es_pep,nombre,"
                                           "apellido_paterno,razon_social,tipo_persona"})
-    pendientes = await _sb_get("pld_operaciones", {
+    pendientes = [o for o in await _sb_get("pld_operaciones", {
         "user_id": f"eq.{uid}", "genera_aviso": "eq.true", "aviso_id": "is.null",
         "estatus": "neq.cancelada",
-        "select": "id,fecha_operacion,monto,motivo_aviso,expediente_id",
+        "select": "id,fecha_operacion,monto,motivo_aviso,expediente_id,tipo_operacion",
         "order": "fecha_operacion.asc"})
+        if (o.get("tipo_operacion") or "compraventa") in TIPOS_BROQUER_INM]
     inusuales = await _sb_get("pld_operaciones", {
         "user_id": f"eq.{uid}", "inusual": "eq.true", "inusual_reportada_at": "is.null",
         "select": "id,inusual_detectada_at,inusual_motivo,expediente_id"})
@@ -1324,9 +1345,10 @@ async def revisar_alertas_pld(ahora_utc: Optional[datetime] = None) -> int:
         uid = cfg.get("user_id")
         if not uid:
             continue
-        pendientes = await _sb_get("pld_operaciones", {
+        pendientes = [o for o in await _sb_get("pld_operaciones", {
             "user_id": f"eq.{uid}", "genera_aviso": "eq.true", "aviso_id": "is.null",
-            "estatus": "neq.cancelada", "select": "id,fecha_operacion"})
+            "estatus": "neq.cancelada", "select": "id,fecha_operacion,tipo_operacion"})
+            if (o.get("tipo_operacion") or "compraventa") in TIPOS_BROQUER_INM]
         inusuales = await _sb_get("pld_operaciones", {
             "user_id": f"eq.{uid}", "inusual": "eq.true", "inusual_reportada_at": "is.null",
             "select": "id,inusual_detectada_at"})

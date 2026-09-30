@@ -1579,6 +1579,9 @@
             '<span>Hay ' + incompletos.length + ' expediente(s) incompleto(s) en este aviso: ' +
             esc(incompletos.join(', ')) + '. Complétalos antes de presentarlo.</span></div>'
           : '') +
+        (r.excluidas
+          ? '<div class="bk-alert bk-alert--info" style="margin-top:var(--sp-4);"><span>' + esc(r.excluidas) + '</span></div>'
+          : '') +
         (r.validado
           ? '<div class="bk-alert bk-alert--success" style="margin-top:var(--sp-4);"><span>' +
             'El archivo cumple el formato oficial del SAT para inmuebles (esquema XSD de la UIF).' +
@@ -1928,7 +1931,12 @@
     /* Avisos */
     g('cp-periodos').addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-generar]');
-      if (b) generarAviso(b.dataset.generar);
+      if (!b || b.disabled) return;
+      // Un doble clic no debe armar dos avisos del mismo periodo.
+      b.disabled = true;
+      var txt = b.textContent;
+      b.textContent = 'Generando…';
+      generarAviso(b.dataset.generar).then(function () { b.disabled = false; b.textContent = txt; });
     });
     g('a-descargar').addEventListener('click', function () {
       if (!xmlActual) return;
