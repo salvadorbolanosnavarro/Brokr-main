@@ -1,5 +1,5 @@
 {
-  "count": 272,
+  "count": 273,
   "operations": [
     {
       "body": false,
@@ -2295,6 +2295,16 @@
       "method": "POST",
       "params": [],
       "path": "/solicitud-arrendamiento/analizar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/soporte/mensaje",
       "responses": [
         "200",
         "422"

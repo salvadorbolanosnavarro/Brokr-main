@@ -142,6 +142,11 @@ body {
   text-decoration: none;
 }
 .contact-value a:hover { text-decoration: underline; }
+.contact-btn {
+  margin: 12px 0 4px; padding: 10px 20px; border-radius: var(--r-pill);
+  background: var(--sky-blue); color: var(--paper); border: 1px solid var(--sky-blue);
+  font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
+}
 .contact-note {
   font-size: var(--fs-sm);
   color: var(--mute);
@@ -294,7 +299,8 @@ body {
       <div class="contact-body">
         <div class="contact-label">Correo de soporte</div>
         <div class="contact-value"><a href="mailto:hola@broquer.app">hola@broquer.app</a></div>
-        <div class="contact-note">Tiempo de respuesta: menos de 24 horas hábiles (lunes a viernes, 9:00–18:00 CST). Para incidencias urgentes relacionadas con pagos o acceso a la cuenta, indica el asunto "URGENTE" en el correo.</div>
+        <button type="button" class="contact-btn" data-soporte-abrir>Enviar mensaje a soporte</button>
+        <div class="contact-note">Tiempo de respuesta: menos de 24 horas hábiles (lunes a viernes, 9:00–18:00 CST). Para incidencias urgentes relacionadas con pagos o acceso a la cuenta, escribe "URGENTE" al inicio de tu mensaje.</div>
       </div>
     </div>
   </div>
@@ -513,5 +519,6 @@ function toggle(btn) {
   item.scrollIntoView({ behavior: 'smooth', block: 'center' });
 })();
 </script>
+<script src="soporte-form.js" defer></script>
 </body>
 </html>
