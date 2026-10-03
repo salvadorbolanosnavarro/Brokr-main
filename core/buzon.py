@@ -252,7 +252,7 @@ async def registrar_lead(*, org_id: str, user_id: str, canal: str, nombre: str =
     if propiedad_id and contacto_id:
         try:   # liga el contacto como interesado en el inmueble de origen
             await post_rows("contactos_propiedades", {"contacto_id": contacto_id, "propiedad_id": propiedad_id,
-                                                      "user_id": user_id}, prefer="return=minimal")
+                                                      "relacion": "interes", "user_id": user_id}, prefer="return=minimal")
         except httpx.HTTPStatusError:
             pass
     await avisar_asignacion(asignado_a, lead)

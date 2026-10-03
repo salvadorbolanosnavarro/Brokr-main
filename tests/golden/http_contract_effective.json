@@ -1,5 +1,5 @@
 {
-  "count": 308,
+  "count": 318,
   "operations": [
     {
       "body": false,
@@ -137,6 +137,120 @@
       "path": "/agent/health",
       "responses": [
         "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:propiedad_id!"
+      ],
+      "path": "/alertas/clientes-potenciales/{propiedad_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/alertas/coincidencias/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/alertas/ligar-interesado",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/alertas/preparar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/alertas/registrar-envio",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/alertas/requerimiento/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PUT",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/alertas/requerimiento/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:agente"
+      ],
+      "path": "/alertas/requerimientos",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:rid!"
+      ],
+      "path": "/alertas/requerimientos/{rid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:rid!"
+      ],
+      "path": "/alertas/requerimientos/{rid}",
+      "responses": [
+        "200",
+        "422"
       ]
     },
     {

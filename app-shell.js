@@ -289,6 +289,7 @@
     // ligas siguen vivas (y resaltan "Contactos", ver NAV_ALIAS).
     { key:'contactos',    href:'contactos.html',     label:'Contactos',          group:'crm',         icon:'users' },
     { key:'clientes',     href:'clientes.html',      label:'Pipeline de contactos', group:'crm',      icon:'apreton', hidden:true },
+    { key:'alertas',      href:'alertas.html',       label:'Alertas de búsqueda', group:'crm',         icon:'search', hidden:true },
     { key:'crm-ajustes',  href:'crm-ajustes.html',   label:'Ajustes de CRM',     group:'crm',         icon:'cog', hidden:true },
     { key:'tareas',       href:'tareas.html',        label:'Tareas',              group:'crm',         icon:'check' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',        group:'crm',         icon:'chart' },
@@ -352,6 +353,7 @@
   const PAGE_META = {
     'buzon':         { title:'Buzón',                  sub:'Todo lo que entra, en un solo lugar: WhatsApp, tu sitio, la Bolsa, Zapier y llamadas.' },
     'equipo':        { title:'Equipo',                 sub:'Quién trabaja en tu cuenta y qué puede ver cada quien.' },
+    'alertas':       { title:'Alertas de búsqueda',    sub:'Lo que busca cada cliente del equipo y los inmuebles nuevos que le coinciden.' },
     'crm-ajustes':   { title:'Ajustes de CRM',         sub:'Etapas del pipeline, tipos de contacto, fuentes, etiquetas y categorías de tu cuenta.' },
     'bolsa':         { title:'Bolsa inmobiliaria',     sub:'Comparte inventario con otros agentes Broquer y cierra en equipo con comisión compartida.' },
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
@@ -1498,7 +1500,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
      ════════════════════════════════════════════════════════════════ */
   const activeKey = (document.body.getAttribute('data-app') || 'home').toLowerCase();
   // Pantallas que viven dentro de otro módulo del menú.
-  const NAV_ALIAS = { clientes: 'contactos', 'crm-ajustes': 'contactos' };
+  const NAV_ALIAS = { clientes: 'contactos', 'crm-ajustes': 'contactos', alertas: 'contactos' };
   const navKey = NAV_ALIAS[activeKey] || activeKey;
   const activeMod = MODS.find(m => m.key === activeKey) || MODS[0];
 

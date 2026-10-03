@@ -62,3 +62,17 @@ create or replace function auth.role() returns text language sql stable as $$ se
 
 -- org_permiso (versión real en ajuste-easybroker.sql)
 create or replace function public.org_permiso(p_clave text) returns boolean language sql stable as $$ select true $$;
+
+-- Buscador (versión real en migracion-buscador-propiedades.sql)
+create table if not exists public.requerimientos_busqueda (
+  id uuid primary key default gen_random_uuid(), user_id uuid not null, contacto_id uuid not null,
+  activo boolean not null default true, operacion text not null default 'venta', tipo_inmueble text not null default 'casa',
+  colonia text, ciudad text, estado text, precio_min numeric, precio_max numeric, recamaras_min integer, notas text,
+  creado_en timestamptz not null default now(), actualizado_en timestamptz not null default now(), ultima_busqueda_en timestamptz,
+  unique (contacto_id));
+create table if not exists public.busqueda_resultados (
+  id uuid primary key default gen_random_uuid(), requerimiento_id uuid not null, user_id uuid not null, contacto_id uuid not null,
+  titulo text, url text not null, encontrado_en timestamptz not null default now());
+create table if not exists public.contactos_propiedades (
+  id uuid primary key default gen_random_uuid(), user_id uuid, contacto_id text, propiedad_id uuid, relacion text,
+  created_at timestamptz default now());

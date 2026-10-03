@@ -632,6 +632,11 @@ app.include_router(crm_router)
 from routers.buzon import router as buzon_router
 app.include_router(buzon_router)
 
+# Alertas de búsqueda: requerimiento ampliado, coincidencias, clientes
+# potenciales y ciclo diario (ver routers/alertas.py).
+from routers.alertas import router as alertas_router
+app.include_router(alertas_router)
+
 app.include_router(admin_usage_router)
 app.include_router(account_delete_router)
 app.include_router(avm_legacy_router)

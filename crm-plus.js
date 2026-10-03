@@ -45,9 +45,12 @@
         '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Lista</a>' +
       '<a class="bk-seg__btn' + (VISTA === 'pipeline' ? ' is-active' : '') + '" href="clientes.html' + qs + '"' + (VISTA === 'pipeline' ? ' aria-current="page"' : '') + '>' +
         '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 5h4v14H4zM10 5h4v9h-4zM16 5h4v6h-4z"/></svg>Pipeline</a>' +
-      '</nav><a class="crm-gear" id="crm-gear" href="crm-ajustes.html" hidden>' +
+      '</nav><a class="crm-gear" href="alertas.html">' +
+        '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>Alertas de búsqueda</a>' +
+      '<a class="crm-gear" id="crm-gear" href="crm-ajustes.html" hidden>' +
         '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.3 4.3c.4-1.7 3-1.7 3.4 0a1.7 1.7 0 002.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 001 2.5c1.8.4 1.8 3 0 3.4a1.7 1.7 0 00-1 2.6c.9 1.5-.9 3.3-2.4 2.4a1.7 1.7 0 00-2.6 1c-.4 1.8-3 1.8-3.4 0a1.7 1.7 0 00-2.5-1c-1.6.9-3.3-.9-2.4-2.4a1.7 1.7 0 00-1.1-2.6c-1.7-.4-1.7-3 0-3.4a1.7 1.7 0 001.1-2.5c-.9-1.6.8-3.3 2.4-2.4a1.7 1.7 0 002.5-1.1z"/><circle cx="12" cy="12" r="3"/></svg>Ajustes de CRM</a>';
     row.parentNode.insertBefore(div, row.nextSibling);
+    document.querySelectorAll('.bk-volver span').forEach(function (s) { if (/Directorio|Clientes/.test(s.textContent)) s.textContent = 'Contactos'; });
     var sub = document.querySelector('.cl-sub'); if (sub) sub.textContent = 'Vista Pipeline: tus clientes potenciales por etapa. Arrastra para cambiarlos de etapa.';
   }
 

@@ -676,6 +676,42 @@
   };
 
   // ════════════════════════════════════════════════════════════════════
+  // CLIENTES POTENCIALES (ficha del inmueble → contactos cuyo requerimiento
+  // coincide; routers/alertas.py)
+  // ════════════════════════════════════════════════════════════════════
+  function bloquePotenciales(p) {
+    var pane = g('f-pane-detalles'); if (!pane || g('px-potenciales')) return;
+    pane.insertAdjacentHTML('beforeend', '<div class="bk-bloque" id="px-potenciales"><div class="bk-acciones">' +
+      '<h3 class="bk-acciones__t">Clientes potenciales</h3><button class="bk-btn bk-btn--sm" id="px-pot-btn">Buscar clientes potenciales</button></div>' +
+      '<div id="px-pot-lista"></div></div>');
+    g('px-pot-btn').onclick = function () { buscarPotenciales(p.id); };
+  }
+  async function buscarPotenciales(pid) {
+    var cont = g('px-pot-lista'); cont.innerHTML = '<div class="bk-cargando"></div>';
+    try {
+      var d = await window.bkApi('/alertas/clientes-potenciales/' + encodeURIComponent(pid));
+      var lista = d.clientes || [];
+      cont.innerHTML = lista.length ? lista.map(function (c) {
+        return '<div class="bk-fila"><a class="bk-fila__cuerpo" href="contactos.html?id=' + encodeURIComponent(c.contacto_id) + '&tab=requerimiento" target="_blank">' +
+          '<span class="bk-fila__t">' + esc(c.nombre || 'Contacto') + '</span><span class="bk-fila__d">' + esc((c.motivos || []).join(' · ')) + '</span></a>' +
+          (c.ligado ? '<span class="pd-tag">Interesado</span>' : '<button class="bk-btn bk-btn--ghost bk-btn--sm" data-ligar="' + esc(c.contacto_id) + '">Ligar como interesado</button>') + '</div>';
+      }).join('') : '<div class="bk-vacio"><p>Ningún requerimiento activo coincide con este inmueble todavía.</p></div>';
+      cont.onclick = async function (e) {
+        var b = e.target.closest('[data-ligar]'); if (!b) return;
+        b.disabled = true;
+        try {
+          await window.bkApi('/alertas/ligar-interesado', { method: 'POST', json: { contacto_id: b.dataset.ligar, propiedad_id: pid } });
+          b.outerHTML = '<span class="pd-tag">Interesado</span>'; mostrarToast('Ligado como interesado');
+        } catch (err) { b.disabled = false; mostrarToast(err.message); }
+      };
+    } catch (e) { cont.innerHTML = '<div class="bk-vacio"><p>' + esc(e.message) + '</p></div>'; }
+  }
+  if (typeof pfRenderDetalles === 'function') {
+    var _pfRenderOrig = pfRenderDetalles;
+    pfRenderDetalles = function (p) { var r = _pfRenderOrig.apply(this, arguments); bloquePotenciales(p); return r; };
+  }
+
+  // ════════════════════════════════════════════════════════════════════
   // ARRANQUE
   // ════════════════════════════════════════════════════════════════════
   window.pxAmenidadesTexto = function (p) {
