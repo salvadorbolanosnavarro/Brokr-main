@@ -9,6 +9,7 @@ import email.utils
 import hashlib
 import imaplib
 import ipaddress
+import logging
 import re
 import smtplib
 import socket
@@ -19,7 +20,7 @@ from email.mime.text import MIMEText
 from typing import Dict, List, Optional
 
 import httpx
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
@@ -30,6 +31,7 @@ from core.organizations import get_org_id_for_user
 from core.subscriptions import has_paid_feature_access
 
 router = APIRouter()
+log = logging.getLogger("broquer.correo")
 
 RESEND_API_KEY = settings.resend_api_key
 CORREO_RELAY_FROM = settings.correo_relay_from
@@ -219,29 +221,68 @@ def _snippet(texto: str, html: str) -> str:
     return re.sub(r"\s+", " ", base).strip()[:140]
 
 
+# Correos más grandes que esto (casi siempre por adjuntos) no se descargan
+# completos para la lista: sólo sus encabezados. El texto se ve al abrirlos.
+_MAX_BYTES_SNIPPET = 256 * 1024
+
+
+def _uid_de(cabecera: bytes) -> Optional[str]:
+    m = re.search(rb"UID (\d+)", cabecera or b"")
+    return m.group(1).decode() if m else None
+
+
+def _tamano(cabecera: bytes) -> int:
+    m = re.search(rb"RFC822\.SIZE (\d+)", cabecera or b"")
+    return int(m.group(1)) if m else 0
+
+
+def _fetch_por_uid(m: imaplib.IMAP4_SSL, uids: List[bytes], partes: str) -> Dict[str, tuple]:
+    """Un solo UID FETCH para varios correos (antes era uno por correo).
+    Regresa {uid: (cabecera_de_respuesta, contenido)}."""
+    if not uids:
+        return {}
+    ok, data = m.uid("fetch", b",".join(uids), partes)
+    if ok != "OK" or not data:
+        return {}
+    out: Dict[str, tuple] = {}
+    for item in data:
+        if isinstance(item, tuple) and len(item) >= 2:
+            uid = _uid_de(item[0])
+            if uid:
+                out[uid] = (item[0], item[1])
+        elif isinstance(item, bytes) and out:
+            # Algunos servidores mandan FLAGS después del contenido: se
+            # pegan a la cabecera del último correo leído.
+            ultimo = next(reversed(out))
+            cab, cont = out[ultimo]
+            out[ultimo] = (cab + b" " + item, cont)
+    return out
+
+
 def _listar_bandeja(cta: dict, limite: int, carpeta: str) -> List[dict]:
     m = _imap_conectar(cta)
     try:
-        m.select(carpeta, readonly=True)
+        ok, _ = m.select(carpeta, readonly=True)
+        if ok != "OK":
+            raise _ErrorCorreo(404, "carpeta", f"No existe la carpeta «{carpeta}» en tu correo.")
         ok, data = m.uid("search", None, "ALL")
-        uids = (data[0] or b"").split()
+        uids = (data[0] or b"").split() if ok == "OK" and data else []
         uids = uids[-limite:][::-1]
+        if not uids:
+            return []
+        encabezados = _fetch_por_uid(m, uids, "(UID FLAGS RFC822.SIZE BODY.PEEK[HEADER])")
+        chicos = [u for u in uids if _tamano(encabezados.get(u.decode(), (b"", b""))[0]) <= _MAX_BYTES_SNIPPET]
+        completos = _fetch_por_uid(m, chicos, "(UID BODY.PEEK[])")
         out = []
-        for uid in uids:
-            ok, msgdata = m.uid("fetch", uid, "(FLAGS BODY.PEEK[])")
-            if ok != "OK" or not msgdata or msgdata[0] is None:
+        for uid_b in uids:
+            uid = uid_b.decode()
+            cab, crudo_enc = encabezados.get(uid, (b"", None))
+            if crudo_enc is None:
                 continue
-            flags = b" ".join(p for p in msgdata if isinstance(p, bytes))
-            visto = b"\\Seen" in flags
-            crudo = None
-            for p in msgdata:
-                if isinstance(p, tuple) and len(p) >= 2:
-                    crudo = p[1]
-                    break
-            if crudo is None:
-                continue
-            msg = email.message_from_bytes(crudo)
-            partes = _texto_de_mensaje(msg)
+            visto = b"\\Seen" in cab
+            crudo = completos.get(uid, (b"", None))[1]
+            msg = email.message_from_bytes(crudo or crudo_enc)
+            partes = _texto_de_mensaje(msg) if crudo else {"texto": "", "html": ""}
             fecha = ""
             try:
                 dt = email.utils.parsedate_to_datetime(msg.get("Date"))
@@ -249,9 +290,10 @@ def _listar_bandeja(cta: dict, limite: int, carpeta: str) -> List[dict]:
             except Exception:
                 pass
             out.append({
-                "uid": uid.decode(), "de": _decodificar(msg.get("From")), "para": _decodificar(msg.get("To")),
+                "uid": uid, "de": _decodificar(msg.get("From")), "para": _decodificar(msg.get("To")),
                 "asunto": _decodificar(msg.get("Subject")) or "(sin asunto)", "fecha": fecha,
-                "visto": visto, "snippet": _snippet(partes["texto"], partes["html"]),
+                "visto": visto,
+                "snippet": _snippet(partes["texto"], partes["html"]) if crudo else "Correo con adjuntos: ábrelo para verlo.",
             })
         return out
     finally:
@@ -259,6 +301,35 @@ def _listar_bandeja(cta: dict, limite: int, carpeta: str) -> List[dict]:
             m.logout()
         except Exception:
             pass
+
+
+class _ErrorCorreo(Exception):
+    """Error de lectura ya traducido para la persona (status, código, mensaje)."""
+
+    def __init__(self, status: int, codigo: str, mensaje: str):
+        super().__init__(mensaje)
+        self.status, self.codigo, self.mensaje = status, codigo, mensaje
+
+
+def _traducir_error(e: Exception, accion: str) -> _ErrorCorreo:
+    """Convierte la falla técnica en algo que la persona pueda resolver."""
+    if isinstance(e, _ErrorCorreo):
+        return e
+    texto = str(e)
+    bajo = texto.lower()
+    if isinstance(e, InvalidToken):
+        return _ErrorCorreo(409, "reconectar", "Por seguridad hay que volver a conectar tu correo (la contraseña guardada ya no se puede leer).")
+    if isinstance(e, imaplib.IMAP4.error) and any(k in bajo for k in ("authenticationfailed", "invalid credentials", "login failed",
+                                                                        "authenticate failed", "web login required", "application-specific password")):
+        return _ErrorCorreo(409, "reconectar", "Tu proveedor rechazó la contraseña de aplicación (pudo haberse revocado o cambiado). Vuelve a conectar tu correo.")
+    if isinstance(e, ValueError):
+        return _ErrorCorreo(409, "reconectar", f"La configuración guardada de tu correo ya no es válida ({texto}). Vuelve a conectarlo.")
+    if isinstance(e, (socket.timeout, TimeoutError)) or "timed out" in bajo:
+        return _ErrorCorreo(504, "proveedor_lento", f"Tu proveedor de correo tardó demasiado en responder al {accion}. Intenta de nuevo en un momento.")
+    if isinstance(e, OSError):
+        return _ErrorCorreo(503, "sin_conexion", f"No pudimos conectarnos con tu proveedor de correo al {accion}. Intenta de nuevo en un momento.")
+    log.exception("correo: falla inesperada al %s", accion)
+    return _ErrorCorreo(502, "error", f"No se pudo {accion}: {texto[:200]}")
 
 
 def _leer_mensaje(cta: dict, uid: str, carpeta: str) -> Optional[dict]:
@@ -422,7 +493,9 @@ async def correo_bandeja(request: Request, limite: int = 30, carpeta: str = "INB
     try:
         mensajes = await asyncio.to_thread(_listar_bandeja, cta, limite, carpeta)
     except Exception as e:
-        raise HTTPException(502, f"No se pudo leer la bandeja: {e}")
+        err = _traducir_error(e, "leer tu bandeja")
+        log.warning("correo: bandeja de %s falló (%s): %s", uid, err.codigo, e)
+        raise HTTPException(err.status, {"codigo": err.codigo, "mensaje": err.mensaje})
     return {"ok": True, "email": cta["email"], "mensajes": mensajes}
 
 
@@ -437,7 +510,9 @@ async def correo_mensaje(uid_msg: str, request: Request, carpeta: str = "INBOX")
     try:
         msg = await asyncio.to_thread(_leer_mensaje, cta, uid_msg, carpeta)
     except Exception as e:
-        raise HTTPException(502, f"No se pudo leer el mensaje: {e}")
+        err = _traducir_error(e, "abrir el correo")
+        log.warning("correo: mensaje de %s falló (%s): %s", uid, err.codigo, e)
+        raise HTTPException(err.status, {"codigo": err.codigo, "mensaje": err.mensaje})
     if not msg:
         raise HTTPException(404, "El mensaje ya no está en esta carpeta.")
     return {"ok": True, "mensaje": msg}

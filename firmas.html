@@ -1778,7 +1778,7 @@
     try {
       if (!window.brokrSb || !window.brokrSb.rest) return;
       var r = await window.brokrSb.rest(
-        'rest/v1/contactos?select=id,nombre,telefono,email,wa&order=updated_at.desc&limit=500');
+        'contactos?select=id,nombre,telefono,email,wa&order=updated_at.desc&limit=500');
       CONTACTOS = Array.isArray(r) ? r : (r && r.data) || [];
       g('fr-contactos').innerHTML = CONTACTOS.map(function (c) {
         return '<option value="' + esc(c.nombre) + '"></option>';
