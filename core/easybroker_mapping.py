@@ -112,24 +112,26 @@ def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
 
     location_raw = prop_full.get("location") or ""
     colonia = None
-    ciudad = "Morelia"
-    estado = "Michoacán"
+    # Sin default geográfico: un "Morelia" inventado se pegaba a inmuebles de
+    # otras ciudades. Si EasyBroker no trae el dato, se queda vacío.
+    ciudad = None
+    estado = None
     cp_from_loc = None
     if isinstance(location_raw, dict):
         # La API v1 de EasyBroker manda la ubicación como un solo texto en
         # "name" ("Ciudad Granja, Zapopan, Jalisco"), sin "city" ni "region".
         # Antes ese texto completo se guardaba como colonia y la ciudad caía
-        # al default Morelia → "Ciudad Granja, Zapopan, Jalisco, Morelia".
+        # a un default Morelia → "Ciudad Granja, Zapopan, Jalisco, Morelia".
         col_n, ciu_n, est_n = _split_location_name(location_raw.get("name"))
         colonia = location_raw.get("city_area") or location_raw.get("neighborhood") or col_n or None
-        ciudad = location_raw.get("city") or location_raw.get("municipality") or ciu_n or "Morelia"
-        estado = location_raw.get("region") or location_raw.get("state") or est_n or "Michoacán"
+        ciudad = location_raw.get("city") or location_raw.get("municipality") or ciu_n or None
+        estado = location_raw.get("region") or location_raw.get("state") or est_n or None
         cp_from_loc = location_raw.get("postal_code") or None
     elif isinstance(location_raw, str) and location_raw:
         col_n, ciu_n, est_n = _split_location_name(location_raw)
         colonia = col_n
-        ciudad = ciu_n or "Morelia"
-        estado = est_n or "Michoacán"
+        ciudad = ciu_n
+        estado = est_n
 
     street_raw = prop_full.get("street") or ""
     if not street_raw and isinstance(location_raw, dict):
