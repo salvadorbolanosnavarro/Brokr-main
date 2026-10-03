@@ -1,5 +1,5 @@
 {
-  "count": 293,
+  "count": 308,
   "operations": [
     {
       "body": false,
@@ -374,6 +374,175 @@
       "method": "POST",
       "params": [],
       "path": "/bolsa/retirar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/bolsa/solicitud",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:asignado",
+        "query:canal",
+        "query:estado",
+        "query:fuente_id",
+        "query:limit",
+        "query:propiedad_id"
+      ],
+      "path": "/buzon",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/buzon/contador",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:token!"
+      ],
+      "path": "/buzon/entrada/{token}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:desde",
+        "query:hasta"
+      ],
+      "path": "/buzon/estadisticas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/buzon/manual",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/buzon/reglas",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PUT",
+      "params": [],
+      "path": "/buzon/reglas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/buzon/respuestas",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/buzon/respuestas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:rid!"
+      ],
+      "path": "/buzon/respuestas/{rid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:rid!"
+      ],
+      "path": "/buzon/respuestas/{rid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:lead_id!"
+      ],
+      "path": "/buzon/{lead_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [
+        "path:lead_id!"
+      ],
+      "path": "/buzon/{lead_id}/asignar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:lead_id!"
+      ],
+      "path": "/buzon/{lead_id}/respondido",
       "responses": [
         "200",
         "422"

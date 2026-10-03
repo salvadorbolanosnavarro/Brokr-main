@@ -36,6 +36,12 @@
     if (!r.ok) throw new Error((data && (data.detail || data.message)) || ('Error ' + r.status));
     return data;
   };
+  // Supabase REST con la sesión del usuario (espera a que app-shell esté listo).
+  window.bkRest = async function (path, opts) {
+    await esperarShell();
+    if (!window.brokrSb || !window.brokrSb.rest) throw new Error('La app aún se está cargando.');
+    return window.brokrSb.rest(path, opts);
+  };
   window.bkEsc = function (s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];

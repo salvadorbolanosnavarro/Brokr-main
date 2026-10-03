@@ -147,7 +147,7 @@ with sync_playwright() as pw:
     p3.goto(base + "/crm-ajustes.html")
     p3.wait_for_selector("#crm-etapas .crm-fila", timeout=15000)
     check(p3.locator("#crm-etapas .crm-fila").count() == 3, "Ajustes: etapas listadas")
-    check(p3.locator("#crm-tabs .bk-tab").count() == 5, "Ajustes: 5 pestañas")
+    check(p3.locator("#crm-tabs .bk-tab").count() == 7, "Ajustes: 7 pestañas (incluye Asignación y Respuestas)")
     p3.screenshot(path=str(OUT / "crm-ajustes-375.png"))
     p3.click("[data-tab=fuentes]")
     p3.wait_for_selector("#crm-fuentes")

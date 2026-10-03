@@ -22,7 +22,10 @@
     { id: 'etiquetas', titulo: 'Etiquetas', render: renderEtiquetas },
     { id: 'categorias', titulo: 'Categorías de tareas', render: renderCategorias },
   ];
-  window.crmRegistrarPestana = function (p) { PESTANAS.push(p); pintarTabs(); };
+  window.crmRegistrarPestana = function (p) {
+    PESTANAS.push(p); pintarTabs();
+    if (location.hash === '#' + p.id && CAT.etapas.length) abrir(p.id);
+  };
   window.crmCatalogo = function () { return CAT; };
 
   var SVG_ASA = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
@@ -297,7 +300,7 @@
   async function renderCategorias(el) {
     var orgId = null;
     try { var o = await api('/org'); orgId = o.org_id; } catch (e) {}
-    var cats = (orgId && window.brokrSb) ? await window.brokrSb.rest('organizacion_categorias?select=id,nombre&org_id=eq.' + encodeURIComponent(orgId) + '&order=nombre.asc') : [];
+    var cats = orgId ? await window.bkRest('organizacion_categorias?select=id,nombre&org_id=eq.' + encodeURIComponent(orgId) + '&order=nombre.asc') : [];
     var dis = CAT.es_admin ? '' : ' disabled';
     el.innerHTML = '<h2>Categorías de tareas y notas</h2><p>Las mismas que eliges al crear una tarea o una nota. Cualquier miembro puede crear nuevas desde la tarea; aquí se renombran o se quitan.</p>' +
       ((cats || []).length ? '<div class="crm-lista" id="crm-cats">' + cats.map(function (c) {

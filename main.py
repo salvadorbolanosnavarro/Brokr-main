@@ -628,6 +628,10 @@ app.include_router(propiedades_actualizar_router)
 from routers.crm import router as crm_router
 app.include_router(crm_router)
 
+# Buzón: bandeja única de leads, asignación y webhook de entrada (Zapier).
+from routers.buzon import router as buzon_router
+app.include_router(buzon_router)
+
 app.include_router(admin_usage_router)
 app.include_router(account_delete_router)
 app.include_router(avm_legacy_router)

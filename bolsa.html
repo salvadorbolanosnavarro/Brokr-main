@@ -296,7 +296,10 @@
         (p.descripcion ? '<p style="white-space:pre-line;margin-top:14px">' + esc(p.descripcion) + '</p>' : '') +
         C.multimediaHtml(p) +
         (p.bolsa_notas ? '<div class="bl-notas">' + esc(p.bolsa_notas) + '</div>' : '') +
-      '</div></div>';
+      '</div>' +
+      (p.propia ? '' : '<div class="bk-modal__foot"><textarea class="bk-input" id="bl-sol-msg" rows="2" placeholder="Mensaje para el captador (opcional)" style="flex:1"></textarea>' +
+        '<button class="bk-btn bk-btn--forest" type="button" id="bl-solicitar" data-pid="' + esc(p.id) + '">Solicitar información</button></div>') +
+      '</div>';
     ov.classList.add('is-open');
   }
   document.addEventListener('click', function (e) {
@@ -304,6 +307,14 @@
     if (!card || e.target.closest('a')) return;
     var p = _ultimas[Number(card.dataset.blIdx)];
     if (p) abrirDetalle(p);
+  });
+  document.addEventListener('click', async function (e) {
+    var b = e.target.closest('#bl-solicitar'); if (!b) return;
+    b.disabled = true;
+    try {
+      await api('/bolsa/solicitud', { method: 'POST', json: { propiedad_id: b.dataset.pid, mensaje: (el('bl-sol-msg') || {}).value || '' } });
+      b.textContent = 'Solicitud enviada';
+    } catch (err) { b.disabled = false; alert(err.message || 'No se pudo enviar la solicitud'); }
   });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && el('bl-detalle')) el('bl-detalle').classList.remove('is-open');

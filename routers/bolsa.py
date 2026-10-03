@@ -359,3 +359,45 @@ async def bolsa_retirar(body: RetirarBody, request: Request):
     _require_db()
     await _patch_propia(uid, body.propiedad_id, {"en_bolsa": False})
     return {"ok": True}
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# SOLICITAR INFORMACIÓN — el lead le llega al Buzón del captador
+# ══════════════════════════════════════════════════════════════════════════
+class SolicitudBody(BaseModel):
+    propiedad_id: str
+    mensaje: Optional[str] = None
+
+
+@router.post("/solicitud")
+async def bolsa_solicitud(body: SolicitudBody, request: Request):
+    """Un agente pide información de un inmueble de la bolsa: se registra en el
+    Buzón de la organización dueña (canal "Bolsa Broquer", inmueble ligado)."""
+    uid = await _uid(request)
+    _require_db()
+    from core.buzon import registrar_lead
+    from core.database import get_rows
+    pid = (body.propiedad_id or "").strip()
+    filas = await get_rows("propiedades", {"id": f"eq.{pid}", "en_bolsa": "eq.true", "estatus": "eq.activa",
+                                           "select": "id,user_id,org_id,titulo", "limit": "1"})
+    if not filas:
+        raise HTTPException(404, "Ese inmueble ya no está en la bolsa.")
+    prop = filas[0]
+    if prop.get("user_id") == uid:
+        raise HTTPException(400, "Este inmueble es tuyo.")
+    org_id = prop.get("org_id")
+    if not org_id:
+        from routers.organizaciones import get_org_id_for_user
+        org_id = await get_org_id_for_user(prop["user_id"])
+    if not org_id:
+        raise HTTPException(409, "El captador no tiene cuenta configurada.")
+    agentes = await get_rows("usuarios", {"id": f"eq.{uid}", "select": "nombre,telefono,email", "limit": "1"})
+    ag = agentes[0] if agentes else {}
+    lead = await registrar_lead(
+        org_id=org_id, user_id=prop["user_id"], canal="bolsa",
+        nombre=ag.get("nombre") or "Agente Broquer", telefono=ag.get("telefono") or "", email=ag.get("email") or "",
+        mensaje=(body.mensaje or "").strip()[:1000] or f"Me interesa «{prop.get('titulo') or 'tu inmueble'}» para un cliente.",
+        fuente="Bolsa Broquer", propiedad_id=prop["id"], referencia=f"{uid}:{prop['id']}",
+        datos={"agente_id": uid},
+    )
+    return {"ok": True, "id": lead.get("id")}

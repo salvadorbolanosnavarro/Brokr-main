@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>Buzón · Broquer</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<link rel="stylesheet" href="crm-plus.css"/>
+<link rel="stylesheet" href="buzon.css"/>
+</head>
+<body data-app="buzon">
+
+<div class="bz">
+  <section class="bz-lista" id="bz-lista-col" aria-label="Leads">
+    <div class="bz-top">
+      <div class="bz-estados bk-seg" role="tablist" id="bz-estados">
+        <button class="bk-seg__btn is-active" data-estado="sin_atender">Sin atender <span id="bz-n-sin"></span></button>
+        <button class="bk-seg__btn" data-estado="atendida">Atendidas</button>
+        <button class="bk-seg__btn" data-estado="archivada">Archivadas</button>
+        <button class="bk-seg__btn" data-estado="spam">Spam</button>
+      </div>
+      <div class="bz-filtros">
+        <select class="bk-select" id="bz-f-canal" aria-label="Canal"><option value="">Todos los canales</option></select>
+        <select class="bk-select" id="bz-f-fuente" aria-label="Fuente"><option value="">Todas las fuentes</option></select>
+        <select class="bk-select" id="bz-f-asignado" aria-label="Asignado"><option value="">Todos</option><option value="yo">Míos</option><option value="nadie">Sin asignar</option></select>
+        <select class="bk-select" id="bz-f-prop" aria-label="Inmueble"><option value="">Todos los inmuebles</option></select>
+      </div>
+      <button class="bk-btn bk-btn--forest bk-btn--sm" id="bz-nuevo">+ Lead de teléfono</button>
+    </div>
+    <div id="bz-items" class="bz-items"><div class="bk-cargando">Cargando…</div></div>
+  </section>
+  <section class="bz-detalle" id="bz-detalle" aria-label="Conversación" hidden></section>
+</div>
+
+<script src="app-shell.js" defer></script>
+<script src="bk-api.js" defer></script>
+<script src="buzon.js" defer></script>
+</body>
+</html>
