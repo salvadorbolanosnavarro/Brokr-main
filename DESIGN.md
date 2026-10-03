@@ -1,6 +1,6 @@
 # Broquer — Contrato de diseño
 
-> **Edición vigente: “Canon” · revisión 2026-08-b.**
+> **Edición vigente: “Canon” · revisión visual 2026-10-03 (rama de pruebas).**
 >
 > La única fuente de verdad **ejecutable** de colores, tipografía, radios,
 > sombras, espaciado, motion y componentes es **`brokr-theme.css`**. Este
@@ -25,7 +25,7 @@ contenido y consume el sistema visual común.
 1. **Cero colores de producto escritos a mano en un módulo.** Usa tokens
    `var(--…)` de `brokr-theme.css`. Solo se toleran blanco/negro puros cuando
    semánticamente corresponda y colores oficiales de marcas externas.
-2. **Una sola familia tipográfica de producto.** La edición Canon usa **Inter**
+2. **Una sola familia tipográfica de producto.** La edición de esta rama usa **Manrope**
    mediante `--font-sans`, `--font-display`, `--font-mono` y `--font-serif`.
    Los aliases históricos existen por compatibilidad; no son permiso para
    introducir otra familia.
@@ -48,9 +48,9 @@ contenido y consume el sistema visual común.
 
 ## 2. Identidad Canon
 
-La dirección actual está definida en `brokr-theme.css`: blanco dominante,
-negro/tinta precisa, azul profundo para estructura y azul de acción para
-interacción. Los estados semánticos usan los tokens `--success`, `--warn`,
+La dirección actual está definida en `brokr-theme.css`: blanco dominante, tinta oscura, azul claro para superficies y naranja
+para acciones principales. La referencia visual son las ocho capturas aprobadas
+y los componentes de `broquer-caro-bueno`. Los estados semánticos usan los tokens `--success`, `--warn`,
 `--danger` e `--info`.
 
 Los colores exactos **no se duplican aquí** a propósito. Consulta los tokens
@@ -204,3 +204,7 @@ pantalla.
 
 **`brokr-theme.css` es la implementación visual canónica. `DESIGN.md` es su
 contrato de uso. No debe existir una tercera fuente de verdad.**
+
+## Migración de octubre
+
+`brokr-theme.css` conserva todos los tokens. `styles/app-layout.css` es una hoja de componentes importada por ese único punto de entrada; no define otro tema ni otro conjunto de tokens. Se conservan formularios, permisos y funciones del repositorio original. Las pruebas antiguas que exigen literalmente Inter quedan pendientes de actualizar al contrato aprobado; no se modificaron para ocultar esa diferencia.

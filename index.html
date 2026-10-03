@@ -13,283 +13,70 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="Broquer"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
+
 <style>
-/* ─── Home — tercera generación: launcher de módulos ──────────────
-   El inicio deja de ser un dashboard operativo (KPIs del día, tareas,
-   leads, pipeline, inventario) y se vuelve la puerta de entrada a toda
-   la app: una barra superior (mismo azul del rail lateral) con la foto
-   del agente, una frase y el logotipo; debajo, las 3 cifras que de
-   verdad importan para el negocio; debajo de eso, todos los módulos
-   seguidos uno del otro en tarjetas grandes de un solo color, sin
-   categorías. La foto de perfil abre su propio menú (Mi perfil/Ayuda/
-   Admin), igual que en el rail lateral. El rail/topbar/mobile-head compartidos
-   (app-shell.js) se ocultan SOLO en esta pantalla — el resto de la app
-   no cambia. */
-
-.dash-scroll {
-  padding: 0 28px 48px; max-width: 1180px; margin: 0 auto;
-  font-family: var(--font-sans);
-  color: var(--ink);
-  letter-spacing: -0.012em;
-}
-@media (max-width: 720px) { .dash-scroll { padding: 0 14px 40px; } }
-
-/* ── Banner "sin conexión" — discreto, arriba de todo lo demás ──
-   El bug real de por qué seguía apareciendo con la conexión bien: esta
-   regla ponía `display:flex` a secas, y una regla de autor con `display`
-   siempre le gana a la regla del navegador `[hidden]{display:none}` sin
-   importar la especificidad ni lo que haga el JS con `.hidden = true` —
-   el atributo `hidden` nunca tuvo efecto real. La única forma correcta es
-   que el propio selector de autor respete `[hidden]` explícitamente. */
+.design-home { min-width: 0; }
+.dash-offline { display: flex; padding: var(--sp-4); background: var(--warn-soft); color: var(--warn); border-radius: var(--r); }
 .dash-offline[hidden] { display: none; }
-.dash-offline {
-  display: flex; align-items: center; gap: var(--sp-2);
-  background: var(--warn-soft); color: var(--warn);
-  border-radius: var(--r-sm); padding: 8px 14px;
-  font-size: var(--fs-xs); font-weight: 600;
-  margin: 14px 0 0;
-}
-
-/* ── Ocultar el rail/topbar/mobile-head compartidos SOLO aquí ──
-   .bk-content ya es flex:1 (ver app-shell.js), así que al quitar el
-   rail (flex-shrink:0, ancho fijo) el contenido reclama el ancho
-   completo sin tocar esa regla. Especificidad (0,2,1) le gana a la
-   de las reglas compartidas (incluida su @media) sin importar el
-   orden de inyección en el <head>. */
-body[data-app="home"] .bk-sidebar,
-body[data-app="home"] .bk-mobile-head,
-body[data-app="home"] .bk-topbar {
-  display: none;
-}
-
-/* ── Barra superior propia: perfil · frase · logotipo ──
-   Mismo azul que el rail lateral (--sb-bg) — misma superficie de marca,
-   aunque el rail esté oculto en esta pantalla. Pegada arriba (el scroll
-   real de la app es #bk-page, inyectado por app-shell.js —
-   position:sticky ya es un patrón usado en todos los módulos sobre ese
-   mismo contenedor). */
-.home-top {
-  position: sticky; top: 14px; z-index: 5;
-  display: flex; align-items: center; gap: var(--sp-4);
-  padding: 16px 20px; margin: 14px 0 0;
-  border-radius: var(--r-lg);
-  background: var(--sb-bg);
-  box-shadow: var(--sb-glow);
-}
-.home-avatar-wrap { position: relative; flex: 0 0 auto; }
-.home-avatar {
-  width: 44px; height: 44px; border-radius: var(--r-pill);
-  border: none; padding: 0; cursor: pointer; overflow: hidden;
-  background: #FFFFFF; color: var(--sky-navy);
-  display: flex; align-items: center; justify-content: center;
-  font-size: var(--fs-sm); font-weight: 700;
-  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-}
-.home-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.home-avatar:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
-.home-avatar:focus-visible { outline: none; box-shadow: var(--focus); }
-/* Menú de la foto de perfil: Mi perfil / Ayuda / Admin (solo si aplica) —
-   igual que el flyout "Más" del rail lateral, pero desde el avatar. Sin
-   `display` propio: [hidden] lo oculta con la regla del propio
-   navegador, sin el bug de display-vs-[hidden] que ya mordió a esta
-   pantalla dos veces (ver .dash-offline arriba). */
-.home-avatar-menu {
-  position: absolute; top: 100%; left: 0;
-  margin-top: 8px; z-index: 20; min-width: 190px;
-  background: var(--bone); border: 1px solid var(--line-2);
-  border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
-  padding: 8px;
-}
-.home-avatar-menu a {
-  display: flex; align-items: center; gap: var(--sp-3);
-  padding: 10px 12px; border-radius: var(--r-sm);
-  font-size: var(--fs-sm); font-weight: 600; color: var(--ink);
-  text-decoration: none;
-}
-.home-avatar-menu a:hover { background: var(--paper-2); }
-.home-avatar-menu a svg { width: 18px; height: 18px; color: var(--data-1); flex: 0 0 auto; }
-.home-phrase {
-  flex: 1 1 auto; min-width: 0;
-  text-align: center;
-  font-size: var(--fs-sm); font-weight: 600; color: #FFFFFF;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  opacity: 0; transition: opacity .4s var(--ease);
-}
-.home-phrase.is-visible { opacity: 1; }
-.home-phrase .quote-author { color: rgba(255,255,255,.68); font-weight: 500; }
-.home-phrase .quote-author::before { content: ' — '; }
-@media (max-width: 640px) {
-  /* En una línea no cabe la cita completa en un teléfono: se permite
-     una segunda línea y se quita el truncado agresivo. */
-  .home-phrase { white-space: normal; -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--fs-xs); }
-}
-.home-logo {
-  flex: 0 0 auto; height: 79px; width: auto; display: block; margin: -21px 0;
-  /* logo-broquer.png es un trazo oscuro; el fondo de .home-top es
-     siempre el azul de marca (--sb-bg), en claro y en oscuro — se
-     invierte a blanco sin condicionar al modo del sistema, igual que
-     .bk-sidebar__brand img en app-shell.js sobre ese mismo azul. */
-  filter: brightness(0) invert(1); opacity: .96;
-}
-
-/* ── Las 3 cifras que de verdad importan para una agencia ── */
-.home-kpis {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-4); margin: var(--sp-5) 0;
-}
-@media (max-width: 640px) { .home-kpis { grid-template-columns: 1fr; } }
-.home-kpi { text-decoration: none; color: inherit; display: block; -webkit-tap-highlight-color: transparent; transition: background var(--dur) var(--ease); }
-.home-kpi:active { background: var(--paper-2); }
-.home-kpi:focus-visible { outline: none; box-shadow: var(--focus); }
-.home-kpi__lab {
-  display: flex; align-items: center; gap: var(--sp-2);
-  font-size: var(--fs-sm); color: var(--mute); font-weight: 600;
-}
-.home-kpi__ic {
-  width: 26px; height: 26px; border-radius: var(--r-xs); flex: 0 0 auto;
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.home-kpi__ic--1 { background: var(--data-1-soft); color: var(--data-1); }
-.home-kpi__ic--2 { background: var(--data-2-soft); color: var(--data-2); }
-.home-kpi__ic--3 { background: var(--data-3-soft); color: var(--data-3); }
-.home-kpi__val {
-  font-size: var(--fs-h2); font-weight: 800; letter-spacing: -0.02em;
-  margin-top: var(--sp-2); font-variant-numeric: tabular-nums;
-}
-
-/* ── Todos los módulos, seguidos uno del otro, sin categorías ──
-   Un solo color (el azul de marca, el mismo de la barra superior y el
-   rail) — nada de 6 colores distintos por grupo; tarjetas más grandes
-   para un target de toque más cómodo que el mínimo de 44px. */
-.home-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: var(--sp-3); margin: var(--sp-5) 0;
-}
-.home-card {
-  display: flex; flex-direction: column; align-items: center; gap: var(--sp-3);
-  text-align: center; text-decoration: none; color: inherit;
-  padding: var(--sp-5) var(--sp-3);
-  border: none; background: none; font: inherit; width: 100%;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
-}
-a.home-card, button.home-card { cursor: pointer; }
-.home-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); border-color: var(--line-2); }
-.home-card:active { transform: translateY(0); background: var(--paper-2); }
-.home-card:focus-visible { outline: none; box-shadow: var(--focus); }
-.home-card__ic {
-  width: 56px; height: 56px; border-radius: var(--r-sm); flex: 0 0 auto;
-  background: var(--data-1-soft); color: var(--data-1);
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.home-card__ic svg { width: 26px; height: 26px; }
-.home-card__label { font-size: var(--fs-sm); font-weight: 700; line-height: 1.25; }
-
-@media (prefers-reduced-motion: reduce) {
-  .home-avatar, .home-card, .home-phrase { transition: none; }
-  .home-card:hover { transform: none; }
-}
-
-/* Insignia Meta Tech Provider: pie de página, viaja con el contenido. */
-.dash-meta {
-  width: max-content; margin: var(--sp-7) auto 0;
-  display: inline-flex; align-items: center;
-  background: var(--paper); border: 1px solid var(--line);
-  border-radius: var(--r-pill); padding: 6px 11px;
-  box-shadow: var(--shadow-sm);
-  pointer-events: none; user-select: none; opacity: .9;
-}
-.dash-meta img { height: 16px; width: auto; display: block; -webkit-user-drag: none; }
-@media (max-width: 880px) {
-  .dash-meta { padding: 5px 9px; }
-  .dash-meta img { height: 14px; }
-}
-
-/* ── Ajuste móvil: nada se desborda del ancho de la pantalla ── */
-@media (max-width: 900px) {
-  .dash-scroll { overflow-x: clip; }
-  .home-kpis, .home-grid { max-width: 100%; }
-}
 </style>
 </head>
 <body data-app="home">
 
-<div class="dash-scroll">
-
-  <div class="dash-offline" id="dash-offline" role="status" hidden>
-    Sin conexión · datos de <span id="dash-offline-hora"></span>
-  </div>
-
-  <!-- Barra superior: perfil del agente · frase rotativa · logotipo ──
-       La foto abre un menú (Mi perfil/Ayuda/Admin), igual que el flyout
-       "Más" del rail lateral — "Mi perfil" es el drawer que ya existe
-       en toda la app (window.openProfileDrawer, definido en
-       app-shell.js), NO mi-sitio.html (ese es el sitio público del
-       agente, un módulo aparte). -->
-  <header class="home-top">
-    <div class="home-avatar-wrap">
-      <button class="home-avatar" id="home-avatar" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="home-avatar-menu">?</button>
-      <div class="home-avatar-menu" id="home-avatar-menu" role="menu" hidden>
+<main class="design-home">
+<div class="dash-offline" id="dash-offline" role="status" hidden>Sin conexión · datos de <span id="dash-offline-hora"></span></div>
+<section class="design-greeting"><p id="design-date"></p><h1>Buen día<span id="design-name"></span><em>.</em></h1><p>Todo listo para tu siguiente paso.</p><a href="tareas.html">Ver mi agenda ↗</a></section>
+<div class="design-home-layout"><section><div class="design-tools-title"><h2>Tus herramientas</h2><button id="design-customize" type="button">Personalizar</button></div>
+<div class="design-tool-filters"><div role="group" aria-label="Herramientas"><button type="button" id="design-all" aria-pressed="true">Todas</button><button type="button" id="design-favorites" aria-pressed="false">Favoritas <span id="design-fav-count">0</span></button></div><input type="search" id="design-tool-search" placeholder="Buscar herramienta" aria-label="Buscar herramienta"></div>
+<div class="design-tool-grid"><article class="design-tool design-tool--dark" data-tool="facebook-ads.html" data-extra="false">
+ <div class="design-tool-top"><svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path d="M3 10v5h4l12 5V5L7 10H3zm4 5 2 6h3l-2-5M19 10h2v5h-2"/></svg><button class="design-favorite" type="button" aria-label="Guardar Campañas en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="facebook-ads.html"><h3>Campañas</h3><p>Anuncios que abren conversaciones.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool design-tool--sky" data-tool="tareas.html" data-extra="false">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><button class="design-favorite" type="button" aria-label="Guardar Agenda en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="tareas.html"><h3>Agenda</h3><p>Tus visitas y pendientes, en orden.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="propiedades.html" data-extra="false">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg><button class="design-favorite" type="button" aria-label="Guardar Inmuebles en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="propiedades.html"><h3>Inmuebles</h3><p>Cada propiedad, en un solo lugar.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="clientes.html" data-extra="false">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="m11 17 2 2a1 1 0 1 0 3-3"/><path stroke-linecap="round" stroke-linejoin="round" d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path stroke-linecap="round" stroke-linejoin="round" d="m21 3 1 11h-2"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h8"/></svg><button class="design-favorite" type="button" aria-label="Guardar Clientes en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="clientes.html"><h3>Clientes</h3><p>Del primer contacto al cierre.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="contratos.html" data-extra="false">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg><button class="design-favorite" type="button" aria-label="Guardar Contratos en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="contratos.html"><h3>Contratos</h3><p>Prepara el siguiente acuerdo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="image-cleaner.html" data-extra="false">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg><button class="design-favorite" type="button" aria-label="Guardar Fotografía en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="image-cleaner.html"><h3>Fotografía</h3><p>Muestra el potencial de cada espacio.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="contactos.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg><button class="design-favorite" type="button" aria-label="Guardar Directorio en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="contactos.html"><h3>Directorio</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="estadisticas.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941"/></svg><button class="design-favorite" type="button" aria-label="Guardar Estadísticas en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="estadisticas.html"><h3>Estadísticas</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="whatsapp.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path fill="currentColor" stroke="none" d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 00.614.612l6.115-1.598A11.947 11.947 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.967 0-3.805-.538-5.378-1.47l-.385-.23-3.993 1.044 1.012-3.9-.252-.403A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path fill="currentColor" stroke="none" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg><button class="design-favorite" type="button" aria-label="Guardar WhatsApp en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="whatsapp.html"><h3>WhatsApp</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="buscador.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg><button class="design-favorite" type="button" aria-label="Guardar Buscador de propiedades en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="buscador.html"><h3>Buscador de propiedades</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="firmas.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg><button class="design-favorite" type="button" aria-label="Guardar Firma electrónica en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="firmas.html"><h3>Firma electrónica</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="cumplimiento.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg><button class="design-favorite" type="button" aria-label="Guardar Cumplimiento en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="cumplimiento.html"><h3>Cumplimiento</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="avm.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18"/><path stroke-linecap="round" stroke-linejoin="round" d="M16 7.5c0-1.5-1.5-2.5-4-2.5s-4 1-4 2.5S9.5 10 12 10.5s4 1 4 2.5-1.5 3-4 3-4-1-4-2.5"/></svg><button class="design-favorite" type="button" aria-label="Guardar Estimación de valor en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="avm.html"><h3>Estimación de valor</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="isr.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="4.5" y="3" width="15" height="18" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 6.75h9v3h-9zM8.25 13.5h.008v.008H8.25V13.5zm0 3h.008v.008H8.25V16.5zm3.75-3h.008v.008H12V13.5zm0 3h.008v.008H12V16.5zm3.75-3h.008v.008h-.008V13.5zm0 3h.008v.008h-.008V16.5z"/></svg><button class="design-favorite" type="button" aria-label="Guardar ISR en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="isr.html"><h3>ISR</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="finanzas.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/></svg><button class="design-favorite" type="button" aria-label="Guardar Finanzas en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="finanzas.html"><h3>Finanzas</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="ficha-manual.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75l2.25-2.25 1.5 1.5 2.25-2.25 2.25 2.25M8.25 15h7.5M5.625 3H8.25M5.625 3c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg><button class="design-favorite" type="button" aria-label="Guardar Ficha técnica en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="ficha-manual.html"><h3>Ficha técnica</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="video.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="2.25" y="6" width="13.5" height="12" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-2.83a.75.75 0 011.13.64v7.38a.75.75 0 01-1.13.64l-4.72-2.83"/></svg><button class="design-favorite" type="button" aria-label="Guardar Video en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="video.html"><h3>Video</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="mi-sitio.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18"/></svg><button class="design-favorite" type="button" aria-label="Guardar Mi sitio en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="mi-sitio.html"><h3>Mi sitio</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article><article class="design-tool " data-tool="blog.html" data-extra="true">
+ <div class="design-tool-top"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5l6.74-6.76zM16 8L2 22M17.5 15H9"/></svg><button class="design-favorite" type="button" aria-label="Guardar Blog en favoritas" aria-pressed="false">☆</button></div>
+ <a class="design-tool-link" href="blog.html"><h3>Blog</h3><p>Abre tu herramienta de trabajo.</p><span>Explorar <b aria-hidden="true">↗</b></span></a></article></div><p id="design-tools-empty" hidden>No hay herramientas que coincidan.</p><button id="design-expand" type="button">▦ &nbsp; Explorar todas las herramientas &nbsp; →</button></section>
+<aside class="design-home-aside"><section class="design-next"><h2>Tu próxima tarea</h2><div id="design-next-task"><p>Consulta tus visitas y pendientes.</p><a href="tareas.html">Abrir agenda ↗</a></div></section>
+<section class="design-home-summary"><h2>Tu actividad</h2><a href="propiedades.html">Inmuebles activos <strong id="home-kpi-activos">—</strong></a><a href="clientes.html?filtro=prospectos">Prospectos <strong id="home-kpi-pros">—</strong></a><a href="clientes.html?filtro=cierres&periodo=mes">Cierres del mes <strong id="home-kpi-cierres">—</strong></a></section>
+<button class="design-assistant" type="button" id="design-assistant"><strong>b.</strong><span>Broq, tu asistente<br><small>Abre una conversación.</small></span>↗</button>
+<div class="design-home-account"><button class="home-avatar" id="home-avatar" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="home-avatar-menu">?</button><div class="home-avatar-menu" id="home-avatar-menu" role="menu" hidden>
         <a href="javascript:void(0)" role="menuitem" onclick="if(window.openProfileDrawer)window.openProfileDrawer();"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>Mi perfil</a>
         <a href="guia-agente.html" role="menuitem"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg>Ayuda</a>
-      </div>
-    </div>
-    <p class="home-phrase" id="home-phrase" aria-live="polite"></p>
-    <img class="home-logo" src="logo-broquer.png" alt="Broquer"/>
-  </header>
-
-  <!-- Las 3 cifras que de verdad importan para una agencia: inventario
-       activo, prospección en curso y cierres — no productividad
-       personal del día (eso vive en Tareas). -->
-  <div class="home-kpis" aria-label="Indicadores clave">
-    <a class="home-kpi" href="propiedades.html" aria-label="Ver tus inmuebles">
-      <div class="home-kpi__lab"><span class="home-kpi__ic home-kpi__ic--1"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg></span>Inmuebles activos</div>
-      <div class="home-kpi__val" id="home-kpi-activos">—</div>
-    </a>
-    <a class="home-kpi" href="clientes.html?filtro=prospectos" aria-label="Ver prospectos">
-      <div class="home-kpi__lab"><span class="home-kpi__ic home-kpi__ic--2"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path stroke-linecap="round" d="M2 20a7 7 0 0114 0M17 8h5M19.5 5.5v5"/></svg></span>Prospectos</div>
-      <div class="home-kpi__val" id="home-kpi-pros">—</div>
-    </a>
-    <a class="home-kpi" href="clientes.html?filtro=cierres&periodo=mes" aria-label="Ver cierres del mes">
-      <div class="home-kpi__lab"><span class="home-kpi__ic home-kpi__ic--3"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 6L9 17l-5-5"/></svg></span>Cierres del mes</div>
-      <div class="home-kpi__val" id="home-kpi-cierres">—</div>
-    </a>
-  </div>
-
-  <!-- Todos los módulos, seguidos uno del otro, sin categorías -->
-  <nav aria-label="Módulos">
-    <div class="home-grid">
-      <a class="home-card" href="propiedades.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg></span><span class="home-card__label">Tus Inmuebles</span></a>
-      <a class="home-card" href="contactos.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg></span><span class="home-card__label">Directorio</span></a>
-      <a class="home-card" href="clientes.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="m11 17 2 2a1 1 0 1 0 3-3"/><path stroke-linecap="round" stroke-linejoin="round" d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path stroke-linecap="round" stroke-linejoin="round" d="m21 3 1 11h-2"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h8"/></svg></span><span class="home-card__label">Clientes</span></a>
-      <a class="home-card" href="tareas.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span><span class="home-card__label">Tareas</span></a>
-      <a class="home-card" href="estadisticas.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518l2.74-1.22m0 0l-5.94-2.281m5.94 2.28l-2.28 5.941"/></svg></span><span class="home-card__label">Estadísticas</span></a>
-      <a class="home-card" href="whatsapp.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path fill="currentColor" stroke="none" d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.533 5.857L.057 23.882a.5.5 0 00.614.612l6.115-1.598A11.947 11.947 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.967 0-3.805-.538-5.378-1.47l-.385-.23-3.993 1.044 1.012-3.9-.252-.403A9.96 9.96 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path fill="currentColor" stroke="none" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/></svg></span><span class="home-card__label">WhatsApp</span></a>
-      <a class="home-card" href="buscador.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg></span><span class="home-card__label">Buscador de propiedades</span></a>
-      <a class="home-card" href="contratos.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></span><span class="home-card__label">Contratos</span></a>
-      <a class="home-card" href="firmas.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg></span><span class="home-card__label">Firma electrónica</span></a>
-      <a class="home-card" href="cumplimiento.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg></span><span class="home-card__label">Cumplimiento</span></a>
-      <a class="home-card" href="avm.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18"/><path stroke-linecap="round" stroke-linejoin="round" d="M16 7.5c0-1.5-1.5-2.5-4-2.5s-4 1-4 2.5S9.5 10 12 10.5s4 1 4 2.5-1.5 3-4 3-4-1-4-2.5"/></svg></span><span class="home-card__label">Estimación de valor</span></a>
-      <a class="home-card" href="isr.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="4.5" y="3" width="15" height="18" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 6.75h9v3h-9zM8.25 13.5h.008v.008H8.25V13.5zm0 3h.008v.008H8.25V16.5zm3.75-3h.008v.008H12V13.5zm0 3h.008v.008H12V16.5zm3.75-3h.008v.008h-.008V13.5zm0 3h.008v.008h-.008V16.5z"/></svg></span><span class="home-card__label">ISR</span></a>
-      <a class="home-card" href="finanzas.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/></svg></span><span class="home-card__label">Finanzas</span></a>
-      <a class="home-card" href="image-cleaner.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg></span><span class="home-card__label">Editor de imágenes</span></a>
-      <a class="home-card" href="ficha-manual.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75l2.25-2.25 1.5 1.5 2.25-2.25 2.25 2.25M8.25 15h7.5M5.625 3H8.25M5.625 3c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></span><span class="home-card__label">Ficha técnica</span></a>
-      <a class="home-card" href="video.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><rect x="2.25" y="6" width="13.5" height="12" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-2.83a.75.75 0 011.13.64v7.38a.75.75 0 01-1.13.64l-4.72-2.83"/></svg></span><span class="home-card__label">Video</span></a>
-      <a class="home-card" href="mi-sitio.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18"/></svg></span><span class="home-card__label">Mi sitio</span></a>
-      <a class="home-card" href="blog.html"><span class="home-card__ic"><svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5l6.74-6.76zM16 8L2 22M17.5 15H9"/></svg></span><span class="home-card__label">Blog</span></a>
-    </div>
-  </nav>
-
-  <!-- Pie: insignia Meta Tech Provider -->
-  <footer class="dash-meta" aria-label="Meta Tech Provider">
-    <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
-  </footer>
-
-</div>
-
+      </div></div></aside></div>
+<footer class="design-footer"><a href="index.html" class="bk-design-brand">broquer<span>.</span></a><span>Tu trabajo, en un solo lugar.</span><a href="guia-agente.html">Ayuda ↗</a></footer></main>
+<script src="home-design.js" defer></script>
 <script src="app-shell.js" defer></script>
 <script src="capacitor-bridge.js" defer></script>
-
 <script>
 /* ── Invitación pendiente a un equipo ──
    Si la persona abrió un link de invitación sin sesión, unirse.html guarda
@@ -333,7 +120,7 @@ a.home-card, button.home-card { cursor: pointer; }
    aquí (el scope de un service worker es del origen completo, no
    depende de qué página hizo el registro). */
 (function () {
-  if (!('serviceWorker' in navigator)) return;
+  if (!('serviceWorker' in navigator) || !['broquer.app','www.broquer.app'].includes(location.hostname)) return;
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
