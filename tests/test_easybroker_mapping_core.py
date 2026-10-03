@@ -95,6 +95,43 @@ class EasyBrokerMappingCoreTests(unittest.TestCase):
         self.assertEqual(_split_location_name(""), (None, None, None))
         self.assertEqual(_split_location_name(None), (None, None, None))
 
+    def test_paridad_operaciones_tipos_caracteristicas_coordenadas(self):
+        row = _eb_to_brokr(
+            {
+                "public_id": "EB-3",
+                "property_type": "Nave industrial",
+                "operations": [
+                    {"type": "rental", "amount": 90000, "currency": "mxn", "unit": "total"},
+                    {"type": "sale", "amount": 25, "currency": "usd", "unit": "square_meter"},
+                    {"type": "temporary_rental", "amount": 1500, "currency": "MXN", "period": "daily"},
+                ],
+                "features": [{"name": "Alberca", "category": "Recreación"}, "Seguridad 24h", "Vista a la presa"],
+                "location": {"name": "Col. X, Morelia, Michoacán", "latitude": 19.7, "longitude": -101.18},
+                "age": 12,
+            },
+            "user-1",
+        )
+        self.assertEqual(row["tipo"], "bodega")
+        self.assertEqual(row["subtipo"], "nave_industrial")
+        self.assertEqual(row["operacion"], "venta")
+        self.assertEqual(row["precio"], 25.0)
+        self.assertEqual(row["moneda"], "USD")
+        self.assertEqual(row["precio_unidad"], "m2")
+        self.assertEqual([o["tipo"] for o in row["operaciones"]], ["venta", "renta", "renta_temporal"])
+        self.assertEqual(row["operaciones"][2]["periodo"], "noche")
+        self.assertEqual(row["caracteristicas"], ["alberca", "seguridad_24h"])
+        self.assertEqual(row["otras_caracteristicas"], "Vista a la presa")
+        self.assertEqual((row["lat"], row["lng"]), (19.7, -101.18))
+        self.assertEqual(row["antiguedad"], 12)
+        self.assertIsNone(row["anio_construccion"])
+
+    def test_columnas_extendidas_se_pueden_quitar(self):
+        from core.easybroker_mapping import quitar_columnas_extendidas
+        row = _eb_to_brokr({"public_id": "EB-4"}, "u")
+        base = quitar_columnas_extendidas(row)
+        self.assertNotIn("operaciones", base)
+        self.assertIn("titulo", base)
+
     def test_main_delegates_mapping_after_transform(self):
         source = (ROOT / "main.py").read_text(encoding="utf-8")
         # This assertion becomes true when the deterministic transform is applied

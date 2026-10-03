@@ -662,14 +662,34 @@
         <label>Tipo de inmueble</label>
         <select id="d-tipo" onchange="onTipoFichaChange()">
           <option value="">Seleccionar</option>
-          <option value="Casa">Casa</option>
-          <option value="Departamento">Departamento</option>
-          <option value="Edificio">Edificio</option>
-          <option value="Terreno">Terreno</option>
-          <option value="Local comercial">Local comercial</option>
-          <option value="Oficina">Oficina</option>
-          <option value="Bodega">Bodega</option>
-          <option value="Rancho">Rancho</option>
+          <optgroup label="Residencial">
+            <option value="Casa">Casa</option>
+            <option value="Casa en condominio">Casa en condominio</option>
+            <option value="Departamento">Departamento</option>
+            <option value="Habitación">Habitación</option>
+            <option value="Quinta">Quinta</option>
+            <option value="Rancho">Rancho</option>
+            <option value="Terreno">Terreno</option>
+            <option value="Villa">Villa</option>
+          </optgroup>
+          <optgroup label="Comercial">
+            <option value="Bodega comercial">Bodega comercial</option>
+            <option value="Casa con uso de suelo">Casa con uso de suelo</option>
+            <option value="Edificio">Edificio</option>
+            <option value="Huerta">Huerta</option>
+            <option value="Local comercial">Local comercial</option>
+            <option value="Local en centro comercial">Local en centro comercial</option>
+            <option value="Oficina">Oficina</option>
+            <option value="Terreno comercial">Terreno comercial</option>
+          </optgroup>
+          <optgroup label="Industrial">
+            <option value="Bodega industrial">Bodega industrial</option>
+            <option value="Nave industrial">Nave industrial</option>
+            <option value="Terreno industrial">Terreno industrial</option>
+          </optgroup>
+          <optgroup label="Otro">
+            <option value="Otro">Otro</option>
+          </optgroup>
         </select>
       </div>
       <div class="f">
@@ -1345,6 +1365,9 @@ function _fmGetUserId() {
     };
     setSelect('d-tipo', d.tipo);
     setSelect('d-op',   d.operacion);
+    if (d.amen && document.getElementById('d-amen') && !document.getElementById('d-amen').value) {
+      document.getElementById('d-amen').value = d.amen;
+    }
     if (typeof onOpChange === 'function') onOpChange();
 
     // Precio
@@ -1526,7 +1549,8 @@ function onTipoFichaChange() {
   const tipoEl = document.getElementById('d-tipo');
   if (!tipoEl) return;
   const tipo = (tipoEl.value || '').toLowerCase();
-  const sinHabitaciones = ['terreno', 'local comercial', 'oficina', 'bodega', 'rancho', 'edificio'];
+  const sinHabitaciones = ['terreno', 'terreno comercial', 'terreno industrial', 'local comercial', 'local en centro comercial',
+    'oficina', 'bodega', 'bodega comercial', 'bodega industrial', 'nave industrial', 'rancho', 'edificio', 'huerta'];
   const hide = sinHabitaciones.includes(tipo);
   ['fld-rec', 'fld-ban', 'fld-mban'].forEach(id => {
     const el = document.getElementById(id);

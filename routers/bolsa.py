@@ -34,6 +34,7 @@ from pydantic import BaseModel
 
 from core.auth import require_user_id
 from core.config import settings
+from core.catalogo_inmuebles import OPERACION_KEYS, TIPO_KEYS, es_error_columna_faltante, tipo_familia
 from core.database import rest_url, service_headers
 
 router = APIRouter(prefix="/bolsa", tags=["bolsa"])
@@ -75,7 +76,12 @@ def _publica(fila: dict, agentes: dict, uid: str) -> dict:
         "id":               fila.get("id"),
         "titulo":           fila.get("titulo"),
         "tipo":             fila.get("tipo"),
+        "subtipo":          fila.get("subtipo"),
         "operacion":        fila.get("operacion"),
+        "operaciones":      fila.get("operaciones") or [],
+        "precio_unidad":    fila.get("precio_unidad") or "total",
+        "caracteristicas":  fila.get("caracteristicas") or [],
+        "otras_caracteristicas": fila.get("otras_caracteristicas"),
         "precio":           fila.get("precio"),
         "moneda":           fila.get("moneda") or "MXN",
         "colonia":          fila.get("colonia"),
@@ -171,10 +177,23 @@ async def bolsa_propiedades(
         params["ciudad"] = f"ilike.*{_patron_sin_acentos(_limpia_filtro(ciudad))}*"
     if estado:
         params["estado"] = f"ilike.*{_patron_sin_acentos(_limpia_filtro(estado))}*"
-    if tipo:
-        params["tipo"] = f"eq.{_limpia_filtro(tipo)}"
-    if operacion:
-        params["operacion"] = f"eq.{_limpia_filtro(operacion)}"
+    # Tipo/operación del catálogo: se filtra por subtipo y por la lista de
+    # operaciones; si la base aún no tiene esas columnas (migración pendiente)
+    # se reintenta con las columnas viejas tipo/operacion.
+    params_viejos = {}
+    tipo = _limpia_filtro(tipo)
+    operacion = _limpia_filtro(operacion)
+    if tipo in TIPO_KEYS:
+        params["subtipo"] = f"eq.{tipo}"
+        params_viejos["tipo"] = f"eq.{tipo_familia(tipo)}"
+    elif tipo:
+        params["tipo"] = f"eq.{tipo}"
+    if operacion in OPERACION_KEYS:
+        params["operaciones"] = 'cs.[{"tipo":"%s"}]' % operacion
+        if operacion in ("venta", "renta"):
+            params_viejos["operacion"] = f"eq.{operacion}"
+    elif operacion:
+        params["operacion"] = f"eq.{operacion}"
     if recamaras_min is not None and recamaras_min > 0:
         params["recamaras"] = f"gte.{recamaras_min}"
     if banos_min is not None and banos_min > 0:
@@ -203,6 +222,15 @@ async def bolsa_propiedades(
                 headers=service_headers(prefer="count=exact"),
                 params=params,
             )
+            if r.status_code == 400 and (params_viejos or "subtipo" in params or "operaciones" in params) \
+                    and (es_error_columna_faltante(r.text) or "column" in r.text):
+                respaldo = {k: v for k, v in params.items() if k not in ("subtipo", "operaciones")}
+                respaldo.update(params_viejos)
+                r = await client.get(
+                    rest_url("propiedades"),
+                    headers=service_headers(prefer="count=exact"),
+                    params=respaldo,
+                )
             if r.status_code not in (200, 206):
                 log.error("bolsa listado %s: %s", r.status_code, r.text[:300])
                 raise HTTPException(500, "No se pudo cargar la bolsa. Intenta de nuevo.")

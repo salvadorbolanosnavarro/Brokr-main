@@ -26,7 +26,18 @@ function money(n) {
   catch { return '$' + n; }
 }
 
+// Operaciones del catálogo (inmuebles-catalogo.js). Un inmueble puede tener
+// varias; la tarjeta muestra la primera y el detalle todas.
+function opsDe(p) {
+  if (!window.bkCat) return [];
+  return bkCat.operaciones(Object.assign({}, p, p.operacion === 'renta' && p.precio == null ? { precio: p.precio_renta } : {}));
+}
 function precioTexto(p) {
+  const ops = opsDe(p);
+  if (ops.length && p.operaciones && p.operaciones.length) {
+    if (p.mostrar_precio === false) return 'Precio a consultar';
+    return bkCat.precioTexto(ops[0]);
+  }
   if (p.operacion === 'renta') {
     return p.precio_renta != null ? money(p.precio_renta) + ' / mes' : 'Precio a consultar';
   }
@@ -60,6 +71,7 @@ function redSocialLink(tipo, valor) {
 }
 
 function tipoLegible(t) {
+  if (window.bkCat && t) return bkCat.tipoLabel(t);
   const mapa = { casa:'Casa', departamento:'Departamento', depa:'Departamento', terreno:'Terreno', local:'Local comercial', oficina:'Oficina', bodega:'Bodega', edificio:'Edificio' };
   const k = String(t || '').toLowerCase();
   return mapa[k] || (t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Propiedad');
@@ -141,6 +153,20 @@ async function cargarSitio() {
   } catch (e) { /* si truena, mostramos el sitio igual sin esas secciones */ }
 
   _propsTodas = Array.isArray(props) ? props : [];
+  // Campos nuevos (operaciones, tipo detallado, características): vista
+  // propiedades_publicas_extra. Si aún no existe, el sitio sigue igual.
+  if (_propsTodas.length) {
+    try {
+      const ids = _propsTodas.map(p => p.id).filter(Boolean);
+      const extras = [];
+      for (let i = 0; i < ids.length; i += 80) {
+        extras.push(...await sbPublic('propiedades_publicas_extra?id=in.(' + ids.slice(i, i + 80).join(',') + ')&select=*'));
+      }
+      const porId = {};
+      extras.forEach(e => { porId[e.id] = e; });
+      _propsTodas = _propsTodas.map(p => porId[p.id] ? Object.assign({}, p, porId[p.id]) : p);
+    } catch (e) { /* vista no disponible todavía */ }
+  }
   _propsVisibles = _propsTodas.slice();
   render(perfil, Array.isArray(testimonios) ? testimonios : []);
 }
@@ -307,15 +333,17 @@ function render(perfil, testimonios) {
 
 /* ── Buscador / filtros ────────────────────────────────────────────────── */
 function buscadorHtml() {
-  const tipos = [...new Set(_propsTodas.map(p => p.tipo).filter(Boolean))].sort();
+  const tipos = [...new Set(_propsTodas.map(p => p.subtipo || p.tipo).filter(Boolean))].sort();
+  const opsPresentes = [...new Set(_propsTodas.flatMap(p => opsDe(p).map(o => o.tipo)))];
+  const tabsOps = (window.bkCat ? bkCat.data.operaciones : [{ key: 'venta', label: 'Venta' }, { key: 'renta', label: 'Renta' }])
+    .filter(o => opsPresentes.includes(o.key) || o.key === 'venta' || o.key === 'renta');
   const ciudades = [...new Set(_propsTodas.map(p => p.ciudad).filter(Boolean))].sort();
   return `
     <div class="st-buscador">
       <div class="st-buscador__top">
         <div class="st-buscador__tabs">
           <button type="button" class="st-tab is-active" data-op="">Todas</button>
-          <button type="button" class="st-tab" data-op="venta">Venta</button>
-          <button type="button" class="st-tab" data-op="renta">Renta</button>
+          ${tabsOps.map(o => `<button type="button" class="st-tab" data-op="${esc(o.key)}">${esc(o.key === 'renta' ? 'Renta' : o.label)}</button>`).join('')}
         </div>
         <select id="st-f-orden" class="st-f-orden">
           <option value="reciente">Más recientes</option>
@@ -398,8 +426,8 @@ function bindBuscador() {
 
 function aplicarFiltros() {
   let lista = _propsTodas.filter(p => {
-    if (_filtro.operacion && p.operacion !== _filtro.operacion) return false;
-    if (_filtro.tipo && p.tipo !== _filtro.tipo) return false;
+    if (_filtro.operacion && !opsDe(p).some(o => o.tipo === _filtro.operacion) && p.operacion !== _filtro.operacion) return false;
+    if (_filtro.tipo && (p.subtipo || p.tipo) !== _filtro.tipo) return false;
     if (_filtro.ciudad && p.ciudad !== _filtro.ciudad) return false;
     if (_filtro.colonia && p.colonia !== _filtro.colonia) return false;
     if (_filtro.recamaras && !(Number(p.recamaras) >= _filtro.recamaras)) return false;
@@ -472,7 +500,7 @@ function tarjetaProp(p, i) {
   return `<article class="st-card" data-idx="${i}">
     <div class="st-card__foto">
       ${foto ? `<img src="${esc(foto)}" loading="lazy" decoding="async" alt=""/>` : `<div class="st-card__sinfoto">Sin foto</div>`}
-      <span class="st-card__op">${p.operacion === 'renta' ? 'Renta' : 'Venta'}</span>
+      <span class="st-card__op">${esc(opsDe(p).length ? opsDe(p).map(o => o.tipo === 'renta' ? 'Renta' : bkCat.opLabel(o.tipo)).join(' · ') : (p.operacion === 'renta' ? 'Renta' : 'Venta'))}</span>
     </div>
     <div class="st-card__info">
       <div class="st-card__precio">${esc(precioTexto(p))}</div>
@@ -512,7 +540,10 @@ function toggleDetalleProp(idxStr) {
         ${p.m2_terreno ? `<span>${p.m2_terreno} m² terreno</span>` : ''}
         ${p.m2_construccion ? `<span>${p.m2_construccion} m² construcción</span>` : ''}
       </div>
+      ${opsDe(p).length > 1 && p.mostrar_precio !== false ? `<div class="st-modal__specs">${opsDe(p).map(o => `<span>${esc(bkCat.opLabel(o.tipo))}: ${esc(bkCat.precioTexto(o))}</span>`).join('')}</div>` : ''}
       ${p.descripcion ? `<p class="st-modal__desc">${esc(p.descripcion)}</p>` : ''}
+      ${window.bkCat && Array.isArray(p.caracteristicas) && p.caracteristicas.length ? bkCat.caractPorGrupo(p.caracteristicas).map(gr =>
+        `<div class="st-modal__specs" style="margin-top:10px"><strong style="width:100%">${esc(gr.grupo)}</strong>${gr.items.map(x => `<span>${esc(x)}</span>`).join('')}</div>`).join('') : ''}
       ${wa ? `<a class="st-btn st-btn--primary" href="${wa}" target="_blank" rel="noopener">${ICONO_WA_INLINE} Preguntar por esta propiedad</a>` : ''}
     </div>
   </div>`;

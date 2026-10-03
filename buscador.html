@@ -123,11 +123,6 @@
         <label class="bk-label" for="bp-tipo">Tipo de propiedad</label>
         <select class="bk-select" id="bp-tipo">
           <option value="casa">Casa</option>
-          <option value="departamento">Departamento</option>
-          <option value="terreno">Terreno</option>
-          <option value="local">Local comercial</option>
-          <option value="oficina">Oficina</option>
-          <option value="bodega">Bodega</option>
         </select>
       </div>
     </div>
@@ -203,6 +198,7 @@
 </div>
 
 <script src="app-shell.js" defer></script>
+<script src="inmuebles-catalogo.js"></script>
 <script>
 (function () {
   'use strict';
@@ -237,10 +233,9 @@
   }
   function gv(id) { return (document.getElementById(id).value || '').trim(); }
 
-  var TIPO_LABEL = {
-    casa: 'Casa', departamento: 'Departamento', terreno: 'Terreno',
-    local: 'Local comercial', oficina: 'Oficina', bodega: 'Bodega',
-  };
+  var TIPO_LABEL = {};
+  window.BK_CAT.tipos.forEach(function (g) { g.items.forEach(function (t) { TIPO_LABEL[t.key] = t.label; }); });
+  document.getElementById('bp-tipo').innerHTML = window.bkCat.tiposOptions('casa');
   function dinero(n) { return '$' + Number(n).toLocaleString('es-MX', { maximumFractionDigits: 0 }); }
 
   function criterios(r) {

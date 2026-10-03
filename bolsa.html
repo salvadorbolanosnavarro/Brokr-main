@@ -85,12 +85,6 @@
       <div class="bk-field" style="margin:0;">
         <select class="bk-select" id="bl-f-tipo">
           <option value="">Tipo</option>
-          <option value="casa">Casa</option>
-          <option value="departamento">Departamento</option>
-          <option value="terreno">Terreno</option>
-          <option value="local">Local</option>
-          <option value="oficina">Oficina</option>
-          <option value="bodega">Bodega</option>
         </select>
       </div>
       <div class="bk-field" style="margin:0;">
@@ -195,6 +189,7 @@
 </div>
 
 <script src="app-shell.js" defer></script>
+<script src="inmuebles-catalogo.js"></script>
 <script>
 (function () {
   'use strict';
@@ -239,8 +234,25 @@
     var s = n.toLocaleString('es-MX', { maximumFractionDigits: 0 });
     return '$' + s + ' ' + (moneda || 'MXN');
   }
-  var TIPOS = { casa: 'Casa', departamento: 'Departamento', terreno: 'Terreno', local: 'Local', oficina: 'Oficina', bodega: 'Bodega' };
-  function tipoTxt(t) { return TIPOS[t] || (t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Inmueble'); }
+  var C = window.bkCat;
+  function tipoTxt(t) { return t ? C.tipoLabel(t) : 'Inmueble'; }
+  el('bl-f-tipo').innerHTML = C.tiposOptions('', { vacio: 'Tipo' });
+  el('bl-f-op').innerHTML = C.listaOptions(C.data.operaciones, '', 'Operación');
+  function precioCard(p) {
+    var ops = C.operaciones(p);
+    if (!ops.length) return esc(dinero(p.precio, p.moneda));
+    var extra = ops.length > 1
+      ? '<div style="font-size:var(--fs-xs);color:var(--mute);font-weight:400;">' + ops.slice(1).map(function (o) { return esc(C.opLabel(o.tipo) + ' ' + C.precioTexto(o)); }).join(' · ') + '</div>'
+      : '';
+    return '<span style="font-size:var(--fs-xs);color:var(--mute);font-weight:500;">' + esc(C.opLabel(ops[0].tipo)) + '</span> ' + esc(C.precioTexto(ops[0])) + extra;
+  }
+  function caracts(p) {
+    var ks = p.caracteristicas || [];
+    if (!ks.length) return '';
+    var max = 4;
+    return '<div class="bl-specs">' + ks.slice(0, max).map(function (k) { return '<span>' + esc(C.caractLabel(k)) + '</span>'; }).join('') +
+      (ks.length > max ? '<span>+' + (ks.length - max) + '</span>' : '') + '</div>';
+  }
 
   /* ── Tabs ── */
   var tabExp = el('bl-tab-explorar'), tabMis = el('bl-tab-mis');
@@ -288,10 +300,11 @@
     return '<article class="bk-card bk-card--raise bk-card--hover bl-card">' +
       '<div class="bl-foto">' + (foto ? '<img loading="lazy" src="' + esc(foto) + '" alt=""/>' : '') + com + '</div>' +
       '<div class="bl-body">' +
-        '<div class="bl-precio">' + esc(dinero(p.precio, p.moneda)) + (p.operacion === 'renta' ? ' <span style="font-size:var(--fs-xs);color:var(--mute);font-weight:400;">/ mes</span>' : '') + '</div>' +
-        '<div class="bl-titulo">' + esc(p.titulo || tipoTxt(p.tipo)) + '</div>' +
-        '<div class="bl-ubi">' + esc(ubi) + '</div>' +
+        '<div class="bl-precio">' + precioCard(p) + '</div>' +
+        '<div class="bl-titulo">' + esc(p.titulo || tipoTxt(p.subtipo || p.tipo)) + '</div>' +
+        '<div class="bl-ubi">' + esc((p.subtipo || p.tipo ? tipoTxt(p.subtipo || p.tipo) + ' · ' : '') + ubi) + '</div>' +
         '<div class="bl-specs">' + specs(p) + '</div>' +
+        caracts(p) +
         notas +
       '</div>' +
       '<div class="bl-agente"><span class="n">' + esc((p.agente && p.agente.nombre) || 'Agente Broquer') + '</span>' + wa + '</div>' +

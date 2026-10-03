@@ -1,5 +1,5 @@
 {
-  "count": 273,
+  "count": 274,
   "operations": [
     {
       "body": false,
@@ -2244,6 +2244,15 @@
       "method": "POST",
       "params": [],
       "path": "/propiedades/eliminar-masivo",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [],
+      "path": "/propiedades/lote",
       "responses": [
         "200"
       ]

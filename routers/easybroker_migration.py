@@ -9,6 +9,8 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 
 from core.auth import get_user_id_from_token
+from core.catalogo_inmuebles import es_error_columna_faltante
+from core.easybroker_mapping import quitar_columnas_extendidas
 from core.easybroker_migration import MIGRACIONES, PROGRESO_IMPORT, migration_key
 from core.legacy_main_config import legacy_main_settings
 from routers.organizaciones import get_org_id_for_user
@@ -318,6 +320,12 @@ def create_import_all_router(get_context: Callable[[], dict[str, Any]]) -> APIRo
                         break
                     except httpx_dep.HTTPStatusError as e:
                         ultimo_fallo = f"Supabase {e.response.status_code}: {e.response.text[:200]}"
+                        # Columnas nuevas (paridad EasyBroker) aún sin migrar en
+                        # esta base: se reintenta con sólo las columnas de siempre
+                        # en vez de perder el lote completo.
+                        if es_error_columna_faltante(e.response.text):
+                            chunk = [quitar_columnas_extendidas(r) for r in chunk]
+                            continue
                     except Exception as e:
                         ultimo_fallo = str(e)[:200]
                     await asyncio_dep.sleep(1.5 * (2 ** intento))

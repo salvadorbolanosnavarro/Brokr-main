@@ -124,10 +124,18 @@ function pfRenderEstado(p) {
     `<span class="bk-punto" style="background:${est.color}"></span>
      <span class="bk-pill__txt">${esc(est.l)}</span>${BK_CHEVRON}`;
 
-  const op = p.operacion === 'renta' ? 'En renta' : (p.operacion === 'venta' ? 'En venta' : 'Sin operación');
-  g('f-operacion').innerHTML =
-    `<span class="bk-pill__lbl">${esc(op)}</span>
-     <span class="bk-pill__txt bk-num">${esc(fmtPrecio(p.precio))} ${esc(p.moneda || 'MXN')}</span>`;
+  const ops = window.bkCat ? bkCat.operaciones(p) : [];
+  if (ops.length) {
+    const o = ops[0];
+    g('f-operacion').innerHTML =
+      `<span class="bk-pill__lbl">${esc(bkCat.opLabel(o.tipo))}${ops.length > 1 ? ' +' + (ops.length - 1) : ''}</span>
+       <span class="bk-pill__txt bk-num">${esc(bkCat.precioTexto(o))}</span>`;
+  } else {
+    const op = p.operacion === 'renta' ? 'En renta' : (p.operacion === 'venta' ? 'En venta' : 'Sin operación');
+    g('f-operacion').innerHTML =
+      `<span class="bk-pill__lbl">${esc(op)}</span>
+       <span class="bk-pill__txt bk-num">${esc(fmtPrecio(p.precio))} ${esc(p.moneda || 'MXN')}</span>`;
+  }
 
   const arch = g('f-archivada');
   arch.hidden = !p.archivada;
@@ -190,7 +198,7 @@ function pfRenderDetalles(p, fotos) {
   // informa, sólo hace más larga la lectura.
   const m2 = (v) => v ? v + ' m²' : '';
   const datos = [
-    ['Tipo', p.tipo ? esc(p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1)) : ''],
+    ['Tipo', window.bkCat ? esc(bkCat.tipoLabel(bkCat.tipoDe(p))) : (p.tipo ? esc(p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1)) : '')],
     ['Construcción', m2(p.m2_construccion)],
     ['Terreno', m2(p.m2_terreno)],
     ['Superficie no cubierta', m2(p.m2_superficie_no_cubierta)],
@@ -200,7 +208,14 @@ function pfRenderDetalles(p, fotos) {
     ['Estacionamientos', p.estacionamientos || ''],
     ['Nivel', p.nivel || ''],
     ['Mantenimiento', p.mantenimiento ? esc(fmtPrecio(p.mantenimiento)) : ''],
+    ['Mantenimiento incluido', p.mantenimiento_incluido === 'si' ? 'Sí' : (p.mantenimiento_incluido === 'no' ? 'No' : '')],
     ['Año de construcción', p.anio_construccion || ''],
+    ['Antigüedad', p.antiguedad != null && p.antiguedad !== '' ? p.antiguedad + (p.antiguedad == 1 ? ' año' : ' años') : ''],
+    ['Pisos del edificio', p.pisos_edificio || ''],
+    ['Condición', window.bkCat && p.condicion ? esc(bkCat.condicionLabel(p.condicion)) : ''],
+    ['Disposición', window.bkCat && p.disposicion ? esc(bkCat.disposicionLabel(p.disposicion)) : ''],
+    ['Orientación', window.bkCat && p.orientacion ? esc(bkCat.orientacionLabel(p.orientacion)) : ''],
+    ['Precio en el anuncio', p.mostrar_precio === false ? 'Oculto' : ''],
     ['Comisión', p.operacion === 'renta'
       ? (p.comision_renta_meses != null ? p.comision_renta_meses + ' mes(es)' : '')
       : (p.comision_venta_pct != null ? p.comision_venta_pct + '%' : '')],
@@ -215,9 +230,23 @@ function pfRenderDetalles(p, fotos) {
   let html = galeria;
   if (ubicLine) html += `<p class="pf-ubic">${esc(ubicLine)}</p>`;
   if (p.descripcion) html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Descripción</h3><p class="bk-prosa">${esc(p.descripcion)}</p></div>`;
+  const opsDet = window.bkCat ? bkCat.operaciones(p) : [];
+  if (opsDet.length) {
+    html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Operaciones y precios</h3><div class="px-ficha-ops">${
+      opsDet.map(o => `<div class="px-ficha-op"><span>${esc(bkCat.opLabel(o.tipo))}</span><span class="bk-num">${esc(bkCat.precioTexto(o))}</span></div>`).join('')
+    }</div></div>`;
+  }
   if (datosHTML) html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Datos del inmueble</h3><div class="bk-datos">${datosHTML}</div></div>`;
 
-  if (Array.isArray(p.amenidades) && p.amenidades.length) {
+  const carKeys = window.pxCaracteristicasDe ? pxCaracteristicasDe(p) : [];
+  if (window.bkCat && (carKeys.length || p.otras_caracteristicas)) {
+    const grupos = bkCat.caractPorGrupo(carKeys);
+    html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Características</h3>${
+      grupos.map(gr => `<div class="px-ficha-car"><h5>${esc(gr.grupo)}</h5><div>${gr.items.map(a => `<span class="pd-tag">${esc(a)}</span>`).join('')}</div></div>`).join('')
+    }${p.otras_caracteristicas ? `<div class="px-ficha-car"><h5>Otras</h5><div>${
+      String(p.otras_caracteristicas).split(',').map(x => x.trim()).filter(Boolean).map(a => `<span class="pd-tag">${esc(a)}</span>`).join('')
+    }</div></div>` : ''}</div>`;
+  } else if (Array.isArray(p.amenidades) && p.amenidades.length) {
     html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Amenidades</h3>
       <div class="bk-tags">${p.amenidades.map(a => `<span class="pd-tag">${esc(a)}</span>`).join('')}</div></div>`;
   }
