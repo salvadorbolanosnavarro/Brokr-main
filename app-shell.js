@@ -27,7 +27,7 @@
      ─────────────────────────────────────────────────────────────────── */
   (function initSentry() {
     const h = window.location.hostname;
-    if (h === 'localhost' || h === '127.0.0.1' || h === '') return;
+    if (h !== 'broquer.app' && h !== 'www.broquer.app') return;
     const s = document.createElement('script');
     s.src = 'https://js.sentry-cdn.com/266e3bda223d2a0a211074bde709f4e8.min.js';
     s.crossOrigin = 'anonymous';
@@ -351,7 +351,7 @@
     'avm':           { title:'Estimación de valor',    sub:'Avalúo automático con comparables de tu zona.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
-    'finanzas':      { title:'Finanzas',              sub:'Tus ingresos, gastos y cuentas. La rentabilidad real de cada operación.' },
+    'finanzas':      { title:'Tu dinero, en orden.', sub:'Ingresos, gastos y saldos de tus cuentas.' },
     'image-cleaner': { title:'Editor de imágenes',     sub:'Limpia y mejora las fotos de tus propiedades con IA.' },
     'facebook-ads':  { title:'Facebook Ads',           sub:'Crea, activa y mide anuncios de Facebook e Instagram.' },
     'whatsapp':      { title:'WhatsApp',                sub:'Varios números, un solo lugar. La IA califica, agenda y te pasa al prospecto cuando toca.' },
@@ -1437,7 +1437,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     if (/(?:^|[?&#])(?:token_hash|access_token|code|type|error|error_description)=/.test(qs + hs)) {
       return 'login.html' + qs + hs;
     }
-    return IS_IOS_NATIVE ? 'login.html' : 'landing.html';
+    return 'login.html';
   }
 
   async function authInit() {
@@ -1629,6 +1629,25 @@ body[data-app="facebook-ads"]{--page-max:980px}
         </div>
       </main>
     `;
+    const designHeader = document.createElement('header');
+    designHeader.className = 'bk-design-header';
+    designHeader.innerHTML = `<div class="bk-design-header__inner">
+      <a class="bk-design-brand" href="index.html" aria-label="Broquer, inicio">broquer<span>.</span></a>
+      <nav class="bk-design-nav" aria-label="Navegación principal">
+        <a href="index.html" ${activeKey === 'home' ? 'aria-current="page"' : ''}>Inicio</a>
+        <a href="facebook-ads.html" ${activeKey === 'facebook-ads' ? 'aria-current="page"' : ''}>Campañas</a>
+        <a href="tareas.html" ${activeKey === 'tareas' ? 'aria-current="page"' : ''}>Agenda</a>
+        <details class="bk-tools-menu"><summary>Herramientas</summary><div class="bk-tools-menu__list">${MODS.filter(visible).map(m => `<a href="${m.href}">${svg(m.icon,18)}${m.label}</a>`).join('')}</div></details>
+      </nav>
+      <button class="bk-design-account" type="button">Mi cuenta <span aria-hidden="true"></span></button>
+    </div>`;
+    designHeader.querySelector('.bk-design-account span').textContent = initials(profile.fullName || '');
+    designHeader.querySelector('.bk-design-account').addEventListener('click', () => window.openProfileDrawer?.());
+    document.body.appendChild(designHeader);
+    designHeader.querySelectorAll('details').forEach(menu => {
+      document.addEventListener('click', e => { if (!menu.contains(e.target)) menu.open = false; });
+      menu.addEventListener('keydown', e => { if (e.key === 'Escape') { menu.open = false; menu.querySelector('summary').focus(); } });
+    });
     document.body.appendChild(shell);
 
     // Rail: el menú completo. Clic en un grupo abre el flyout con sus
