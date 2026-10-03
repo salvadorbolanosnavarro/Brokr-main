@@ -1,5 +1,5 @@
 {
-  "count": 318,
+  "count": 326,
   "operations": [
     {
       "body": false,
@@ -677,6 +677,96 @@
       "method": "POST",
       "params": [],
       "path": "/chat-claude",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/cierres",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:mov_id!"
+      ],
+      "path": "/cierres/cobrado/{mov_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/cierres/importar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/cierres/plantilla.csv",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/cierres/por-cobrar",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:propiedad_id!"
+      ],
+      "path": "/cierres/propiedad/{propiedad_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:agente",
+        "query:desde",
+        "query:hasta"
+      ],
+      "path": "/cierres/reporte",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:agente",
+        "query:desde",
+        "query:hasta"
+      ],
+      "path": "/cierres/reporte.csv",
       "responses": [
         "200",
         "422"

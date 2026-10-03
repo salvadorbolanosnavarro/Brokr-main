@@ -690,11 +690,14 @@ async def comisiones_pendientes(request: Request):
 # ══════════════════════════════════════════════════════════════════════════
 
 async def _movs_periodo(uid: str, desde: date, hasta: date) -> List[dict]:
-    return await _sb_get("fin_movimientos", {
+    movs = await _sb_get("fin_movimientos", {
         "user_id": f"eq.{uid}",
         "and": f"(fecha.gte.{desde.isoformat()},fecha.lte.{hasta.isoformat()})",
         "order": "fecha.asc", "limit": "100000",
     })
+    # Las comisiones "por cobrar" (cierres, migracion-fase6-cierres.sql) no
+    # son dinero que ya entró: no cuentan en ingresos hasta marcarse cobradas.
+    return [m for m in movs if (m.get("estado") or "cobrado") != "por_cobrar"]
 
 
 def _agrupar(movs: List[dict], cats: List[dict]) -> Dict[str, Any]:

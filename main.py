@@ -637,6 +637,11 @@ app.include_router(buzon_router)
 from routers.alertas import router as alertas_router
 app.include_router(alertas_router)
 
+# Cierres y comisiones: modal de cierre, ingresos por cobrar, PLD y reporte
+# de operaciones cerradas (ver routers/cierres.py).
+from routers.cierres import router as cierres_router
+app.include_router(cierres_router)
+
 app.include_router(admin_usage_router)
 app.include_router(account_delete_router)
 app.include_router(avm_legacy_router)

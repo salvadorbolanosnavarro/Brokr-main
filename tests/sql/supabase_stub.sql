@@ -76,3 +76,9 @@ create table if not exists public.busqueda_resultados (
 create table if not exists public.contactos_propiedades (
   id uuid primary key default gen_random_uuid(), user_id uuid, contacto_id text, propiedad_id uuid, relacion text,
   created_at timestamptz default now());
+
+-- Finanzas mínimo (versión real en migracion-finanzas.sql)
+create table if not exists public.fin_movimientos (
+  id uuid primary key default gen_random_uuid(), user_id uuid not null, tipo text not null, monto numeric not null,
+  fecha date not null default current_date, concepto text not null default '', propiedad_id uuid, contacto_id uuid,
+  origen text not null default 'manual', created_at timestamptz default now());

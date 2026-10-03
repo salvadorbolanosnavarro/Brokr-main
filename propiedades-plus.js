@@ -791,6 +791,11 @@
 
   function init() {
     montarHtml();
+    // Modal de cierre (Fase 6): archivo aparte para no crecer propiedades.html.
+    if (!document.getElementById('px-cierre-js')) {
+      var sc = document.createElement('script'); sc.id = 'px-cierre-js'; sc.src = 'propiedades-cierre.js'; sc.defer = true;
+      document.body.appendChild(sc);
+    }
     var selTipo = g('props-filter-tipo');
     if (selTipo) selTipo.innerHTML = C.tiposOptions('', { vacio: 'Todos los tipos' });
     var selOp = g('props-filter-op');
