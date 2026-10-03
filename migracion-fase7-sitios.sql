@@ -16,11 +16,19 @@
 -- El backend sirve el sitio como HTML con Open Graph (api.broquer.app/s/slug
 -- o el dominio propio); lectura pública sólo por el backend.
 --
--- Requiere: migracion-aislamiento-organizacion.sql. Idempotente.
+-- Requiere: migracion-aislamiento-organizacion.sql (en producción: correr
+-- antes puesta-al-dia-produccion.sql y la fase 6). Idempotente.
 -- Correr en Supabase → SQL Editor → Run.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 begin;
+
+do $$
+begin
+  if not exists (select 1 from pg_proc where proname = 'mis_org_ids') then
+    raise exception 'Falta la función mis_org_ids. Corre primero puesta-al-dia-produccion.sql. No se cambió nada.';
+  end if;
+end $$;
 
 create table if not exists public.sitios (
   id uuid primary key default gen_random_uuid(),
@@ -65,9 +73,16 @@ create unique index if not exists sitios_org_tipo_user on public.sitios (org_id,
 
 alter table public.sitios enable row level security;
 drop policy if exists "equipo ve los sitios de su organizacion" on public.sitios;
+-- Lectura directa sólo para el administrador de la cuenta o el dueño del
+-- sitio de agente (el sitio trae el código propio del admin y el id de
+-- Cloudflare). La app y el sitio público leen por el backend.
 create policy "equipo ve los sitios de su organizacion"
   on public.sitios for select
-  using (org_id in (select public.mis_org_ids()));
+  using (org_id in (select public.mis_org_ids())
+         and (user_id = auth.uid()
+              or exists (select 1 from public.organizacion_miembros om
+                          where om.org_id = sitios.org_id and om.user_id = auth.uid()
+                            and om.activo and om.rol_org in ('owner', 'admin'))));
 
 create table if not exists public.sitio_paginas (
   id uuid primary key default gen_random_uuid(),

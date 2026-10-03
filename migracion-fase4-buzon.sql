@@ -20,12 +20,47 @@
 -- Lectura con RLS por organización (los agentes sin "ver contactos del
 -- equipo" sólo ven sus leads y los sin asignar); escritura sólo por backend.
 --
+-- TOLERA TABLAS VIEJAS: en producción respuestas_guardadas ya existía con
+-- otra forma (user_id y contenido NOT NULL, sin org_id/texto/canal). Aquí se
+-- agregan las columnas que falten, se pasa contenido → texto y user_id →
+-- org_id en filas viejas, y se quita el NOT NULL de columnas viejas que
+-- Broquer ya no llena. No se borra ninguna fila ni columna.
+--
 -- Requiere: migracion-aislamiento-organizacion.sql y migracion-fase3-contactos.sql
 -- (columnas telefonos/correos). Idempotente.
 -- Correr en Supabase → SQL Editor → Run.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 begin;
+
+-- ── Columnas viejas NOT NULL que Broquer ya no llena ────────────────────────
+-- Va primero: si alguna de estas tablas ya existía con columnas obligatorias
+-- que no son de este esquema (y sin valor por defecto), los guardados nuevos
+-- fallarían. Se les quita el NOT NULL (no se borran ni se cambian los datos).
+do $$
+declare r record;
+begin
+  for r in
+    select c.relname as tabla, a.attname as columna
+      from pg_attribute a
+      join pg_class c on c.oid = a.attrelid
+      join pg_namespace n on n.oid = c.relnamespace
+      join (values
+        ('buzon_leads',          array['id', 'org_id', 'canal']),
+        ('respuestas_guardadas', array['id', 'org_id', 'titulo', 'texto']),
+        ('buzon_reglas',         array['org_id']),
+        ('buzon_guardias',       array['id', 'org_id', 'user_id', 'dia', 'hora_inicio', 'hora_fin'])
+      ) as t(tabla, nuestras) on t.tabla = c.relname
+     where n.nspname = 'public' and a.attnum > 0 and not a.attisdropped
+       and a.attnotnull and not a.atthasdef
+       and a.attname <> all (t.nuestras)
+       and not exists (select 1 from pg_index i
+                        where i.indrelid = c.oid and i.indisprimary and a.attnum = any (i.indkey))
+  loop
+    execute format('alter table public.%I alter column %I drop not null', r.tabla, r.columna);
+    raise notice '%.%: se quitó NOT NULL (columna vieja que Broquer ya no llena)', r.tabla, r.columna;
+  end loop;
+end $$;
 
 create table if not exists public.buzon_leads (
   id uuid primary key default gen_random_uuid(),
@@ -81,6 +116,31 @@ create table if not exists public.respuestas_guardadas (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+-- Tabla vieja (id, user_id, titulo, contenido, created_at, updated_at): se
+-- completa con las columnas del Buzón y las filas viejas se pasan a su
+-- organización (texto = contenido) para que aparezcan.
+alter table public.respuestas_guardadas
+  add column if not exists org_id uuid,
+  add column if not exists titulo text,
+  add column if not exists texto text,
+  add column if not exists canal text not null default 'todos',
+  add column if not exists creado_por uuid,
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz not null default now();
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'respuestas_guardadas' and column_name = 'contenido') then
+    update public.respuestas_guardadas set texto = contenido where texto is null and contenido is not null;
+  end if;
+  if exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'respuestas_guardadas' and column_name = 'user_id') then
+    update public.respuestas_guardadas r
+       set org_id = om.org_id, creado_por = coalesce(r.creado_por, r.user_id)
+      from public.organizacion_miembros om
+     where r.org_id is null and om.user_id = r.user_id and om.activo = true;
+  end if;
+end $$;
 create index if not exists idx_respuestas_org on public.respuestas_guardadas (org_id, titulo);
 alter table public.respuestas_guardadas enable row level security;
 drop policy if exists "equipo ve respuestas de su organizacion" on public.respuestas_guardadas;

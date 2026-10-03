@@ -15,11 +15,24 @@
 --   propiedades        + publicada_en (para "días publicada"); se rellena con
 --                      la fecha de alta y se sella sola al publicar.
 --
--- Requiere: migracion-finanzas.sql y migracion-fase1-inventario.sql.
+-- Requiere: migracion-finanzas.sql y migracion-fase1-inventario.sql (en
+-- producción: correr antes puesta-al-dia-produccion.sql). Si falta algo, se
+-- detiene al inicio con un mensaje claro y no cambia nada.
 -- Idempotente. Correr en Supabase → SQL Editor → Run.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 begin;
+
+do $$
+begin
+  if to_regclass('public.fin_movimientos') is null then
+    raise exception 'Falta la tabla fin_movimientos (Finanzas). Corre primero puesta-al-dia-produccion.sql. No se cambió nada.';
+  end if;
+  if not exists (select 1 from pg_proc where proname = 'org_permiso')
+     or not exists (select 1 from pg_proc where proname = 'mis_org_ids') then
+    raise exception 'Faltan las funciones org_permiso / mis_org_ids. Corre primero puesta-al-dia-produccion.sql. No se cambió nada.';
+  end if;
+end $$;
 
 create table if not exists public.cierres (
   id uuid primary key default gen_random_uuid(),
