@@ -59,6 +59,24 @@ def _split_street(s: str):
     return (s, None, num_int)
 
 
+def _split_location_name(name):
+    """Parte "Colonia, Municipio, Estado" de EasyBroker en sus tres piezas.
+
+    Con más de tres partes, las dos últimas son municipio y estado y el resto
+    es la colonia. Las piezas que no vengan se regresan como None.
+    """
+    if not name or not isinstance(name, str):
+        return (None, None, None)
+    parts = [p.strip() for p in name.split(",") if p.strip()]
+    if not parts:
+        return (None, None, None)
+    if len(parts) == 1:
+        return (parts[0], None, None)
+    if len(parts) == 2:
+        return (parts[0], parts[1], None)
+    return (", ".join(parts[:-2]), parts[-2], parts[-1])
+
+
 def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
     """Mapea una propiedad de EasyBroker al esquema de propiedades de Broquer."""
     def _to_int(v):
@@ -98,15 +116,20 @@ def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
     estado = "Michoacán"
     cp_from_loc = None
     if isinstance(location_raw, dict):
-        colonia = location_raw.get("city_area") or location_raw.get("name") or location_raw.get("neighborhood") or None
-        ciudad = location_raw.get("city") or location_raw.get("municipality") or "Morelia"
-        estado = location_raw.get("region") or location_raw.get("state") or "Michoacán"
+        # La API v1 de EasyBroker manda la ubicación como un solo texto en
+        # "name" ("Ciudad Granja, Zapopan, Jalisco"), sin "city" ni "region".
+        # Antes ese texto completo se guardaba como colonia y la ciudad caía
+        # al default Morelia → "Ciudad Granja, Zapopan, Jalisco, Morelia".
+        col_n, ciu_n, est_n = _split_location_name(location_raw.get("name"))
+        colonia = location_raw.get("city_area") or location_raw.get("neighborhood") or col_n or None
+        ciudad = location_raw.get("city") or location_raw.get("municipality") or ciu_n or "Morelia"
+        estado = location_raw.get("region") or location_raw.get("state") or est_n or "Michoacán"
         cp_from_loc = location_raw.get("postal_code") or None
     elif isinstance(location_raw, str) and location_raw:
-        parts = [p.strip() for p in location_raw.split(",")]
-        colonia = parts[0] if parts else None
-        ciudad = parts[1] if len(parts) > 1 else "Morelia"
-        estado = parts[2] if len(parts) > 2 else "Michoacán"
+        col_n, ciu_n, est_n = _split_location_name(location_raw)
+        colonia = col_n
+        ciudad = ciu_n or "Morelia"
+        estado = est_n or "Michoacán"
 
     street_raw = prop_full.get("street") or ""
     if not street_raw and isinstance(location_raw, dict):

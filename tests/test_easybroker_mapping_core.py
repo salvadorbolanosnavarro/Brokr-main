@@ -9,6 +9,7 @@ from core.easybroker_mapping import (
     _EB_STATUS_DEFAULT,
     _EB_STATUS_MAP,
     _eb_to_brokr,
+    _split_location_name,
     _split_street,
 )
 
@@ -67,6 +68,32 @@ class EasyBrokerMappingCoreTests(unittest.TestCase):
         self.assertEqual(row["num_interior"], "2")
         self.assertEqual(row["amenidades"], ["Alberca"])
         self.assertEqual(row["estatus"], "activa")
+
+    def test_location_name_from_api_is_split_without_morelia_default(self):
+        # Forma real de la API v1: todo viene en "name", sin city/region.
+        row = _eb_to_brokr(
+            {
+                "public_id": "EB-2",
+                "location": {
+                    "name": "Ciudad Granja, Zapopan, Jalisco",
+                    "postal_code": "45010",
+                    "street": "Av. Vallarta 5000",
+                },
+            },
+            "user-1",
+        )
+        self.assertEqual(row["colonia"], "Ciudad Granja")
+        self.assertEqual(row["ciudad"], "Zapopan")
+        self.assertEqual(row["estado"], "Jalisco")
+
+    def test_location_name_splitter_shapes(self):
+        self.assertEqual(_split_location_name("A, B, C"), ("A", "B", "C"))
+        self.assertEqual(_split_location_name("Fracc. X, Sección 2, Morelia, Michoacán"),
+                         ("Fracc. X, Sección 2", "Morelia", "Michoacán"))
+        self.assertEqual(_split_location_name("A, B"), ("A", "B", None))
+        self.assertEqual(_split_location_name("A"), ("A", None, None))
+        self.assertEqual(_split_location_name(""), (None, None, None))
+        self.assertEqual(_split_location_name(None), (None, None, None))
 
     def test_main_delegates_mapping_after_transform(self):
         source = (ROOT / "main.py").read_text(encoding="utf-8")
