@@ -623,6 +623,11 @@ app.include_router(bulk_delete_router)
 from routers.propiedades_actualizar import router as propiedades_actualizar_router
 app.include_router(propiedades_actualizar_router)
 
+# Ajustes de CRM (etapas, tipos, fuentes, etiquetas), fusión de duplicados y
+# lote de contactos (ver routers/crm.py).
+from routers.crm import router as crm_router
+app.include_router(crm_router)
+
 app.include_router(admin_usage_router)
 app.include_router(account_delete_router)
 app.include_router(avm_legacy_router)

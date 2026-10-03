@@ -284,8 +284,12 @@
   const MODS = [
     // CRM — el inventario y la gente.
     { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',       group:'crm',         icon:'building' },
-    { key:'contactos',    href:'contactos.html',     label:'Directorio',         group:'crm',         icon:'users' },
-    { key:'clientes',     href:'clientes.html',      label:'Clientes',           group:'crm',         icon:'apreton' },
+    // Contactos: un solo módulo con dos vistas (Lista = contactos.html,
+    // Pipeline = clientes.html). Clientes queda oculto del menú pero sus
+    // ligas siguen vivas (y resaltan "Contactos", ver NAV_ALIAS).
+    { key:'contactos',    href:'contactos.html',     label:'Contactos',          group:'crm',         icon:'users' },
+    { key:'clientes',     href:'clientes.html',      label:'Pipeline de contactos', group:'crm',      icon:'apreton', hidden:true },
+    { key:'crm-ajustes',  href:'crm-ajustes.html',   label:'Ajustes de CRM',     group:'crm',         icon:'cog', hidden:true },
     { key:'tareas',       href:'tareas.html',        label:'Tareas',              group:'crm',         icon:'check' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',        group:'crm',         icon:'chart' },
     { key:'bolsa',        href:'bolsa.html',         label:'Bolsa inmobiliaria',  group:'crm',         icon:'apreton', hidden:true },
@@ -316,8 +320,9 @@
   const CONTEXT_LABELS = {
     'home':         'Dashboard principal — menú de módulos',
     'props':        'Tus Inmuebles — catálogo de propiedades',
-    'contactos':    'Directorio — todos tus contactos, sin importar su rol o etapa',
-    'clientes':     'Clientes — tu pipeline de venta en kanban: prospectos potenciales por etapa',
+    'contactos':    'Contactos (vista Lista) — todos tus contactos, sin importar su rol o etapa',
+    'clientes':     'Contactos (vista Pipeline) — tu pipeline de venta en kanban: prospectos potenciales por etapa',
+    'crm-ajustes':  'Ajustes de CRM — etapas del pipeline, tipos de contacto, fuentes de captación, etiquetas y categorías',
     'equipo':       'Equipo — miembros de la cuenta, roles y permisos',
     'tareas':       'Tareas — pendientes y actividad del CRM',
     'estadisticas': 'Estadísticas — captación, pipeline e inmuebles con más interés',
@@ -344,6 +349,7 @@
      en posición/tamaño/estilo. 'home' se excluye (tiene su propio hero). */
   const PAGE_META = {
     'equipo':        { title:'Equipo',                 sub:'Quién trabaja en tu cuenta y qué puede ver cada quien.' },
+    'crm-ajustes':   { title:'Ajustes de CRM',         sub:'Etapas del pipeline, tipos de contacto, fuentes, etiquetas y categorías de tu cuenta.' },
     'bolsa':         { title:'Bolsa inmobiliaria',     sub:'Comparte inventario con otros agentes Broquer y cierra en equipo con comisión compartida.' },
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
     'cumplimiento':  { title:'Cumplimiento',           sub:'El expediente de identificación de cada cliente, el control de umbrales y los avisos a la UIF, en un solo lugar.' },
@@ -1484,6 +1490,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
      DOM injection
      ════════════════════════════════════════════════════════════════ */
   const activeKey = (document.body.getAttribute('data-app') || 'home').toLowerCase();
+  // Pantallas que viven dentro de otro módulo del menú.
+  const NAV_ALIAS = { clientes: 'contactos', 'crm-ajustes': 'contactos' };
+  const navKey = NAV_ALIAS[activeKey] || activeKey;
   const activeMod = MODS.find(m => m.key === activeKey) || MODS[0];
 
   function buildSidebarLink(m, active) {
@@ -1603,7 +1612,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         </div>
         <div class="bk-sb-cols">
           <nav class="bk-rail" id="bk-rail" aria-label="Módulos">
-            ${modsSueltos.map(m => buildRailIcon(m, activeKey)).join('')}
+            ${modsSueltos.map(m => buildRailIcon(m, navKey)).join('')}
             ${buildRailItem(GRUPOS.find(g => g.key === 'mas'), porGrupo('mas'), activeMod.group)}
           </nav>
         </div>
@@ -1673,7 +1682,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         { n: 'Nuevo inmueble', href: 'propiedades.html' },
         { n: 'Nuevo contacto', href: 'contactos.html' },
         { n: 'Nueva tarea', href: 'tareas.html' },
-        { n: 'Nuevo cliente', href: 'clientes.html' },
+        { n: 'Nuevo cliente (pipeline)', href: 'clientes.html' },
       ];
       const grupoLabel = k => (GRUPOS.find(g => g.key === k) || {}).label || '';
       const bg = document.createElement('div');
@@ -1811,7 +1820,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     sheet.setAttribute('aria-label', 'Módulos');
 
     function sheetItem(m) {
-      const act = m.key === activeKey ? ' is-active' : '';
+      const act = m.key === navKey ? ' is-active' : '';
       const badge = m.key === 'whatsapp' ? '<i class="bk-badge" id="bk-sheet-badge"></i>' : '';
       // "Mi sitio" en móvil/iOS no abre la pantalla de configuración: abre el sitio público.
       const attrs = m.key === 'mi-sitio'

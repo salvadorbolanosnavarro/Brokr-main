@@ -28,9 +28,10 @@ create table public.propiedades (
   created_at timestamptz default now(), updated_at timestamptz default now());
 
 create table public.contactos (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid, org_id uuid, asignado_a uuid, nombre text, telefono text, email text,
-  tipo text, fuente text, etapa text, etiquetas text[],
+  id text primary key default ('c_' || floor(random() * 1e12)::text),
+  user_id uuid, org_id uuid, asignado_a uuid, nombre text, telefono text, wa text, email text,
+  tipo text, fuente text, estatus text, es_potencial boolean default false, probabilidad text,
+  etiquetas text[] default '{}',
   created_at timestamptz default now(), updated_at timestamptz default now());
 
 create table public.tareas (

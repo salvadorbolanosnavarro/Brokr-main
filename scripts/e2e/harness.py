@@ -67,12 +67,19 @@ class FakeDB:
             return out
         if method == "POST":
             nuevos = body if isinstance(body, list) else [body]
+            out = []
             for n in nuevos:
                 n = dict(n)
+                previo = next((f for f in filas if "on_conflict" in params and n.get("id") and f.get("id") == n["id"]), None)
+                if previo is not None:
+                    previo.update(n)
+                    out.append(previo)
+                    continue
                 n.setdefault("id", str(uuid.uuid4()))
                 n.setdefault("created_at", time.strftime("%Y-%m-%dT%H:%M:%SZ"))
                 filas.append(n)
-            return nuevos
+                out.append(n)
+            return out
         if method == "PATCH":
             out = []
             for f in filas:
