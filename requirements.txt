@@ -13,3 +13,4 @@ PyJWT
 cryptography
 pypdf
 lxml
+segno==1.6.6

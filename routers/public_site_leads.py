@@ -44,6 +44,29 @@ class SitioLeadIn(BaseModel):
     telefono: str = ""
     mensaje: str = ""
     sitio_web: str = ""
+    email: str = ""
+    propiedad_id: str = ""
+    dominio: str = ""
+
+
+async def _al_buzon(user_id: str, contacto_id: str, payload: "SitioLeadIn", nombre: str,
+                    telefono: str, mensaje: str) -> None:
+    """Además del contacto, el lead entra al Buzón (canal "Sitio web", con el
+    inmueble ligado y la fuente = dominio del sitio). Nunca bloquea al visitante."""
+    try:
+        from core.buzon import registrar_lead
+        from routers.organizaciones import get_org_id_for_user
+        org_id = await get_org_id_for_user(user_id)
+        if not org_id:
+            return
+        dominio = (payload.dominio or "").strip().lower()[:80]
+        pid = (payload.propiedad_id or "").strip()
+        await registrar_lead(org_id=org_id, user_id=user_id, canal="sitio", nombre=nombre, telefono=telefono,
+                             email=(payload.email or "").strip()[:160], mensaje=mensaje,
+                             fuente=dominio or "Sitio web", propiedad_id=pid if len(pid) == 36 else None,
+                             contacto_id=contacto_id)
+    except Exception:
+        pass
 
 
 @router.post("/sitio/{slug}/lead")
@@ -135,6 +158,7 @@ async def sitio_registrar_lead(slug: str, payload: SitioLeadIn, request: Request
                 )
             except httpx.HTTPStatusError:
                 pass
+            await _al_buzon(user_id, existente["id"], payload, nombre, telefono, mensaje)
             return {"ok": True, "duplicado": True}
 
         nuevo = {
@@ -161,5 +185,6 @@ async def sitio_registrar_lead(slug: str, payload: SitioLeadIn, request: Request
             )
         except httpx.HTTPStatusError:
             raise HTTPException(status_code=502, detail="No se pudo registrar el lead")
+        await _al_buzon(user_id, nuevo["id"], payload, nombre, telefono, mensaje)
 
     return {"ok": True}

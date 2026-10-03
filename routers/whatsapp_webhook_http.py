@@ -44,5 +44,9 @@ async def wa2_receive_webhook_core(
 
     for item in trabajo:
         background.add_task(_procesar_en_segundo_plano, item)
+        # Buzón: cada mensaje de un prospecto entra (o reabre) su conversación.
+        if not item.get("es_asesor"):
+            from core.buzon import registrar_desde_whatsapp
+            background.add_task(registrar_desde_whatsapp, item)
 
     return Response(status_code=200)

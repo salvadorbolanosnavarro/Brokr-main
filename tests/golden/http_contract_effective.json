@@ -1,5 +1,5 @@
 {
-  "count": 273,
+  "count": 318,
   "operations": [
     {
       "body": false,
@@ -137,6 +137,120 @@
       "path": "/agent/health",
       "responses": [
         "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:propiedad_id!"
+      ],
+      "path": "/alertas/clientes-potenciales/{propiedad_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/alertas/coincidencias/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/alertas/ligar-interesado",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/alertas/preparar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/alertas/registrar-envio",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/alertas/requerimiento/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PUT",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/alertas/requerimiento/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:agente"
+      ],
+      "path": "/alertas/requerimientos",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:rid!"
+      ],
+      "path": "/alertas/requerimientos/{rid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:rid!"
+      ],
+      "path": "/alertas/requerimientos/{rid}",
+      "responses": [
+        "200",
+        "422"
       ]
     },
     {
@@ -374,6 +488,175 @@
       "method": "POST",
       "params": [],
       "path": "/bolsa/retirar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/bolsa/solicitud",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:asignado",
+        "query:canal",
+        "query:estado",
+        "query:fuente_id",
+        "query:limit",
+        "query:propiedad_id"
+      ],
+      "path": "/buzon",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/buzon/contador",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:token!"
+      ],
+      "path": "/buzon/entrada/{token}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:desde",
+        "query:hasta"
+      ],
+      "path": "/buzon/estadisticas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/buzon/manual",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/buzon/reglas",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PUT",
+      "params": [],
+      "path": "/buzon/reglas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/buzon/respuestas",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/buzon/respuestas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:rid!"
+      ],
+      "path": "/buzon/respuestas/{rid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:rid!"
+      ],
+      "path": "/buzon/respuestas/{rid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:lead_id!"
+      ],
+      "path": "/buzon/{lead_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [
+        "path:lead_id!"
+      ],
+      "path": "/buzon/{lead_id}/asignar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:lead_id!"
+      ],
+      "path": "/buzon/{lead_id}/respondido",
       "responses": [
         "200",
         "422"
@@ -645,6 +928,215 @@
         "query:carpeta"
       ],
       "path": "/correo/mensaje/{uid_msg}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/crm/catalogos",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:cat_id!"
+      ],
+      "path": "/crm/categorias/{cat_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:cat_id!"
+      ],
+      "path": "/crm/categorias/{cat_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/contactos/fusionar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/contactos/lote",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/etapas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/etapas/orden",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:etapa_id!",
+        "query:mover_a"
+      ],
+      "path": "/crm/etapas/{etapa_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:etapa_id!"
+      ],
+      "path": "/crm/etapas/{etapa_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:tabla"
+      ],
+      "path": "/crm/etiquetas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/etiquetas/eliminar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/etiquetas/renombrar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/fuentes",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/fuentes/fusionar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:fuente_id!"
+      ],
+      "path": "/crm/fuentes/{fuente_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:fuente_id!"
+      ],
+      "path": "/crm/fuentes/{fuente_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/tipos",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:tipo_id!",
+        "query:mover_a"
+      ],
+      "path": "/crm/tipos/{tipo_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:tipo_id!"
+      ],
+      "path": "/crm/tipos/{tipo_id}",
       "responses": [
         "200",
         "422"
@@ -2244,6 +2736,15 @@
       "method": "POST",
       "params": [],
       "path": "/propiedades/eliminar-masivo",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [],
+      "path": "/propiedades/lote",
       "responses": [
         "200"
       ]

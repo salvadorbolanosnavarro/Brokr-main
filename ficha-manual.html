@@ -662,14 +662,34 @@
         <label>Tipo de inmueble</label>
         <select id="d-tipo" onchange="onTipoFichaChange()">
           <option value="">Seleccionar</option>
-          <option value="Casa">Casa</option>
-          <option value="Departamento">Departamento</option>
-          <option value="Edificio">Edificio</option>
-          <option value="Terreno">Terreno</option>
-          <option value="Local comercial">Local comercial</option>
-          <option value="Oficina">Oficina</option>
-          <option value="Bodega">Bodega</option>
-          <option value="Rancho">Rancho</option>
+          <optgroup label="Residencial">
+            <option value="Casa">Casa</option>
+            <option value="Casa en condominio">Casa en condominio</option>
+            <option value="Departamento">Departamento</option>
+            <option value="Habitación">Habitación</option>
+            <option value="Quinta">Quinta</option>
+            <option value="Rancho">Rancho</option>
+            <option value="Terreno">Terreno</option>
+            <option value="Villa">Villa</option>
+          </optgroup>
+          <optgroup label="Comercial">
+            <option value="Bodega comercial">Bodega comercial</option>
+            <option value="Casa con uso de suelo">Casa con uso de suelo</option>
+            <option value="Edificio">Edificio</option>
+            <option value="Huerta">Huerta</option>
+            <option value="Local comercial">Local comercial</option>
+            <option value="Local en centro comercial">Local en centro comercial</option>
+            <option value="Oficina">Oficina</option>
+            <option value="Terreno comercial">Terreno comercial</option>
+          </optgroup>
+          <optgroup label="Industrial">
+            <option value="Bodega industrial">Bodega industrial</option>
+            <option value="Nave industrial">Nave industrial</option>
+            <option value="Terreno industrial">Terreno industrial</option>
+          </optgroup>
+          <optgroup label="Otro">
+            <option value="Otro">Otro</option>
+          </optgroup>
         </select>
       </div>
       <div class="f">
@@ -755,6 +775,15 @@
     <div class="f">
       <label>Lista separada por comas</label>
       <input type="text" id="d-amen" placeholder="Alberca, Jardín, Cuarto de servicio, Roof garden"/>
+    </div>
+  </div>
+
+  <!-- VIDEO Y TOUR -->
+  <div class="ui-card">
+    <h3>Video y recorrido virtual</h3>
+    <div class="f">
+      <label>Ligas de YouTube o tour virtual (una por renglón) — salen en la ficha con su código QR</label>
+      <textarea id="d-mm" rows="2" placeholder="https://youtu.be/…&#10;https://my.matterport.com/show/?m=…"></textarea>
     </div>
   </div>
 
@@ -1171,6 +1200,7 @@ function getDatos(){
     niv:     gv('d-niv'),
     anio:    gv('d-anio'),
     desc:    gv('d-desc'),
+    mm:      (document.getElementById('d-mm') || {}).value || '',
     amen:    gv('d-amen'),
   };
 }
@@ -1220,6 +1250,8 @@ async function generarFicha(){
       floors: d.niv ? parseFloat(d.niv) : null,
       age: d.anio || null,
       amenities: d.amen ? d.amen.split(',').map(a=>({name:a.trim()})).filter(a=>a.name) : [],
+      videos: (d.mm || '').split(/\s+/).filter(u => /^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(u)),
+      virtual_tours: (d.mm || '').split(/\s+/).filter(u => /^https:\/\//i.test(u) && !/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(u)),
       property_images: fotos.map(f => ({ url: f.url, original: f.url }))
     };
 
@@ -1345,6 +1377,10 @@ function _fmGetUserId() {
     };
     setSelect('d-tipo', d.tipo);
     setSelect('d-op',   d.operacion);
+    if (d.amen && document.getElementById('d-amen') && !document.getElementById('d-amen').value) {
+      document.getElementById('d-amen').value = d.amen;
+    }
+    if (d.mm && document.getElementById('d-mm')) document.getElementById('d-mm').value = d.mm;
     if (typeof onOpChange === 'function') onOpChange();
 
     // Precio
@@ -1526,7 +1562,8 @@ function onTipoFichaChange() {
   const tipoEl = document.getElementById('d-tipo');
   if (!tipoEl) return;
   const tipo = (tipoEl.value || '').toLowerCase();
-  const sinHabitaciones = ['terreno', 'local comercial', 'oficina', 'bodega', 'rancho', 'edificio'];
+  const sinHabitaciones = ['terreno', 'terreno comercial', 'terreno industrial', 'local comercial', 'local en centro comercial',
+    'oficina', 'bodega', 'bodega comercial', 'bodega industrial', 'nave industrial', 'rancho', 'edificio', 'huerta'];
   const hide = sinHabitaciones.includes(tipo);
   ['fld-rec', 'fld-ban', 'fld-mban'].forEach(id => {
     const el = document.getElementById(id);

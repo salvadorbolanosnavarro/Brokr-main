@@ -28,5 +28,7 @@ class PropData(BaseModel):
     floors: Optional[float] = None
     age: Optional[float] = None
     amenities: Optional[list] = None
+    videos: Optional[list] = None
+    virtual_tours: Optional[list] = None
     property_images: Optional[list] = None
     status: Optional[str] = None

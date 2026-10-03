@@ -4,6 +4,14 @@ from __future__ import annotations
 from datetime import datetime
 import re
 
+from core.catalogo_inmuebles import (
+    EB_TIPOS,
+    clasificar_amenidades,
+    operacion_legacy,
+    quitar_columnas_paridad,
+    tipo_familia,
+)
+
 
 _EB_TIPO_MAP = {
     "Casa": "casa",
@@ -59,6 +67,72 @@ def _split_street(s: str):
     return (s, None, num_int)
 
 
+_EB_OP_TIPO = {"sale": "venta", "rental": "renta", "temporary_rental": "renta_temporal"}
+_EB_UNIDAD = {"total": "total", "square_meter": "m2", "m2": "m2", "hectare": "ha", "ha": "ha"}
+_EB_PERIODO = {"daily": "noche", "nightly": "noche", "weekly": "semana", "monthly": "mes"}
+
+# Si la base aún no tiene las columnas de paridad, el importador reintenta sin
+# ellas (ver routers/easybroker_migration.py).
+quitar_columnas_extendidas = quitar_columnas_paridad
+
+
+def _to_coord(v):
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return f if f != 0 and -180 <= f <= 180 else None
+
+
+_YT_RE = re.compile(r"(?:youtu\.be/|youtube(?:-nocookie)?\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/|live/|v/))([A-Za-z0-9_-]{11})")
+
+
+def _eb_ligas(valores, solo_youtube: bool = False) -> list:
+    """Ligas https únicas de una lista de textos u objetos {"url": …}."""
+    out = []
+    for v in valores or []:
+        url = (v.get("url") or v.get("link") or "") if isinstance(v, dict) else (v or "")
+        url = str(url).strip()
+        if not url:
+            continue
+        if solo_youtube:
+            m = _YT_RE.search(url)
+            if not m:
+                continue
+            url = f"https://www.youtube.com/watch?v={m.group(1)}"
+        elif not url.startswith("https://"):
+            continue
+        if url not in out:
+            out.append(url)
+    return out
+
+
+def _eb_operaciones(ops) -> list:
+    """Operaciones de EasyBroker → lista de operaciones Broquer."""
+    out = []
+    for op in ops or []:
+        if not isinstance(op, dict):
+            continue
+        tipo = _EB_OP_TIPO.get(op.get("type"))
+        if not tipo:
+            continue
+        try:
+            precio = float(op.get("amount")) if op.get("amount") else None
+        except (TypeError, ValueError):
+            precio = None
+        item = {
+            "tipo": tipo,
+            "precio": precio,
+            "moneda": (op.get("currency") or "MXN").upper(),
+            "unidad": _EB_UNIDAD.get(op.get("unit") or "total", "total"),
+        }
+        periodo = _EB_PERIODO.get(op.get("period") or "")
+        if tipo == "renta_temporal":
+            item["periodo"] = periodo or "noche"
+        out.append(item)
+    return out
+
+
 def _split_location_name(name):
     """Parte "Colonia, Municipio, Estado" de EasyBroker en sus tres piezas.
 
@@ -91,24 +165,28 @@ def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
         except Exception:
             return None
 
-    tipo_eb = prop_full.get("property_type", "")
-    tipo = _EB_TIPO_MAP.get(tipo_eb, tipo_eb.lower() if tipo_eb else None)
+    tipo_eb = prop_full.get("property_type", "") or ""
+    subtipo = EB_TIPOS.get(tipo_eb)
+    if subtipo:
+        tipo = tipo_familia(subtipo)
+    else:
+        tipo = _EB_TIPO_MAP.get(tipo_eb, tipo_eb.lower() if tipo_eb else None)
 
-    operaciones = prop_full.get("operations", []) or []
+    operaciones_eb = prop_full.get("operations", []) or []
+    operaciones = _eb_operaciones(operaciones_eb)
     operacion = None
     precio = None
     moneda = "MXN"
     if operaciones:
-        op_venta = next((o for o in operaciones if o.get("type") == "sale"), None)
-        op_renta = next((o for o in operaciones if o.get("type") == "rental"), None)
-        op = op_venta or op_renta or operaciones[0]
-        if op.get("type") == "sale":
-            operacion = "venta"
-        elif op.get("type") == "rental":
-            operacion = "renta"
-        amount = op.get("amount") or 0
-        precio = float(amount) if amount else None
-        moneda = (op.get("currency") or "MXN").upper()
+        # La operación principal (columnas viejas): venta primero, luego renta.
+        principal = (next((o for o in operaciones if o["tipo"] == "venta"), None)
+                     or next((o for o in operaciones if o["tipo"] == "renta"), None)
+                     or operaciones[0])
+        operacion = operacion_legacy(principal["tipo"])
+        precio = principal.get("precio")
+        moneda = principal.get("moneda") or "MXN"
+        # La principal va primero en la lista.
+        operaciones = [principal] + [o for o in operaciones if o is not principal]
 
     location_raw = prop_full.get("location") or ""
     colonia = None
@@ -150,8 +228,26 @@ def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
         if url and url not in fotos:
             fotos.append(url)
 
+    # features llega como lista de textos o de objetos {"name", "category"}.
     features = prop_full.get("features") or []
-    amenidades = [f for f in features if isinstance(f, str) and f.strip()] or None
+    nombres_features = []
+    for f in features:
+        nombre = f.get("name") if isinstance(f, dict) else f
+        if isinstance(nombre, str) and nombre.strip():
+            nombres_features.append(nombre.strip())
+    amenidades = nombres_features or None
+    caracteristicas, otras = clasificar_amenidades(nombres_features)
+
+    lat = lng = None
+    if isinstance(location_raw, dict):
+        lat = _to_coord(location_raw.get("latitude") or location_raw.get("lat"))
+        lng = _to_coord(location_raw.get("longitude") or location_raw.get("lng"))
+
+    # "age" en EasyBroker puede venir como año de construcción o como años de
+    # antigüedad; un número de año (>= 1800) se toma como año.
+    edad = _to_int(prop_full.get("age"))
+    anio_construccion = edad if edad and edad >= 1800 else None
+    antiguedad = edad if edad and edad < 1800 else None
 
     return {
         "user_id": user_id,
@@ -177,9 +273,21 @@ def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
         "estacionamientos": _to_int(prop_full.get("parking_spaces")),
         "nivel": str(prop_full.get("floor")) if prop_full.get("floor") not in (None, "") else None,
         "mantenimiento": _to_float(prop_full.get("expenses")),
-        "anio_construccion": _to_int(prop_full.get("age")),
+        "anio_construccion": anio_construccion,
         "descripcion": prop_full.get("description") or None,
         "amenidades": amenidades,
         "fotos": fotos,
+        # ── Columnas de paridad (migracion-fase1-inventario.sql) ──
+        "subtipo": subtipo,
+        "operaciones": operaciones,
+        "precio_unidad": (operaciones[0].get("unidad") if operaciones else None) or "total",
+        "antiguedad": antiguedad,
+        "caracteristicas": caracteristicas,
+        "otras_caracteristicas": ", ".join(otras) or None,
+        "lat": lat,
+        "lng": lng,
+        # Fase 2 (migracion-fase2-multimedia.sql)
+        "videos": _eb_ligas(prop_full.get("videos"), solo_youtube=True),
+        "tours": _eb_ligas([prop_full.get("virtual_tour"), *(prop_full.get("virtual_tours") or [])]),
         "updated_at": datetime.utcnow().isoformat(),
     }

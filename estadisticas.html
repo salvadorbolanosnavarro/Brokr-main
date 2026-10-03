@@ -12,12 +12,7 @@
 <style>
 html, body { background: var(--canvas); }
 
-/* ════════════════════════════════════════════════════════════
-   Hero — edición "Vista": banda con degradado de marca y la
-   navegación del módulo flotando sobre su borde, como tarjeta.
-   El saludo, el conteo y el periodo viven en el hero; las
-   pestañas, en la tarjeta flotante.
-   ════════════════════════════════════════════════════════════ */
+/* Hero: degradado de marca; saludo, conteo y periodo en el hero, pestañas en la tarjeta flotante. */
 .es-hero {
   background: linear-gradient(135deg, var(--sky-navy), var(--sky-blue) 55%, var(--sky-blue-lift));
   color: var(--bone);
@@ -372,6 +367,8 @@ html, body { background: var(--canvas); }
 </div>
 
 <script src="app-shell.js" defer></script>
+<script src="bk-api.js" defer></script>
+<script src="estadisticas-plus.js" defer></script>
 
 <script>
 const API_BASE = window.API_BASE || 'https://api.broquer.app';
