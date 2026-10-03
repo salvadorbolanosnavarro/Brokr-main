@@ -703,7 +703,7 @@
       </div>
       <div class="f">
         <label>Ciudad</label>
-        <input type="text" id="d-ciudad" placeholder="Ciudad de México" value="Morelia"/>
+        <input type="text" id="d-ciudad" placeholder="Ej. Morelia"/>
       </div>
     </div>
     <div class="frow single">
@@ -1160,7 +1160,7 @@ function getDatos(){
     precioRenta: document.getElementById('d-op')?.value === 'Venta y renta'
                  ? getPrecioFormateado('d-precio-renta') : '',
     colonia: gv('d-colonia'),
-    ciudad:  gv('d-ciudad') || 'Morelia',
+    ciudad:  gv('d-ciudad') || '',
     dir:     gv('d-dir'),
     rec:     gv('d-rec'),
     ban:     gv('d-ban'),
@@ -1209,7 +1209,7 @@ async function generarFicha(){
       property_type: d.tipo || 'Propiedad',
       description: d.desc || '',
       operations: buildOperations(),
-      location: { name: d.colonia || '', city: d.ciudad || 'Morelia' },
+      location: { name: d.colonia || '', city: d.ciudad || '' },
       address: d.dir || '',
       bedrooms: d.rec ? parseFloat(d.rec) : null,
       bathrooms: d.ban ? parseFloat(d.ban) : null,
@@ -1452,7 +1452,7 @@ async function guardarComoInmueble() {
     moneda:            'MXN',
     calle:             d.dir || null,
     colonia:           d.colonia || null,
-    ciudad:            d.ciudad || 'Morelia',
+    ciudad:            d.ciudad || '',
     recamaras:         d.rec ? parseInt(d.rec) : null,
     banos:             d.ban ? parseFloat(d.ban) : null,
     m2_construccion:   d.m2c ? parseFloat(d.m2c) : null,

@@ -27,7 +27,7 @@ async def generar_descripcion_ficha_manual(data: dict, request: Request):
 
     tipo = data.get("tipo", "")
     colonia = data.get("colonia", "")
-    ciudad = data.get("ciudad", "Morelia")
+    ciudad = data.get("ciudad") or ""
     m2c = data.get("m2c", "")
     m2t = data.get("m2t", "")
     rec = data.get("rec", "")
