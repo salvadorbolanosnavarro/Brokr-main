@@ -177,9 +177,10 @@ def nueva_pagina(browser, base, ancho=375, alto=812):
     ctx = browser.new_context(viewport={"width": ancho, "height": alto}, has_touch=True, is_mobile=ancho < 700,
                               device_scale_factor=2)
     ctx.add_init_script(f"""
+      try {{ if (location.hostname !== '127.0.0.1') throw 0;
       localStorage.setItem('sb_token', '{fake_jwt()}');
       localStorage.setItem('sb_user', JSON.stringify({{id: '{USER_ID}', email: 'chava@prueba.mx'}}));
-      localStorage.setItem('sesion_activa', '1');
+      localStorage.setItem('sesion_activa', '1'); }} catch (e) {{}}
     """)
     page = ctx.new_page()
     errores = []

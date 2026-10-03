@@ -140,6 +140,92 @@
     cont.innerHTML = C.caractCheckboxes('caracteristicas', sel || []);
   }
 
+  // ── Multimedia: documentos públicos ──
+  var docs = [];
+  var MAX_DOC = 15 * 1024 * 1024;
+  function pintarDocs() {
+    var ul = g('px-docs-list'); if (!ul) return;
+    ul.innerHTML = docs.map(function (d, i) {
+      return '<li><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' + esc(d.nombre) + '</a>' +
+        '<button type="button" class="px-op__del" data-quitar-doc="' + i + '" aria-label="Quitar documento">' +
+        '<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button></li>';
+    }).join('');
+  }
+  async function subirDocumentos(e) {
+    var files = Array.from(e.target.files || []); if (!files.length) return;
+    var prog = g('px-docs-progress');
+    var token = await getValidToken();
+    if (!token) { prog.textContent = 'Tu sesión expiró. Vuelve a iniciar sesión.'; return; }
+    var carpeta = (typeof pOrgId !== 'undefined' && pOrgId) || (typeof getCurrentUserId === 'function' && getCurrentUserId()) || 'sin-cuenta';
+    for (var i = 0; i < files.length; i++) {
+      var f = files[i];
+      if (f.size > MAX_DOC) { prog.textContent = f.name + ' pesa más de 15 MB; no se subió.'; continue; }
+      if (!/^(application\/pdf|image\/)/.test(f.type)) { prog.textContent = f.name + ' no es PDF ni imagen; no se subió.'; continue; }
+      prog.textContent = 'Subiendo ' + (i + 1) + ' de ' + files.length + '…';
+      var limpio = f.name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-80);
+      var ruta = carpeta + '/' + Date.now() + '_' + Math.random().toString(36).slice(2, 7) + '_' + limpio;
+      try {
+        var r = await fetch(SB_URL + '/storage/v1/object/documentos-publicos/' + ruta, {
+          method: 'POST', body: f,
+          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': f.type || 'application/octet-stream', 'x-upsert': 'true' }
+        });
+        if (!r.ok) throw new Error((await r.text()).slice(0, 160));
+        docs.push({ nombre: f.name, url: SB_URL + '/storage/v1/object/public/documentos-publicos/' + ruta, tipo: f.type, tamano: f.size });
+        pintarDocs();
+        if (typeof propFormDirty !== 'undefined') propFormDirty = true;
+      } catch (err) { prog.textContent = 'No se pudo subir ' + f.name + ': ' + err.message; return; }
+    }
+    prog.textContent = '';
+    e.target.value = '';
+  }
+
+  // ── Fotos: tope de 50 y aviso de baja resolución ──
+  var MAX_FOTOS = 50, MIN_LADO = 500;
+  function marcarBajaResolucion() {
+    document.querySelectorAll('#fotos-preview .foto-preview-item img').forEach(function (img) {
+      function revisar() {
+        var item = img.closest('.foto-preview-item'); if (!item || !img.naturalWidth) return;
+        var baja = img.naturalWidth < MIN_LADO || img.naturalHeight < MIN_LADO;
+        item.classList.toggle('px-baja-res', baja);
+        if (baja && !item.querySelector('.px-baja-res__tag')) {
+          item.insertAdjacentHTML('beforeend', '<span class="px-baja-res__tag" title="' + img.naturalWidth + '×' + img.naturalHeight + ' px">Baja resolución</span>');
+        }
+      }
+      if (img.complete) revisar(); else img.addEventListener('load', revisar, { once: true });
+    });
+    var nota = g('px-fotos-nota');
+    if (nota && typeof uploadedFotoUrls !== 'undefined') {
+      var n = uploadedFotoUrls.length;
+      nota.textContent = n >= MAX_FOTOS
+        ? 'Llegaste al máximo de ' + MAX_FOTOS + ' fotos.'
+        : 'Hasta ' + MAX_FOTOS + ' fotos (' + (MAX_FOTOS - n) + ' disponibles). Recomendado: al menos ' + MIN_LADO + ' px por lado.';
+    }
+  }
+  if (typeof renderFotosPreview === 'function') {
+    var _renderFotosOrig = renderFotosPreview;
+    renderFotosPreview = function () { _renderFotosOrig(); marcarBajaResolucion(); };
+  }
+  if (typeof initFotoUpload === 'function') {
+    var _initFotoOrig = initFotoUpload;
+    initFotoUpload = function () {
+      _initFotoOrig();
+      var input = g('fotos-upload'); if (!input || !input.onchange) return;
+      var subirOrig = input.onchange;
+      input.onchange = function (e) {
+        var libres = MAX_FOTOS - uploadedFotoUrls.length;
+        var files = Array.from(e.target.files || []);
+        if (libres <= 0) { mostrarToast('Ya tienes ' + MAX_FOTOS + ' fotos, el máximo por inmueble.'); input.value = ''; return; }
+        if (files.length > libres) {
+          mostrarToast('Sólo se subirán ' + libres + ' de ' + files.length + ' fotos (máximo ' + MAX_FOTOS + ').');
+          var dt = new DataTransfer(); files.slice(0, libres).forEach(function (f) { dt.items.add(f); });
+          // e.target.files es de sólo lectura en el evento; se pasa un evento equivalente.
+          return subirOrig.call(input, { target: { files: dt.files, value: '' } }).then(function () { input.value = ''; });
+        }
+        return subirOrig.call(input, e);
+      };
+    };
+  }
+
   // Lo llama openPropForm() después de llenar el formulario.
   window.pxFormCargar = function (p) {
     var f = g('prop-form'); if (!f) return;
@@ -164,6 +250,11 @@
     }
     pintarCaract(sel);
     if (f.elements['otras_caracteristicas']) f.elements['otras_caracteristicas'].value = otras;
+    if (g('px-videos')) g('px-videos').value = ((p && p.videos) || []).join('\n');
+    if (g('px-tours')) g('px-tours').value = ((p && p.tours) || []).join('\n');
+    docs = (p && Array.isArray(p.documentos)) ? p.documentos.slice() : [];
+    pintarDocs();
+    if (g('px-docs-progress')) g('px-docs-progress').textContent = '';
   };
 
   // Lo llama saveProp() con el objeto ya armado; ajusta los campos nuevos.
@@ -187,6 +278,10 @@
     // amenidades (texto) se sigue llenando para lo que aún la lee (PDF, Broq).
     var am = claves.map(C.caractLabel).concat(otras ? otras.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : []);
     data.amenidades = am.length ? am : null;
+    if (g('px-videos')) data.videos = C.ligas(g('px-videos').value, true);
+    if (g('px-tours')) data.tours = C.ligas(g('px-tours').value, false);
+    data.documentos = docs.slice();
+    if (Array.isArray(data.fotos) && data.fotos.length > MAX_FOTOS) data.fotos = data.fotos.slice(0, MAX_FOTOS);
     ['antiguedad', 'pisos_edificio'].forEach(function (k) { if (data[k] !== undefined && data[k] !== null && data[k] !== '') data[k] = parseInt(data[k], 10); });
     ['lat', 'lng'].forEach(function (k) { if (data[k] !== undefined && data[k] !== null && data[k] !== '') data[k] = parseFloat(data[k]); });
     return data;
@@ -624,6 +719,16 @@
       '<svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>' +
       ' Mapa</button>';
 
+  var HTML_MULTI =
+    '<div class="pf-section">Multimedia</div>' +
+    '<div class="pf-row"><div class="pf-field full"><label>Videos de YouTube' + NOTA('una liga por renglón') + '</label>' +
+      '<textarea id="px-videos" rows="2" placeholder="https://youtu.be/…"></textarea></div></div>' +
+    '<div class="pf-row"><div class="pf-field full"><label>Tour virtual' + NOTA('Matterport, Kuula u otra liga https, una por renglón') + '</label>' +
+      '<textarea id="px-tours" rows="2" placeholder="https://my.matterport.com/show/?m=…"></textarea></div></div>' +
+    '<div class="pf-row"><div class="pf-field full"><label>Documentos públicos' + NOTA('planos, volantes, lista de precios · PDF o imagen, máx. 15 MB') + '</label>' +
+      '<input type="file" id="px-docs-input" accept="application/pdf,image/*" multiple class="px-file"/>' +
+      '<ul id="px-docs-list" class="px-docs"></ul><div id="px-docs-progress" class="px-nota"></div></div></div>';
+
   function montarHtml() {
     var w = g('px-ops-wrap'); if (w && !g('px-ops')) w.innerHTML = HTML_OPS;
     var e = g('px-campos-extra'); if (e && !g('px-caract')) e.innerHTML = HTML_EXTRA;
@@ -631,9 +736,21 @@
     if (arch && !g('px-fil-btn')) arch.insertAdjacentHTML('beforebegin', HTML_TOOLS);
     var grid = g('props-grid');
     if (grid && !g('px-map')) grid.insertAdjacentHTML('beforebegin', '<div id="px-map-aviso" class="px-map-aviso"></div><div id="px-map" class="px-map"></div>');
+    var fotosRow = g('fotos-upload') && g('fotos-upload').closest('.pf-row');
+    if (fotosRow && !g('px-videos')) {
+      fotosRow.insertAdjacentHTML('afterend', HTML_MULTI);
+      var nota = document.createElement('div'); nota.className = 'px-nota'; nota.id = 'px-fotos-nota';
+      nota.textContent = 'Hasta ' + MAX_FOTOS + ' fotos. Recomendado: al menos ' + MIN_LADO + ' px por lado.';
+      g('fotos-upload').insertAdjacentElement('afterend', nota);
+      g('px-docs-input').addEventListener('change', subirDocumentos);
+      g('px-docs-list').addEventListener('click', function (e) {
+        var b = e.target.closest('[data-quitar-doc]'); if (!b) return;
+        docs.splice(Number(b.dataset.quitarDoc), 1); pintarDocs();
+      });
+    }
     var del = document.querySelector('#bulk-bar .bulk-bar__btn--danger');
     if (del && !g('px-bulk-pop')) del.insertAdjacentHTML('beforebegin',
-      '<div class="px-bulk-menu"><button class="bulk-bar__btn" onclick="pxBulkMenu(event)">Acciones ▾</button><div class="px-bulk-pop" id="px-bulk-pop"></div></div>');
+      '<div class="px-bulk-menu"><button class="bulk-bar__btn" onclick="pxBulkMenu(event)">Acciones <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M1 1l4 4 4-4"/></svg></button><div class="px-bulk-pop" id="px-bulk-pop"></div></div>');
   }
 
   function init() {

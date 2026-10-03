@@ -223,6 +223,8 @@ COLUMNAS_PARIDAD = frozenset({
     "subtipo", "operaciones", "precio_unidad", "mantenimiento_incluido",
     "antiguedad", "condicion", "disposicion", "orientacion", "pisos_edificio",
     "caracteristicas", "otras_caracteristicas", "lat", "lng", "fecha_cierre",
+    # Fase 2 (migracion-fase2-multimedia.sql)
+    "videos", "tours", "documentos",
 })
 
 

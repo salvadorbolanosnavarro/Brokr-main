@@ -230,6 +230,8 @@ function pfRenderDetalles(p, fotos) {
   let html = galeria;
   if (ubicLine) html += `<p class="pf-ubic">${esc(ubicLine)}</p>`;
   if (p.descripcion) html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Descripción</h3><p class="bk-prosa">${esc(p.descripcion)}</p></div>`;
+  const mm = window.bkCat ? bkCat.multimediaHtml(p) : '';
+  if (mm) html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Multimedia</h3>${mm}</div>`;
   const opsDet = window.bkCat ? bkCat.operaciones(p) : [];
   if (opsDet.length) {
     html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Operaciones y precios</h3><div class="px-ficha-ops">${

@@ -6,6 +6,41 @@ import base64
 from core.pdf_design import theme_css_for_pdf
 
 
+def _qr_svg(url: str) -> str:
+    """QR como data URI SVG (sin red). Vacío si segno no está instalado."""
+    try:
+        import segno
+    except Exception:
+        return ""
+    try:
+        return segno.make(url, error="m").svg_data_uri(scale=3, border=1, dark="#14213d")
+    except Exception:
+        return ""
+
+
+def _multimedia_html(videos: list, tours: list) -> str:
+    """Bloque de la ficha con ligas de video/tour y su QR."""
+    from html import escape
+    items = []
+    for etiqueta, lista in (("Video", videos), ("Recorrido virtual", tours)):
+        for url in lista[:3]:
+            url = str(url or "").strip()
+            if not url.startswith("https://"):
+                continue
+            qr = _qr_svg(url)
+            items.append(
+                '<div class="mm-item">{}<div class="mm-txt"><div class="char-lbl">{}</div>'
+                '<a class="mm-url" href="{}">{}</a></div></div>'.format(
+                    '<img class="mm-qr" src="{}" alt=""/>'.format(qr) if qr else "",
+                    etiqueta, escape(url, quote=True), escape(url if len(url) <= 60 else url[:57] + "…"),
+                )
+            )
+    if not items:
+        return ""
+    return ('<div class="chars-group mm-section"><div class="chars-group-ttl">Video y recorrido virtual</div>'
+            '<div class="mm-grid">{}</div></div>'.format("".join(items)))
+
+
 def build_ficha_html(p: dict, images_b64: dict) -> str:
     """Plantilla editorial Broquer para la ficha técnica en PDF — edición Sky.
     Portada con tarjeta flotante sobre la foto, franja de specs con
@@ -223,10 +258,13 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         items = "".join('<div class="amen-item">{}{}</div>'.format(ICO["sparkles"], a.get("name") or a) for a in amenids)
         amen_html = '<div class="chars-group amen-section"><div class="chars-group-ttl">Amenidades y extras</div><div class="amen-grid">{}</div></div>'.format(items)
 
+    # ── Video y recorrido virtual: liga + QR para abrirlo desde el papel ──
+    mm_html = _multimedia_html(p.get("videos") or [], p.get("virtual_tours") or [])
+
     chars_content = (
         '<div class="fp-kicker"><div class="fp-kicker-left"><div class="fp-kicker-ico">{}</div><h2>Características del inmueble</h2></div>'
         '<div class="fp-kicker-id">{}</div></div>'
-        '<div class="chars-body">{}{}{}{}{}</div>'
+        '<div class="chars-body">{}{}{}{}{}{}</div>'
     ).format(
         ICO["list"], id_prop,
         group_html("Operación y precio", prec_rows),
@@ -234,6 +272,7 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         group_html("Superficie y estacionamiento", sup_rows),
         group_html("Ubicación", ub_rows),
         amen_html,
+        mm_html,
     )
 
     all_contents = [cover_content] + gallery_contents + [chars_content]
@@ -310,6 +349,10 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);-webk
 .char-lbl{font-size:10px;color:var(--mute);margin-bottom:1px}
 .char-val{font-size:13px;font-weight:600;color:var(--ink);letter-spacing:-.01em;overflow-wrap:anywhere}
 .amen-grid{display:flex;flex-wrap:wrap;gap:7px}
+.mm-grid{display:flex;flex-wrap:wrap;gap:12px}
+.mm-item{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 8px;border:1px solid var(--line);border-radius:12px;background:var(--paper-2);max-width:100%}
+.mm-qr{width:74px;height:74px;flex-shrink:0;background:#fff;border-radius:6px}
+.mm-url{font-size:10.5px;color:var(--ink-2);word-break:break-all;text-decoration:none}
 .amen-item{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:6px 12px;background:var(--paper-2);border-radius:var(--r-pill);color:var(--ink-2);border:1px solid var(--line);font-weight:500}
 .amen-item svg{width:12px;height:12px;color:var(--sky-blue);flex-shrink:0}
 

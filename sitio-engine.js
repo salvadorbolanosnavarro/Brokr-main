@@ -542,6 +542,7 @@ function toggleDetalleProp(idxStr) {
       </div>
       ${opsDe(p).length > 1 && p.mostrar_precio !== false ? `<div class="st-modal__specs">${opsDe(p).map(o => `<span>${esc(bkCat.opLabel(o.tipo))}: ${esc(bkCat.precioTexto(o))}</span>`).join('')}</div>` : ''}
       ${p.descripcion ? `<p class="st-modal__desc">${esc(p.descripcion)}</p>` : ''}
+      ${window.bkCat ? bkCat.multimediaHtml(p) : ''}
       ${window.bkCat && Array.isArray(p.caracteristicas) && p.caracteristicas.length ? bkCat.caractPorGrupo(p.caracteristicas).map(gr =>
         `<div class="st-modal__specs" style="margin-top:10px"><strong style="width:100%">${esc(gr.grupo)}</strong>${gr.items.map(x => `<span>${esc(x)}</span>`).join('')}</div>`).join('') : ''}
       ${wa ? `<a class="st-btn st-btn--primary" href="${wa}" target="_blank" rel="noopener">${ICONO_WA_INLINE} Preguntar por esta propiedad</a>` : ''}

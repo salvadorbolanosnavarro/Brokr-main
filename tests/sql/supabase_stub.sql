@@ -1,8 +1,10 @@
 -- Esqueleto mínimo tipo Supabase para probar migraciones en un Postgres local.
 -- NO es el esquema real: sólo las tablas/columnas que las migraciones tocan.
-create role anon nologin;
-create role authenticated nologin;
-create role service_role nologin bypassrls;
+do $$ begin
+  if not exists (select 1 from pg_roles where rolname = 'anon') then create role anon nologin; end if;
+  if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated nologin; end if;
+  if not exists (select 1 from pg_roles where rolname = 'service_role') then create role service_role nologin bypassrls; end if;
+end $$;
 create schema auth;
 create table auth.users (id uuid primary key, email text);
 create function auth.uid() returns uuid language sql stable as
@@ -49,3 +51,10 @@ create view public.propiedades_publicas as
 
 grant select, insert, update, delete on all tables in schema public to authenticated;
 grant select on public.propiedades_publicas to anon;
+
+-- Storage mínimo
+create schema if not exists storage;
+create table if not exists storage.buckets (id text primary key, name text, public boolean);
+create table if not exists storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid);
+alter table storage.objects enable row level security;
+create or replace function auth.role() returns text language sql stable as $$ select coalesce(current_setting('request.jwt.claim.role', true), 'anon') $$;

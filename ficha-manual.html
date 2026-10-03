@@ -778,6 +778,15 @@
     </div>
   </div>
 
+  <!-- VIDEO Y TOUR -->
+  <div class="ui-card">
+    <h3>Video y recorrido virtual</h3>
+    <div class="f">
+      <label>Ligas de YouTube o tour virtual (una por renglón) — salen en la ficha con su código QR</label>
+      <textarea id="d-mm" rows="2" placeholder="https://youtu.be/…&#10;https://my.matterport.com/show/?m=…"></textarea>
+    </div>
+  </div>
+
   <!-- ACTIONS -->
   <div class="ui-card">
     <label id="ficha-save-inmueble-row" style="display:flex;align-items:center;gap:10px;margin-bottom:14px;cursor:pointer;font-size:var(--fs-xs);color:var(--ink)">
@@ -1191,6 +1200,7 @@ function getDatos(){
     niv:     gv('d-niv'),
     anio:    gv('d-anio'),
     desc:    gv('d-desc'),
+    mm:      (document.getElementById('d-mm') || {}).value || '',
     amen:    gv('d-amen'),
   };
 }
@@ -1240,6 +1250,8 @@ async function generarFicha(){
       floors: d.niv ? parseFloat(d.niv) : null,
       age: d.anio || null,
       amenities: d.amen ? d.amen.split(',').map(a=>({name:a.trim()})).filter(a=>a.name) : [],
+      videos: (d.mm || '').split(/\s+/).filter(u => /^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(u)),
+      virtual_tours: (d.mm || '').split(/\s+/).filter(u => /^https:\/\//i.test(u) && !/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(u)),
       property_images: fotos.map(f => ({ url: f.url, original: f.url }))
     };
 
@@ -1368,6 +1380,7 @@ function _fmGetUserId() {
     if (d.amen && document.getElementById('d-amen') && !document.getElementById('d-amen').value) {
       document.getElementById('d-amen').value = d.amen;
     }
+    if (d.mm && document.getElementById('d-mm')) document.getElementById('d-mm').value = d.mm;
     if (typeof onOpChange === 'function') onOpChange();
 
     // Precio

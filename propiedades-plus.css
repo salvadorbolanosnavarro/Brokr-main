@@ -124,3 +124,16 @@
   width: 18px; height: 18px; min-width: 18px; padding: 0; margin: 0;
   border-radius: var(--r-xs); box-shadow: none;
 }
+
+/* ── Multimedia ── */
+.px-nota { font-size: var(--fs-xs); color: var(--mute); margin-top: 6px; }
+.px-file { padding: 10px !important; height: auto !important; border: 2px dashed var(--line-2) !important; background: var(--paper) !important; cursor: pointer; }
+.px-docs { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.px-docs li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 6px 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--paper); }
+.px-docs li a { font-size: var(--fs-sm); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.px-docs .px-op__del { width: 32px; height: 32px; }
+.foto-preview-item.px-baja-res { outline: 2px solid var(--warn); outline-offset: -2px; }
+.px-baja-res__tag {
+  position: absolute; left: 4px; bottom: 4px; padding: 2px 6px; border-radius: var(--r-pill);
+  background: var(--warn); color: var(--bone); font-size: var(--fs-label-3); font-weight: 600; pointer-events: none;
+}

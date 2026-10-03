@@ -2145,6 +2145,7 @@ function crearFichaDesde(id) {
     tipo:      window.bkCat ? bkCat.tipoLabel(bkCat.tipoDe(p)) : p.tipo,
     operacion: p.operacion,
     amen:      window.pxAmenidadesTexto ? pxAmenidadesTexto(p) : (p.amenidades || []).join(', '),
+    mm:        (p.videos || []).concat(p.tours || []).join('\n'),
     precio:    p.precio,
     moneda:    p.moneda || 'MXN',
     colonia:   p.colonia,

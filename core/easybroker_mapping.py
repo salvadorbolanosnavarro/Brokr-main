@@ -84,6 +84,29 @@ def _to_coord(v):
     return f if f != 0 and -180 <= f <= 180 else None
 
 
+_YT_RE = re.compile(r"(?:youtu\.be/|youtube(?:-nocookie)?\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/|live/|v/))([A-Za-z0-9_-]{11})")
+
+
+def _eb_ligas(valores, solo_youtube: bool = False) -> list:
+    """Ligas https únicas de una lista de textos u objetos {"url": …}."""
+    out = []
+    for v in valores or []:
+        url = (v.get("url") or v.get("link") or "") if isinstance(v, dict) else (v or "")
+        url = str(url).strip()
+        if not url:
+            continue
+        if solo_youtube:
+            m = _YT_RE.search(url)
+            if not m:
+                continue
+            url = f"https://www.youtube.com/watch?v={m.group(1)}"
+        elif not url.startswith("https://"):
+            continue
+        if url not in out:
+            out.append(url)
+    return out
+
+
 def _eb_operaciones(ops) -> list:
     """Operaciones de EasyBroker → lista de operaciones Broquer."""
     out = []
@@ -263,5 +286,8 @@ def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
         "otras_caracteristicas": ", ".join(otras) or None,
         "lat": lat,
         "lng": lng,
+        # Fase 2 (migracion-fase2-multimedia.sql)
+        "videos": _eb_ligas(prop_full.get("videos"), solo_youtube=True),
+        "tours": _eb_ligas([prop_full.get("virtual_tour"), *(prop_full.get("virtual_tours") or [])]),
         "updated_at": datetime.utcnow().isoformat(),
     }

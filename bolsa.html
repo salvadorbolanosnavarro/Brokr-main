@@ -268,6 +268,48 @@
     if (!misCargadas) cargarMis();
   };
 
+  /* ══ DETALLE (fotos, operaciones, características, video, tour, documentos) ══ */
+  var _ultimas = [];
+  function abrirDetalle(p) {
+    var ov = el('bl-detalle');
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'bl-detalle'; ov.className = 'bk-overlay bk-overlay--sheet';
+      ov.addEventListener('click', function (e) { if (e.target === ov || e.target.closest('[data-cerrar]')) ov.classList.remove('is-open'); });
+      document.body.appendChild(ov);
+    }
+    var fotos = (p.fotos || []).map(function (f) { return '<img loading="lazy" src="' + esc(f) + '" alt="" style="height:180px;border-radius:var(--r);flex-shrink:0;object-fit:cover"/>'; }).join('');
+    var ops = C.operaciones(p).map(function (o) {
+      return '<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:var(--mute)">' + esc(C.opLabel(o.tipo)) + '</span><strong>' + esc(C.precioTexto(o)) + '</strong></div>';
+    }).join('');
+    var car = C.caractPorGrupo(p.caracteristicas || []).map(function (gr) {
+      return '<div style="margin-top:10px"><div style="font-size:var(--fs-xs);font-weight:600;margin-bottom:4px">' + esc(gr.grupo) + '</div><div class="bl-specs">' +
+        gr.items.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div></div>';
+    }).join('');
+    ov.innerHTML = '<div class="bk-modal" role="dialog" aria-modal="true">' +
+      '<div class="bk-modal__head"><div class="bk-modal__title">' + esc(p.titulo || tipoTxt(p.subtipo || p.tipo)) + '</div>' +
+      '<button class="bk-btn bk-btn--ghost" type="button" data-cerrar aria-label="Cerrar"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button></div>' +
+      '<div class="bk-modal__body">' +
+        (fotos ? '<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px">' + fotos + '</div>' : '') +
+        '<div class="bl-ubi" style="margin-bottom:8px">' + esc([tipoTxt(p.subtipo || p.tipo), p.colonia, p.ciudad, p.estado].filter(Boolean).join(' · ')) + '</div>' +
+        (ops ? '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px">' + ops + '</div>' : '') +
+        '<div class="bl-specs">' + specs(p) + '</div>' + car +
+        (p.descripcion ? '<p style="white-space:pre-line;margin-top:14px">' + esc(p.descripcion) + '</p>' : '') +
+        C.multimediaHtml(p) +
+        (p.bolsa_notas ? '<div class="bl-notas">' + esc(p.bolsa_notas) + '</div>' : '') +
+      '</div></div>';
+    ov.classList.add('is-open');
+  }
+  document.addEventListener('click', function (e) {
+    var card = e.target.closest('[data-bl-idx]');
+    if (!card || e.target.closest('a')) return;
+    var p = _ultimas[Number(card.dataset.blIdx)];
+    if (p) abrirDetalle(p);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && el('bl-detalle')) el('bl-detalle').classList.remove('is-open');
+    if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-bl-idx]')) e.target.click();
+  });
+
   /* ══ EXPLORAR ══ */
   var pagina = 1, paginas = 1;
 
@@ -297,7 +339,7 @@
            'WhatsApp</a>';
     }
     var notas = p.bolsa_notas ? '<div class="bl-notas">' + esc(p.bolsa_notas) + '</div>' : '';
-    return '<article class="bk-card bk-card--raise bk-card--hover bl-card">' +
+    return '<article class="bk-card bk-card--raise bk-card--hover bl-card" data-bl-idx="' + (_ultimas.indexOf(p)) + '" tabindex="0" role="button" aria-label="Ver detalle">' +
       '<div class="bl-foto">' + (foto ? '<img loading="lazy" src="' + esc(foto) + '" alt=""/>' : '') + com + '</div>' +
       '<div class="bl-body">' +
         '<div class="bl-precio">' + precioCard(p) + '</div>' +
@@ -336,6 +378,7 @@
         el('bl-empty').hidden = false;
         return;
       }
+      _ultimas = props;
       grid.innerHTML = props.map(tarjeta).join('');
       if (paginas > 1) {
         el('bl-pag').hidden = false;

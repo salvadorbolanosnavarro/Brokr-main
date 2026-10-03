@@ -262,7 +262,13 @@ update public.propiedades p
 
 -- ── Campos públicos nuevos para el micrositio ──
 -- Sólo inmuebles que ya expone propiedades_publicas (mismas reglas que hoy).
-create or replace view public.propiedades_publicas_extra as
+-- Se crea sólo si no existe: las fases siguientes la amplían, y volver a
+-- correr esta fase no debe quitarle columnas.
+do $vista$
+begin
+  if not exists (select 1 from pg_views where schemaname = 'public' and viewname = 'propiedades_publicas_extra') then
+    execute $sql$
+create view public.propiedades_publicas_extra as
 select p.id, p.subtipo,
        -- Si el agente ocultó el precio, las operaciones salen sin monto.
        case when coalesce(p.mostrar_precio, true) then p.operaciones
@@ -275,7 +281,10 @@ select p.id, p.subtipo,
        case when p.mostrar_ubicacion_exacta then p.lat end as lat,
        case when p.mostrar_ubicacion_exacta then p.lng end as lng
   from public.propiedades p
- where p.id in (select id from public.propiedades_publicas);
+ where p.id in (select id from public.propiedades_publicas)
+    $sql$;
+  end if;
+end $vista$;
 
 grant select on public.propiedades_publicas_extra to anon, authenticated;
 

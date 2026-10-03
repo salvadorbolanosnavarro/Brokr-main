@@ -812,6 +812,56 @@
     }).join('');
   }
 
+  // ── Multimedia ──
+  // ID de YouTube de cualquier forma de liga (watch, youtu.be, shorts, embed, live).
+  function ytId(url) {
+    var m = String(url || '').match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/))([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+  function esHttps(url) { return /^https:\/\/[^\s"'<>]+$/i.test(String(url || '').trim()); }
+  function iframe(src, titulo) {
+    return '<div class="bk-embed"><iframe src="' + esc(src) + '" title="' + esc(titulo) + '" loading="lazy" ' +
+      'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; xr-spatial-tracking; fullscreen" ' +
+      'allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>';
+  }
+  function videoEmbed(url) {
+    var id = ytId(url);
+    return id ? iframe('https://www.youtube-nocookie.com/embed/' + id, 'Video del inmueble') : '';
+  }
+  function tourEmbed(url) {
+    url = String(url || '').trim();
+    if (!esHttps(url)) return '';
+    // Matterport: la liga "show" se embebe tal cual; Kuula: /share/ → /share/ (embed acepta ambas).
+    return iframe(url, 'Tour virtual');
+  }
+  // Limpia una lista de ligas (texto con saltos de línea o arreglo).
+  function ligas(v, soloYoutube) {
+    var arr = Array.isArray(v) ? v : String(v || '').split(/[\n,]+/);
+    var out = [];
+    arr.forEach(function (x) {
+      x = String(x || '').trim();
+      if (!x) return;
+      if (soloYoutube) { var id = ytId(x); if (id) x = 'https://www.youtube.com/watch?v=' + id; else return; }
+      else if (!esHttps(x)) return;
+      if (out.indexOf(x) === -1) out.push(x);
+    });
+    return out;
+  }
+  function multimediaHtml(p, opts) {
+    opts = opts || {};
+    var h = '';
+    var vids = (p.videos || []).map(videoEmbed).filter(Boolean);
+    var tours = (p.tours || []).map(tourEmbed).filter(Boolean);
+    var docs = (p.documentos || []).filter(function (d) { return d && esHttps(d.url); });
+    if (vids.length) h += '<div class="bk-mm"><h4>' + (vids.length > 1 ? 'Videos' : 'Video') + '</h4>' + vids.join('') + '</div>';
+    if (tours.length) h += '<div class="bk-mm"><h4>Tour virtual</h4>' + tours.join('') + '</div>';
+    if (docs.length) h += '<div class="bk-mm"><h4>Documentos</h4><ul class="bk-docs">' + docs.map(function (d) {
+      return '<li><a href="' + esc(d.url) + '" target="_blank" rel="noopener" download>' + esc(d.nombre || 'Documento') + '</a>' +
+        (d.tamano ? ' <span>' + Math.max(1, Math.round(d.tamano / 1024)) + ' KB</span>' : '') + '</li>';
+    }).join('') + '</ul></div>';
+    return h;
+  }
+
   window.BK_CAT = CAT;
   window.bkCat = {
     data: CAT,
@@ -836,6 +886,22 @@
     caractLabel: caractLabel,
     caractGrupo: function (k) { return CAR_GRUPO[k] || ''; },
     caractPorGrupo: caractPorGrupo,
-    caractCheckboxes: caractCheckboxes
+    caractCheckboxes: caractCheckboxes,
+    ytId: ytId,
+    esHttps: esHttps,
+    videoEmbed: videoEmbed,
+    tourEmbed: tourEmbed,
+    ligas: ligas,
+    multimediaHtml: multimediaHtml
   };
+  // Estilos mínimos de multimedia (la usan páginas con hojas distintas).
+  if (typeof document !== 'undefined' && !document.getElementById('bk-mm-css')) {
+    var st = document.createElement('style'); st.id = 'bk-mm-css';
+    st.textContent = '.bk-embed{position:relative;width:100%;aspect-ratio:16/9;border-radius:var(--r,12px);overflow:hidden;background:var(--paper-2,#eee);margin:0 0 10px}' +
+      '.bk-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}' +
+      '.bk-mm{margin:14px 0}.bk-mm h4{margin:0 0 8px;font-size:var(--fs-sm,14px);font-weight:600}' +
+      '.bk-docs{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}' +
+      '.bk-docs a{font-weight:600;color:inherit;text-decoration:underline}.bk-docs span{color:var(--mute,#777);font-size:var(--fs-xs,12px)}';
+    (document.head || document.documentElement).appendChild(st);
+  }
 })();

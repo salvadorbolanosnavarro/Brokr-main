@@ -19,7 +19,10 @@ PROPS = [
      "operaciones": [{"tipo": "venta", "precio": 4500000, "moneda": "MXN", "unidad": "total"},
                      {"tipo": "renta", "precio": 28000, "moneda": "MXN", "unidad": "total"}],
      "caracteristicas": ["alberca", "seguridad_24h", "fin_infonavit"], "lat": 19.66, "lng": -101.16,
-     "fotos": [], "etiquetas": ["destacada"], "created_at": "2026-09-01T10:00:00Z", "updated_at": "2026-09-20T10:00:00Z"},
+     "fotos": ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII="],
+     "videos": ["https://www.youtube.com/watch?v=dQw4w9WgXcQ"], "tours": ["https://my.matterport.com/show/?m=abc"],
+     "documentos": [{"nombre": "Plano.pdf", "url": "https://x.supabase.co/storage/v1/object/public/documentos-publicos/a/plano.pdf", "tipo": "application/pdf", "tamano": 2048}],
+     "etiquetas": ["destacada"], "created_at": "2026-09-01T10:00:00Z", "updated_at": "2026-09-20T10:00:00Z"},
     {"id": "p2", "user_id": USER_ID, "org_id": ORG_ID, "titulo": "Nave en Ciudad Industrial", "tipo": "bodega", "subtipo": "nave_industrial",
      "operacion": "renta", "precio": 90000, "moneda": "MXN", "estatus": "activa", "colonia": "Ciudad Industrial", "ciudad": "Morelia",
      "estado": "Michoacán", "m2_construccion": 1200, "fotos": [], "etiquetas": [], "lat": 19.72, "lng": -101.25,
@@ -120,6 +123,12 @@ with sync_playwright() as pw:
     page.locator("#px-ops .px-op").nth(2).locator("input[data-k=precio]").fill("1800")
     page.check("#px-caract input[value=jardin]")
     page.fill("#prop-form input[name=antiguedad]", "7")
+    check(page.locator("#px-videos").input_value().startswith("https://www.youtube.com/watch?v=dQw4w9WgXcQ"), "videos cargados en el formulario")
+    check(page.locator("#px-docs-list li").count() == 1, "documento público listado")
+    page.wait_for_timeout(300)
+    check(page.locator("#fotos-preview .px-baja-res__tag").count() == 1, "aviso de foto de baja resolución")
+    page.fill("#px-videos", "https://youtu.be/dQw4w9WgXcQ\nliga mala\nhttps://youtu.be/aaaaaaaaaaa")
+    page.fill("#px-tours", "javascript:alert(1)\nhttps://kuula.co/share/abc")
     page.screenshot(path=str(OUT / "inm-form-375.png"))
     page.click("#prop-form .pf-save-btn")
     page.wait_for_timeout(800)
@@ -129,6 +138,9 @@ with sync_playwright() as pw:
     check(p1["tipo"] == "casa" and p1["subtipo"] == "casa_condominio", "tipo=familia y subtipo detallado")
     check("jardin" in p1["caracteristicas"] and "Jardín" in (p1.get("amenidades") or []), "características + amenidades de respaldo")
     check(p1["antiguedad"] == 7, "antigüedad guardada como número")
+    check(p1["videos"] == ["https://www.youtube.com/watch?v=dQw4w9WgXcQ", "https://www.youtube.com/watch?v=aaaaaaaaaaa"], "videos normalizados")
+    check(p1["tours"] == ["https://kuula.co/share/abc"], "tours sólo https")
+    check(len(p1["documentos"]) == 1, "documentos conservados")
     check(p1["operacion"] == "venta" and p1["precio"] == 4500000, "columnas viejas con la operación principal")
 
     # Ficha
@@ -138,8 +150,18 @@ with sync_playwright() as pw:
     check("Renta temporal" in det and "por noche" in det, "ficha muestra operaciones")
     check("Financiamiento aceptado" in det and "INFONAVIT" in det, "ficha muestra características por grupo")
     check("Casa en condominio" in det, "ficha muestra tipo detallado")
+    check(page.locator("#f-pane-detalles iframe[src*='youtube-nocookie.com/embed/dQw4w9WgXcQ']").count() == 1, "ficha embebe el video")
+    check(page.locator("#f-pane-detalles iframe[src*='kuula.co']").count() == 1, "ficha embebe el tour")
     page.screenshot(path=str(OUT / "inm-ficha-375.png"), full_page=True)
     page.evaluate("closePropDetail()")
+
+    # Tope de 50 fotos
+    page.evaluate("openPropForm('p2'); uploadedFotoUrls = Array(50).fill('https://x/f.jpg'); renderFotosPreview();")
+    check("máximo de 50" in page.locator("#px-fotos-nota").inner_text(), "aviso de tope de 50 fotos")
+    page.set_input_files("#fotos-upload", files=[{"name": "a.jpg", "mimeType": "image/jpeg", "buffer": b"x"}])
+    page.wait_for_timeout(300)
+    check(page.evaluate("uploadedFotoUrls.length") == 50, "no deja pasar de 50 fotos")
+    page.evaluate("propFormDirty=false; closePropModal()")
 
     # Lote: seleccionar 2, cambiar estatus y exportar CSV
     page.evaluate("toggleSelectProp('p1'); toggleSelectProp('p2');")

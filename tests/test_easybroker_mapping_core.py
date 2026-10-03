@@ -125,6 +125,15 @@ class EasyBrokerMappingCoreTests(unittest.TestCase):
         self.assertEqual(row["antiguedad"], 12)
         self.assertIsNone(row["anio_construccion"])
 
+    def test_videos_y_tour_virtual(self):
+        row = _eb_to_brokr({
+            "public_id": "EB-5",
+            "videos": ["https://youtu.be/dQw4w9WgXcQ", {"url": "https://vimeo.com/1"}, "https://www.youtube.com/watch?v=dQw4w9WgXcQ"],
+            "virtual_tour": "https://my.matterport.com/show/?m=abc",
+        }, "u")
+        self.assertEqual(row["videos"], ["https://www.youtube.com/watch?v=dQw4w9WgXcQ"])
+        self.assertEqual(row["tours"], ["https://my.matterport.com/show/?m=abc"])
+
     def test_columnas_extendidas_se_pueden_quitar(self):
         from core.easybroker_mapping import quitar_columnas_extendidas
         row = _eb_to_brokr({"public_id": "EB-4"}, "u")
