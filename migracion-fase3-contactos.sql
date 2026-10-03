@@ -16,12 +16,45 @@
 --   Funciones de servicio (sólo backend) para renombrar/fusionar/eliminar
 --   etiquetas de contactos e inmuebles en toda una organización.
 --
+-- TOLERA TABLAS VIEJAS: en producción pipeline_etapas y fuentes_captacion ya
+-- existían con otra forma (user_id NOT NULL, sin org_id/nombre_norm). Aquí se
+-- agregan las columnas que falten y se quita el NOT NULL de columnas viejas
+-- que Broquer ya no llena. No se borra ninguna fila ni columna.
+--
 -- Requiere: migracion-fase1-inventario.sql (usa bk_normaliza) y
 -- migracion-aislamiento-organizacion.sql (usa mis_org_ids). Idempotente.
 -- Correr en Supabase → SQL Editor → Run.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 begin;
+
+-- ── Columnas viejas NOT NULL que Broquer ya no llena ────────────────────────
+-- Va primero: si alguna de estas tablas ya existía con columnas obligatorias que no son
+-- de este esquema (y sin valor por defecto), los guardados nuevos fallarían.
+-- Se les quita el NOT NULL (no se borran ni se cambian los datos).
+do $$
+declare r record;
+begin
+  for r in
+    select c.relname as tabla, a.attname as columna
+      from pg_attribute a
+      join pg_class c on c.oid = a.attrelid
+      join pg_namespace n on n.oid = c.relnamespace
+      join (values
+        ('pipeline_etapas',   array['id', 'nombre']),
+        ('contacto_tipos',    array['id', 'org_id', 'clave', 'nombre']),
+        ('fuentes_captacion', array['id', 'org_id', 'nombre', 'nombre_norm'])
+      ) as t(tabla, nuestras) on t.tabla = c.relname
+     where n.nspname = 'public' and a.attnum > 0 and not a.attisdropped
+       and a.attnotnull and not a.atthasdef
+       and a.attname <> all (t.nuestras)
+       and not exists (select 1 from pg_index i
+                        where i.indrelid = c.oid and i.indisprimary and a.attnum = any (i.indkey))
+  loop
+    execute format('alter table public.%I alter column %I drop not null', r.tabla, r.columna);
+    raise notice '%.%: se quitó NOT NULL (columna vieja que Broquer ya no llena)', r.tabla, r.columna;
+  end loop;
+end $$;
 
 -- ── Etapas del pipeline ─────────────────────────────────────────────────────
 create table if not exists public.pipeline_etapas (
@@ -33,9 +66,17 @@ create table if not exists public.pipeline_etapas (
   created_at timestamptz default now()
 );
 alter table public.pipeline_etapas
+  add column if not exists user_id uuid,
+  add column if not exists nombre text,
+  add column if not exists orden integer default 0,
+  add column if not exists color text,
+  add column if not exists created_at timestamptz default now(),
   add column if not exists org_id uuid,
   add column if not exists clave text,
   add column if not exists es_sistema boolean not null default false;
+-- Tabla vieja: user_id venía NOT NULL; las etapas nuevas son de la
+-- organización y no llevan user_id.
+alter table public.pipeline_etapas alter column user_id drop not null;
 
 -- La clave de las etapas que ya existían es el nombre en minúsculas: es
 -- exactamente lo que las pantallas guardaban en contactos.estatus.
@@ -121,6 +162,25 @@ create table if not exists public.fuentes_captacion (
   nombre_norm text not null,
   created_at timestamptz not null default now()
 );
+-- Tabla vieja (id, user_id NOT NULL, nombre, created_at): se completa.
+alter table public.fuentes_captacion
+  add column if not exists org_id uuid,
+  add column if not exists nombre text,
+  add column if not exists nombre_norm text,
+  add column if not exists created_at timestamptz not null default now();
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'fuentes_captacion' and column_name = 'user_id') then
+    alter table public.fuentes_captacion alter column user_id drop not null;
+    update public.fuentes_captacion f
+       set org_id = om.org_id
+      from public.organizacion_miembros om
+     where f.org_id is null and om.user_id = f.user_id and om.activo = true;
+  end if;
+end $$;
+update public.fuentes_captacion set nombre_norm = public.bk_normaliza(nombre)
+ where nombre_norm is null and nombre is not null;
 create unique index if not exists fuentes_captacion_org_norm on public.fuentes_captacion (org_id, nombre_norm);
 
 alter table public.contactos
@@ -237,6 +297,7 @@ end $$;
 revoke all on function public.bk_etiquetas_conteo(text, uuid) from public, anon, authenticated;
 revoke all on function public.bk_etiqueta_renombrar(text, uuid, text, text) from public, anon, authenticated;
 revoke all on function public.bk_etiqueta_eliminar(text, uuid, text) from public, anon, authenticated;
+
 
 commit;
 
