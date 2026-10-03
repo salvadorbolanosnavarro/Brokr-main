@@ -642,6 +642,12 @@ app.include_router(alertas_router)
 from routers.cierres import router as cierres_router
 app.include_router(cierres_router)
 
+# Fase 7 · Sitio web de la inmobiliaria y del asesor: configuración, páginas,
+# dominio propio y páginas públicas renderizadas en servidor (routers/sitios.py).
+from routers.sitios import router as sitios_router, instalar_middleware as instalar_sitios_middleware
+app.include_router(sitios_router)
+instalar_sitios_middleware(app)
+
 app.include_router(admin_usage_router)
 app.include_router(account_delete_router)
 app.include_router(avm_legacy_router)

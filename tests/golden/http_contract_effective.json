@@ -1,5 +1,5 @@
 {
-  "count": 326,
+  "count": 348,
   "operations": [
     {
       "body": false,
@@ -2524,6 +2524,19 @@
     {
       "body": false,
       "method": "GET",
+      "params": [
+        "path:pid!",
+        "query:a"
+      ],
+      "path": "/p/{pid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
       "params": [],
       "path": "/ping",
       "responses": [
@@ -2870,12 +2883,265 @@
       ]
     },
     {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/acerca",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/buscar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/contacto",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/contacto",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:pid!",
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/inmueble/{pid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:pagina!",
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/p/{pagina}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/renta",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/rentas-temporales",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/robots.txt",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/sitemap.xml",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/venta",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
       "body": true,
       "method": "POST",
       "params": [
         "path:slug!"
       ],
       "path": "/sitio/{slug}/lead",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/sitios/mios",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/dominio",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/dominio",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/dominio/verificar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/paginas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/paginas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:pagina_id!",
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/paginas/{pagina_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:pagina_id!",
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/paginas/{pagina_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PUT",
+      "params": [
+        "path:tipo!"
+      ],
+      "path": "/sitios/{tipo}",
       "responses": [
         "200",
         "422"
