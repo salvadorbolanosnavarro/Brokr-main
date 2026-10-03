@@ -791,6 +791,11 @@
 
   function init() {
     montarHtml();
+    // Modal de cierre (Fase 6): archivo aparte para no crecer propiedades.html.
+    if (!document.getElementById('px-cierre-js')) {
+      var sc = document.createElement('script'); sc.id = 'px-cierre-js'; sc.src = 'propiedades-cierre.js'; sc.defer = true;
+      document.body.appendChild(sc);
+    }
     var selTipo = g('props-filter-tipo');
     if (selTipo) selTipo.innerHTML = C.tiposOptions('', { vacio: 'Todos los tipos' });
     var selOp = g('props-filter-op');
@@ -806,4 +811,46 @@
     pintarBadge();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+// ── Importación de EasyBroker (Fase 9): el resumen de propiedades.html se
+// completa con propietarios ligados, agentes asignados y la lista completa de
+// errores con su motivo (propiedades.html está en su techo de tamaño).
+(function () {
+  'use strict';
+  if (!window.fetch || window.__ebResumenPlus) return;
+  window.__ebResumenPlus = true;
+  var _fetch = window.fetch;
+  window.fetch = function (url) {
+    var p = _fetch.apply(this, arguments);
+    if (typeof url === 'string' && url.indexOf('/easybroker/import-all') !== -1) {
+      p.then(function (r) {
+        r.clone().json().then(function (d) { esperar(d, 0); }).catch(function () {});
+      }).catch(function () {});
+    }
+    return p;
+  };
+  function esperar(d, n) {
+    var sum = document.getElementById('eb-import-summary');
+    if (sum && sum.style.display === 'block') return completar(d);
+    if (n < 100) setTimeout(function () { esperar(d, n + 1); }, 50);
+  }
+  function completar(d) {
+    var esc = window.bkEsc || function (s) { return String(s == null ? '' : s); };
+    var sum = document.getElementById('eb-import-summary');
+    if (sum && d && (d.propietarios_ligados || d.asignadas_agente)) {
+      sum.insertAdjacentHTML('beforeend',
+        (d.asignadas_agente ? '<div><b>' + d.asignadas_agente + '</b> con su agente asignado</div>' : '') +
+        (d.propietarios_ligados ? '<div><b>' + d.propietarios_ligados + '</b> con su propietario ligado en Contactos</div>' : ''));
+    }
+    var errs = document.getElementById('eb-import-errs');
+    if (errs && d && d.errores && d.errores.length > 5) {
+      var det = document.createElement('details');
+      det.innerHTML = '<summary style="cursor:pointer;margin-top:6px">Ver los ' + d.errores.length + ' errores</summary>' +
+        '<div style="max-height:200px;overflow:auto;margin-top:6px">' + d.errores.map(function (e) {
+          return '· ' + esc(e.title || e.id) + ': ' + esc(e.error || 'desconocido');
+        }).join('<br>') + '</div>';
+      errs.appendChild(det);
+    }
+  }
 })();

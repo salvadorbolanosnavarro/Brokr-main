@@ -15,10 +15,52 @@
 --                     cliente (por WhatsApp o correo, cuándo y quién).
 --
 -- Requiere: migracion-fase1-inventario.sql. Idempotente.
+-- Ya no requiere correr antes migracion-buscador-propiedades.sql: si las
+-- tablas del buscador no existen, se crean aquí (con contacto_id de texto).
 -- Correr en Supabase → SQL Editor → Run.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 begin;
+
+-- ── Tablas del buscador (migracion-buscador-propiedades.sql) si faltan ──────
+create table if not exists public.requerimientos_busqueda (
+  id                  uuid primary key default gen_random_uuid(),
+  user_id             uuid not null,
+  contacto_id         text not null,
+  activo              boolean not null default true,
+  operacion           text not null default 'venta',
+  tipo_inmueble       text not null default 'casa',
+  colonia             text,
+  ciudad              text,
+  estado              text,
+  precio_min          numeric,
+  precio_max          numeric,
+  recamaras_min       integer,
+  notas               text,
+  creado_en           timestamptz not null default now(),
+  actualizado_en      timestamptz not null default now(),
+  ultima_busqueda_en  timestamptz,
+  unique (contacto_id)
+);
+create index if not exists requerimientos_busqueda_user_idx on public.requerimientos_busqueda (user_id);
+create index if not exists requerimientos_busqueda_pendientes_idx on public.requerimientos_busqueda (activo, ultima_busqueda_en);
+create table if not exists public.busqueda_resultados (
+  id                  uuid primary key default gen_random_uuid(),
+  requerimiento_id    uuid not null,
+  user_id             uuid not null,
+  contacto_id         text not null,
+  titulo              text,
+  url                 text not null,
+  portal              text,
+  precio              numeric,
+  precio_confirmado   boolean not null default false,
+  snippet             text,
+  encontrado_en       timestamptz not null default now()
+);
+create index if not exists busqueda_resultados_requerimiento_idx on public.busqueda_resultados (requerimiento_id);
+create index if not exists busqueda_resultados_contacto_idx on public.busqueda_resultados (contacto_id);
+alter table public.requerimientos_busqueda enable row level security;
+alter table public.busqueda_resultados enable row level security;
 
 -- contacto_id a texto (sólo si hoy es uuid).
 do $$

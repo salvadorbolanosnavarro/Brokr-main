@@ -255,13 +255,36 @@ async function coCargarBandeja() {
   try {
     const r = await fetch(CO_API + '/correo/bandeja?limite=30', { headers: await coAuth() });
     const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.detail || 'Error');
+    // Sin cuenta conectada (o se desconectó en otro dispositivo): a conectar.
+    if (r.status === 404) { coEstado(); return; }
+    if (!r.ok) { coErrorBandeja(lista, d.detail); return; }
     CO_MSGS = d.mensajes || [];
     coPintarLista();
   } catch (e) {
-    lista.innerHTML = '<div class="co-vacio"><strong>No se pudo leer tu bandeja</strong><span>'
-      + coEsc(e.message || e) + '</span></div>';
+    coErrorBandeja(lista, { mensaje: 'Revisa tu conexión a internet e intenta de nuevo.' });
   }
+}
+
+// El backend manda {codigo, mensaje}: "reconectar" ofrece volver a conectar;
+// lo demás (proveedor lento o caído) ofrece reintentar.
+function coErrorBandeja(lista, det) {
+  const info = (det && typeof det === 'object') ? det : { mensaje: det || 'Intenta de nuevo en un momento.' };
+  const reconectar = info.codigo === 'reconectar';
+  lista.innerHTML = '<div class="co-vacio"><strong>' + (reconectar ? 'Hay que volver a conectar tu correo' : 'No pudimos traer tu bandeja')
+    + '</strong><span>' + coEsc(info.mensaje || '') + '</span>'
+    + (reconectar
+      ? '<div style="margin-top:var(--sp-4)"><button class="bk-btn bk-btn--forest" onclick="coReconectar()">Volver a conectar</button></div>'
+      : '<div style="margin-top:var(--sp-4)"><button class="bk-btn" onclick="coCargarBandeja()">Reintentar</button></div>')
+    + '</div>';
+}
+
+function coReconectar() {
+  const correo = document.getElementById('co-cuenta').textContent || '';
+  coVista('conectar');
+  coCambioProveedor();
+  if (correo) document.getElementById('co-email').value = correo;
+  document.getElementById('co-password').value = '';
+  document.getElementById('co-password').focus();
 }
 
 function coPintarLista() {
@@ -297,7 +320,7 @@ async function coAbrirMensaje(uid) {
   try {
     const r = await fetch(CO_API + '/correo/mensaje/' + encodeURIComponent(uid), { headers: await coAuth() });
     const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(d.detail || 'Error');
+    if (!r.ok) throw new Error((d.detail && d.detail.mensaje) || d.detail || 'Intenta de nuevo en un momento.');
     CO_ACTUAL = d.mensaje;
     const en = CO_MSGS.find(x => x.uid === uid);
     if (en) en.visto = true;

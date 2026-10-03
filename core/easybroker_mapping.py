@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 import re
+from typing import Optional
 
 from core.catalogo_inmuebles import (
     EB_TIPOS,
@@ -151,6 +152,39 @@ def _split_location_name(name):
     return (", ".join(parts[:-2]), parts[-2], parts[-1])
 
 
+def _texto(v, largo: int) -> Optional[str]:
+    v = str(v).strip() if v not in (None, "") else ""
+    return v[:largo] or None
+
+
+def eb_extras(prop_full: dict) -> dict:
+    """Datos de EasyBroker que no van directo a una columna del inmueble:
+    descripción privada (→ notas internas), agente asignado y propietario.
+    La API los ha mandado con varios nombres; se aceptan todos."""
+    nota = next((prop_full.get(k) for k in ("private_description", "internal_notes", "private_notes", "notes")
+                 if isinstance(prop_full.get(k), str) and prop_full.get(k).strip()), None)
+    agente = prop_full.get("agent") if isinstance(prop_full.get("agent"), dict) else None
+    dueno = next((prop_full.get(k) for k in ("owner", "property_owner", "owner_contact")
+                  if isinstance(prop_full.get(k), dict)), None)
+    propietario = None
+    if dueno:
+        tel = dueno.get("phone") or dueno.get("mobile_phone") or dueno.get("cell_phone") or ""
+        if not tel and isinstance(dueno.get("phones"), list) and dueno["phones"]:
+            p0 = dueno["phones"][0]
+            tel = p0.get("phone") if isinstance(p0, dict) else p0
+        email = dueno.get("email") or ""
+        if not email and isinstance(dueno.get("emails"), list) and dueno["emails"]:
+            e0 = dueno["emails"][0]
+            email = e0.get("email") if isinstance(e0, dict) else e0
+        nombre = (dueno.get("full_name") or dueno.get("name")
+                  or " ".join(x for x in (dueno.get("first_name"), dueno.get("last_name")) if x) or "").strip()
+        tel = re.sub(r"[^+\d]", "", str(tel or ""))[:20]
+        email = str(email or "").strip().lower()[:120]
+        if nombre or tel or email:
+            propietario = {"nombre": nombre[:120] or "Propietario", "telefono": tel, "email": email}
+    return {"nota_privada": nota.strip()[:4000] if nota else None, "agente": agente, "propietario": propietario}
+
+
 def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
     """Mapea una propiedad de EasyBroker al esquema de propiedades de Broquer."""
     def _to_int(v):
@@ -289,5 +323,9 @@ def _eb_to_brokr(prop_full: dict, user_id: str) -> dict:
         # Fase 2 (migracion-fase2-multimedia.sql)
         "videos": _eb_ligas(prop_full.get("videos"), solo_youtube=True),
         "tours": _eb_ligas([prop_full.get("virtual_tour"), *(prop_full.get("virtual_tours") or [])]),
+        # Fase 9: clave interna, código de llave y etiquetas de EasyBroker.
+        "clave_interna": _texto(prop_full.get("internal_id"), 60),
+        "codigo_llave": _texto(prop_full.get("key_code") or prop_full.get("keys_location") or prop_full.get("key_location"), 120),
+        "etiquetas": [str(t).strip()[:40] for t in (prop_full.get("tags") or []) if isinstance(t, str) and t.strip()][:40],
         "updated_at": datetime.utcnow().isoformat(),
     }

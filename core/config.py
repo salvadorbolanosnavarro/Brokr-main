@@ -110,6 +110,13 @@ class Settings:
     wa2_ai_limit: int
     firmame_api_key: str
     firmame_base_url: str
+    # Sitios web con dominio propio (Cloudflare for SaaS, ver routers/sitios.py
+    # y cloudflare/sitios-worker.js). Vacíos = la pantalla de dominio explica
+    # qué falta y el sitio sigue visible en su dirección de prueba.
+    cloudflare_api_token: str = ""
+    cloudflare_zone_id: str = ""
+    sitios_cname_destino: str = "sitios.broquer.app"
+    sitios_worker_clave: str = ""
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -194,6 +201,10 @@ class Settings:
             # PSC (Proveedor de Servicios de Certificación) para la constancia
             # de conservación NOM-151. Vacío = el sello NOM-151 queda apagado
             # y la firma electrónica reforzada sigue funcionando igual.
+            cloudflare_api_token=os.getenv("CLOUDFLARE_API_TOKEN", "").strip(),
+            cloudflare_zone_id=os.getenv("CLOUDFLARE_ZONE_ID", "").strip(),
+            sitios_cname_destino=os.getenv("SITIOS_CNAME_DESTINO", "sitios.broquer.app").strip(),
+            sitios_worker_clave=os.getenv("SITIOS_WORKER_CLAVE", "").strip(),
             firmame_api_key=os.getenv("FIRMAME_API_KEY", "").strip(),
             firmame_base_url=os.getenv(
                 "FIRMAME_BASE_URL",

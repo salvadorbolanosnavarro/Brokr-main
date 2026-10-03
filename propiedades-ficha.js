@@ -216,9 +216,10 @@ function pfRenderDetalles(p, fotos) {
     ['Disposición', window.bkCat && p.disposicion ? esc(bkCat.disposicionLabel(p.disposicion)) : ''],
     ['Orientación', window.bkCat && p.orientacion ? esc(bkCat.orientacionLabel(p.orientacion)) : ''],
     ['Precio en el anuncio', p.mostrar_precio === false ? 'Oculto' : ''],
-    ['Comisión', p.operacion === 'renta'
+    // Comisiones: sólo quien tiene el permiso "Ver comisiones".
+    ['Comisión', (window.pPermisos && window.pPermisos.ver_comisiones === false) ? '' : (p.operacion === 'renta'
       ? (p.comision_renta_meses != null ? p.comision_renta_meses + ' mes(es)' : '')
-      : (p.comision_venta_pct != null ? p.comision_venta_pct + '%' : '')],
+      : (p.comision_venta_pct != null ? p.comision_venta_pct + '%' : ''))],
     ['Exclusiva', p.exclusiva === 'si' ? 'Sí' : (p.exclusiva === 'no' ? 'No' : '')],
     ['Comparte comisión', p.comision_compartida === true ? 'Sí' : (p.comision_compartida === false ? 'No' : '')],
     ['Clave interna', esc(p.clave_interna || '')],

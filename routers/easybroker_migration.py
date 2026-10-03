@@ -10,13 +10,76 @@ from fastapi import APIRouter, HTTPException, Request
 
 from core.auth import get_user_id_from_token
 from core.catalogo_inmuebles import es_error_columna_faltante
-from core.easybroker_mapping import quitar_columnas_extendidas
+from core.contact_import import map_org_agents
+from core.easybroker_mapping import eb_extras, quitar_columnas_extendidas
 from core.easybroker_migration import MIGRACIONES, PROGRESO_IMPORT, migration_key
 from core.legacy_main_config import legacy_main_settings
 from routers.organizaciones import get_org_id_for_user
 
 
 router = APIRouter()
+
+# Columnas que la Fase 9 llena desde EasyBroker (existen desde antes en
+# propiedades; si una base vieja no las tiene, el guardado reintenta sin ellas).
+EB_COLUMNAS_FASE9 = ("clave_interna", "codigo_llave", "etiquetas", "asignado_a")
+
+
+def fusionar_fase9(inmueble: dict, prev: dict, extras: dict, agente_uid) -> None:
+    """Re-importar no pisa lo que se trabajó en Broquer: la clave y el código
+    de llave sólo se llenan si EasyBroker trae dato (si no, queda el previo),
+    las etiquetas se suman, el agente sólo cambia si EasyBroker trae uno que
+    es miembro del equipo, y la descripción privada se agrega a las notas
+    internas una sola vez."""
+    for k in ("clave_interna", "codigo_llave"):
+        inmueble[k] = inmueble.get(k) or prev.get(k) or None
+    previas = prev.get("etiquetas") if isinstance(prev.get("etiquetas"), list) else []
+    inmueble["etiquetas"] = list(dict.fromkeys([*previas, *(inmueble.get("etiquetas") or [])]))[:60]
+    inmueble["asignado_a"] = agente_uid or prev.get("asignado_a") or None
+    nota = extras.get("nota_privada")
+    if nota:
+        actuales = inmueble.get("notas") or ""
+        if nota not in actuales:
+            inmueble["notas"] = (actuales + "\n\n" if actuales else "") + "Descripción privada (EasyBroker):\n" + nota
+
+
+async def ligar_propietarios(org_id: str, user_id: str, por_pid: dict, get_rows_dep) -> tuple:
+    """Crea (o reutiliza) el contacto del propietario y lo liga al inmueble
+    con relación «propietario». Idempotente: no duplica contactos ni ligas."""
+    from core.database import post_rows
+    ligados, errores = 0, []
+    try:
+        props = await get_rows_dep("propiedades", {"org_id": f"eq.{org_id}", "eb_public_id": f"in.({','.join(por_pid)})",
+                                                   "select": "id,eb_public_id"}, timeout=20)
+        contactos = await get_rows_dep("contactos", {"org_id": f"eq.{org_id}", "select": "id,telefono,email", "limit": "5000"}, timeout=20)
+    except Exception as e:
+        return 0, [{"id": "propietarios", "error": f"No se pudieron ligar propietarios: {str(e)[:150]}"}]
+    id_por_eb = {p["eb_public_id"]: p["id"] for p in props}
+    por_tel = {c["telefono"][-10:]: c["id"] for c in contactos if c.get("telefono")}
+    por_mail = {c["email"].lower(): c["id"] for c in contactos if c.get("email")}
+    for pid, d in por_pid.items():
+        prop_id = id_por_eb.get(pid)
+        if not prop_id:
+            continue
+        try:
+            cid = (d["telefono"] and por_tel.get(d["telefono"][-10:])) or (d["email"] and por_mail.get(d["email"]))
+            if not cid:
+                nuevo = await post_rows("contactos", {"user_id": user_id, "org_id": org_id, "nombre": d["nombre"],
+                                                      "telefono": d["telefono"] or None, "email": d["email"] or None,
+                                                      "tipo": "arrendador", "fuente": "EasyBroker"})
+                cid = nuevo[0]["id"]
+                if d["telefono"]:
+                    por_tel[d["telefono"][-10:]] = cid
+                if d["email"]:
+                    por_mail[d["email"]] = cid
+            ya = await get_rows_dep("contactos_propiedades", {"contacto_id": f"eq.{cid}", "propiedad_id": f"eq.{prop_id}",
+                                                              "select": "id", "limit": "1"}, timeout=10)
+            if not ya:
+                await post_rows("contactos_propiedades", {"user_id": user_id, "contacto_id": cid, "propiedad_id": prop_id,
+                                                          "relacion": "propietario"})
+            ligados += 1
+        except Exception as e:
+            errores.append({"id": pid, "error": f"Propietario «{d['nombre']}» no ligado: {str(e)[:150]}"})
+    return ligados, errores
 
 
 async def _job_migracion_eb(llave: str, auth_header: str):
@@ -171,17 +234,28 @@ def create_import_all_router(get_context: Callable[[], dict[str, Any]]) -> APIRo
                     "propiedades",
                     {"user_id": f"eq.{user_id}",
                      "eb_public_id": "not.is.null",
-                     "select": "eb_public_id,notas,estatus"},
+                     "select": "eb_public_id,notas,estatus," + ",".join(EB_COLUMNAS_FASE9)},
                     timeout=15,
                 )
             except httpx_dep.HTTPStatusError:
-                filas_existentes = []
+                # Base sin alguna columna: lo de siempre (notas y estatus).
+                try:
+                    filas_existentes = await get_rows_dep(
+                        "propiedades",
+                        {"user_id": f"eq.{user_id}",
+                         "eb_public_id": "not.is.null",
+                         "select": "eb_public_id,notas,estatus"},
+                        timeout=15,
+                    )
+                except httpx_dep.HTTPStatusError:
+                    filas_existentes = []
             for row in filas_existentes:
                 eb_id = row.get("eb_public_id")
                 if eb_id:
                     existentes_por_eb_id[eb_id] = {
                         "notas": row.get("notas"),
                         "estatus": row.get("estatus"),
+                        **{k: row.get(k) for k in EB_COLUMNAS_FASE9},
                     }
         except Exception as e:
             print(f"[import-all] Error leyendo existentes: {e}")
@@ -246,6 +320,25 @@ def create_import_all_router(get_context: Callable[[], dict[str, Any]]) -> APIRo
         if not org_id_import:
             raise HTTPException(status_code=403, detail="Tu cuenta no está configurada. Contacta a soporte.")
 
+        propietarios_por_pid: dict = {}
+        mapa_agentes = None
+        try:
+            mapa_agentes = await map_org_agents(org_id_import, user_id)
+        except Exception as e:
+            print(f"[import-all] No se pudo leer el equipo para asignar agentes: {e}")
+
+        def agente_a_usuario(ag):
+            if not ag or not mapa_agentes:
+                return None
+            em = (ag.get("email") or "").strip().lower()
+            if em and em in mapa_agentes["por_email"]:
+                return mapa_agentes["por_email"][em]
+            for llave in ("full_name", "name"):
+                nm = mapa_agentes["_nrm"](ag.get(llave))
+                if nm and nm in mapa_agentes["por_nombre"]:
+                    return mapa_agentes["por_nombre"][nm]
+            return None
+
         async def fetch_one(client, pid: str):
             try:
                 rd = await eb_get_reintentos(
@@ -257,7 +350,10 @@ def create_import_all_router(get_context: Callable[[], dict[str, Any]]) -> APIRo
                 if rd is None:
                     return ("err", {"id": pid, "error": "EasyBroker no respondió tras varios intentos"})
                 if rd.status_code != 200:
-                    return ("err", {"id": pid, "error": f"EB status {rd.status_code}"})
+                    motivo = {404: "ya no existe en EasyBroker", 401: "la llave de EasyBroker fue rechazada",
+                              403: "tu llave de EasyBroker no tiene acceso a este inmueble",
+                              429: "EasyBroker limitó las peticiones; vuelve a importar en unos minutos"}.get(rd.status_code, "")
+                    return ("err", {"id": pid, "error": f"EB status {rd.status_code}" + (f" ({motivo})" if motivo else "")})
                 prop_full = rd.json()
                 inmueble = eb_to_brokr(prop_full, user_id)
                 inmueble["org_id"] = org_id_import
@@ -270,6 +366,10 @@ def create_import_all_router(get_context: Callable[[], dict[str, Any]]) -> APIRo
                         inmueble["notas"] = prev["notas"]
                     if prev.get("estatus"):
                         inmueble["estatus"] = prev["estatus"]
+                extras = eb_extras(prop_full)
+                fusionar_fase9(inmueble, prev or {}, extras, agente_a_usuario(extras.get("agente")))
+                if extras.get("propietario"):
+                    propietarios_por_pid[pid] = extras["propietario"]
                 return ("ok", inmueble)
             except Exception as e:
                 return ("err", {"id": pid, "error": str(e)[:120]})
@@ -324,7 +424,8 @@ def create_import_all_router(get_context: Callable[[], dict[str, Any]]) -> APIRo
                         # esta base: se reintenta con sólo las columnas de siempre
                         # en vez de perder el lote completo.
                         if es_error_columna_faltante(e.response.text):
-                            chunk = [quitar_columnas_extendidas(r) for r in chunk]
+                            chunk = [{k: v for k, v in quitar_columnas_extendidas(r).items() if k not in EB_COLUMNAS_FASE9}
+                                     for r in chunk]
                             continue
                     except Exception as e:
                         ultimo_fallo = str(e)[:200]
@@ -337,6 +438,13 @@ def create_import_all_router(get_context: Callable[[], dict[str, Any]]) -> APIRo
 
         nuevas = sum(1 for inm in inmuebles_listos if inm["eb_public_id"] not in existentes_por_eb_id)
         actualizadas = upserted - nuevas if upserted >= nuevas else 0
+
+        propietarios_ligados, errores_propietario = 0, []
+        if propietarios_por_pid and upserted:
+            propietarios_ligados, errores_propietario = await ligar_propietarios(
+                org_id_import, user_id, propietarios_por_pid, get_rows_dep)
+            errores.extend(errores_propietario)
+        asignadas_agente = sum(1 for inm in inmuebles_listos if inm.get("asignado_a"))
 
         fotos_lanzado = False
         if org_id_import and upserted and not fotos_diferidas:
@@ -357,6 +465,8 @@ def create_import_all_router(get_context: Callable[[], dict[str, Any]]) -> APIRo
             "limite": eb_limite_propiedades,
             "limite_alcanzado": limite_alcanzado,
             "fotos_en_proceso": fotos_lanzado,
+            "propietarios_ligados": propietarios_ligados,
+            "asignadas_agente": asignadas_agente,
             "errores": errores
         }
 
