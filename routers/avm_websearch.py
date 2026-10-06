@@ -84,6 +84,23 @@ FIRECRAWL_API_KEY = legacy_main_settings.firecrawl_api_key
 FIRECRAWL_CONCURRENCY = legacy_main_settings.firecrawl_concurrency
 FIRECRAWL_TIMEOUT = legacy_main_settings.firecrawl_timeout
 FIRECRAWL_STRUCTURED_EXTRACT = legacy_main_settings.firecrawl_structured_extract
+
+
+def _log_firecrawl(mensaje: str) -> None:
+    """Línea "[firecrawl] …" en los logs de Railway. Con flush para que salga
+    al momento: sin él, Python guarda los print() en un búfer y la línea
+    puede no aparecer nunca en los logs."""
+    print(f"[firecrawl] {mensaje}", flush=True)
+
+
+def estado_firecrawl() -> str:
+    if FIRECRAWL_API_KEY:
+        return "activo"
+    return "inactivo: falta FIRECRAWL_API_KEY"
+
+
+# Al arrancar el servidor (main.py importa este módulo al iniciar).
+_log_firecrawl(estado_firecrawl())
 AVM_CACHE_TTL_DAYS = legacy_main_settings.avm_cache_ttl_days
 
 PREMIUM_FETCH_DOMAINS = {
@@ -940,7 +957,8 @@ def _build_page_summary(html: str) -> str:
 
 
 async def _fetch_candidate_pages(
-    candidates: List[Dict[str, Any]], colonia: str = "", ciudad: str = ""
+    candidates: List[Dict[str, Any]], colonia: str = "", ciudad: str = "",
+    resumen: Optional[Dict[str, Any]] = None,
 ) -> List[Dict[str, Any]]:
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -949,7 +967,8 @@ async def _fetch_candidate_pages(
     }
     sem_http = asyncio.Semaphore(3)
     sem_fc = asyncio.Semaphore(FIRECRAWL_CONCURRENCY)
-    stats = {"firecrawl_calls": 0, "firecrawl_credits": 0, "firecrawl_cache_hits": 0}
+    stats = {"firecrawl_calls": 0, "firecrawl_credits": 0, "firecrawl_cache_hits": 0,
+             "firecrawl_intentos": 0, "firecrawl_errores": {}}
 
     async def _try_httpx(url: str) -> Dict[str, Any]:
         async with sem_http:
@@ -968,8 +987,12 @@ async def _fetch_candidate_pages(
         if cacheado is not None:
             stats["firecrawl_cache_hits"] += 1
             return {"ok": True, "page_text": cacheado, "credits": 0, "from_cache": True}
+        stats["firecrawl_intentos"] += 1
         async with sem_fc:
             result = await _firecrawl_scrape(url)
+        if not result.get("ok"):
+            err = str(result.get("error") or "error")[:60]
+            stats["firecrawl_errores"][err] = stats["firecrawl_errores"].get(err, 0) + 1
         if result.get("ok"):
             stats["firecrawl_calls"] += 1
             stats["firecrawl_credits"] += int(result.get("credits") or 0)
@@ -1011,7 +1034,13 @@ async def _fetch_candidate_pages(
                         "page_text": "",
                     }
 
-            direct = await _try_httpx(url)
+            try:
+                direct = await _try_httpx(url)
+            except Exception as exc:
+                # Los muros anti-bot muchas veces no responden 403: cortan la
+                # conexión o la dejan colgada hasta el timeout. Antes eso
+                # terminaba en "error" sin darle oportunidad a Firecrawl.
+                direct = {"ok": False, "status": 0, "text": "", "error": str(exc)[:120]}
             bloqueada = direct["ok"] and _pagina_bloqueada(direct["text"])
             if direct["ok"] and not bloqueada:
                 return {**item, "fetch_status": "ok", "page_text": direct["text"]}
@@ -1022,9 +1051,9 @@ async def _fetch_candidate_pages(
             # muro en vez de aceptar la página bloqueada como si fuera
             # evidencia real (eso era lo que dejaba un AVM entero sin
             # comparables verificables aunque sí hubiera oferta en la zona).
-            if FIRECRAWL_API_KEY and (bloqueada or status in (403, 429) or status >= 500):
+            if FIRECRAWL_API_KEY and (bloqueada or status in (0, 401, 403, 429) or status >= 500):
                 firecrawl = await _try_firecrawl(url)
-                etiqueta = "bloqueo" if bloqueada else str(status)
+                etiqueta = "bloqueo" if bloqueada else ("sin_respuesta" if status == 0 else str(status))
                 if firecrawl.get("ok"):
                     return {
                         **item,
@@ -1038,18 +1067,60 @@ async def _fetch_candidate_pages(
                 }
             if bloqueada:
                 return {**item, "fetch_status": "bloqueada_sin_firecrawl", "page_text": ""}
+            if status == 0:
+                return {**item, "fetch_status": "error", "fetch_error": direct.get("error", ""), "page_text": ""}
             return {**item, "fetch_status": f"http_{status}", "page_text": ""}
         except Exception as exc:
             return {**item, "fetch_status": "error", "fetch_error": str(exc)[:120], "page_text": ""}
 
     tasks = [one(candidate) for candidate in candidates[:MAX_URLS_TO_FETCH]]
     fetched = await asyncio.gather(*tasks) if tasks else []
-    if stats["firecrawl_calls"] or stats["firecrawl_cache_hits"]:
-        print(
-            f"[firecrawl] calls={stats['firecrawl_calls']} credits={stats['firecrawl_credits']} "
-            f"cache_hits={stats['firecrawl_cache_hits']}"
-        )
+    info = resumen_firecrawl(fetched, stats)
+    if resumen is not None:
+        resumen.update(info)
+    # Siempre, después de cada avalúo: si no se usó, se dice por qué.
+    errores = ", ".join(f"{k}×{v}" for k, v in stats["firecrawl_errores"].items()) or "ninguno"
+    linea = (f"calls={stats['firecrawl_calls']} intentos={stats['firecrawl_intentos']} "
+             f"credits={stats['firecrawl_credits']} cache_hits={stats['firecrawl_cache_hits']} "
+             f"paginas={len(fetched)} errores={errores}")
+    if info.get("motivo_no_uso"):
+        linea += f" — no se usó porque {info['motivo_no_uso']}"
+    _log_firecrawl(linea)
     return fetched
+
+
+def estado_lectura_simple(fetch_status: str) -> str:
+    """Traduce el estado técnico de cada página a lo que ve la persona."""
+    st = fetch_status or ""
+    if st.startswith("ok_firecrawl"):
+        return "leído con Firecrawl"
+    if st in ("ok", "ok_httpx_fallback"):
+        return "leído"
+    if st == "skipped_domain":
+        return "omitido"
+    return "bloqueado"
+
+
+def resumen_firecrawl(paginas: List[Dict[str, Any]], stats: Dict[str, Any]) -> Dict[str, Any]:
+    conteo = {"leído": 0, "leído con Firecrawl": 0, "bloqueado": 0, "omitido": 0}
+    for p in paginas:
+        conteo[estado_lectura_simple(p.get("fetch_status", ""))] += 1
+    motivo = ""
+    if not FIRECRAWL_API_KEY:
+        motivo = "falta FIRECRAWL_API_KEY en el servidor"
+    elif not stats.get("firecrawl_intentos") and not stats.get("firecrawl_cache_hits"):
+        motivo = ("ninguna página era de un portal protegido ni salió bloqueada"
+                  if paginas else "la búsqueda no encontró páginas que leer")
+    return {
+        "activo": bool(FIRECRAWL_API_KEY),
+        "intentos": stats.get("firecrawl_intentos", 0),
+        "leidas": stats.get("firecrawl_calls", 0),
+        "cache": stats.get("firecrawl_cache_hits", 0),
+        "creditos": stats.get("firecrawl_credits", 0),
+        "errores": dict(stats.get("firecrawl_errores") or {}),
+        "conteo": conteo,
+        "motivo_no_uso": motivo,
+    }
 
 
 def _subject_summary(req: AvmWebSearchRequest, tipo_label: str) -> str:
@@ -1226,7 +1297,8 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
             detail="No encontré URLs candidatas con las APIs de búsqueda configuradas. Prueba con otra colonia/zona o configura otra API de búsqueda.",
         )
 
-    paginas = await _fetch_candidate_pages(candidatos, colonia=req.colonia, ciudad=req.ciudad)
+    resumen_fc: Dict[str, Any] = {}
+    paginas = await _fetch_candidate_pages(candidatos, colonia=req.colonia, ciudad=req.ciudad, resumen=resumen_fc)
     resultado = await _claude_extract_and_value(
         req,
         tipo_label,
@@ -1253,8 +1325,10 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
         "url": page.get("url", ""),
         "portal": page.get("portal", ""),
         "estado_lectura": page.get("fetch_status", ""),
+        "lectura": estado_lectura_simple(page.get("fetch_status", "")),
         "provider": page.get("provider", ""),
     } for page in paginas]
+    resultado["firecrawl"] = resumen_fc
     resultado["queries_utilizadas"] = busqueda["queries"]
     resultado["proveedores_busqueda_configurados"] = busqueda["providers_configured"]
     resultado["colonias_colindantes_verificadas"] = colonias_vecinas

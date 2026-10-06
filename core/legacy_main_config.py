@@ -68,7 +68,7 @@ class LegacyMainSettings:
             # dos valuaciones en la misma colonia con días de diferencia no
             # deberían volver a gastarle crédito a Firecrawl por la misma URL.
             avm_cache_ttl_days=int(os.getenv("AVM_CACHE_TTL_DAYS", "14")),
-            firecrawl_api_key=os.getenv("FIRECRAWL_API_KEY", ""),
+            firecrawl_api_key=os.getenv("FIRECRAWL_API_KEY", "").strip(),
             firecrawl_concurrency=int(os.getenv("FIRECRAWL_CONCURRENCY", "5")),
             firecrawl_timeout=float(os.getenv("FIRECRAWL_TIMEOUT", "45")),
             # Extracción estructurada (jsonOptions) además del markdown de
