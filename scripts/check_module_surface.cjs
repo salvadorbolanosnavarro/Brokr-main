@@ -27,6 +27,7 @@ const base=process.env.BROQUER_TEST_URL || 'http://127.0.0.1:8080';
     await p.goto(base+'/'+item.path,{waitUntil:'load'});
     if(item.shared_shell) await p.locator('.bk-design-header').waitFor({timeout:12000});
     else await p.locator('body').waitFor();
+    if(await p.locator('#splash').count()) await p.locator('#splash').waitFor({state:'hidden',timeout:10000});
     await p.evaluate(()=>document.fonts.ready);
     if(item.path==='avm.html') await p.waitForFunction(()=>document.querySelector('#root')?.childElementCount>0,{},{timeout:12000});
     const surface=await p.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,heading:document.querySelector('h1')?.textContent.trim(),controls:document.querySelectorAll('button,input,select,textarea').length}));

@@ -184,3 +184,26 @@ html body[data-app] :is(.avm-card,.bk-card){box-shadow:none;border-radius:var(--
 html body[data-app] :is(.bk-modal,.bk-pd-drawer){font-family:var(--font-sans)}
 @media(max-width:720px){.bk-design-header__inner{width:calc(100% - 32px)}}
 html body[data-app='avm'] #btn-analizar-ia:not(:disabled){background:var(--orange)!important;color:var(--orange-ink)!important;border-color:var(--orange)!important;border-radius:var(--r-sm)!important}
+
+
+/* Public account and document flows share the design without mounting the
+   authenticated shell or altering token, consent and signing handlers. */
+body[data-design-public]{background:var(--paper);font-family:var(--font-sans);color:var(--ink)}
+body[data-design-public] :is(.bk-auth,.un-page){background:var(--paper)}
+body[data-design-public] :is(.bk-form,.un-card,.ex-tarjeta){background:var(--paper);box-shadow:none;backdrop-filter:none;border-color:var(--line);border-radius:var(--r-lg)}
+body[data-design-public] :is(.bk-submit,.reg-submit,.bk-btn--forest):not(:disabled){background:var(--orange);color:var(--orange-ink);border-color:var(--orange);box-shadow:none;border-radius:var(--r-sm)}
+body[data-design-public] :is(.bk-submit,.reg-submit,.bk-btn--forest):disabled{background:var(--line);color:var(--mute);cursor:not-allowed}
+body[data-design-public] :is(.bk-form__hed,.un-hed,.fm-hed){font-weight:600;letter-spacing:-.035em;line-height:1.2}
+body[data-design-public] :is(.bk-input,.bk-select){min-height:52px;background:var(--paper);border-color:var(--line)}
+body[data-design-public='registro'] .reg-shell{width:min(100%,1080px);border:0;box-shadow:none;gap:80px;overflow:visible;align-items:center}
+body[data-design-public='registro'] .reg-brand{background:var(--paper);color:var(--ink);padding:32px 0;gap:72px}
+body[data-design-public='registro'] .reg-brand::after{display:none}
+body[data-design-public='registro'] .reg-brand h1{color:var(--ink);font-weight:600;line-height:1.15;letter-spacing:-.04em}
+body[data-design-public='registro'] .reg-brand p{color:var(--mute);line-height:1.7}
+body[data-design-public='registro'] .reg-brand__eyebrow{color:var(--forest);text-transform:none;letter-spacing:0;font-weight:500}
+body[data-design-public='registro'] .reg-form{padding:36px;border:1px solid var(--line);border-radius:var(--r-lg)}
+body[data-design-public='registro'] .reg-form__head h2{font-weight:600}
+@media(max-width:720px){body[data-design-public='registro'] .reg-shell{gap:24px;grid-template-columns:1fr}body[data-design-public='registro'] .reg-brand{display:flex;padding:8px 4px;gap:32px}body[data-design-public='registro'] .reg-brand h1{font-size:34px}body[data-design-public='registro'] .reg-form{padding:24px 20px}body[data-design-public] :is(.bk-form,.un-card){padding:28px 20px}}
+
+body[data-design-public] :is(.bk-submit,.reg-submit,.bk-btn--forest):disabled{opacity:1}
+@media(max-width:720px){body[data-design-public='registro'] .reg-wrap{padding:32px 20px}}

@@ -40,3 +40,20 @@ interfaz propia, permisos completos, persistencia, archivos e integraciones en
 servicios de staging. Resolver el contrato de fuente y revisar explícitamente la
 distribución de terceros señalada por el control de arquitectura antes de fusionar.
 No se ha modificado producción ni publicado una URL de pruebas.
+
+## Flujos públicos y de cuenta
+
+Adaptados registro/completar perfil, recuperación, invitaciones, firma pública,
+verificación de firma y expediente público. Se conservan todos sus controles,
+validaciones y contratos de URL. La revisión visual de las seis páginas a dos
+tamaños pasó (12 vistas). Las capturas esperan ahora la retirada del splash.
+
+`check_public_flows.cjs` comprueba: registro sin sesión redirige a acceso,
+aceptación de términos habilita continuar, nombre requerido, recuperación sin
+token bloqueada, longitud/coincidencia de contraseña, actualización y cierre
+global de sesiones interceptados en el navegador, y estados de ligas incompletas.
+Resultado: aprobado, cero peticiones a producción. El éxito de las peticiones
+interceptadas no certifica autenticación o guardado reales.
+
+La configuración concreta que falta para avanzar a servicios reales está descrita
+en `STAGING_SETUP.md`.

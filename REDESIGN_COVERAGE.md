@@ -24,12 +24,12 @@ La presencia del código no certifica su funcionamiento. Todos los flujos requie
 | `empresas.html` | No; revisar flujo propio | Sin cambios | Ninguno |
 | `equipo.html` | Sí | Sin cambios | Ninguno |
 | `estadisticas.html` | Sí | Sin cambios | Ninguno |
-| `expediente.html` | No; revisar flujo propio | Sin cambios | Ninguno |
+| `expediente.html` | No; revisar flujo propio | Modificada | Ninguno |
 | `facebook-ads.html` | Sí | Modificada | Ninguno |
 | `facebook-callback.html` | No; revisar flujo propio | Sin cambios | Ninguno |
 | `ficha-manual.html` | Sí | Sin cambios | Ninguno |
 | `finanzas.html` | Sí | Sin cambios | Ninguno |
-| `firmar.html` | No; revisar flujo propio | Sin cambios | Ninguno |
+| `firmar.html` | No; revisar flujo propio | Modificada | Ninguno |
 | `firmas.html` | Sí | Sin cambios | Ninguno |
 | `guia-agente.html` | Sí | Sin cambios | Ninguno |
 | `image-cleaner.html` | Sí | Sin cambios | Ninguno |
@@ -45,15 +45,15 @@ La presencia del código no certifica su funcionamiento. Todos los flujos requie
 | `preview-modo/preview-campanas.html` | No; revisar flujo propio | Sin cambios | Ninguno |
 | `preview-modo/preview-inicio.html` | No; revisar flujo propio | Sin cambios | Ninguno |
 | `propiedades.html` | Sí | Modificada | Ninguno |
-| `registro.html` | No; revisar flujo propio | Sin cambios | Ninguno |
-| `reset-password.html` | No; revisar flujo propio | Sin cambios | Ninguno |
+| `registro.html` | No; revisar flujo propio | Modificada | Ninguno |
+| `reset-password.html` | No; revisar flujo propio | Modificada | Ninguno |
 | `robin.html` | No; revisar flujo propio | Sin cambios | Ninguno |
 | `sitio.html` | No; revisar flujo propio | Sin cambios | Ninguno |
 | `soporte.html` | No; revisar flujo propio | Sin cambios | Ninguno |
 | `tareas.html` | Sí | Modificada | Ninguno |
-| `unirse.html` | No; revisar flujo propio | Sin cambios | Ninguno |
+| `unirse.html` | No; revisar flujo propio | Modificada | Ninguno |
 | `verificador.html` | Sí | Sin cambios | Ninguno |
-| `verificar-firma.html` | No; revisar flujo propio | Sin cambios | Ninguno |
+| `verificar-firma.html` | No; revisar flujo propio | Modificada | Ninguno |
 | `video.html` | Sí | Sin cambios | Ninguno |
 | `videos/landing.html` | No; revisar flujo propio | Sin cambios | Ninguno |
 | `whatsapp-callback.html` | No; revisar flujo propio | Sin cambios | Ninguno |
