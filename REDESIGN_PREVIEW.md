@@ -43,8 +43,12 @@ publicado una URL de pruebas ni realizado un despliegue.
 
 ## Alcance visual y funcional
 
-Adaptados: inicio, acceso, clientes, inmuebles, agenda, finanzas, campañas y
-directorio, además de la cabecera compartida. Los datos de las referencias no se
+El alcance es toda la aplicación actual: las ocho capturas solo son referencias
+visuales. `REDESIGN_COVERAGE.md` y `redesign-inventory.json` inventarían los 52 HTML
+(incluidos auxiliares y prototipos) y las 268 declaraciones de endpoints de la base.
+Se extiende la cabecera a los 28 módulos que la usan y el lenguaje de componentes
+a documentos, finanzas, multimedia, equipo y cumplimiento. Las páginas con interfaz
+propia siguen pendientes de revisión visual detallada. Los datos de las referencias no se
 insertan como contenido real. Los filtros, pestañas y acciones existentes siguen
 presentes, aunque no aparezcan en las referencias; falta terminar su composición
 visual y revisar estados con registros, errores, permisos y modales.
@@ -56,7 +60,9 @@ cita obtiene datos reales de agenda y, si existe, imagen del inmueble relacionad
 ## Verificación reproducible
 
 ```bash
+python scripts/inventory_redesign.py
 python scripts/check_staging.py
+node scripts/check_module_surface.cjs
 # Instalar Playwright y Chromium en el entorno de verificación.
 node scripts/check_redesign.cjs
 # O bien PLAYWRIGHT_MODULE=/ruta/a/playwright node scripts/check_redesign.cjs
@@ -79,3 +85,22 @@ con las referencias, probar creación/edición/lectura con el backend separado,
 comprobar roles y archivos y resolver explícitamente el contrato de tipografía.
 La validación visual exacta y la validación funcional con servicios reales siguen
 pendientes. Mantener este cambio como borrador hasta terminarlas.
+
+## Cobertura ampliada
+
+`check_module_surface.cjs` recorre los 51 HTML que no son la plantilla de desarrollo,
+a dos tamaños (102 vistas). Comprueba carga, errores JavaScript, desbordamiento,
+acceso a Broq/Chats y acciones locales concretas de contratos, perfil y cumplimiento.
+Los formularios de la base conservan sus identificadores y el backend permanece
+sin modificaciones. Esto no sustituye pruebas de persistencia, integraciones,
+roles completos ni validación visual manual. Los informes distinguen los fallos.
+
+El acceso a Broq y el indicador de WhatsApp ahora viven también en la cabecera,
+para conservar esas funciones al reemplazar el menú móvil. Los enlaces destacados
+respetan los módulos desactivados. Los botones deshabilitados mantienen su estado
+visual y funcional. Las reglas originales de móvil/iOS de Mi sitio se conservan.
+
+AVM conserva su JSX original, pero usa React 18.2.0 local y `avm-runtime.js`
+precompilado para evitar una pantalla vacía si falla el CDN. Después de editar el
+JSX, regenerar con `scripts/compile_avm.cjs` (instrucciones en el archivo).
+Consultar los resultados y límites actualizados en `REDESIGN_VALIDATION.md`.

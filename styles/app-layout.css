@@ -161,3 +161,26 @@ body[data-app='home'] .design-greeting h1 {font-weight:600!important;letter-spac
 html body[data-app] :is(.bk-bnav,.bk-sheet,.bk-sheet-back){display:none!important}
 html body[data-app] :is(.bk-btn--forest,.btn-new-prop,.btn-new-tarea,.add-btn,.bk-submit,.fa-btn-blue){background:var(--orange)!important;color:var(--orange-ink)!important;border-color:var(--orange)!important;box-shadow:none!important;border-radius:var(--r-sm)!important}
 html body[data-app] :is(.bk-btn--forest,.btn-new-prop,.btn-new-tarea,.add-btn,.bk-submit,.fa-btn-blue):hover{background:var(--orange-press)!important}
+
+/* Preserve mobile assistant and unread-chat access in the new shell. */
+.bk-design-utilities{display:flex;align-items:center;gap:12px}
+.bk-design-utilities :is(button,a){position:relative;display:flex;align-items:center;gap:6px;min-height:44px;border:0;background:transparent;color:var(--ink);font:600 var(--fs-sm) var(--font-sans);cursor:pointer}
+.bk-design-utilities [hidden],.bk-design-nav>[hidden]{display:none!important}
+.bk-design-chats .bk-badge{position:absolute;right:-4px;top:4px;display:none}
+.bk-design-chats .bk-badge.is-on{display:block}
+@media(max-width:1000px){.bk-design-utilities span{display:none}.bk-design-header__inner{gap:12px}}
+@media(max-width:720px){.bk-design-account{margin-left:auto}.bk-design-header__inner{gap:0}.bk-design-utilities{margin-left:auto;margin-right:12px;gap:10px}.bk-design-account{margin-left:0}}
+
+/* Extend the reference language to the existing document, finance, media,
+   team and compliance tools. Form structure and application handlers stay local. */
+.bk-design-header__inner{width:min(100% - 64px,1256px)}
+html body[data-app] :is(.gen-btn,.doc-new-btn,.isr-calc-btn,.btn-pdf,.fa-btn-primary,.pf-save-btn,.tk-composer .go):not(:disabled){background:var(--orange)!important;color:var(--orange-ink)!important;border-color:var(--orange)!important;box-shadow:none!important;border-radius:var(--r-sm)!important}
+html body[data-app] :is(.bk-btn--forest,.btn-new-prop,.btn-new-tarea,.add-btn,.bk-submit,.fa-btn-blue,.gen-btn,.isr-calc-btn,.btn-pdf):disabled{background:var(--line)!important;color:var(--mute)!important;border-color:var(--line)!important;cursor:not-allowed}
+html body[data-app] :is(.fr-scroll,.cp-scroll,.eq-scroll,.vid-scroll,.bp-body){padding-top:var(--sp-6);padding-bottom:var(--sp-10)}
+html body[data-app] :is(.doc-picker,.avm-tabs){background:var(--paper-2);border-color:var(--line);border-radius:var(--r)}
+html body[data-app] .avm-tab{color:var(--mute)}
+html body[data-app] .avm-tab.active{color:var(--ink);background:var(--sky-canvas);border-bottom-color:var(--forest)}
+html body[data-app] :is(.avm-card,.bk-card){box-shadow:none;border-radius:var(--r-lg)}
+html body[data-app] :is(.bk-modal,.bk-pd-drawer){font-family:var(--font-sans)}
+@media(max-width:720px){.bk-design-header__inner{width:calc(100% - 32px)}}
+html body[data-app='avm'] #btn-analizar-ia:not(:disabled){background:var(--orange)!important;color:var(--orange-ink)!important;border-color:var(--orange)!important;border-radius:var(--r-sm)!important}

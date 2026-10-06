@@ -1635,12 +1635,17 @@ body[data-app="facebook-ads"]{--page-max:980px}
       <a class="bk-design-brand" href="index.html" aria-label="Broquer, inicio">broquer<span>.</span></a>
       <nav class="bk-design-nav" aria-label="Navegación principal">
         <a href="index.html" ${activeKey === 'home' ? 'aria-current="page"' : ''}>Inicio</a>
-        <a href="facebook-ads.html" ${activeKey === 'facebook-ads' ? 'aria-current="page"' : ''}>Campañas</a>
-        <a href="tareas.html" ${activeKey === 'tareas' ? 'aria-current="page"' : ''}>Agenda</a>
+        <a href="facebook-ads.html" ${modulosOff.has('facebook-ads') ? 'hidden' : ''} ${activeKey === 'facebook-ads' ? 'aria-current="page"' : ''}>Campañas</a>
+        <a href="tareas.html" ${modulosOff.has('tareas') ? 'hidden' : ''} ${activeKey === 'tareas' ? 'aria-current="page"' : ''}>Agenda</a>
         <details class="bk-tools-menu"><summary>Herramientas</summary><div class="bk-tools-menu__list">${MODS.filter(visible).map(m => `<a href="${m.href}">${svg(m.icon,18)}${m.label}</a>`).join('')}</div></details>
       </nav>
+      <div class="bk-design-utilities">
+        <button class="bk-design-assistant" type="button" aria-label="Abrir Broq">${svg('mic',18)}<span>Broq</span></button>
+        <a class="bk-design-chats" href="whatsapp.html#chats" aria-label="Chats de WhatsApp" ${modulosOff.has('whatsapp') ? 'hidden' : ''}>${svg('whatsapp',18)}<span>Chats</span><i class="bk-badge" id="bk-design-chats-badge"></i></a>
+      </div>
       <button class="bk-design-account" type="button">Mi cuenta <span aria-hidden="true"></span></button>
     </div>`;
+    designHeader.querySelector('.bk-design-assistant').addEventListener('click', () => toggleShaarkPopup());
     designHeader.querySelector('.bk-design-account span').textContent = initials(profile.fullName || '');
     designHeader.querySelector('.bk-design-account').addEventListener('click', () => window.openProfileDrawer?.());
     document.body.appendChild(designHeader);
@@ -4642,7 +4647,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
 
   function _pintarBadge(n) {
     const txt = n > 99 ? '99+' : String(n);
-    ['bk-bnav-badge', 'bk-sheet-badge'].forEach(id => {
+    ['bk-bnav-badge', 'bk-sheet-badge', 'bk-design-chats-badge'].forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
       el.textContent = txt;

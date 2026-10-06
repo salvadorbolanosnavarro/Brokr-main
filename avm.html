@@ -8,9 +8,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="vendor/react-18.2.0/react.production.min.js"></script>
+  <script src="vendor/react-18.2.0/react-dom.production.min.js"></script>
+
   <style>
     @supports (-webkit-touch-callout: none) {
       @media (display-mode: standalone) {
@@ -1236,5 +1236,6 @@ input:focus, select:focus, textarea:focus {
     root.render(<AVM />);
   </script>
   <script src="app-shell.js" defer></script>
+  <script src="avm-runtime.js" defer></script>
 </body>
 </html>

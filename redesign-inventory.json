@@ -1,0 +1,7805 @@
+{
+  "baseline": "3d792b52c1265cfd09ed05b41df8a7d4bc02da2f",
+  "pages": [
+    {
+      "path": "404.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": false,
+      "source_unchanged": true,
+      "controls": [],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "sitio-engine.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "_TEMPLATE-modulo.html",
+      "exists": true,
+      "app": "mi-modulo",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "form"
+        },
+        {
+          "tag": "input",
+          "id": "mod-nombre",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "id": "mod-tipo"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "submit"
+        },
+        {
+          "tag": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "#"
+      ],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "admin.html",
+      "exists": true,
+      "app": "admin",
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "onclick": "setRango(7)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setRango(30)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setRango(90)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTab('panorama')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTab('usuarios')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTab('ingresos')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTab('correo')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTab('marketing')"
+        },
+        {
+          "tag": "input",
+          "id": "adm-search",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFilter('todos')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFilter('admin')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFilter('equipo')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFilter('acceso-completo')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFilter('pagado')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFilter('agente')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFilter('inactivo')"
+        },
+        {
+          "tag": "button",
+          "onclick": "exportarCsv()"
+        },
+        {
+          "tag": "button",
+          "onclick": "escribirAUsuario()"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "pickRol('admin')"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "pickRol('equipo')"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "pickRol('agente')"
+        },
+        {
+          "tag": "input",
+          "id": "d-emp-nombre",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-emp-asientos",
+          "type": "number"
+        },
+        {
+          "tag": "button",
+          "id": "d-emp-btn",
+          "type": "button",
+          "onclick": "activarEmpresa()"
+        },
+        {
+          "tag": "button",
+          "id": "d-emp-quitar",
+          "type": "button",
+          "onclick": "quitarEmpresa()"
+        },
+        {
+          "tag": "input",
+          "id": "d-acc-hasta",
+          "type": "date"
+        },
+        {
+          "tag": "button",
+          "id": "d-acc-btn",
+          "type": "button",
+          "onclick": "guardarAccesoCompleto()"
+        },
+        {
+          "tag": "button",
+          "id": "d-acc-quitar",
+          "type": "button",
+          "onclick": "quitarAccesoCompleto()"
+        },
+        {
+          "tag": "button",
+          "id": "d-mod-btn",
+          "type": "button",
+          "onclick": "guardarModulos()"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "marcarTodosModulos(true)"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "marcarTodosModulos(false)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setUsoRange(7)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setUsoRange(30)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setUsoRange(90)"
+        },
+        {
+          "tag": "button",
+          "id": "d-eliminar",
+          "type": "button",
+          "onclick": "abrirEliminar()"
+        },
+        {
+          "tag": "button",
+          "onclick": "resetDetail()"
+        },
+        {
+          "tag": "button",
+          "id": "d-save",
+          "onclick": "saveChanges()"
+        },
+        {
+          "tag": "button",
+          "onclick": "setBox('entrada')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setBox('enviados')"
+        },
+        {
+          "tag": "input",
+          "id": "co-q",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "abrirCompositor()"
+        },
+        {
+          "tag": "button",
+          "onclick": "responderCorreo()"
+        },
+        {
+          "tag": "button",
+          "onclick": "abrirCampana()"
+        },
+        {
+          "tag": "button",
+          "onclick": "exportarSegmento()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarModal('ov-correo')"
+        },
+        {
+          "tag": "input",
+          "id": "mo-para",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "mo-asunto",
+          "type": "text"
+        },
+        {
+          "tag": "textarea",
+          "id": "mo-cuerpo"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarModal('ov-correo')"
+        },
+        {
+          "tag": "button",
+          "id": "mo-enviar",
+          "onclick": "enviarCorreo()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarModal('ov-eliminar')"
+        },
+        {
+          "tag": "input",
+          "id": "el-confirm",
+          "type": "email"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarModal('ov-eliminar')"
+        },
+        {
+          "tag": "button",
+          "id": "el-btn",
+          "onclick": "ejecutarEliminar()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarModal('ov-cfdi')"
+        },
+        {
+          "tag": "input",
+          "id": "cf-uuid",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "cf-notas",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "guardarCfdi('no_requiere')"
+        },
+        {
+          "tag": "button",
+          "onclick": "guardarCfdi('emitida')"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "index.html"
+      ],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "aviso-privacidad.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "javascript:history.back()"
+      ],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "avm.html",
+      "exists": true,
+      "app": "avm",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": false,
+      "controls": [],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "vendor/react-18.2.0/react.production.min.js",
+        "vendor/react-18.2.0/react-dom.production.min.js",
+        "app-shell.js",
+        "avm-runtime.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "bandeja.html",
+      "exists": true,
+      "app": "bandeja",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "input",
+          "id": "bxSearch",
+          "type": "search"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFiltro('todos')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFiltro('calientes')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFiltro('mios')"
+        },
+        {
+          "tag": "button",
+          "onclick": "closeThread()"
+        },
+        {
+          "tag": "input",
+          "id": "aiToggle",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggleDossier()"
+        },
+        {
+          "tag": "textarea",
+          "id": "composer"
+        },
+        {
+          "tag": "button",
+          "id": "sendBtn",
+          "onclick": "sendMsg()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "blog.html",
+      "exists": true,
+      "app": "blog",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "input",
+          "id": "bl-search",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "id": "bl-search-clear"
+        },
+        {
+          "tag": "button",
+          "id": "bl-back"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "avm.html",
+        "contactos.html",
+        "contratos.html",
+        "index.html",
+        "propiedades.html"
+      ],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "bolsa.html",
+      "exists": true,
+      "app": "bolsa",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "id": "bl-tab-explorar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "bl-tab-mis",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "bl-f-q",
+          "type": "search"
+        },
+        {
+          "tag": "input",
+          "id": "bl-f-ciudad",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "id": "bl-f-tipo"
+        },
+        {
+          "tag": "select",
+          "id": "bl-f-op"
+        },
+        {
+          "tag": "button",
+          "id": "bl-f-buscar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "bl-f-mas",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "bl-f-estado",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "bl-f-pmin",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "bl-f-pmax",
+          "type": "number"
+        },
+        {
+          "tag": "select",
+          "id": "bl-f-rec"
+        },
+        {
+          "tag": "select",
+          "id": "bl-f-ban"
+        },
+        {
+          "tag": "select",
+          "id": "bl-f-orden"
+        },
+        {
+          "tag": "button",
+          "id": "bl-prev",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "bl-next",
+          "type": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "propiedades.html"
+      ],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "buscador.html",
+      "exists": true,
+      "app": "buscador",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "select",
+          "id": "bp-operacion"
+        },
+        {
+          "tag": "select",
+          "id": "bp-tipo"
+        },
+        {
+          "tag": "input",
+          "id": "bp-colonia",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "bp-ciudad",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "bp-estado",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "bp-precio-min",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "bp-precio-max",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "bp-recamaras",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "bp-cliente-input",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "bp-cliente-id",
+          "type": "hidden"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "bpQuitarCliente()"
+        },
+        {
+          "tag": "input",
+          "id": "bp-guardar",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "id": "bp-buscar-btn",
+          "onclick": "bpBuscar()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "clientes.html",
+      "exists": true,
+      "app": "clientes",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": false,
+      "controls": [
+        {
+          "tag": "button",
+          "id": "add-btn-top",
+          "onclick": "abrirModal()"
+        },
+        {
+          "tag": "input",
+          "id": "search-input",
+          "type": "search"
+        },
+        {
+          "tag": "select",
+          "id": "c-filtro-fecha"
+        },
+        {
+          "tag": "select",
+          "id": "c-filtro-fuente"
+        },
+        {
+          "tag": "input",
+          "id": "c-filtro-interes-buscar",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "c-filtro-interes-sel",
+          "type": "hidden"
+        },
+        {
+          "tag": "select",
+          "id": "c-filtro-agente"
+        },
+        {
+          "tag": "button",
+          "id": "fab-nuevo",
+          "onclick": "abrirModal()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarModal()"
+        },
+        {
+          "tag": "input",
+          "id": "m-nombre",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-tel",
+          "type": "tel"
+        },
+        {
+          "tag": "input",
+          "id": "m-wa",
+          "type": "tel"
+        },
+        {
+          "tag": "input",
+          "id": "m-email",
+          "type": "email"
+        },
+        {
+          "tag": "select",
+          "id": "m-tipo"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('M',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('F',this)"
+        },
+        {
+          "tag": "input",
+          "id": "m-empresa",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-fuente",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-etiquetas",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-prop-buscar",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-prop-sel",
+          "type": "hidden"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "mAgregarPropPendiente()"
+        },
+        {
+          "tag": "input",
+          "id": "m-calle",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-numext",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-numint",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-cp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-colonia",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-mpio",
+          "type": "text"
+        },
+        {
+          "tag": "textarea",
+          "id": "m-notas"
+        },
+        {
+          "tag": "textarea",
+          "id": "m-descripcion-privada"
+        },
+        {
+          "tag": "button",
+          "id": "btn-del",
+          "onclick": "confirmarEliminar()"
+        },
+        {
+          "tag": "button",
+          "onclick": "guardarContacto()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarDetalle()"
+        },
+        {
+          "tag": "button",
+          "id": "f-mas",
+          "onclick": "clMenuMas(this)"
+        },
+        {
+          "tag": "select",
+          "id": "f-asignado-sel"
+        },
+        {
+          "tag": "button",
+          "id": "f-etapa-btn",
+          "onclick": "clMenuEtapa(this)"
+        },
+        {
+          "tag": "button",
+          "id": "f-prob-btn",
+          "onclick": "clMenuProb(this)"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-info",
+          "onclick": "setDetTab('info')"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-bitacora",
+          "onclick": "setDetTab('bitacora')"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-props",
+          "onclick": "setDetTab('props')"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-tareas",
+          "onclick": "setDetTab('tareas')"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-requerimiento",
+          "onclick": "setDetTab('requerimiento')"
+        },
+        {
+          "tag": "button",
+          "onclick": "clAbrirNota()"
+        },
+        {
+          "tag": "input",
+          "id": "f-archivo-suelto",
+          "type": "file"
+        },
+        {
+          "tag": "button",
+          "onclick": "document.getElementById('f-archivo-suelto').click()"
+        },
+        {
+          "tag": "textarea",
+          "id": "f-nota-texto"
+        },
+        {
+          "tag": "select",
+          "id": "f-nota-cat-sel"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "clNuevaCategoriaNota()"
+        },
+        {
+          "tag": "input",
+          "id": "f-nota-prop-buscar",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-nota-prop-sel",
+          "type": "hidden"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "clQuitarPropNota()"
+        },
+        {
+          "tag": "input",
+          "id": "f-nota-adjuntos",
+          "type": "file"
+        },
+        {
+          "tag": "button",
+          "onclick": "document.getElementById('f-nota-adjuntos').click()"
+        },
+        {
+          "tag": "button",
+          "onclick": "clCancelarNota()"
+        },
+        {
+          "tag": "button",
+          "id": "f-nota-guardar",
+          "onclick": "clGuardarNota()"
+        },
+        {
+          "tag": "input",
+          "id": "vinculo-prop-buscar",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "vinculo-prop",
+          "type": "hidden"
+        },
+        {
+          "tag": "select",
+          "id": "vinculo-rel"
+        },
+        {
+          "tag": "button",
+          "onclick": "agregarVinculo()"
+        },
+        {
+          "tag": "input",
+          "id": "tarea-nueva-titulo",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "tarea-nueva-fecha",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "tarea-nueva-hora",
+          "type": "time"
+        },
+        {
+          "tag": "button",
+          "onclick": "crearTareaVinculada()"
+        },
+        {
+          "tag": "select",
+          "id": "vinculo-tarea"
+        },
+        {
+          "tag": "select",
+          "id": "bp-operacion"
+        },
+        {
+          "tag": "select",
+          "id": "bp-tipo"
+        },
+        {
+          "tag": "input",
+          "id": "bp-colonia",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "bp-ciudad",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "bp-estado",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "bp-precio-min",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "bp-precio-max",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "bp-recamaras",
+          "type": "number"
+        },
+        {
+          "tag": "textarea",
+          "id": "bp-notas"
+        },
+        {
+          "tag": "input",
+          "id": "bp-activo",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "id": "bp-guardar",
+          "onclick": "bpGuardarRequerimiento()"
+        },
+        {
+          "tag": "button",
+          "id": "bp-buscar-ahora",
+          "onclick": "bpBuscarAhora()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "#"
+      ],
+      "scripts": [
+        "historial-adjuntos.js",
+        "ficha-comun.js",
+        "categorias.js",
+        "clientes-ficha.js",
+        "tarea-nueva.js",
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "contactos.html",
+      "exists": true,
+      "app": "contactos",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": false,
+      "controls": [
+        {
+          "tag": "button",
+          "id": "btn-import-eb",
+          "onclick": "abrirMigracion()"
+        },
+        {
+          "tag": "button",
+          "id": "add-btn-top",
+          "onclick": "abrirModal()"
+        },
+        {
+          "tag": "input",
+          "id": "search-input",
+          "type": "search"
+        },
+        {
+          "tag": "select",
+          "id": "c-filtro-fecha"
+        },
+        {
+          "tag": "select",
+          "id": "c-filtro-fuente"
+        },
+        {
+          "tag": "input",
+          "id": "c-filtro-interes-buscar",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "c-filtro-interes-sel",
+          "type": "hidden"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFiltro('todos',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFiltro('arrendador',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFiltro('arrendatario',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFiltro('comprador',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFiltro('vendedor',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFiltro('colega',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFiltro('notario',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setFiltro('otro',this)"
+        },
+        {
+          "tag": "select",
+          "id": "c-filtro-agente"
+        },
+        {
+          "tag": "button",
+          "onclick": "cConfirmarBorrar()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cDeseleccionarTodo()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cCerrarConfirm()"
+        },
+        {
+          "tag": "button",
+          "id": "c-del-btn",
+          "onclick": "cBorrarSeleccionados()"
+        },
+        {
+          "tag": "button",
+          "id": "fab-nuevo",
+          "onclick": "abrirModal()"
+        },
+        {
+          "tag": "button",
+          "onclick": "migracionCompleta()"
+        },
+        {
+          "tag": "button",
+          "onclick": "document.getElementById('mig-file').click()"
+        },
+        {
+          "tag": "input",
+          "id": "mig-file",
+          "type": "file"
+        },
+        {
+          "tag": "button",
+          "id": "import-close",
+          "onclick": "cerrarImport()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarModal()"
+        },
+        {
+          "tag": "input",
+          "id": "m-nombre",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-tel",
+          "type": "tel"
+        },
+        {
+          "tag": "input",
+          "id": "m-wa",
+          "type": "tel"
+        },
+        {
+          "tag": "input",
+          "id": "m-email",
+          "type": "email"
+        },
+        {
+          "tag": "select",
+          "id": "m-tipo"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('M',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('F',this)"
+        },
+        {
+          "tag": "input",
+          "id": "m-empresa",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-fuente",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-etiquetas",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-potencial",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "m-calle",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-numext",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-numint",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-cp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-colonia",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-mpio",
+          "type": "text"
+        },
+        {
+          "tag": "textarea",
+          "id": "m-notas"
+        },
+        {
+          "tag": "textarea",
+          "id": "m-descripcion-privada"
+        },
+        {
+          "tag": "button",
+          "id": "btn-del",
+          "onclick": "confirmarEliminar()"
+        },
+        {
+          "tag": "button",
+          "onclick": "guardarContacto()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarDetalle()"
+        },
+        {
+          "tag": "button",
+          "id": "f-mas",
+          "onclick": "ctMenuMas(this)"
+        },
+        {
+          "tag": "select",
+          "id": "f-asignado-sel"
+        },
+        {
+          "tag": "button",
+          "id": "f-potencial",
+          "onclick": "toggleDetPotencial()"
+        },
+        {
+          "tag": "button",
+          "id": "f-etapa-btn",
+          "onclick": "ctMenuEtapa(this)"
+        },
+        {
+          "tag": "button",
+          "id": "f-prob-btn",
+          "onclick": "ctMenuProb(this)"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-info",
+          "onclick": "setDetTab('info')"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-bitacora",
+          "onclick": "setDetTab('bitacora')"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-props",
+          "onclick": "setDetTab('props')"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-tareas",
+          "onclick": "setDetTab('tareas')"
+        },
+        {
+          "tag": "button",
+          "onclick": "ctAbrirNota()"
+        },
+        {
+          "tag": "input",
+          "id": "f-archivo-suelto",
+          "type": "file"
+        },
+        {
+          "tag": "button",
+          "onclick": "document.getElementById('f-archivo-suelto').click()"
+        },
+        {
+          "tag": "textarea",
+          "id": "f-nota-texto"
+        },
+        {
+          "tag": "select",
+          "id": "f-nota-cat-sel"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "ctNuevaCategoriaNota()"
+        },
+        {
+          "tag": "input",
+          "id": "f-nota-prop-buscar",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-nota-prop-sel",
+          "type": "hidden"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "ctQuitarPropNota()"
+        },
+        {
+          "tag": "input",
+          "id": "f-nota-adjuntos",
+          "type": "file"
+        },
+        {
+          "tag": "button",
+          "onclick": "document.getElementById('f-nota-adjuntos').click()"
+        },
+        {
+          "tag": "button",
+          "onclick": "ctCancelarNota()"
+        },
+        {
+          "tag": "button",
+          "id": "f-nota-guardar",
+          "onclick": "ctGuardarNota()"
+        },
+        {
+          "tag": "input",
+          "id": "vinculo-prop-buscar",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "vinculo-prop",
+          "type": "hidden"
+        },
+        {
+          "tag": "select",
+          "id": "vinculo-rel"
+        },
+        {
+          "tag": "button",
+          "onclick": "agregarVinculo()"
+        },
+        {
+          "tag": "input",
+          "id": "tarea-nueva-titulo",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "tarea-nueva-fecha",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "tarea-nueva-hora",
+          "type": "time"
+        },
+        {
+          "tag": "button",
+          "onclick": "crearTareaVinculada()"
+        },
+        {
+          "tag": "select",
+          "id": "vinculo-tarea"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "#"
+      ],
+      "scripts": [
+        "historial-adjuntos.js",
+        "ficha-comun.js",
+        "categorias.js",
+        "contactos-ficha.js",
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "contratos.html",
+      "exists": true,
+      "app": "contratos",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "id": "doc-picker-btn",
+          "type": "button",
+          "onclick": "toggleDocMenu(event)"
+        },
+        {
+          "tag": "button",
+          "id": "doc-new-btn",
+          "type": "button",
+          "onclick": "nuevoMachote()"
+        },
+        {
+          "tag": "input",
+          "id": "a-inicio",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "a-fin",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "a-duracion",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-inicio-escrito",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-fin-escrito",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "abrirPickerInmueble('arrendamiento')"
+        },
+        {
+          "tag": "input",
+          "id": "a-calle-inm",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-numext-inm",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-numint-inm",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-colonia",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-cp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-municipio-inm",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-estado-inm",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-ciudad-firma",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-estado-firma",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "id": "a-destino"
+        },
+        {
+          "tag": "input",
+          "id": "a-destino-otro",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "abrirPickerContacto('arrendador')"
+        },
+        {
+          "tag": "input",
+          "id": "a-arrendador",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('arr','M',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('arr','F',this)"
+        },
+        {
+          "tag": "input",
+          "id": "arr-misma-inm",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "a-calle-arr",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-numext-arr",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-numint-arr",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-colonia-arr",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-cp-arr",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-municipio-arr",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-estado-arr",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "abrirPickerContacto('arrendatario')"
+        },
+        {
+          "tag": "input",
+          "id": "a-arrendatario",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('arrt','M',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('arrt','F',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "abrirPickerContacto('os')"
+        },
+        {
+          "tag": "input",
+          "id": "a-os",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('os','M',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('os','F',this)"
+        },
+        {
+          "tag": "input",
+          "id": "a-calle-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-numext-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-numint-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-colonia-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-cp-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-municipio-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-estado-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "os-misma-prop",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "a-calle-inm-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-numext-inm-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-numint-inm-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-colonia-inm-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-cp-inm-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-municipio-inm-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-estado-inm-os",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-renta",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-deposito",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-dia-pago",
+          "type": "number"
+        },
+        {
+          "tag": "select",
+          "id": "a-forma-pago"
+        },
+        {
+          "tag": "input",
+          "id": "a-banco",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-pena",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-testigo1",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "a-testigo2",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-fecha",
+          "type": "date"
+        },
+        {
+          "tag": "button",
+          "onclick": "abrirPickerInmueble('promesa')"
+        },
+        {
+          "tag": "input",
+          "id": "p-calle-inm",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-numext-inm",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-numint-inm",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-colonia",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-cp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-municipio-inm",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-estado-inm",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-ciudad-firma",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-estado-firma",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-esc-num",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-not-num",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-not-nombre",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-estado-notaria",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-tomo",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-registro",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "abrirPickerContacto('vendedor')"
+        },
+        {
+          "tag": "input",
+          "id": "p-vendedor",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('vend','M',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('vend','F',this)"
+        },
+        {
+          "tag": "input",
+          "id": "vend-misma-inm",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "p-calle-vend",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-numext-vend",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-numint-vend",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-colonia-vend",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-cp-vend",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-municipio-vend",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-estado-vend",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-cuenta-vend",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-banco-vend",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "abrirPickerContacto('comprador')"
+        },
+        {
+          "tag": "input",
+          "id": "p-comprador",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('comp','M',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "setSexo('comp','F',this)"
+        },
+        {
+          "tag": "input",
+          "id": "p-calle-comp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-numext-comp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-numint-comp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-colonia-comp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-cp-comp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-municipio-comp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-estado-comp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-precio",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-arras",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-saldo",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-pena",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "id": "p-forma-pago"
+        },
+        {
+          "tag": "input",
+          "id": "p-fecha-limite",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "p-testigo1",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-testigo2",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTipo('arrendamiento')"
+        },
+        {
+          "tag": "input",
+          "id": "mach-titulo",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "mach-tipo",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "mach-file",
+          "type": "file"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "limpiarMachFile()"
+        },
+        {
+          "tag": "button",
+          "id": "mach-abrir-btn",
+          "onclick": "abrirEnBroquer()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarMachote()"
+        },
+        {
+          "tag": "button",
+          "id": "mach-sug-btn",
+          "onclick": "sugerirConIA()"
+        },
+        {
+          "tag": "button",
+          "id": "mach-crear-btn",
+          "onclick": "crearMachote()"
+        },
+        {
+          "tag": "button",
+          "onclick": "abrirFormulario()"
+        },
+        {
+          "tag": "button",
+          "id": "mach-rev-btn",
+          "onclick": "guardarRevision()"
+        },
+        {
+          "tag": "button",
+          "onclick": "abrirRevision()"
+        },
+        {
+          "tag": "button",
+          "onclick": "abrirDocMenu()"
+        },
+        {
+          "tag": "button",
+          "id": "mach-prev-btn",
+          "onclick": "previsualizarMachote()"
+        },
+        {
+          "tag": "button",
+          "id": "mach-generar-btn",
+          "onclick": "generarDesdeMachote()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarPreview()"
+        },
+        {
+          "tag": "button",
+          "onclick": "addClausula()"
+        },
+        {
+          "tag": "button",
+          "id": "gen-btn",
+          "onclick": "generarContrato()"
+        },
+        {
+          "tag": "button",
+          "id": "firma-btn",
+          "onclick": "mandarAFirma()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarPickerContacto()"
+        },
+        {
+          "tag": "input",
+          "id": "pick-contact-search",
+          "type": "search"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarPickerInmueble()"
+        },
+        {
+          "tag": "input",
+          "id": "pick-prop-search",
+          "type": "search"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "correo.html",
+      "exists": true,
+      "app": "correo",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "select",
+          "id": "co-proveedor"
+        },
+        {
+          "tag": "input",
+          "id": "co-email",
+          "type": "email"
+        },
+        {
+          "tag": "input",
+          "id": "co-password",
+          "type": "password"
+        },
+        {
+          "tag": "input",
+          "id": "co-imap-host"
+        },
+        {
+          "tag": "input",
+          "id": "co-imap-port",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "co-smtp-host"
+        },
+        {
+          "tag": "input",
+          "id": "co-smtp-port",
+          "type": "number"
+        },
+        {
+          "tag": "button",
+          "id": "co-btn-conectar",
+          "onclick": "coConectar()"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "coDesconectar()"
+        },
+        {
+          "tag": "button",
+          "onclick": "coCargarBandeja()"
+        },
+        {
+          "tag": "button",
+          "onclick": "coAbrirRedactar()"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "coVolverALista()"
+        },
+        {
+          "tag": "button",
+          "onclick": "coAbrirResponder()"
+        },
+        {
+          "tag": "button",
+          "onclick": "coCerrarModal()"
+        },
+        {
+          "tag": "input",
+          "id": "co-m-para",
+          "type": "email"
+        },
+        {
+          "tag": "input",
+          "id": "co-m-asunto",
+          "type": "text"
+        },
+        {
+          "tag": "textarea",
+          "id": "co-m-cuerpo"
+        },
+        {
+          "tag": "button",
+          "id": "co-btn-enviar",
+          "onclick": "coEnviar()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "https://myaccount.google.com/apppasswords"
+      ],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "cumplimiento.html",
+      "exists": true,
+      "app": "cumplimiento",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "cp-buscar",
+          "type": "search"
+        },
+        {
+          "tag": "select",
+          "id": "cp-filtro-estatus"
+        },
+        {
+          "tag": "button",
+          "id": "cp-nuevo-exp",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "cp-nuevo-exp-2",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "cp-nueva-op",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "cf-alta",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "cf-rfc-so",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "cf-colegiada",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "cf-folio",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "cf-fecha-alta",
+          "type": "date"
+        },
+        {
+          "tag": "select",
+          "id": "cf-fraccion"
+        },
+        {
+          "tag": "input",
+          "id": "cf-resp-nombre",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "cf-resp-rfc",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "cf-resp-email",
+          "type": "email"
+        },
+        {
+          "tag": "input",
+          "id": "cf-uma",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "cf-vig",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "cf-umbral",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "cf-meses",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "cf-dia",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "cf-ret",
+          "type": "number"
+        },
+        {
+          "tag": "button",
+          "id": "cf-guardar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "e-buscar-contacto",
+          "type": "search"
+        },
+        {
+          "tag": "button",
+          "id": "e-desvincular",
+          "type": "button"
+        },
+        {
+          "tag": "select",
+          "id": "e-tipo"
+        },
+        {
+          "tag": "select",
+          "id": "e-rol"
+        },
+        {
+          "tag": "input",
+          "id": "e-nombre",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-ap",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-am",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-fnac",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "e-curp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-rfc",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-nac",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-ocup",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-act",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-tel",
+          "type": "tel"
+        },
+        {
+          "tag": "input",
+          "id": "e-mail",
+          "type": "email"
+        },
+        {
+          "tag": "select",
+          "id": "e-idtipo"
+        },
+        {
+          "tag": "input",
+          "id": "e-idnum",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-idaut",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-idvig",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "e-razon",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-fcons",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "e-rfcm",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-folio",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-giro",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-rnom",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-rap",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-ram",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-rcurp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-rrfc",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-ridnum",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-rpoder",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-rnot",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-calle",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-next",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-nint",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-col",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-cp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-mun",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-edo",
+          "type": "text"
+        },
+        {
+          "tag": "textarea",
+          "id": "e-origen"
+        },
+        {
+          "tag": "textarea",
+          "id": "e-prop"
+        },
+        {
+          "tag": "input",
+          "id": "e-file",
+          "type": "file"
+        },
+        {
+          "tag": "input",
+          "id": "e-bc-mismo",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "e-bcnom",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-bcap",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-bcam",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-bcfnac",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "e-bccurp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-bcrfc",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-bcpct",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "e-pep",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "e-pepcargo",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-pepdep",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "e-peppar",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "id": "e-pep-revisar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "e-liga",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "e-liga-url",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "id": "e-liga-copiar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "e-guardar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "select",
+          "id": "o-exp"
+        },
+        {
+          "tag": "select",
+          "id": "o-tipo"
+        },
+        {
+          "tag": "input",
+          "id": "o-fecha",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "o-monto",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "o-siniva",
+          "type": "number"
+        },
+        {
+          "tag": "select",
+          "id": "o-pago"
+        },
+        {
+          "tag": "input",
+          "id": "o-efectivo",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "o-inusual",
+          "type": "checkbox"
+        },
+        {
+          "tag": "textarea",
+          "id": "o-inusual-motivo"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "o-guardar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "a-descargar",
+          "type": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "blog.html?art=alta-padron-actividades-vulnerables"
+      ],
+      "scripts": [
+        "cumplimiento-aviso.js",
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "empresas.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "landing.html",
+        "landing.html#precios",
+        "legal.html",
+        "mailto:hola@broquer.app?subject=Broquer%20para%20Empresas",
+        "mailto:hola@broquer.app?subject=Broquer%20para%20Empresas&body=Hola%2C%20me%20interesa%20Broquer%20para%20Empresas.%0A%0ANombre%20de%20mi%20agencia%3A%20%0AN%C3%BAmero%20de%20agentes%3A%20%0ACiudad%3A%20",
+        "soporte.html"
+      ],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "equipo.html",
+      "exists": true,
+      "app": "equipo",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "id": "eq-btn-invitar",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "eq-email",
+          "type": "email"
+        },
+        {
+          "tag": "input",
+          "id": "eq-traer-datos",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "id": "eq-cancelar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "eq-crear",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "eq-cerrar-ok",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "eq-copiar",
+          "type": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "empresas.html"
+      ],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "estadisticas.html",
+      "exists": true,
+      "app": "estadisticas",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "onclick": "setPeriodo('semana')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setPeriodo('mes')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setPeriodo('trimestre')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setPeriodo('todo')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTab('resumen')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTab('leads')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTab('inmuebles')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTab('whatsapp')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTab('marketing')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTab('inmueble')"
+        },
+        {
+          "tag": "button",
+          "onclick": "setTab('actividad')"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "expediente.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "input",
+          "id": "f-nombre",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-ap",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-am",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-fnac",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "f-nac",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-curp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-rfc",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-ocup",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-tel",
+          "type": "tel"
+        },
+        {
+          "tag": "input",
+          "id": "f-mail",
+          "type": "email"
+        },
+        {
+          "tag": "select",
+          "id": "f-idtipo"
+        },
+        {
+          "tag": "input",
+          "id": "f-idnum",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-razon",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-fcons",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "m-rfc",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-folio",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-giro",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-rnom",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-rap",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-ram",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-rcurp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "m-ridnum",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-calle",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-next",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-nint",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-col",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-cp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-mun",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-edo",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "id": "ex-a-paso2",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "ex-file",
+          "type": "file"
+        },
+        {
+          "tag": "button",
+          "id": "ex-a-paso3",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "ex-a-atras2",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "b-si",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "b-no",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "b-nom",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "b-ap",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "b-am",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "b-fnac",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "b-curp",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "id": "p-si",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "p-no",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "p-cargo",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-dep",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "p-par",
+          "type": "text"
+        },
+        {
+          "tag": "textarea",
+          "id": "o-origen"
+        },
+        {
+          "tag": "textarea",
+          "id": "o-prop"
+        },
+        {
+          "tag": "input",
+          "id": "ex-firma",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "id": "ex-enviar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "ex-a-atras3",
+          "type": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "facebook-ads.html",
+      "exists": true,
+      "app": "facebook-ads",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": false,
+      "controls": [
+        {
+          "tag": "button",
+          "onclick": "goToProfile()"
+        },
+        {
+          "tag": "button",
+          "onclick": "goToProfile()"
+        },
+        {
+          "tag": "button",
+          "onclick": "goToProfile()"
+        },
+        {
+          "tag": "button",
+          "id": "fa-tabbtn-crear",
+          "onclick": "switchTab('crear')"
+        },
+        {
+          "tag": "button",
+          "id": "fa-tabbtn-camps",
+          "onclick": "switchTab('camps')"
+        },
+        {
+          "tag": "input",
+          "id": "fa-prop-input",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "fa-campaign-name",
+          "type": "text"
+        },
+        {
+          "tag": "textarea",
+          "id": "fa-ad-text"
+        },
+        {
+          "tag": "button",
+          "id": "fa-ai-btn",
+          "type": "button",
+          "onclick": "improveText()"
+        },
+        {
+          "tag": "input",
+          "id": "fa-ad-headline",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "fa-image-input",
+          "type": "file"
+        },
+        {
+          "tag": "input",
+          "id": "fa-city-input",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "id": "fa-city-clear",
+          "type": "button",
+          "onclick": "clearCity()"
+        },
+        {
+          "tag": "input",
+          "id": "fa-budget",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "fa-duration",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "fa-publish-now",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "id": "fa-submit-btn",
+          "onclick": "createAd()"
+        },
+        {
+          "tag": "button",
+          "id": "fa-car-prev",
+          "type": "button",
+          "onclick": "carouselNav(-1)"
+        },
+        {
+          "tag": "button",
+          "id": "fa-car-next",
+          "type": "button",
+          "onclick": "carouselNav(1)"
+        },
+        {
+          "tag": "button",
+          "onclick": "loadCampaigns()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "#",
+        "https://www.facebook.com/adsmanager",
+        "image-cleaner.html"
+      ],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "facebook-callback.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "ficha-manual.html",
+      "exists": true,
+      "app": "ficha-manual",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "input",
+          "id": "foto-input",
+          "type": "file"
+        },
+        {
+          "tag": "select",
+          "id": "d-tipo"
+        },
+        {
+          "tag": "select",
+          "id": "d-op"
+        },
+        {
+          "tag": "input",
+          "id": "d-precio",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-precio-renta",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-colonia",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-ciudad",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-dir",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "d-rec",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "d-ban",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "d-mban",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "d-m2c",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "d-m2t",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "d-est",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "d-niv",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "d-anio",
+          "type": "number"
+        },
+        {
+          "tag": "textarea",
+          "id": "d-desc"
+        },
+        {
+          "tag": "button",
+          "id": "ai-btn",
+          "onclick": "generarDescripcion()"
+        },
+        {
+          "tag": "input",
+          "id": "d-amen",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "ficha-save-inmueble",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "onclick": "generarFicha()"
+        },
+        {
+          "tag": "button",
+          "id": "pdf-btn",
+          "onclick": "abrirPDF()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "finanzas.html",
+      "exists": true,
+      "app": "finanzas",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "id": "fin-btn-nuevo"
+        },
+        {
+          "tag": "button",
+          "id": "fin-btn-ticket"
+        },
+        {
+          "tag": "button",
+          "id": "fin-btn-reporte"
+        },
+        {
+          "tag": "button",
+          "id": "fin-btn-cuentas"
+        },
+        {
+          "tag": "input",
+          "id": "fin-desde",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "fin-hasta",
+          "type": "date"
+        },
+        {
+          "tag": "button",
+          "id": "fin-aplicar"
+        },
+        {
+          "tag": "input",
+          "id": "fin-buscar",
+          "type": "search"
+        },
+        {
+          "tag": "select",
+          "id": "fin-filtro-tipo"
+        },
+        {
+          "tag": "button",
+          "id": "fin-vacio-crear"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "fin-f-monto",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "fin-f-fecha",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "fin-f-concepto",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "id": "fin-f-cat"
+        },
+        {
+          "tag": "select",
+          "id": "fin-f-cta"
+        },
+        {
+          "tag": "select",
+          "id": "fin-f-prop"
+        },
+        {
+          "tag": "textarea",
+          "id": "fin-f-notas"
+        },
+        {
+          "tag": "button",
+          "id": "fin-f-comp-ver",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fin-f-comp-subir",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fin-f-borrar"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fin-f-guardar"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "input",
+          "id": "fin-c-nombre",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "id": "fin-c-tipo"
+        },
+        {
+          "tag": "input",
+          "id": "fin-c-saldo",
+          "type": "number"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fin-c-crear"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "input",
+          "id": "fin-rep-desde",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "fin-rep-hasta",
+          "type": "date"
+        },
+        {
+          "tag": "button",
+          "id": "fin-rep-csv"
+        },
+        {
+          "tag": "button",
+          "id": "fin-rep-pdf"
+        },
+        {
+          "tag": "input",
+          "id": "fin-file-oculto",
+          "type": "file"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "isr.html"
+      ],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "firmar.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "id": "fm-lei",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "fm-ine-file",
+          "type": "file"
+        },
+        {
+          "tag": "button",
+          "id": "fm-borrar",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "fm-acepto",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "id": "fm-pedir-codigo",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fm-rechazar",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "fm-codigo",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "id": "fm-firmar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fm-reenviar",
+          "type": "button"
+        },
+        {
+          "tag": "textarea",
+          "id": "fm-motivo"
+        },
+        {
+          "tag": "button",
+          "id": "fm-rechazo-cancelar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fm-rechazo-ok",
+          "type": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "verificar-firma.html"
+      ],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "firmas.html",
+      "exists": true,
+      "app": "firmas",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "input",
+          "id": "fr-buscar",
+          "type": "search"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fr-nuevo",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fr-vacio-btn",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fr-volver",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fr-aviso-x",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "fr-archivo",
+          "type": "file"
+        },
+        {
+          "tag": "input",
+          "id": "fr-d-tit",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "id": "fr-d-tipo"
+        },
+        {
+          "tag": "textarea",
+          "id": "fr-d-msg"
+        },
+        {
+          "tag": "input",
+          "id": "fr-d-ine",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "fr-f-nom",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "id": "fr-f-rol"
+        },
+        {
+          "tag": "input",
+          "id": "fr-f-mail",
+          "type": "email"
+        },
+        {
+          "tag": "input",
+          "id": "fr-f-wa",
+          "type": "tel"
+        },
+        {
+          "tag": "button",
+          "id": "fr-f-cancelar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fr-f-add",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "fr-cascada",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "id": "fr-rubricar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fr-quitar-todo",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "fr-cancelar-motivo",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "id": "fr-cancelar-no",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "fr-cancelar-si",
+          "type": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "#"
+      ],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "guia-agente.html",
+      "exists": true,
+      "app": "guia",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "onclick": "confirmEliminarCuenta()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "avm.html",
+        "contactos.html",
+        "contratos.html",
+        "facebook-ads.html",
+        "ficha-manual.html",
+        "finanzas.html",
+        "image-cleaner.html",
+        "isr.html",
+        "legal.html#whatsapp",
+        "mailto:hola@broquer.app",
+        "propiedades.html",
+        "whatsapp.html"
+      ],
+      "scripts": [
+        "app-shell.js",
+        "soporte-form.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "image-cleaner.html",
+      "exists": true,
+      "app": "image-cleaner",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "input",
+          "id": "file-input",
+          "type": "file"
+        },
+        {
+          "tag": "textarea",
+          "id": "prompt-input"
+        },
+        {
+          "tag": "button",
+          "onclick": "applyPreset(this,'Foto profesional de bienes raíces: mejora iluminación, contraste y nitidez. Deja el espacio limpio y atractivo.')"
+        },
+        {
+          "tag": "button",
+          "onclick": "applyPreset(this,'Elimina todos los muebles no fijos: camas, sofás, sillas, mesas, alfombras, cortinas, lámparas y decoraciones. Conserva paredes, pisos, techos, ventanas y puertas. Muestra el cuarto vacío y limpio.')"
+        },
+        {
+          "tag": "button",
+          "onclick": "applyPreset(this,'Transforma esta foto en una imagen profesional de bienes raíces: cuarto vacío, sin muebles, excelente iluminación, colores vivos y balanceados, listo para publicar.')"
+        },
+        {
+          "tag": "button",
+          "onclick": "applyPreset(this,'Mejora esta foto de jardín o exterior: cielo más azul, vegetación más verde y vibrante, iluminación natural cálida, aspecto de día soleado.')"
+        },
+        {
+          "tag": "button",
+          "onclick": "applyPreset(this,'Corrige la iluminación: aumenta brillo en zonas oscuras, reduce brillos, mejora el balance de blancos para que la foto luzca natural y profesional.')"
+        },
+        {
+          "tag": "button",
+          "id": "btn-dl-all",
+          "onclick": "downloadAll()"
+        },
+        {
+          "tag": "button",
+          "id": "btn-dl-selected",
+          "onclick": "downloadSelected()"
+        },
+        {
+          "tag": "button",
+          "id": "btn-usar",
+          "onclick": "toggleUsarMenu()"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "useInNuevoInmueble()"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "useInFicha()"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "useInFacebookAds()"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "useInVideo()"
+        },
+        {
+          "tag": "button",
+          "id": "btn-clean",
+          "onclick": "cleanAll()"
+        },
+        {
+          "tag": "button",
+          "onclick": "selectAll()"
+        },
+        {
+          "tag": "button",
+          "id": "btn-confirm-sel",
+          "onclick": "downloadSelected()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cancelSelection()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "index.html",
+      "exists": true,
+      "app": "home",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": false,
+      "controls": [
+        {
+          "tag": "button",
+          "id": "design-customize",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "design-all",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "design-favorites",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "design-tool-search",
+          "type": "search"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "design-expand",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "design-assistant",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "home-avatar",
+          "type": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [
+        "home-phrase"
+      ],
+      "links": [
+        "avm.html",
+        "blog.html",
+        "buscador.html",
+        "clientes.html",
+        "clientes.html?filtro=cierres&periodo=mes",
+        "clientes.html?filtro=prospectos",
+        "contactos.html",
+        "contratos.html",
+        "cumplimiento.html",
+        "estadisticas.html",
+        "facebook-ads.html",
+        "ficha-manual.html",
+        "finanzas.html",
+        "firmas.html",
+        "guia-agente.html",
+        "image-cleaner.html",
+        "index.html",
+        "isr.html",
+        "javascript:void(0)",
+        "mi-sitio.html",
+        "propiedades.html",
+        "tareas.html",
+        "video.html",
+        "whatsapp.html"
+      ],
+      "scripts": [
+        "home-design.js",
+        "app-shell.js",
+        "capacitor-bridge.js",
+        "quotes.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "isr.html",
+      "exists": true,
+      "app": "isr",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "select",
+          "id": "f-tipo"
+        },
+        {
+          "tag": "select",
+          "id": "f-forma-adq"
+        },
+        {
+          "tag": "select",
+          "id": "f-copro"
+        },
+        {
+          "tag": "input",
+          "id": "f-pct-copro",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "f-venta",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-fecha-v",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "f-mes-v",
+          "type": "hidden"
+        },
+        {
+          "tag": "input",
+          "id": "f-anio-v",
+          "type": "hidden"
+        },
+        {
+          "tag": "input",
+          "id": "f-dia-v",
+          "type": "hidden"
+        },
+        {
+          "tag": "input",
+          "id": "f-compra",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "id": "mp-trigger-c",
+          "type": "button",
+          "onclick": "mpToggle('c')"
+        },
+        {
+          "tag": "button",
+          "onclick": "mpPrevYear('c')"
+        },
+        {
+          "tag": "button",
+          "onclick": "mpNextYear('c')"
+        },
+        {
+          "tag": "input",
+          "id": "f-mes-c",
+          "type": "hidden"
+        },
+        {
+          "tag": "input",
+          "id": "f-anio-c",
+          "type": "hidden"
+        },
+        {
+          "tag": "input",
+          "id": "f-pct-terreno",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "id": "f-pct-const",
+          "type": "number"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "toggleTerrenoHelp()"
+        },
+        {
+          "tag": "input",
+          "id": "f-vt-boleta",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-vc-boleta",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-mej",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-esc",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "f-com",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "id": "f-pri"
+        },
+        {
+          "tag": "select",
+          "id": "f-exp"
+        },
+        {
+          "tag": "button",
+          "id": "calc-btn",
+          "onclick": "calcISR()"
+        },
+        {
+          "tag": "button",
+          "onclick": "resetISR()"
+        },
+        {
+          "tag": "button",
+          "onclick": "descargarPDF()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "landing.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "lnAbrirDemo()"
+        },
+        {
+          "tag": "button",
+          "id": "mv-poster",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "lnCerrarDemo()"
+        },
+        {
+          "tag": "input",
+          "id": "ln-demo-nombre",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "ln-demo-contacto",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "ln-demo-fecha",
+          "type": "date"
+        },
+        {
+          "tag": "select",
+          "id": "ln-demo-hora"
+        },
+        {
+          "tag": "textarea",
+          "id": "ln-demo-mensaje"
+        },
+        {
+          "tag": "button",
+          "id": "ln-demo-enviar",
+          "type": "button",
+          "onclick": "lnEnviarDemo()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "#modulos",
+        "#nosotros",
+        "#precios",
+        "empresas.html",
+        "https://apps.apple.com/us/app/broquer/id6775727897",
+        "landing.html",
+        "legal.html",
+        "login.html",
+        "registro.html",
+        "soporte.html"
+      ],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "leads.html",
+      "exists": true,
+      "app": "clientes",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "clientes.html"
+      ],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "legal.html",
+      "exists": true,
+      "app": "legal",
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "onclick": "showTab('tyc',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "showTab('contrato',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "showTab('privacidad',this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "showTab('whatsapp',this)"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "https://business.whatsapp.com/policy",
+        "https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing",
+        "https://developers.facebook.com/terms/",
+        "https://www.whatsapp.com/legal/business-terms"
+      ],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "login.html",
+      "exists": true,
+      "app": "acceso",
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": false,
+      "controls": [
+        {
+          "tag": "button",
+          "id": "seg-login",
+          "onclick": "setTab('login')"
+        },
+        {
+          "tag": "button",
+          "id": "seg-signup",
+          "onclick": "setTab('signup')"
+        },
+        {
+          "tag": "form",
+          "id": "form-login",
+          "onsubmit": "event.preventDefault();doLogin()"
+        },
+        {
+          "tag": "input",
+          "id": "l-email",
+          "type": "email"
+        },
+        {
+          "tag": "input",
+          "id": "l-pass",
+          "type": "password"
+        },
+        {
+          "tag": "button",
+          "id": "btn-login",
+          "type": "submit"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "doGoogle()"
+        },
+        {
+          "tag": "form",
+          "id": "form-signup",
+          "onsubmit": "event.preventDefault();doSignup()"
+        },
+        {
+          "tag": "input",
+          "id": "s-nombre",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "s-apellidos",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "s-telefono",
+          "type": "tel"
+        },
+        {
+          "tag": "input",
+          "id": "s-email",
+          "type": "email"
+        },
+        {
+          "tag": "input",
+          "id": "s-pass",
+          "type": "password"
+        },
+        {
+          "tag": "input",
+          "id": "s-pass2",
+          "type": "password"
+        },
+        {
+          "tag": "input",
+          "id": "s-legal",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "id": "btn-signup",
+          "type": "submit"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "doGoogle()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "#",
+        "index.html",
+        "legal.html",
+        "legal.html#privacidad"
+      ],
+      "scripts": [
+        "capacitor-bridge.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "mi-sitio.html",
+      "exists": true,
+      "app": "mi-sitio",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "preview-modo/index.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "preview-agenda.html",
+        "preview-campanas.html",
+        "preview-inicio.html"
+      ],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "preview-modo/preview-agenda.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": false,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "#",
+        "preview-agenda.html",
+        "preview-campanas.html",
+        "preview-inicio.html"
+      ],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "preview-modo/preview-campanas.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": false,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "preview-agenda.html",
+        "preview-campanas.html",
+        "preview-inicio.html"
+      ],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "preview-modo/preview-inicio.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": false,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "#",
+        "preview-agenda.html",
+        "preview-campanas.html",
+        "preview-inicio.html"
+      ],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "propiedades.html",
+      "exists": true,
+      "app": "props",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": false,
+      "controls": [
+        {
+          "tag": "button",
+          "onclick": "abrirCsvModal()"
+        },
+        {
+          "tag": "button",
+          "onclick": "importarDesdeEasyBroker()"
+        },
+        {
+          "tag": "button",
+          "onclick": "openPropForm(null)"
+        },
+        {
+          "tag": "input",
+          "id": "props-search",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "id": "props-filter-op"
+        },
+        {
+          "tag": "select",
+          "id": "props-filter-tipo"
+        },
+        {
+          "tag": "button",
+          "id": "props-filter-est-btn",
+          "type": "button",
+          "onclick": "toggleEstDropdown()"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "props-price-min",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "props-price-max",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "id": "props-sort-precio"
+        },
+        {
+          "tag": "select",
+          "id": "props-filter-fecha"
+        },
+        {
+          "tag": "select",
+          "id": "props-filter-tag"
+        },
+        {
+          "tag": "select",
+          "id": "props-filter-agente"
+        },
+        {
+          "tag": "button",
+          "id": "props-arch-toggle",
+          "type": "button",
+          "onclick": "toggleArchivadas()"
+        },
+        {
+          "tag": "button",
+          "onclick": "closePropModal()"
+        },
+        {
+          "tag": "form",
+          "id": "prop-form",
+          "onsubmit": "saveProp(event)"
+        },
+        {
+          "tag": "input",
+          "name": "titulo",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "name": "tipo"
+        },
+        {
+          "tag": "select",
+          "name": "operacion"
+        },
+        {
+          "tag": "select",
+          "name": "estatus"
+        },
+        {
+          "tag": "input",
+          "name": "precio",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "name": "moneda"
+        },
+        {
+          "tag": "input",
+          "id": "pf-comision-input",
+          "name": "comision_venta_pct",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "name": "mostrar_precio",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "name": "calle",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "num_exterior",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "num_interior",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "colonia",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "ciudad",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "estado",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "cp",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "esquina_con",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "mostrar_ubicacion_exacta",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "name": "m2_construccion",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "name": "m2_terreno",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "name": "m2_superficie_no_cubierta",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "name": "recamaras",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "name": "banos",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "name": "medio_bano",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "name": "estacionamientos",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "name": "anio_construccion",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "name": "nivel",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "mantenimiento",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "amenidades_raw",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "name": "exclusiva"
+        },
+        {
+          "tag": "select",
+          "id": "pf-comp-sel",
+          "name": "comision_compartida_sel"
+        },
+        {
+          "tag": "input",
+          "name": "condiciones_compartir",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "pf-en-bolsa",
+          "name": "en_bolsa",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "pf-bolsa-comision",
+          "name": "bolsa_comision",
+          "type": "number"
+        },
+        {
+          "tag": "input",
+          "name": "bolsa_notas",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "etiquetas_raw",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "clave_interna",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "name": "codigo_llave",
+          "type": "text"
+        },
+        {
+          "tag": "textarea",
+          "name": "descripcion"
+        },
+        {
+          "tag": "input",
+          "id": "fotos-upload",
+          "type": "file"
+        },
+        {
+          "tag": "input",
+          "id": "fotos-raw-hidden",
+          "name": "fotos_raw",
+          "type": "hidden"
+        },
+        {
+          "tag": "textarea",
+          "name": "notas"
+        },
+        {
+          "tag": "input",
+          "name": "prop_id",
+          "type": "hidden"
+        },
+        {
+          "tag": "input",
+          "id": "fb-publish-check",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "closePropModal()"
+        },
+        {
+          "tag": "button",
+          "type": "submit"
+        },
+        {
+          "tag": "button",
+          "onclick": "closePropDetail()"
+        },
+        {
+          "tag": "button",
+          "id": "f-mas",
+          "onclick": "pfMenuMas(this)"
+        },
+        {
+          "tag": "select",
+          "id": "f-asignado-sel"
+        },
+        {
+          "tag": "button",
+          "id": "f-estatus-btn",
+          "onclick": "pfMenuEstatus(this)"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-detalles",
+          "onclick": "pdSetTab('detalles')"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-bitacora",
+          "onclick": "pdSetTab('bitacora')"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-int",
+          "onclick": "pdSetTab('int')"
+        },
+        {
+          "tag": "button",
+          "id": "f-tab-tareas",
+          "onclick": "pdSetTab('tareas')"
+        },
+        {
+          "tag": "button",
+          "onclick": "pdAbrirNota()"
+        },
+        {
+          "tag": "input",
+          "id": "f-archivo-suelto",
+          "type": "file"
+        },
+        {
+          "tag": "button",
+          "onclick": "document.getElementById('f-archivo-suelto').click()"
+        },
+        {
+          "tag": "textarea",
+          "id": "f-nota-texto"
+        },
+        {
+          "tag": "select",
+          "id": "f-nota-cat-sel"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "pdNuevaCategoriaNota()"
+        },
+        {
+          "tag": "input",
+          "id": "f-nota-adjuntos",
+          "type": "file"
+        },
+        {
+          "tag": "button",
+          "onclick": "document.getElementById('f-nota-adjuntos').click()"
+        },
+        {
+          "tag": "button",
+          "onclick": "pdCancelarNota()"
+        },
+        {
+          "tag": "button",
+          "id": "f-nota-guardar",
+          "onclick": "pdGuardarNota()"
+        },
+        {
+          "tag": "input",
+          "id": "pd-int-contacto-buscar",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "pd-int-contacto",
+          "type": "hidden"
+        },
+        {
+          "tag": "select",
+          "id": "pd-int-rel"
+        },
+        {
+          "tag": "button",
+          "onclick": "pdVincularContacto()"
+        },
+        {
+          "tag": "input",
+          "id": "pd-tarea-input",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "pd-tarea-fecha",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "pd-tarea-hora",
+          "type": "time"
+        },
+        {
+          "tag": "button",
+          "onclick": "pdAgregarTarea()"
+        },
+        {
+          "tag": "select",
+          "id": "pd-vinculo-tarea"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "closeLightbox()"
+        },
+        {
+          "tag": "button",
+          "id": "lightbox-prev",
+          "type": "button",
+          "onclick": "lightboxNav(-1)"
+        },
+        {
+          "tag": "button",
+          "id": "lightbox-next",
+          "type": "button",
+          "onclick": "lightboxNav(1)"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "id": "eb-pick-btn",
+          "onclick": "ebEjecutarImport()"
+        },
+        {
+          "tag": "button",
+          "id": "eb-import-btn",
+          "onclick": "cerrarImportEB()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarComisionModal()"
+        },
+        {
+          "tag": "input",
+          "id": "comision-real-input",
+          "type": "number"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "cerrarComisionModal()"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "guardarComisionReal()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarCsvModal()"
+        },
+        {
+          "tag": "input",
+          "id": "csv-file",
+          "type": "file"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "cerrarCsvModal()"
+        },
+        {
+          "tag": "button",
+          "id": "csv-import-btn",
+          "type": "button",
+          "onclick": "ejecutarImportCsv()"
+        },
+        {
+          "tag": "button",
+          "onclick": "confirmarBorrarSeleccionados()"
+        },
+        {
+          "tag": "button",
+          "onclick": "deseleccionarTodo()"
+        },
+        {
+          "tag": "button",
+          "onclick": "cerrarConfirmDel()"
+        },
+        {
+          "tag": "button",
+          "id": "confirm-del-btn",
+          "onclick": "borrarSeleccionados()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "propiedades-editor.js",
+        "historial-adjuntos.js",
+        "ficha-comun.js",
+        "categorias.js",
+        "propiedades-ficha.js",
+        "propiedades-lightbox.js",
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "registro.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "input",
+          "id": "r-nombre",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "r-apellidos",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "r-telefono",
+          "type": "tel"
+        },
+        {
+          "tag": "input",
+          "id": "legal-check",
+          "type": "checkbox"
+        },
+        {
+          "tag": "button",
+          "id": "btn-save",
+          "onclick": "guardar()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "legal.html"
+      ],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "reset-password.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "form",
+          "id": "form-reset",
+          "onsubmit": "event.preventDefault();doReset()"
+        },
+        {
+          "tag": "input",
+          "id": "r-pass",
+          "type": "password"
+        },
+        {
+          "tag": "input",
+          "id": "r-pass2",
+          "type": "password"
+        },
+        {
+          "tag": "button",
+          "id": "btn-reset",
+          "type": "submit"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "login.html"
+      ],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "robin.html",
+      "exists": true,
+      "app": "robin",
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "rbHecho('lead-1')"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "rbHecho('lead-1')"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "rbHecho('lead-2')"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "rbHecho('lead-2')"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "rbHecho('lead-3')"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "rbHecho('lead-3')"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "rbBroq('ficha')"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "rbBroq('enfria')"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "rbBroq('manana')"
+        },
+        {
+          "tag": "input",
+          "id": "broq-input",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "rbBroq('libre')"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "rbVendido()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "sitio.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": false,
+      "source_unchanged": true,
+      "controls": [],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "sitio-engine.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "soporte.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        },
+        {
+          "tag": "button",
+          "onclick": "toggle(this)"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "blog.html?art=whatsapp-cobro-meta-octubre-2026",
+        "legal.html",
+        "legal.html#whatsapp",
+        "mailto:hola@broquer.app"
+      ],
+      "scripts": [
+        "soporte-form.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "tareas.html",
+      "exists": true,
+      "app": "tareas",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": false,
+      "controls": [
+        {
+          "tag": "button",
+          "onclick": "tknAbrir()"
+        },
+        {
+          "tag": "input",
+          "id": "tk-search",
+          "type": "text"
+        },
+        {
+          "tag": "select",
+          "id": "tk-filtro-estado"
+        },
+        {
+          "tag": "select",
+          "id": "tk-filtro-vinculo"
+        },
+        {
+          "tag": "select",
+          "id": "tk-filtro-asignado"
+        },
+        {
+          "tag": "button",
+          "id": "tk-tab-tareas",
+          "onclick": "setTab('tareas')"
+        },
+        {
+          "tag": "button",
+          "id": "tk-tab-act",
+          "onclick": "setTab('actividad')"
+        },
+        {
+          "tag": "input",
+          "id": "tk-nueva-titulo",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "tk-nueva-fecha",
+          "type": "date"
+        },
+        {
+          "tag": "select",
+          "id": "tk-nueva-vinculo"
+        },
+        {
+          "tag": "button",
+          "id": "tk-nueva-btn",
+          "onclick": "crearTarea()"
+        },
+        {
+          "tag": "input",
+          "id": "tke-titulo"
+        },
+        {
+          "tag": "input",
+          "id": "tke-fecha",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "tke-hora",
+          "type": "time"
+        },
+        {
+          "tag": "textarea",
+          "id": "tke-notas"
+        },
+        {
+          "tag": "select",
+          "id": "tke-asignado-sel"
+        },
+        {
+          "tag": "select",
+          "id": "tke-agregar-categoria"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "tkeNuevaCategoria()"
+        },
+        {
+          "tag": "input",
+          "id": "tke-agregar-contacto-buscar",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "tke-agregar-contacto",
+          "type": "hidden"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "tkAgregarContacto()"
+        },
+        {
+          "tag": "input",
+          "id": "tke-agregar-propiedad-buscar",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "tke-agregar-propiedad",
+          "type": "hidden"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "tkAgregarPropiedad()"
+        },
+        {
+          "tag": "input",
+          "id": "tke-adj-input",
+          "type": "file"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "g('tke-adj-input').click()"
+        },
+        {
+          "tag": "button",
+          "onclick": "tkEliminarDesdeModal()"
+        },
+        {
+          "tag": "button",
+          "onclick": "tkCerrarEditar()"
+        },
+        {
+          "tag": "button",
+          "id": "tke-guardar-btn",
+          "onclick": "tkGuardarEdicion()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "app-shell.js",
+        "ficha-comun.js",
+        "categorias.js",
+        "historial-adjuntos.js",
+        "tarea-nueva.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "unirse.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "id": "un-btn-unirme",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "un-btn-otra",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "un-btn-login",
+          "type": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "verificador.html",
+      "exists": true,
+      "app": "verificador",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "verificar-firma.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "input",
+          "id": "vf-folio",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "id": "vf-buscar",
+          "type": "button"
+        },
+        {
+          "tag": "input",
+          "id": "vf-archivo",
+          "type": "file"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "video.html",
+      "exists": true,
+      "app": "video",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "input",
+          "id": "vid-q",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "id": "vid-ed-abrir",
+          "type": "button"
+        },
+        {
+          "tag": "textarea",
+          "id": "vid-ed-prompt"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "vid-ed-editar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "vid-generar",
+          "type": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "videos/landing.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "id": "mv-poster",
+          "type": "button"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "#modulos",
+        "#nosotros",
+        "#precios",
+        "https://apps.apple.com/us/app/broquer/id6775727897",
+        "landing.html",
+        "legal.html",
+        "login.html",
+        "mailto:hola@broquer.app?subject=Broquer%20para%20empresas",
+        "registro.html",
+        "soporte.html"
+      ],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "whatsapp-callback.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "whatsapp-chatgpt.html",
+      "exists": true,
+      "app": "whatsapp-chatgpt",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "button",
+          "id": "connectBtn"
+        },
+        {
+          "tag": "button",
+          "id": "reloadBtn"
+        },
+        {
+          "tag": "button",
+          "id": "openTestBtn"
+        },
+        {
+          "tag": "input",
+          "id": "searchBox"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "textarea",
+          "id": "identity"
+        },
+        {
+          "tag": "button",
+          "id": "saveIdentity"
+        },
+        {
+          "tag": "button",
+          "id": "simulateBtn"
+        },
+        {
+          "tag": "button",
+          "id": "scheduleBtn"
+        },
+        {
+          "tag": "input",
+          "id": "testTo"
+        },
+        {
+          "tag": "textarea",
+          "id": "testBody"
+        },
+        {
+          "tag": "button",
+          "id": "sendTestBtn"
+        },
+        {
+          "tag": "button",
+          "id": "closeTestBtn"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "whatsapp.html",
+      "exists": true,
+      "app": "whatsapp",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "select",
+          "id": "w2-filtro-numero"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2ToggleNumerosPanel()"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "w2CerrarAvisoMetaCobro()"
+        },
+        {
+          "tag": "button",
+          "id": "wa-connect-btn",
+          "onclick": "w2ConectarNumero()"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2RevisarWebhookApp()"
+        },
+        {
+          "tag": "button",
+          "id": "w2-app-webhook-fix-btn",
+          "onclick": "w2ArreglarWebhookApp()"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2IrATab('chats')"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2IrATab('entrenamiento')"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2IrATab('automatizaciones')"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2IrATab('campanas')"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2IrATab('plantillas')"
+        },
+        {
+          "tag": "input",
+          "id": "w2-avanzado-check",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "w2-buscar",
+          "type": "search"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2Filtrar('todos')"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2Filtrar('nuevos')"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2Filtrar('ia')"
+        },
+        {
+          "tag": "select",
+          "id": "w2-cp-numero"
+        },
+        {
+          "tag": "select",
+          "id": "w2-cp-audiencia"
+        },
+        {
+          "tag": "select",
+          "id": "w2-cp-plantilla"
+        },
+        {
+          "tag": "input",
+          "id": "w2-cp-nombre"
+        },
+        {
+          "tag": "button",
+          "id": "w2-cp-enviar",
+          "onclick": "w2CampEnviar()"
+        },
+        {
+          "tag": "button",
+          "id": "w2-au-cancelar",
+          "onclick": "w2AuCancelarEdicion()"
+        },
+        {
+          "tag": "input",
+          "id": "w2-au-nombre"
+        },
+        {
+          "tag": "select",
+          "id": "w2-au-numero"
+        },
+        {
+          "tag": "select",
+          "id": "w2-au-disparador"
+        },
+        {
+          "tag": "input",
+          "id": "w2-au-palabras"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "w2FlujoAgregarPaso()"
+        },
+        {
+          "tag": "button",
+          "id": "w2-au-guardar-btn",
+          "onclick": "w2AuGuardar()"
+        },
+        {
+          "tag": "select",
+          "id": "w2-pl-numero-selector"
+        },
+        {
+          "tag": "input",
+          "id": "w2-pl-nombre"
+        },
+        {
+          "tag": "select",
+          "id": "w2-pl-categoria"
+        },
+        {
+          "tag": "textarea",
+          "id": "w2-pl-cuerpo"
+        },
+        {
+          "tag": "input",
+          "id": "w2-pl-ejemplo"
+        },
+        {
+          "tag": "input",
+          "id": "w2-pl-footer"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2CrearPlantilla()"
+        },
+        {
+          "tag": "select",
+          "id": "w2-t-numero-selector"
+        },
+        {
+          "tag": "form",
+          "onsubmit": "event.preventDefault(); w2GuardarEntrenamiento();"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-activo",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "name": "w2-t-modo",
+          "type": "radio"
+        },
+        {
+          "tag": "input",
+          "name": "w2-t-modo",
+          "type": "radio"
+        },
+        {
+          "tag": "input",
+          "name": "w2-t-modo",
+          "type": "radio"
+        },
+        {
+          "tag": "select",
+          "id": "w2-t-nuevos-meses"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-pausa",
+          "type": "checkbox"
+        },
+        {
+          "tag": "select",
+          "id": "w2-t-pausa-dur"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-nombre"
+        },
+        {
+          "tag": "select",
+          "id": "w2-t-zona"
+        },
+        {
+          "tag": "textarea",
+          "id": "w2-t-conocimiento"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-horario",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-hi",
+          "type": "time"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-hf",
+          "type": "time"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-fuera"
+        },
+        {
+          "tag": "button",
+          "id": "w2-t-avanzado-btn",
+          "type": "button",
+          "onclick": "w2ToggleEntrenAvanzado()"
+        },
+        {
+          "tag": "textarea",
+          "id": "w2-t-identidad"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-tono"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-objetivo"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-especialidad"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-max",
+          "type": "number"
+        },
+        {
+          "tag": "textarea",
+          "id": "w2-t-puede"
+        },
+        {
+          "tag": "textarea",
+          "id": "w2-t-debe"
+        },
+        {
+          "tag": "textarea",
+          "id": "w2-t-nodebe"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-datos"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-preguntas"
+        },
+        {
+          "tag": "input",
+          "id": "w2-t-escalar"
+        },
+        {
+          "tag": "button",
+          "type": "submit"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "w2ReiniciarPrueba()"
+        },
+        {
+          "tag": "input",
+          "id": "w2-prueba-texto"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "w2EnviarPrueba()"
+        },
+        {
+          "tag": "input",
+          "id": "w2-cita-titulo"
+        },
+        {
+          "tag": "input",
+          "id": "w2-cita-fecha",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "w2-cita-hora",
+          "type": "time"
+        },
+        {
+          "tag": "textarea",
+          "id": "w2-cita-notas"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2CerrarModalCita()"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2GuardarCitaManual()"
+        },
+        {
+          "tag": "select",
+          "id": "w2-plm-nombre"
+        },
+        {
+          "tag": "input",
+          "id": "w2-plm-variables"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2CerrarModalPlantilla()"
+        },
+        {
+          "tag": "button",
+          "onclick": "w2EnviarPlantillaDesdeChat()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [
+        "legal.html#whatsapp",
+        "soporte.html#pago-meta-whatsapp"
+      ],
+      "scripts": [
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    }
+  ],
+  "routes": [
+    {
+      "file": "routers/account_delete.py",
+      "handler": "eliminar_cuenta_y_datos",
+      "method": "DELETE",
+      "path_expression": "'/usuario/eliminar-cuenta'"
+    },
+    {
+      "file": "routers/admin_accounts.py",
+      "handler": "admin_set_rol",
+      "method": "POST",
+      "path_expression": "'/admin/user/rol'"
+    },
+    {
+      "file": "routers/admin_accounts.py",
+      "handler": "admin_set_activo",
+      "method": "POST",
+      "path_expression": "'/admin/user/activo'"
+    },
+    {
+      "file": "routers/admin_accounts.py",
+      "handler": "admin_set_modulos",
+      "method": "POST",
+      "path_expression": "'/admin/user/modulos'"
+    },
+    {
+      "file": "routers/admin_accounts.py",
+      "handler": "admin_set_acceso_completo",
+      "method": "POST",
+      "path_expression": "'/admin/user/acceso-completo'"
+    },
+    {
+      "file": "routers/admin_delete.py",
+      "handler": "admin_eliminar_usuario",
+      "method": "POST",
+      "path_expression": "'/admin/user/eliminar'"
+    },
+    {
+      "file": "routers/admin_read.py",
+      "handler": "admin_me",
+      "method": "GET",
+      "path_expression": "'/admin/me'"
+    },
+    {
+      "file": "routers/admin_read.py",
+      "handler": "admin_list_users",
+      "method": "GET",
+      "path_expression": "'/admin/users'"
+    },
+    {
+      "file": "routers/admin_usage.py",
+      "handler": "admin_user_uso",
+      "method": "GET",
+      "path_expression": "'/admin/user/{user_id}/uso'"
+    },
+    {
+      "file": "routers/agente.py",
+      "handler": "agent",
+      "method": "POST",
+      "path_expression": "'/agent'"
+    },
+    {
+      "file": "routers/agente.py",
+      "handler": "transcribir",
+      "method": "POST",
+      "path_expression": "'/transcribir'"
+    },
+    {
+      "file": "routers/agente.py",
+      "handler": "agent_health",
+      "method": "GET",
+      "path_expression": "'/agent/health'"
+    },
+    {
+      "file": "routers/avm_apify.py",
+      "handler": "buscar_comparables",
+      "method": "POST",
+      "path_expression": "'/api/comparables'"
+    },
+    {
+      "file": "routers/avm_claude.py",
+      "handler": "avm_claude",
+      "method": "POST",
+      "path_expression": "'/api/avm-claude'"
+    },
+    {
+      "file": "routers/avm_legacy.py",
+      "handler": "calcular_avm",
+      "method": "POST",
+      "path_expression": "'/avm'"
+    },
+    {
+      "file": "routers/avm_nearby.py",
+      "handler": "comparables_cercanos",
+      "method": "POST",
+      "path_expression": "'/api/comparables-cercanos'"
+    },
+    {
+      "file": "routers/avm_pdf.py",
+      "handler": "generar_avm_pdf",
+      "method": "POST",
+      "path_expression": "'/avm-pdf'"
+    },
+    {
+      "file": "routers/avm_places.py",
+      "handler": "buscar_colonias",
+      "method": "GET",
+      "path_expression": "'/api/colonias'"
+    },
+    {
+      "file": "routers/avm_websearch.py",
+      "handler": "avm_websearch",
+      "method": "POST",
+      "path_expression": "'/api/avm-websearch'"
+    },
+    {
+      "file": "routers/banxico.py",
+      "handler": "api_inpc",
+      "method": "GET",
+      "path_expression": "'/api/inpc/{anio}/{mes}'"
+    },
+    {
+      "file": "routers/banxico.py",
+      "handler": "api_udis",
+      "method": "GET",
+      "path_expression": "'/api/udis/{fecha}'"
+    },
+    {
+      "file": "routers/bolsa.py",
+      "handler": "bolsa_propiedades",
+      "method": "GET",
+      "path_expression": "'/propiedades'"
+    },
+    {
+      "file": "routers/bolsa.py",
+      "handler": "bolsa_mis",
+      "method": "GET",
+      "path_expression": "'/mis'"
+    },
+    {
+      "file": "routers/bolsa.py",
+      "handler": "bolsa_publicar",
+      "method": "POST",
+      "path_expression": "'/publicar'"
+    },
+    {
+      "file": "routers/bolsa.py",
+      "handler": "bolsa_retirar",
+      "method": "POST",
+      "path_expression": "'/retirar'"
+    },
+    {
+      "file": "routers/bulk_delete.py",
+      "handler": "propiedades_eliminar_masivo",
+      "method": "POST",
+      "path_expression": "'/propiedades/eliminar-masivo'"
+    },
+    {
+      "file": "routers/bulk_delete.py",
+      "handler": "contactos_eliminar_masivo",
+      "method": "POST",
+      "path_expression": "'/contactos/eliminar-masivo'"
+    },
+    {
+      "file": "routers/buscador_propiedades.py",
+      "handler": "buscar_manual",
+      "method": "POST",
+      "path_expression": "'/api/buscador/buscar'"
+    },
+    {
+      "file": "routers/buscador_propiedades.py",
+      "handler": "obtener_requerimiento",
+      "method": "GET",
+      "path_expression": "'/api/buscador/requerimiento/{contacto_id}'"
+    },
+    {
+      "file": "routers/buscador_propiedades.py",
+      "handler": "guardar_requerimiento",
+      "method": "PUT",
+      "path_expression": "'/api/buscador/requerimiento/{contacto_id}'"
+    },
+    {
+      "file": "routers/buscador_propiedades.py",
+      "handler": "obtener_resultados",
+      "method": "GET",
+      "path_expression": "'/api/buscador/resultados/{contacto_id}'"
+    },
+    {
+      "file": "routers/buscador_propiedades.py",
+      "handler": "escanear_ahora",
+      "method": "POST",
+      "path_expression": "'/api/buscador/escanear/{contacto_id}'"
+    },
+    {
+      "file": "routers/buscador_propiedades.py",
+      "handler": "listar_requerimientos",
+      "method": "GET",
+      "path_expression": "'/api/buscador'"
+    },
+    {
+      "file": "routers/chat.py",
+      "handler": "chat_proxy",
+      "method": "POST",
+      "path_expression": "'/chat'"
+    },
+    {
+      "file": "routers/chat_claude.py",
+      "handler": "chat_claude_proxy",
+      "method": "POST",
+      "path_expression": "'/chat-claude'"
+    },
+    {
+      "file": "routers/contact_file_import.py",
+      "handler": "importar_contactos_archivo",
+      "method": "POST",
+      "path_expression": "'/contactos/importar-archivo'"
+    },
+    {
+      "file": "routers/contracts_basic.py",
+      "handler": "generar_contrato",
+      "method": "POST",
+      "path_expression": "'/contrato'"
+    },
+    {
+      "file": "routers/correo.py",
+      "handler": "correo_estado",
+      "method": "GET",
+      "path_expression": "'/correo/estado'"
+    },
+    {
+      "file": "routers/correo.py",
+      "handler": "correo_conectar",
+      "method": "POST",
+      "path_expression": "'/correo/conectar'"
+    },
+    {
+      "file": "routers/correo.py",
+      "handler": "correo_desconectar",
+      "method": "DELETE",
+      "path_expression": "'/correo/desconectar'"
+    },
+    {
+      "file": "routers/correo.py",
+      "handler": "correo_bandeja",
+      "method": "GET",
+      "path_expression": "'/correo/bandeja'"
+    },
+    {
+      "file": "routers/correo.py",
+      "handler": "correo_mensaje",
+      "method": "GET",
+      "path_expression": "'/correo/mensaje/{uid_msg}'"
+    },
+    {
+      "file": "routers/correo.py",
+      "handler": "correo_enviar",
+      "method": "POST",
+      "path_expression": "'/correo/enviar'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "obtener_config",
+      "method": "GET",
+      "path_expression": "'/config'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "guardar_config",
+      "method": "PUT",
+      "path_expression": "'/config'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "revision_expediente",
+      "method": "GET",
+      "path_expression": "'/expedientes/{expediente_id}/revision'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "simular_operacion",
+      "method": "POST",
+      "path_expression": "'/operaciones/simular'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "guardar_operacion",
+      "method": "POST",
+      "path_expression": "'/operaciones'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "crear_liga",
+      "method": "POST",
+      "path_expression": "'/expedientes/{expediente_id}/liga'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "publico_leer",
+      "method": "GET",
+      "path_expression": "'/publico/{token}'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "publico_guardar",
+      "method": "POST",
+      "path_expression": "'/publico/{token}'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "subir_documento",
+      "method": "POST",
+      "path_expression": "'/expedientes/{expediente_id}/documentos'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "subir_documento_cliente",
+      "method": "POST",
+      "path_expression": "'/publico/{token}/documentos'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "quitar_documento",
+      "method": "DELETE",
+      "path_expression": "'/documentos/{documento_id}'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "ver_documento",
+      "method": "GET",
+      "path_expression": "'/documentos/{documento_id}/ver'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "generar_aviso",
+      "method": "POST",
+      "path_expression": "'/avisos/generar'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "descargar_xml",
+      "method": "GET",
+      "path_expression": "'/avisos/{aviso_id}/xml'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "marcar_subido",
+      "method": "POST",
+      "path_expression": "'/avisos/{aviso_id}/subido'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "marcar_presentado",
+      "method": "POST",
+      "path_expression": "'/avisos/{aviso_id}/presentado'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "marcar_rechazado",
+      "method": "POST",
+      "path_expression": "'/avisos/{aviso_id}/rechazado'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "descartar_aviso",
+      "method": "POST",
+      "path_expression": "'/avisos/{aviso_id}/descartar'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "generar_modificatorio",
+      "method": "POST",
+      "path_expression": "'/avisos/{aviso_id}/modificatorio'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "resumen",
+      "method": "GET",
+      "path_expression": "'/resumen'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "leer_bitacora",
+      "method": "GET",
+      "path_expression": "'/bitacora'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "catalogos_uif",
+      "method": "GET",
+      "path_expression": "'/catalogos'"
+    },
+    {
+      "file": "routers/cumplimiento.py",
+      "handler": "salud",
+      "method": "GET",
+      "path_expression": "'/salud'"
+    },
+    {
+      "file": "routers/demo.py",
+      "handler": "demo_agendar",
+      "method": "POST",
+      "path_expression": "'/demo/agendar'"
+    },
+    {
+      "file": "routers/demo_live.py",
+      "handler": "crear_sesion",
+      "method": "POST",
+      "path_expression": "'/sesion'"
+    },
+    {
+      "file": "routers/demo_live.py",
+      "handler": "estado_sesion",
+      "method": "GET",
+      "path_expression": "'/estado/{session_id}'"
+    },
+    {
+      "file": "routers/demo_live.py",
+      "handler": "registrar_accion",
+      "method": "POST",
+      "path_expression": "'/accion'"
+    },
+    {
+      "file": "routers/demo_live.py",
+      "handler": "avm_demo",
+      "method": "POST",
+      "path_expression": "'/avm'"
+    },
+    {
+      "file": "routers/demo_live.py",
+      "handler": "chat_demo",
+      "method": "POST",
+      "path_expression": "'/chat'"
+    },
+    {
+      "file": "routers/demo_live.py",
+      "handler": "whatsapp_demo",
+      "method": "GET",
+      "path_expression": "'/whatsapp/{session_id}'"
+    },
+    {
+      "file": "routers/demo_live.py",
+      "handler": "wa_enviar",
+      "method": "POST",
+      "path_expression": "'/whatsapp/enviar'"
+    },
+    {
+      "file": "routers/demo_live.py",
+      "handler": "crear_contacto",
+      "method": "POST",
+      "path_expression": "'/contacto/crear'"
+    },
+    {
+      "file": "routers/demo_live.py",
+      "handler": "crear_propiedad",
+      "method": "POST",
+      "path_expression": "'/propiedad/crear'"
+    },
+    {
+      "file": "routers/easybroker_catalog.py",
+      "handler": "get_propiedades",
+      "method": "GET",
+      "path_expression": "'/propiedades'"
+    },
+    {
+      "file": "routers/easybroker_colonias.py",
+      "handler": "get_colonias",
+      "method": "GET",
+      "path_expression": "'/colonias'"
+    },
+    {
+      "file": "routers/easybroker_config.py",
+      "handler": "set_eb_key",
+      "method": "POST",
+      "path_expression": "'/config/eb-key'"
+    },
+    {
+      "file": "routers/easybroker_config.py",
+      "handler": "delete_eb_key",
+      "method": "DELETE",
+      "path_expression": "'/config/eb-key'"
+    },
+    {
+      "file": "routers/easybroker_config.py",
+      "handler": "get_eb_key",
+      "method": "GET",
+      "path_expression": "'/config/eb-key'"
+    },
+    {
+      "file": "routers/easybroker_contact_import.py",
+      "handler": "importar_contactos_eb",
+      "method": "POST",
+      "path_expression": "'/contactos/importar-eb'"
+    },
+    {
+      "file": "routers/easybroker_diagnostics.py",
+      "handler": "easybroker_diagnostico",
+      "method": "GET",
+      "path_expression": "'/easybroker/diagnostico'"
+    },
+    {
+      "file": "routers/easybroker_import_stats.py",
+      "handler": "easybroker_import_stats",
+      "method": "POST",
+      "path_expression": "'/easybroker/import-stats'"
+    },
+    {
+      "file": "routers/easybroker_migration.py",
+      "handler": "migracion_eb_iniciar",
+      "method": "POST",
+      "path_expression": "'/easybroker/migracion/iniciar'"
+    },
+    {
+      "file": "routers/easybroker_migration.py",
+      "handler": "migracion_eb_estado",
+      "method": "GET",
+      "path_expression": "'/easybroker/migracion/estado'"
+    },
+    {
+      "file": "routers/easybroker_migration.py",
+      "handler": "easybroker_import_all",
+      "method": "POST",
+      "path_expression": "'/easybroker/import-all'"
+    },
+    {
+      "file": "routers/easybroker_photo_status.py",
+      "handler": "easybroker_fotos_pendientes",
+      "method": "GET",
+      "path_expression": "'/easybroker/fotos-pendientes'"
+    },
+    {
+      "file": "routers/easybroker_photo_status.py",
+      "handler": "easybroker_migrar_fotos",
+      "method": "POST",
+      "path_expression": "'/easybroker/migrar-fotos'"
+    },
+    {
+      "file": "routers/easybroker_properties.py",
+      "handler": "get_propiedad",
+      "method": "GET",
+      "path_expression": "'/propiedad/{property_id}'"
+    },
+    {
+      "file": "routers/facebook_ad_accounts.py",
+      "handler": "facebook_ad_accounts",
+      "method": "GET",
+      "path_expression": "'/facebook/ad-accounts'"
+    },
+    {
+      "file": "routers/facebook_ad_description.py",
+      "handler": "facebook_ad_description",
+      "method": "POST",
+      "path_expression": "'/facebook/ad-description'"
+    },
+    {
+      "file": "routers/facebook_audiences.py",
+      "handler": "facebook_audience_from_contacts",
+      "method": "POST",
+      "path_expression": "'/facebook/audiences/from-contacts'"
+    },
+    {
+      "file": "routers/facebook_audiences.py",
+      "handler": "facebook_audience_lookalike",
+      "method": "POST",
+      "path_expression": "'/facebook/audiences/lookalike'"
+    },
+    {
+      "file": "routers/facebook_audiences_read.py",
+      "handler": "facebook_audiences_list",
+      "method": "GET",
+      "path_expression": "'/facebook/audiences'"
+    },
+    {
+      "file": "routers/facebook_campaign_review.py",
+      "handler": "facebook_campaign_review",
+      "method": "GET",
+      "path_expression": "'/facebook/campaign/review'"
+    },
+    {
+      "file": "routers/facebook_campaign_toggle.py",
+      "handler": "facebook_campaign_toggle",
+      "method": "POST",
+      "path_expression": "'/facebook/campaign/toggle'"
+    },
+    {
+      "file": "routers/facebook_campaigns.py",
+      "handler": "facebook_campaigns_list",
+      "method": "GET",
+      "path_expression": "'/facebook/campaigns'"
+    },
+    {
+      "file": "routers/facebook_city_search.py",
+      "handler": "facebook_city_search",
+      "method": "GET",
+      "path_expression": "'/facebook/city-search'"
+    },
+    {
+      "file": "routers/facebook_connection_read.py",
+      "handler": "facebook_get_connection",
+      "method": "GET",
+      "path_expression": "'/facebook/connection'"
+    },
+    {
+      "file": "routers/facebook_create_ad.py",
+      "handler": "facebook_create_ad",
+      "method": "POST",
+      "path_expression": "'/facebook/create-ad'"
+    },
+    {
+      "file": "routers/facebook_disconnect.py",
+      "handler": "facebook_disconnect",
+      "method": "DELETE",
+      "path_expression": "'/facebook/connection'"
+    },
+    {
+      "file": "routers/facebook_encrypt_tokens.py",
+      "handler": "facebook_encrypt_tokens",
+      "method": "POST",
+      "path_expression": "'/facebook/encrypt-tokens'"
+    },
+    {
+      "file": "routers/facebook_insights_read.py",
+      "handler": "facebook_insights",
+      "method": "GET",
+      "path_expression": "'/facebook/insights'"
+    },
+    {
+      "file": "routers/facebook_leadgen_status.py",
+      "handler": "facebook_leadgen_status",
+      "method": "GET",
+      "path_expression": "'/facebook/leadgen/status'"
+    },
+    {
+      "file": "routers/facebook_leadgen_subscribe.py",
+      "handler": "facebook_leadgen_subscribe",
+      "method": "POST",
+      "path_expression": "'/facebook/leadgen/subscribe'"
+    },
+    {
+      "file": "routers/facebook_leadgen_verify.py",
+      "handler": "facebook_leadgen_verify",
+      "method": "GET",
+      "path_expression": "'/facebook/leadgen/webhook'"
+    },
+    {
+      "file": "routers/facebook_leadgen_webhook.py",
+      "handler": "facebook_leadgen_webhook",
+      "method": "POST",
+      "path_expression": "'/facebook/leadgen/webhook'"
+    },
+    {
+      "file": "routers/facebook_oauth_callback.py",
+      "handler": "facebook_callback",
+      "method": "GET",
+      "path_expression": "'/facebook/callback'"
+    },
+    {
+      "file": "routers/facebook_page_posts.py",
+      "handler": "facebook_page_posts",
+      "method": "GET",
+      "path_expression": "'/facebook/page-posts'"
+    },
+    {
+      "file": "routers/facebook_pages.py",
+      "handler": "facebook_list_pages",
+      "method": "GET",
+      "path_expression": "'/facebook/pages'"
+    },
+    {
+      "file": "routers/facebook_publish.py",
+      "handler": "facebook_publish",
+      "method": "POST",
+      "path_expression": "'/facebook/publish'"
+    },
+    {
+      "file": "routers/facebook_publish_property.py",
+      "handler": "facebook_publish_property",
+      "method": "POST",
+      "path_expression": "'/facebook/publish-property'"
+    },
+    {
+      "file": "routers/facebook_qa_selfcheck.py",
+      "handler": "facebook_qa_selfcheck",
+      "method": "POST",
+      "path_expression": "'/facebook/qa-selfcheck'"
+    },
+    {
+      "file": "routers/facebook_reconcile.py",
+      "handler": "facebook_reconcile",
+      "method": "POST",
+      "path_expression": "'/facebook/reconcile'"
+    },
+    {
+      "file": "routers/facebook_refresh_token.py",
+      "handler": "facebook_refresh_token",
+      "method": "POST",
+      "path_expression": "'/facebook/refresh-token'"
+    },
+    {
+      "file": "routers/facebook_save_page.py",
+      "handler": "facebook_save_page",
+      "method": "POST",
+      "path_expression": "'/facebook/save-page'"
+    },
+    {
+      "file": "routers/facebook_select_ad_account.py",
+      "handler": "facebook_select_ad_account",
+      "method": "POST",
+      "path_expression": "'/facebook/select-ad-account'"
+    },
+    {
+      "file": "routers/facebook_select_page.py",
+      "handler": "facebook_select_page",
+      "method": "POST",
+      "path_expression": "'/facebook/select-page'"
+    },
+    {
+      "file": "routers/ficha_manual.py",
+      "handler": "generar_descripcion_ficha_manual",
+      "method": "POST",
+      "path_expression": "'/ficha-manual/descripcion'"
+    },
+    {
+      "file": "routers/ficha_pdf.py",
+      "handler": "generar_ficha_pdf",
+      "method": "POST",
+      "path_expression": "'/ficha-pdf'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "listar_categorias",
+      "method": "GET",
+      "path_expression": "'/categorias'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "crear_categoria",
+      "method": "POST",
+      "path_expression": "'/categorias'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "editar_categoria",
+      "method": "PATCH",
+      "path_expression": "'/categorias/{cat_id}'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "borrar_categoria",
+      "method": "DELETE",
+      "path_expression": "'/categorias/{cat_id}'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "listar_cuentas",
+      "method": "GET",
+      "path_expression": "'/cuentas'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "crear_cuenta",
+      "method": "POST",
+      "path_expression": "'/cuentas'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "editar_cuenta",
+      "method": "PATCH",
+      "path_expression": "'/cuentas/{cuenta_id}'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "borrar_cuenta",
+      "method": "DELETE",
+      "path_expression": "'/cuentas/{cuenta_id}'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "listar_movimientos",
+      "method": "GET",
+      "path_expression": "'/movimientos'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "crear_movimiento",
+      "method": "POST",
+      "path_expression": "'/movimientos'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "editar_movimiento",
+      "method": "PATCH",
+      "path_expression": "'/movimientos/{mov_id}'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "borrar_movimiento",
+      "method": "DELETE",
+      "path_expression": "'/movimientos/{mov_id}'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "subir_comprobante",
+      "method": "POST",
+      "path_expression": "'/movimientos/{mov_id}/comprobante'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "liga_comprobante",
+      "method": "GET",
+      "path_expression": "'/movimientos/{mov_id}/comprobante'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "leer_ticket",
+      "method": "POST",
+      "path_expression": "'/ticket'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "comisiones_pendientes",
+      "method": "GET",
+      "path_expression": "'/comisiones-pendientes'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "resumen",
+      "method": "GET",
+      "path_expression": "'/resumen'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "generar_reporte",
+      "method": "POST",
+      "path_expression": "'/reporte'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "descargar_reporte",
+      "method": "GET",
+      "path_expression": "'/reporte/{token}'"
+    },
+    {
+      "file": "routers/finanzas.py",
+      "handler": "reporte_csv",
+      "method": "GET",
+      "path_expression": "'/reporte.csv'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "listar_documentos",
+      "method": "GET",
+      "path_expression": "'/documentos'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "crear_documento",
+      "method": "POST",
+      "path_expression": "'/documentos'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "ver_documento",
+      "method": "GET",
+      "path_expression": "'/documentos/{documento_id}'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "editar_documento",
+      "method": "PATCH",
+      "path_expression": "'/documentos/{documento_id}'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "borrar_documento",
+      "method": "DELETE",
+      "path_expression": "'/documentos/{documento_id}'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "cancelar_documento",
+      "method": "POST",
+      "path_expression": "'/documentos/{documento_id}/cancelar'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "subir_archivo",
+      "method": "POST",
+      "path_expression": "'/documentos/{documento_id}/archivo'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "desde_contrato",
+      "method": "POST",
+      "path_expression": "'/desde-contrato'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "desde_contrato_estado",
+      "method": "GET",
+      "path_expression": "'/desde-contrato/{job_id}'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "abrir_archivo",
+      "method": "GET",
+      "path_expression": "'/documentos/{documento_id}/archivo'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "agregar_firmante",
+      "method": "POST",
+      "path_expression": "'/documentos/{documento_id}/firmantes'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "editar_firmante",
+      "method": "PATCH",
+      "path_expression": "'/firmantes/{firmante_id}'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "quitar_firmante",
+      "method": "DELETE",
+      "path_expression": "'/firmantes/{firmante_id}'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "enviar_a_firma",
+      "method": "POST",
+      "path_expression": "'/documentos/{documento_id}/enviar'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "recordar",
+      "method": "POST",
+      "path_expression": "'/firmantes/{firmante_id}/recordar'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "publico_leer",
+      "method": "GET",
+      "path_expression": "'/publico/{token}'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "publico_archivo",
+      "method": "GET",
+      "path_expression": "'/publico/{token}/archivo'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "publico_ine",
+      "method": "POST",
+      "path_expression": "'/publico/{token}/ine'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "publico_pedir_codigo",
+      "method": "POST",
+      "path_expression": "'/publico/{token}/codigo'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "publico_firmar",
+      "method": "POST",
+      "path_expression": "'/publico/{token}/firmar'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "publico_rechazar",
+      "method": "POST",
+      "path_expression": "'/publico/{token}/rechazar'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "resellar",
+      "method": "POST",
+      "path_expression": "'/documentos/{documento_id}/sellar'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "reintentar_nom151",
+      "method": "POST",
+      "path_expression": "'/documentos/{documento_id}/nom151'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "ver_paginas",
+      "method": "GET",
+      "path_expression": "'/documentos/{documento_id}/paginas'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "listar_campos",
+      "method": "GET",
+      "path_expression": "'/documentos/{documento_id}/campos'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "crear_campo",
+      "method": "POST",
+      "path_expression": "'/documentos/{documento_id}/campos'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "borrar_campo",
+      "method": "DELETE",
+      "path_expression": "'/campos/{campo_id}'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "rubricar_todas",
+      "method": "POST",
+      "path_expression": "'/documentos/{documento_id}/rubricar-todas'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "verificar",
+      "method": "GET",
+      "path_expression": "'/verificar/{folio}'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "probar_correo",
+      "method": "POST",
+      "path_expression": "'/probar-correo'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "mi_acceso",
+      "method": "GET",
+      "path_expression": "'/mi-acceso'"
+    },
+    {
+      "file": "routers/firmas.py",
+      "handler": "salud",
+      "method": "GET",
+      "path_expression": "'/salud'"
+    },
+    {
+      "file": "routers/image_cleaner.py",
+      "handler": "clean_images",
+      "method": "POST",
+      "path_expression": "'/images/clean'"
+    },
+    {
+      "file": "routers/instagram.py",
+      "handler": "instagram_feed",
+      "method": "GET",
+      "path_expression": "'/instagram/feed'"
+    },
+    {
+      "file": "routers/isr_pdf.py",
+      "handler": "generar_isr_pdf",
+      "method": "POST",
+      "path_expression": "'/isr-pdf'"
+    },
+    {
+      "file": "routers/machotes.py",
+      "handler": "abrir_machote",
+      "method": "POST",
+      "path_expression": "'/contrato/machote/abrir'"
+    },
+    {
+      "file": "routers/machotes.py",
+      "handler": "sugerir_campos_machote",
+      "method": "POST",
+      "path_expression": "'/contrato/machote/sugerir'"
+    },
+    {
+      "file": "routers/machotes.py",
+      "handler": "crear_machote",
+      "method": "POST",
+      "path_expression": "'/contrato/machote/crear'"
+    },
+    {
+      "file": "routers/machotes.py",
+      "handler": "listar_machotes",
+      "method": "GET",
+      "path_expression": "'/contrato/machotes'"
+    },
+    {
+      "file": "routers/machotes.py",
+      "handler": "obtener_machote",
+      "method": "GET",
+      "path_expression": "'/contrato/machote/{machote_id}'"
+    },
+    {
+      "file": "routers/machotes.py",
+      "handler": "actualizar_machote",
+      "method": "PATCH",
+      "path_expression": "'/contrato/machote/{machote_id}'"
+    },
+    {
+      "file": "routers/machotes.py",
+      "handler": "previsualizar_machote",
+      "method": "POST",
+      "path_expression": "'/contrato/machote/{machote_id}/preview'"
+    },
+    {
+      "file": "routers/machotes.py",
+      "handler": "generar_desde_machote_guardado",
+      "method": "POST",
+      "path_expression": "'/contrato/machote/{machote_id}/generar'"
+    },
+    {
+      "file": "routers/machotes.py",
+      "handler": "eliminar_machote",
+      "method": "DELETE",
+      "path_expression": "'/contrato/machote/{machote_id}'"
+    },
+    {
+      "file": "routers/news.py",
+      "handler": "get_noticias",
+      "method": "GET",
+      "path_expression": "'/noticias'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "mi_organizacion",
+      "method": "GET",
+      "path_expression": "'/org'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "listar_miembros",
+      "method": "GET",
+      "path_expression": "'/org/miembros'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "correo_existe",
+      "method": "GET",
+      "path_expression": "'/auth/correo-existe'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "invitar",
+      "method": "POST",
+      "path_expression": "'/org/invitar'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "listar_invitaciones",
+      "method": "GET",
+      "path_expression": "'/org/invitaciones'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "cancelar_invitacion",
+      "method": "DELETE",
+      "path_expression": "'/org/invitacion/{inv_id}'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "ver_invitacion",
+      "method": "GET",
+      "path_expression": "'/org/invitacion/{token}'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "aceptar_invitacion",
+      "method": "POST",
+      "path_expression": "'/org/aceptar-invitacion'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "cambiar_rol",
+      "method": "POST",
+      "path_expression": "'/org/miembro/rol'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "cambiar_permisos",
+      "method": "POST",
+      "path_expression": "'/org/miembro/permisos'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "cambiar_activo",
+      "method": "POST",
+      "path_expression": "'/org/miembro/activo'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "cambiar_nombre",
+      "method": "POST",
+      "path_expression": "'/org/nombre'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "convertir_a_empresa",
+      "method": "POST",
+      "path_expression": "'/admin/org/convertir'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "quitar_estatus_empresa",
+      "method": "POST",
+      "path_expression": "'/admin/org/desconvertir'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "listar_organizaciones",
+      "method": "GET",
+      "path_expression": "'/admin/org/lista'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "asignar_agente",
+      "method": "POST",
+      "path_expression": "'/org/asignar'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "contactos_de_mis_tareas",
+      "method": "POST",
+      "path_expression": "'/org/tareas/contactos-vinculados'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "borrar_tarea",
+      "method": "DELETE",
+      "path_expression": "'/org/tareas/{tarea_id}'"
+    },
+    {
+      "file": "routers/organizaciones.py",
+      "handler": "cambiar_etapa_contacto",
+      "method": "PATCH",
+      "path_expression": "'/org/contactos/{contacto_id}/etapa'"
+    },
+    {
+      "file": "routers/pdf_downloads.py",
+      "handler": "descargar_avm_pdf",
+      "method": "GET",
+      "path_expression": "'/avm-pdf/{token}'"
+    },
+    {
+      "file": "routers/pdf_downloads.py",
+      "handler": "descargar_isr_pdf",
+      "method": "GET",
+      "path_expression": "'/isr-pdf/{token}'"
+    },
+    {
+      "file": "routers/pdf_downloads.py",
+      "handler": "descargar_ficha_pdf",
+      "method": "GET",
+      "path_expression": "'/ficha-pdf/{token}'"
+    },
+    {
+      "file": "routers/profile_status.py",
+      "handler": "get_profile_status",
+      "method": "GET",
+      "path_expression": "'/profile/status'"
+    },
+    {
+      "file": "routers/propiedades_actualizar.py",
+      "handler": "actualizar_propiedad",
+      "method": "PATCH",
+      "path_expression": "'/propiedades/{prop_id}'"
+    },
+    {
+      "file": "routers/public_config.py",
+      "handler": "get_public_config",
+      "method": "GET",
+      "path_expression": "'/config/public'"
+    },
+    {
+      "file": "routers/public_site_leads.py",
+      "handler": "sitio_registrar_lead",
+      "method": "POST",
+      "path_expression": "'/sitio/{slug}/lead'"
+    },
+    {
+      "file": "routers/revenuecat.py",
+      "handler": "revenuecat_webhook",
+      "method": "POST",
+      "path_expression": "'/subscription/revenuecat-webhook'"
+    },
+    {
+      "file": "routers/solicitud_arrendamiento.py",
+      "handler": "analizar_solicitud_arrendamiento",
+      "method": "POST",
+      "path_expression": "'/solicitud-arrendamiento/analizar'"
+    },
+    {
+      "file": "routers/soporte.py",
+      "handler": "enviar_mensaje",
+      "method": "POST",
+      "path_expression": "'/soporte/mensaje'"
+    },
+    {
+      "file": "routers/staging.py",
+      "handler": "amueblar",
+      "method": "POST",
+      "path_expression": "'/amueblar'"
+    },
+    {
+      "file": "routers/stripe_webhook.py",
+      "handler": "stripe_webhook",
+      "method": "POST",
+      "path_expression": "'/subscription/webhook'"
+    },
+    {
+      "file": "routers/subscription_activate.py",
+      "handler": "subscription_activate",
+      "method": "POST",
+      "path_expression": "'/subscription/activate'"
+    },
+    {
+      "file": "routers/subscription_cancel.py",
+      "handler": "subscription_cancel",
+      "method": "POST",
+      "path_expression": "'/subscription/cancel'"
+    },
+    {
+      "file": "routers/subscription_checkout.py",
+      "handler": "subscription_checkout",
+      "method": "POST",
+      "path_expression": "'/subscription/checkout'"
+    },
+    {
+      "file": "routers/subscription_enterprise.py",
+      "handler": "empresa_plan",
+      "method": "GET",
+      "path_expression": "'/subscription/empresa/plan'"
+    },
+    {
+      "file": "routers/subscription_enterprise.py",
+      "handler": "empresa_checkout",
+      "method": "POST",
+      "path_expression": "'/subscription/empresa/checkout'"
+    },
+    {
+      "file": "routers/subscription_enterprise.py",
+      "handler": "empresa_asientos",
+      "method": "POST",
+      "path_expression": "'/subscription/empresa/asientos'"
+    },
+    {
+      "file": "routers/subscription_status.py",
+      "handler": "subscription_status",
+      "method": "GET",
+      "path_expression": "'/subscription/status'"
+    },
+    {
+      "file": "routers/system.py",
+      "handler": "root",
+      "method": "GET",
+      "path_expression": "'/'"
+    },
+    {
+      "file": "routers/system.py",
+      "handler": "ping",
+      "method": "GET",
+      "path_expression": "'/ping'"
+    },
+    {
+      "file": "routers/telemetry.py",
+      "handler": "telemetria_sesion_modulo",
+      "method": "POST",
+      "path_expression": "'/telemetria/sesion-modulo'"
+    },
+    {
+      "file": "routers/video.py",
+      "handler": "generar",
+      "method": "POST",
+      "path_expression": "'/generar'"
+    },
+    {
+      "file": "routers/video.py",
+      "handler": "estado",
+      "method": "GET",
+      "path_expression": "'/estado/{job_id}'"
+    },
+    {
+      "file": "routers/video.py",
+      "handler": "por_propiedad",
+      "method": "GET",
+      "path_expression": "'/propiedad/{propiedad_id}'"
+    },
+    {
+      "file": "routers/video.py",
+      "handler": "mis_videos",
+      "method": "GET",
+      "path_expression": "'/mis-videos'"
+    },
+    {
+      "file": "routers/video.py",
+      "handler": "borrar",
+      "method": "DELETE",
+      "path_expression": "'/{job_id}'"
+    },
+    {
+      "file": "routers/whatsapp_app_subscription.py",
+      "handler": "wa2_app_webhook_status",
+      "method": "GET",
+      "path_expression": "'/app-webhook'"
+    },
+    {
+      "file": "routers/whatsapp_app_subscription.py",
+      "handler": "wa2_app_webhook_fix",
+      "method": "POST",
+      "path_expression": "'/app-webhook'"
+    },
+    {
+      "file": "routers/whatsapp_app_subscription.py",
+      "handler": "wa2_numero_app_suscrito",
+      "method": "GET",
+      "path_expression": "'/numeros/{numero_id}/app-suscrito'"
+    },
+    {
+      "file": "routers/whatsapp_appointments.py",
+      "handler": "wa2_agendar",
+      "method": "POST",
+      "path_expression": "'/agendar'"
+    },
+    {
+      "file": "routers/whatsapp_automations_api.py",
+      "handler": "wa2_automatizaciones_list",
+      "method": "GET",
+      "path_expression": "'/automatizaciones'"
+    },
+    {
+      "file": "routers/whatsapp_automations_api.py",
+      "handler": "wa2_automatizacion_crear",
+      "method": "POST",
+      "path_expression": "'/automatizaciones'"
+    },
+    {
+      "file": "routers/whatsapp_automations_api.py",
+      "handler": "wa2_automatizacion_patch",
+      "method": "PATCH",
+      "path_expression": "'/automatizaciones/{auto_id}'"
+    },
+    {
+      "file": "routers/whatsapp_automations_api.py",
+      "handler": "wa2_automatizacion_delete",
+      "method": "DELETE",
+      "path_expression": "'/automatizaciones/{auto_id}'"
+    },
+    {
+      "file": "routers/whatsapp_campaigns_read.py",
+      "handler": "wa2_etiquetas_list",
+      "method": "GET",
+      "path_expression": "'/etiquetas'"
+    },
+    {
+      "file": "routers/whatsapp_campaigns_read.py",
+      "handler": "wa2_campana_audiencia",
+      "method": "POST",
+      "path_expression": "'/campanas/audiencia'"
+    },
+    {
+      "file": "routers/whatsapp_campaigns_read.py",
+      "handler": "wa2_campanas_list",
+      "method": "GET",
+      "path_expression": "'/campanas'"
+    },
+    {
+      "file": "routers/whatsapp_campaigns_read.py",
+      "handler": "wa2_campana_detalle",
+      "method": "GET",
+      "path_expression": "'/campanas/{campana_id}'"
+    },
+    {
+      "file": "routers/whatsapp_campaigns_send.py",
+      "handler": "wa2_campana_crear",
+      "method": "POST",
+      "path_expression": "'/campanas'"
+    },
+    {
+      "file": "routers/whatsapp_chatgpt.py",
+      "handler": "config",
+      "method": "GET",
+      "path_expression": "'/config'"
+    },
+    {
+      "file": "routers/whatsapp_chatgpt.py",
+      "handler": "numbers",
+      "method": "GET",
+      "path_expression": "'/numbers'"
+    },
+    {
+      "file": "routers/whatsapp_chatgpt.py",
+      "handler": "complete_signup",
+      "method": "POST",
+      "path_expression": "'/complete-signup'"
+    },
+    {
+      "file": "routers/whatsapp_chatgpt.py",
+      "handler": "send_test",
+      "method": "POST",
+      "path_expression": "'/send-test'"
+    },
+    {
+      "file": "routers/whatsapp_connection.py",
+      "handler": "wa2_connect",
+      "method": "POST",
+      "path_expression": "'/connect'"
+    },
+    {
+      "file": "routers/whatsapp_connection.py",
+      "handler": "wa2_numero_verificar",
+      "method": "GET",
+      "path_expression": "'/numeros/{numero_id}/verificar'"
+    },
+    {
+      "file": "routers/whatsapp_connection.py",
+      "handler": "wa2_numeros_list",
+      "method": "GET",
+      "path_expression": "'/numeros'"
+    },
+    {
+      "file": "routers/whatsapp_connection.py",
+      "handler": "wa2_numero_patch",
+      "method": "PATCH",
+      "path_expression": "'/numeros/{numero_id}'"
+    },
+    {
+      "file": "routers/whatsapp_contact_notes.py",
+      "handler": "wa2_agregar_nota",
+      "method": "POST",
+      "path_expression": "'/contactos/{contacto_id}/notas'"
+    },
+    {
+      "file": "routers/whatsapp_contact_settings.py",
+      "handler": "wa2_contacto_patch",
+      "method": "PATCH",
+      "path_expression": "'/contactos/{contacto_id}'"
+    },
+    {
+      "file": "routers/whatsapp_conversation_settings.py",
+      "handler": "wa2_conversacion_patch",
+      "method": "PATCH",
+      "path_expression": "'/conversaciones/{conversacion_id}'"
+    },
+    {
+      "file": "routers/whatsapp_delete.py",
+      "handler": "wa2_numero_delete",
+      "method": "DELETE",
+      "path_expression": "'/numeros/{numero_id}'"
+    },
+    {
+      "file": "routers/whatsapp_delete.py",
+      "handler": "wa2_borrar_mensaje",
+      "method": "DELETE",
+      "path_expression": "'/mensajes/{mensaje_id}'"
+    },
+    {
+      "file": "routers/whatsapp_delete.py",
+      "handler": "wa2_borrar_conversacion",
+      "method": "DELETE",
+      "path_expression": "'/conversaciones/{conversacion_id}'"
+    },
+    {
+      "file": "routers/whatsapp_inbox_read.py",
+      "handler": "wa2_conversaciones_list",
+      "method": "GET",
+      "path_expression": "'/conversaciones'"
+    },
+    {
+      "file": "routers/whatsapp_inbox_read.py",
+      "handler": "wa2_mensajes_list",
+      "method": "GET",
+      "path_expression": "'/mensajes'"
+    },
+    {
+      "file": "routers/whatsapp_inbox_read_state.py",
+      "handler": "wa2_lectura",
+      "method": "POST",
+      "path_expression": "'/conversaciones/{conversacion_id}/lectura'"
+    },
+    {
+      "file": "routers/whatsapp_inbox_send.py",
+      "handler": "wa2_enviar_manual",
+      "method": "POST",
+      "path_expression": "'/mensajes'"
+    },
+    {
+      "file": "routers/whatsapp_template_send.py",
+      "handler": "wa2_enviar_plantilla",
+      "method": "POST",
+      "path_expression": "'/mensajes/plantilla'"
+    },
+    {
+      "file": "routers/whatsapp_templates.py",
+      "handler": "wa2_plantillas_list",
+      "method": "GET",
+      "path_expression": "'/plantillas'"
+    },
+    {
+      "file": "routers/whatsapp_templates.py",
+      "handler": "wa2_plantilla_crear",
+      "method": "POST",
+      "path_expression": "'/plantillas'"
+    },
+    {
+      "file": "routers/whatsapp_training_api.py",
+      "handler": "wa2_training_get",
+      "method": "GET",
+      "path_expression": "'/entrenamiento'"
+    },
+    {
+      "file": "routers/whatsapp_training_api.py",
+      "handler": "wa2_training_put",
+      "method": "PUT",
+      "path_expression": "'/entrenamiento'"
+    }
+  ],
+  "changed_backend_or_existing_tests": [],
+  "warning": "Static inventory, not a certification of functional or visual parity. Router prefixes are not expanded."
+}
