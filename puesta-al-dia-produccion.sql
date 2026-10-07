@@ -658,6 +658,8 @@ create policy "equipo registra su propia edicion o borrado"
   );
 
 create index if not exists idx_actividades_historial_actividad on public.actividades_historial (actividad_id);
+-- Tablas viejas pueden no tener created_at; el índice/la función lo usa.
+alter table public.actividades_historial add column if not exists created_at timestamptz not null default now();
 create index if not exists idx_actividades_historial_org on public.actividades_historial (org_id, created_at desc);
 
 
@@ -1142,6 +1144,8 @@ alter table firma_documentos add column if not exists nom151_ruta        text;
 alter table firma_documentos add column if not exists nom151_folio       text;
 alter table firma_documentos add column if not exists nom151_at          timestamptz;
 
+-- Tablas viejas pueden no tener created_at; el índice/la función lo usa.
+alter table firma_documentos add column if not exists created_at timestamptz not null default now();
 create index if not exists firma_documentos_user_idx
   on firma_documentos (user_id, created_at desc);
 create index if not exists firma_documentos_estado_idx
@@ -1202,6 +1206,8 @@ alter table firma_firmantes add column if not exists ine_frente_ruta  text;
 alter table firma_firmantes add column if not exists ine_reverso_ruta text;
 alter table firma_firmantes add column if not exists geo_precision    double precision;
 
+-- Tablas viejas pueden no tener created_at; el índice/la función lo usa.
+alter table firma_firmantes add column if not exists created_at timestamptz not null default now();
 create index if not exists firma_firmantes_doc_idx
   on firma_firmantes (documento_id, orden nulls first, created_at);
 create index if not exists firma_firmantes_user_idx
@@ -1227,6 +1233,8 @@ create table if not exists firma_eventos (
   created_at    timestamptz not null default now()
 );
 
+-- Tablas viejas pueden no tener created_at; el índice/la función lo usa.
+alter table firma_eventos add column if not exists created_at timestamptz not null default now();
 create index if not exists firma_eventos_doc_idx
   on firma_eventos (documento_id, created_at);
 create index if not exists firma_eventos_user_idx
@@ -1355,6 +1363,8 @@ create table if not exists public.firma_contrato_jobs (
   terminado_en  timestamptz,
   created_at    timestamptz not null default now()
 );
+-- Tablas viejas pueden no tener created_at; el índice/la función lo usa.
+alter table public.firma_contrato_jobs add column if not exists created_at timestamptz not null default now();
 create index if not exists firma_contrato_jobs_user_idx on public.firma_contrato_jobs (user_id, created_at desc);
 alter table public.firma_contrato_jobs enable row level security;
 drop policy if exists "dueño ve sus procesos de contrato" on public.firma_contrato_jobs;
@@ -1455,6 +1465,8 @@ CREATE TABLE IF NOT EXISTS wa2_automatizaciones (
   updated_at timestamptz DEFAULT now()
 );
 
+-- Tablas viejas pueden no tener created_at; el índice/la función lo usa.
+alter table wa2_automatizaciones add column if not exists created_at timestamptz not null default now();
 CREATE INDEX IF NOT EXISTS wa2_automatizaciones_user
   ON wa2_automatizaciones (user_id, created_at DESC);
 
@@ -1485,6 +1497,8 @@ CREATE TABLE IF NOT EXISTS wa2_campanas (
   terminado_at timestamptz
 );
 
+-- Tablas viejas pueden no tener created_at; el índice/la función lo usa.
+alter table wa2_campanas add column if not exists created_at timestamptz not null default now();
 CREATE INDEX IF NOT EXISTS wa2_campanas_user
   ON wa2_campanas (user_id, created_at DESC);
 
@@ -1606,6 +1620,8 @@ begin
     raise notice 'AVISO: % mensajes de WhatsApp repetidos; no se creó la regla única (no se borró nada).', n;
   end if;
 end $$;
+-- Tablas viejas pueden no tener created_at; el índice/la función lo usa.
+alter table public.wa2_mensajes add column if not exists created_at timestamptz not null default now();
 create index if not exists wa2_mensajes_conv_fecha_idx on public.wa2_mensajes (conversacion_id, created_at desc);
 create index if not exists wa2_conversaciones_user_fecha_idx on public.wa2_conversaciones (user_id, last_message_at desc);
 
@@ -2362,6 +2378,8 @@ create policy "equipo ve guardias de su organizacion"
   on public.buzon_guardias for select
   using (org_id in (select public.mis_org_ids()));
 
+-- Tablas viejas pueden no tener created_at; el índice/la función lo usa.
+alter table public.contactos add column if not exists created_at timestamptz not null default now();
 create or replace function public.bk_buscar_contacto(p_org uuid, p_tel10 text, p_email text)
 returns text
 language sql stable security definer set search_path = public as $$
