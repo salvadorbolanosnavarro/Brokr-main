@@ -113,5 +113,23 @@ class GenerarAvisoTests(unittest.TestCase):
         self.assertEqual(e.exception.status_code, 400)
 
 
+class MotivoEsquemaTests(unittest.TestCase):
+    def _resp(self, cuerpo):
+        import httpx
+        return httpx.Response(400, json=cuerpo, request=httpx.Request("POST", "http://x"))
+
+    def test_columna_faltante_lo_dice(self):
+        m = c._motivo_esquema(self._resp({"code": "PGRST204",
+            "message": "Could not find the 'formato' column of 'pld_avisos'"}))
+        self.assertIn("puesta-al-dia-produccion.sql", m)
+        self.assertIn("formato", m)
+
+    def test_estatus_no_permitido_lo_dice(self):
+        self.assertIn("sección 9", c._motivo_esquema(self._resp({"code": "23514"})))
+
+    def test_otro_error_queda_generico(self):
+        self.assertEqual(c._motivo_esquema(self._resp({"code": "42501"})), "")
+
+
 if __name__ == "__main__":
     unittest.main()

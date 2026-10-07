@@ -142,13 +142,29 @@ async def _sb_get(tabla: str, params: dict) -> List[dict]:
         return []
 
 
+def _motivo_esquema(response) -> str:
+    """Si Supabase rechazó el guardado porque a la base le falta la migración
+    (columna inexistente o un estatus que la regla vieja no permite), lo dice.
+    «Intenta de nuevo» ahí no sirve: va a fallar igual hasta correr el SQL."""
+    try:
+        err = response.json() or {}
+    except Exception:
+        return ""
+    code = str(err.get("code") or "")
+    if code in ("PGRST204", "42703", "23514"):
+        return ("No se pudo guardar: a la base de datos le falta la actualización de "
+                "Cumplimiento (puesta-al-dia-produccion.sql, sección 9). Avísanos a soporte. "
+                "Detalle: " + str(err.get("message") or code)[:200])
+    return ""
+
+
 async def _sb_post(tabla: str, payload, prefer: str = "return=representation") -> List[dict]:
     try:
         return await post_rows(tabla, payload, prefer=prefer, timeout=20)
     except httpx.HTTPStatusError as exc:
         response = exc.response
-        log.warning("POST %s -> %s %s", tabla, response.status_code, response.text[:180])
-        raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.") from exc
+        log.warning("POST %s -> %s %s", tabla, response.status_code, response.text[:400])
+        raise HTTPException(500, _motivo_esquema(response) or "No se pudo guardar. Intenta de nuevo.") from exc
     except RuntimeError as exc:
         raise HTTPException(500, "No se pudo guardar. Intenta de nuevo.") from exc
 
