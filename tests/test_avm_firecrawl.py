@@ -3,6 +3,7 @@ fuentes que ve la persona."""
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import contextlib
 import io
 import unittest
@@ -176,6 +177,49 @@ class PayloadFirecrawlTests(unittest.TestCase):
         self.assertIn("unrecognized key", linea)
         self.assertNotIn("fc-secreta", linea)
         self.assertLess(len(linea), 500)
+
+
+class BusquedaPorPortalTests(unittest.TestCase):
+    """Antes la búsqueda genérica llenaba sola los 24 resultados y las
+    búsquedas site:inmuebles24 / site:vivanuncios nunca corrían."""
+
+    def correr(self):
+        llamadas = []
+
+        def proveedor(nombre, cuantos):
+            async def buscar(client, query):
+                llamadas.append((nombre, query))
+                m = A.re.search(r"site:([a-z0-9.]+)", query)
+                dom = m.group(1) if m else "blog-generico.mx"
+                return [{"url": f"https://www.{dom}/{nombre}-{abs(hash(query)) % 997}-{i}", "title": "t", "snippet": "s"}
+                        for i in range(cuantos)]
+            return buscar
+
+        req = A.AvmWebSearchRequest(colonia="Jesús del Monte", ciudad="Morelia", estado="Michoacán",
+                                    tipo_inmueble="casa", operacion="venta", m2_construccion=280)
+        with mock.patch.object(A, "_search_google_cse", proveedor("google", 10)), \
+             mock.patch.object(A, "_search_brave", proveedor("brave", 10)), \
+             mock.patch.object(A, "_search_tavily", proveedor("tavily", 10)), \
+             mock.patch.object(A, "_search_serpapi", proveedor("serpapi", 10)), \
+             mock.patch.object(A, "legacy_main_settings",
+                               dataclasses.replace(A.legacy_main_settings, google_cse_api_key="k", google_cse_id="c")):
+            res = asyncio.run(A._collect_search_candidates(req))
+        return res, llamadas
+
+    def test_todos_los_portales_entran_en_lo_que_se_lee(self):
+        res, _ = self.correr()
+        leidas = res["results"][: A.MAX_URLS_TO_FETCH]
+        portales = {r["portal"] for r in leidas}
+        for p in ("Inmuebles24", "Vivanuncios", "Lamudi", "Propiedades.com", "EasyBroker"):
+            self.assertIn(p, portales)
+        self.assertLessEqual(len(res["results"]), A.MAX_SEARCH_RESULTS)
+
+    def test_no_gasta_proveedores_de_mas(self):
+        _, llamadas = self.correr()
+        # Google ya da la cuota de cada búsqueda: no se llama a los demás.
+        self.assertEqual({n for n, _ in llamadas}, {"google"})
+        self.assertTrue(any("site:inmuebles24.com" in q for _, q in llamadas))
+        self.assertTrue(any("site:vivanuncios.com.mx" in q for _, q in llamadas))
 
 
 if __name__ == "__main__":

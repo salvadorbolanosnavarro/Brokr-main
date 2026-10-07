@@ -617,41 +617,47 @@ async def _collect_search_candidates(req: AvmWebSearchRequest, colonias_vecinas:
         results.append(item)
         return True
 
-    async with httpx.AsyncClient(timeout=SEARCH_TIMEOUT, follow_redirects=True) as client:
-        for query in queries:
-            batches = await asyncio.gather(
-                _search_google_cse(client, query),
-                _search_serpapi(client, query),
-                _search_brave(client, query),
-                _search_tavily(client, query),
-                return_exceptions=True,
-            )
-            conteo_antes = len(results)
-            for batch in batches:
-                if isinstance(batch, Exception):
-                    continue
-                for item in batch:
-                    if _agregar(item, query) and len(results) >= MAX_SEARCH_RESULTS:
-                        return {
-                            "queries": queries,
-                            "results": results,
-                            "providers_configured": providers_configured,
-                        }
+    # Antes la primera búsqueda (la genérica) juntaba sola los 24 resultados
+    # y se cortaba ahí: las búsquedas por portal (site:inmuebles24.com,
+    # site:vivanuncios.com.mx, …) nunca corrían. Ahora cada búsqueda aporta
+    # su cuota y los resultados se intercalan, para que las páginas que sí
+    # se leen (las primeras AVM_MAX_URLS_TO_FETCH) cubran todos los portales.
+    cuota = max(3, math.ceil(MAX_SEARCH_RESULTS / max(1, len(queries))))
+    proveedores = (_search_google_cse, _search_brave, _search_tavily, _search_serpapi)
 
-            # Los cuatro proveedores gratuitos no devolvieron nada para esta
-            # query puntual (bloqueo momentáneo, límite de cuota, etc.):
-            # Firecrawl entra como quinto proveedor de respaldo en vez de
-            # simplemente perder esa query — solo aquí, para no gastarle
-            # crédito de más a algo que los gratuitos ya cubren casi siempre.
-            if len(results) == conteo_antes:
-                extra = await _search_firecrawl(client, query)
-                for item in extra:
-                    if _agregar(item, query) and len(results) >= MAX_SEARCH_RESULTS:
-                        return {
-                            "queries": queries,
-                            "results": results,
-                            "providers_configured": providers_configured,
-                        }
+    async def _una_query(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
+        propios: List[Dict[str, Any]] = []
+        vistos = set()
+        # Proveedores en orden, y se deja de llamar en cuanto la búsqueda
+        # junta su cuota: no se gasta cuota de API de más.
+        for buscar in proveedores:
+            try:
+                lote = await buscar(client, query)
+            except Exception:
+                lote = []
+            for item in lote or []:
+                canon = _canonical_url(item.get("url", ""))
+                if canon and canon not in vistos:
+                    vistos.add(canon)
+                    propios.append(item)
+            if len(propios) >= cuota:
+                break
+        if not propios:
+            propios = await _search_firecrawl(client, query)
+        return propios[: cuota * 2]
+
+    async with httpx.AsyncClient(timeout=SEARCH_TIMEOUT, follow_redirects=True) as client:
+        por_query = await asyncio.gather(*[_una_query(client, q) for q in queries])
+
+    # Intercalado: el 1º de cada búsqueda, luego el 2º de cada una, etc.
+    ronda = 0
+    while len(results) < MAX_SEARCH_RESULTS and any(ronda < len(lista) for lista in por_query):
+        for query, lista in zip(queries, por_query):
+            if ronda < len(lista):
+                _agregar(dict(lista[ronda]), query)
+                if len(results) >= MAX_SEARCH_RESULTS:
+                    break
+        ronda += 1
     return {"queries": queries, "results": results, "providers_configured": providers_configured}
 
 
