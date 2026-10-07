@@ -129,20 +129,20 @@ _FIRECRAWL_LISTING_PROMPT = (
     "(solo el número, sin símbolos de moneda ni separadores), la moneda, "
     "superficie de terreno en m2, superficie de construcción en m2, número "
     "de recámaras, número de baños y número de estacionamientos. Si un dato "
-    "no aparece explícitamente en la página, devuelve null en ese campo — "
-    "nunca inventes ni adivines un valor."
+    "no aparece explícitamente en la página, omite ese campo — nunca "
+    "inventes ni adivines un valor."
 )
 
 _FIRECRAWL_LISTING_SCHEMA = {
     "type": "object",
     "properties": {
-        "precio": {"type": ["number", "null"]},
-        "moneda": {"type": ["string", "null"]},
-        "m2_terreno": {"type": ["number", "null"]},
-        "m2_construccion": {"type": ["number", "null"]},
-        "recamaras": {"type": ["number", "null"]},
-        "banos": {"type": ["number", "null"]},
-        "estacionamientos": {"type": ["number", "null"]},
+        "precio": {"type": "number"},
+        "moneda": {"type": "string"},
+        "m2_terreno": {"type": "number"},
+        "m2_construccion": {"type": "number"},
+        "recamaras": {"type": "number"},
+        "banos": {"type": "number"},
+        "estacionamientos": {"type": "number"},
     },
 }
 
@@ -165,44 +165,69 @@ def _formatea_estructurado_firecrawl(datos: Dict[str, Any]) -> str:
     return "DATO ESTRUCTURADO FIRECRAWL (alta confianza): " + ", ".join(partes) + ".\n\n"
 
 
-async def _firecrawl_scrape(url: str) -> Dict[str, Any]:
-    if not FIRECRAWL_API_KEY:
-        return {"ok": False, "error": "no_api_key", "page_text": "", "credits": 0}
-    formats: List[Any] = ["markdown"]
+# API v2 de Firecrawl (la actual). Antes se llamaba a /v1/scrape pero con el
+# formato JSON de v2 ({"type": "json", ...} dentro de "formats"); v1 sólo
+# acepta textos en "formats" y la extracción va en "jsonOptions", así que
+# Firecrawl rechazaba TODAS las páginas con 400 Bad Request.
+FIRECRAWL_SCRAPE_URL = "https://api.firecrawl.dev/v2/scrape"
+FIRECRAWL_SEARCH_URL = "https://api.firecrawl.dev/v2/search"
+
+
+def firecrawl_scrape_payload(url: str) -> Dict[str, Any]:
+    """Cuerpo de POST /v2/scrape (docs.firecrawl.dev/api-reference/endpoint/scrape)."""
+    formats: List[Dict[str, Any]] = [{"type": "markdown"}]
     if FIRECRAWL_STRUCTURED_EXTRACT:
-        # Además del markdown de siempre, se le pide a Firecrawl que rellene
-        # un esquema fijo (precio/m²/recámaras/baños/estacionamientos) con su
-        # propio LLM leyendo la página ya renderizada. Cuesta crédito extra
-        # (json mode), pero con el margen de plan que hay hoy sale barato
-        # comparado con dejar de tener precio/superficie limpios en vez de
-        # tener que exprimirlos del texto plano.
+        # Además del markdown, Firecrawl rellena un esquema fijo
+        # (precio/m²/recámaras/baños/estacionamientos) con su propio LLM
+        # leyendo la página ya renderizada. Cuesta crédito extra.
         formats.append({
             "type": "json",
             "prompt": _FIRECRAWL_LISTING_PROMPT,
             "schema": _FIRECRAWL_LISTING_SCHEMA,
         })
-    payload = {
+    return {
         "url": url,
         "formats": formats,
-        "proxy": "auto",
         "onlyMainContent": True,
-        "timeout": int(FIRECRAWL_TIMEOUT * 1000),
+        "proxy": "auto",                                        # basic | enhanced | auto
+        "timeout": max(1000, min(300000, int(FIRECRAWL_TIMEOUT * 1000))),   # milisegundos
+        "location": {"country": "MX", "languages": ["es-MX"]},
     }
+
+
+def firecrawl_search_payload(query: str) -> Dict[str, Any]:
+    """Cuerpo de POST /v2/search (docs.firecrawl.dev/api-reference/endpoint/search)."""
+    return {"query": query[:500], "limit": 8, "sources": ["web"], "country": "MX"}
+
+
+def _log_error_firecrawl(operacion: str, url: str, response) -> None:
+    """Motivo exacto del rechazo en los logs de Railway (sin la llave: el
+    cuerpo de la respuesta de Firecrawl no la incluye)."""
+    try:
+        cuerpo = (response.text or "")[:300].replace("\n", " ")
+    except Exception:
+        cuerpo = ""
+    if FIRECRAWL_API_KEY:
+        cuerpo = cuerpo.replace(FIRECRAWL_API_KEY, "***")
+    _log_firecrawl(f"error {operacion} http_{getattr(response, 'status_code', '?')} {url[:120]} — {cuerpo}")
+
+
+async def _firecrawl_scrape(url: str) -> Dict[str, Any]:
+    if not FIRECRAWL_API_KEY:
+        return {"ok": False, "error": "no_api_key", "page_text": "", "credits": 0}
     headers = {
         "Authorization": f"Bearer {FIRECRAWL_API_KEY}",
         "Content-Type": "application/json",
     }
     try:
         async with httpx.AsyncClient(timeout=FIRECRAWL_TIMEOUT + 5) as client:
-            response = await client.post(
-                "https://api.firecrawl.dev/v1/scrape",
-                json=payload,
-                headers=headers,
-            )
+            response = await client.post(FIRECRAWL_SCRAPE_URL, json=firecrawl_scrape_payload(url), headers=headers)
         if response.status_code != 200:
+            _log_error_firecrawl("scrape", url, response)
             return {"ok": False, "error": f"http_{response.status_code}", "page_text": "", "credits": 0}
         data_all = response.json() or {}
         if not data_all.get("success"):
+            _log_error_firecrawl("scrape", url, response)
             return {
                 "ok": False,
                 "error": data_all.get("error") or "no_success",
@@ -517,6 +542,13 @@ async def _search_tavily(client: httpx.AsyncClient, query: str) -> List[Dict[str
     return out
 
 
+def firecrawl_resultados_web(data: Any) -> List[Dict[str, Any]]:
+    """v2 regresa {"web": [...], "news": [...]}; v1 regresaba la lista directa."""
+    if isinstance(data, dict):
+        data = data.get("web") or []
+    return [x for x in (data or []) if isinstance(x, dict)]
+
+
 async def _search_firecrawl(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
     """Firecrawl como quinto proveedor de búsqueda, pero solo entra como
     respaldo (ver _collect_search_candidates) cuando los cuatro gratuitos no
@@ -526,20 +558,22 @@ async def _search_firecrawl(client: httpx.AsyncClient, query: str) -> List[Dict[
         return []
     try:
         response = await client.post(
-            "https://api.firecrawl.dev/v1/search",
-            json={"query": query, "limit": 8, "lang": "es", "country": "mx"},
+            FIRECRAWL_SEARCH_URL,
+            json=firecrawl_search_payload(query),
             headers={
                 "Authorization": f"Bearer {FIRECRAWL_API_KEY}",
                 "Content-Type": "application/json",
             },
         )
         if response.status_code != 200:
+            _log_error_firecrawl("search", query, response)
             return []
         data_all = response.json() or {}
         if not data_all.get("success"):
+            _log_error_firecrawl("search", query, response)
             return []
         out = []
-        for item in data_all.get("data") or []:
+        for item in firecrawl_resultados_web(data_all.get("data")):
             link = item.get("url")
             if link:
                 out.append({
