@@ -10,12 +10,13 @@ import logging
 import httpx
 
 from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.whatsapp_secrets import proteger_para_guardar, revelar_filas
 
 
 log = logging.getLogger("broquer.whatsapp2")
 
 
-async def sb_get(table: str, params: dict) -> list:
+async def _sb_get_crudo(table: str, params: dict) -> list:
     ultimo = ""
     for intento in (1, 2):
         try:
@@ -31,7 +32,7 @@ async def sb_get(table: str, params: dict) -> list:
     return []
 
 
-async def sb_post(table: str, body: dict, prefer: str = "return=representation") -> list:
+async def _sb_post_crudo(table: str, body: dict, prefer: str = "return=representation") -> list:
     ultimo = ""
     for intento in (1, 2):
         try:
@@ -50,7 +51,7 @@ async def sb_post(table: str, body: dict, prefer: str = "return=representation")
     return []
 
 
-async def sb_patch(table: str, params: dict, body: dict) -> list:
+async def _sb_patch_crudo(table: str, params: dict, body: dict) -> list:
     ultimo = ""
     for intento in (1, 2):
         try:
@@ -70,6 +71,20 @@ async def sb_patch(table: str, params: dict, body: dict) -> list:
             ultimo = str(e)
     log.error("sb_patch %s falló -> %s", table, ultimo)
     return []
+
+
+# Los tokens de Meta (wa2_numeros.access_token) se cifran al guardar y se
+# descifran al leer; los tokens viejos en texto plano se leen igual.
+async def sb_get(table: str, params: dict) -> list:
+    return revelar_filas(table, await _sb_get_crudo(table, params))
+
+
+async def sb_post(table: str, body: dict, prefer: str = "return=representation") -> list:
+    return revelar_filas(table, await _sb_post_crudo(table, proteger_para_guardar(table, body), prefer))
+
+
+async def sb_patch(table: str, params: dict, body: dict) -> list:
+    return revelar_filas(table, await _sb_patch_crudo(table, params, proteger_para_guardar(table, body)))
 
 
 async def sb_delete(table: str, params: dict) -> bool:
