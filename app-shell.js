@@ -1406,11 +1406,21 @@ body[data-app="facebook-ads"]{--page-max:980px}
     const parts = name.trim().split(/\s+/);
     return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || 'U';
   }
+  // Copias locales de listas (Contactos/Clientes) de cualquier cuenta: se
+  // borran al salir para que otra cuenta del mismo navegador no las vea.
+  function limpiarCopiasLocales() {
+    try {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('brokr_contactos_cache') || k.startsWith('brokr_clientes_cache'))
+        .forEach(k => localStorage.removeItem(k));
+    } catch (_) {}
+  }
   function doLogout() {
     localStorage.removeItem('sb_token');
     localStorage.removeItem('sb_refresh');
     localStorage.removeItem('sb_user');
     localStorage.removeItem('sesion_activa');
+    limpiarCopiasLocales();
     sessionStorage.clear();
     location.href = 'login.html';
   }
@@ -3792,6 +3802,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       localStorage.removeItem('sb_refresh');
       localStorage.removeItem('sb_user');
       localStorage.removeItem('sesion_activa');
+      limpiarCopiasLocales();
       sessionStorage.clear();
       setTimeout(() => { location.href = 'login.html'; }, 1800);
     } catch (e) {
