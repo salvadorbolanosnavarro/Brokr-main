@@ -39,7 +39,7 @@ def build(env=os.environ):
     output = ROOT / 'dist'
     if output.exists(): shutil.rmtree(output)
     allowed = {'.html','.js','.css','.json','.svg','.png','.jpg','.jpeg','.webp','.gif','.ico','.woff','.woff2','.ttf','.otf','.mp4','.webm','.pdf'}
-    excluded = {'scripts','tests','core','routers','ios','.github','supabase','staging','test-results'}
+    excluded = {'scripts','tests','core','routers','ios','.github','supabase','staging','test-results','cloudflare'}
     paths = subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard'],cwd=ROOT,text=True).splitlines()
     count = 0
     for name in sorted(set(paths)):

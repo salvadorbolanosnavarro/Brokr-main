@@ -36,6 +36,7 @@ from pydantic import BaseModel
 
 from core.auth import require_user_id
 from core.config import settings
+from core.catalogo_inmuebles import tipo_label
 from core.database import delete_rows, get_rows, patch_rows, post_rows, upsert_rows
 from routers import avm_websearch as avm
 
@@ -87,7 +88,8 @@ _PORTALES_SITE = (
 
 
 def _construir_queries(req: Dict[str, Any]) -> List[str]:
-    tipo = _TIPO_LABELS.get(req.get("tipo_inmueble") or "", req.get("tipo_inmueble") or "casa")
+    clave_tipo = req.get("tipo_inmueble") or "casa"
+    tipo = _TIPO_LABELS.get(clave_tipo) or tipo_label(clave_tipo).lower()
     op = "venta" if (req.get("operacion") or "venta") == "venta" else "renta"
     lugar = " ".join(f'"{v}"' for v in (req.get("colonia"), req.get("ciudad")) if v)
 

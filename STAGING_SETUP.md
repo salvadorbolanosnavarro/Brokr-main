@@ -51,7 +51,7 @@ Rama: `work/redesign-preview-20261003`. No cambiar `main`, Railway producción n
 8. Haz clic en **Deploy** para aplicar los cambios pendientes. Abre **Deployments > último despliegue > View logs**. Si falla por una variable de aislamiento, corrige esa variable; no desactives la protección.
 9. En **Settings > Networking**, conserva el dominio existente `brokr-main-staging.up.railway.app`. No crear otro servicio.
 
-En staging el backend permite HTTPX solo al Supabase aprobado y a Stripe con credenciales test; bloquea SMTP y las demás integraciones. El bloqueo devuelve error real: **no simula que un mensaje fue enviado**. IA externa, EasyBroker y otras integraciones también quedan pendientes de pruebas independientes. Las redirecciones HTTP externas no se siguen. Producción conserva su comportamiento si `BROQUER_ENV` no es `staging`.
+En staging el backend permite HTTPX solo al Supabase aprobado y a Stripe con credenciales test; bloquea SMTP, IMAP y las demás integraciones. El bloqueo devuelve error real: **no simula que un mensaje fue enviado**. IA externa, EasyBroker y otras integraciones también quedan pendientes de pruebas independientes. Las redirecciones HTTP externas no se siguen. Producción conserva su comportamiento si `BROQUER_ENV` no es `staging`.
 
 ## 3. Cloudflare Pages: publicar en broquer-staging
 
@@ -87,3 +87,10 @@ La compilación falla si falta configuración, se usa `main`, la API productiva,
 - Solo después de tu revisión y aprobación se podrá mergear el PR. Actualmente sigue siendo borrador.
 
 Fuentes de paneles: https://developers.cloudflare.com/pages/configuration/build-configuration/ · https://docs.railway.com/variables · https://docs.railway.com/services · https://supabase.com/docs/guides/local-development/database-migrations
+
+## Alcance actualizado del PR
+
+La rama incluye las funciones incorporadas a main hasta 1f5fc8d5: Buzón, alertas,
+ajustes CRM, cierres, catálogo y mejoras de sitios/AVM. El inventario actualizado
+cubre 55 HTML y las 348 operaciones del contrato HTTP efectivo. No se ha modificado
+la rama main ni ejecutado sus migraciones en producción.

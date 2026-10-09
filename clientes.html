@@ -9,6 +9,7 @@
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
+<link rel="stylesheet" href="crm-plus.css"/>
 <style>
 html, body { background: var(--paper); }
 
@@ -892,6 +893,10 @@ html, body { background: var(--paper); }
 <script src="clientes-ficha.js" defer></script>
 <script src="tarea-nueva.js" defer></script>
 <script src="app-shell.js" defer></script>
+<script src="inmuebles-catalogo.js" defer></script>
+<script src="bk-api.js" defer></script>
+<script src="ficha-requerimiento.js" defer></script>
+<script src="crm-plus.js" defer></script>
 
 <script>
 let sexoActual = 'M';
@@ -1249,7 +1254,7 @@ async function abrirModal(id = null) {
   } else {
     document.getElementById('modal-title').textContent = 'Nuevo cliente';
     ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-descripcion-privada','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
-    sv('m-mpio','MORELIA, MICHOACÁN');
+    sv('m-mpio','');
     document.getElementById('m-tipo').value = 'comprador'; // el caso más común al dar de alta un cliente
     sexoActual = 'M';
     document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === 'M'));

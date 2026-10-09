@@ -84,6 +84,23 @@ FIRECRAWL_API_KEY = legacy_main_settings.firecrawl_api_key
 FIRECRAWL_CONCURRENCY = legacy_main_settings.firecrawl_concurrency
 FIRECRAWL_TIMEOUT = legacy_main_settings.firecrawl_timeout
 FIRECRAWL_STRUCTURED_EXTRACT = legacy_main_settings.firecrawl_structured_extract
+
+
+def _log_firecrawl(mensaje: str) -> None:
+    """Línea "[firecrawl] …" en los logs de Railway. Con flush para que salga
+    al momento: sin él, Python guarda los print() en un búfer y la línea
+    puede no aparecer nunca en los logs."""
+    print(f"[firecrawl] {mensaje}", flush=True)
+
+
+def estado_firecrawl() -> str:
+    if FIRECRAWL_API_KEY:
+        return "activo"
+    return "inactivo: falta FIRECRAWL_API_KEY"
+
+
+# Al arrancar el servidor (main.py importa este módulo al iniciar).
+_log_firecrawl(estado_firecrawl())
 AVM_CACHE_TTL_DAYS = legacy_main_settings.avm_cache_ttl_days
 
 PREMIUM_FETCH_DOMAINS = {
@@ -112,20 +129,20 @@ _FIRECRAWL_LISTING_PROMPT = (
     "(solo el número, sin símbolos de moneda ni separadores), la moneda, "
     "superficie de terreno en m2, superficie de construcción en m2, número "
     "de recámaras, número de baños y número de estacionamientos. Si un dato "
-    "no aparece explícitamente en la página, devuelve null en ese campo — "
-    "nunca inventes ni adivines un valor."
+    "no aparece explícitamente en la página, omite ese campo — nunca "
+    "inventes ni adivines un valor."
 )
 
 _FIRECRAWL_LISTING_SCHEMA = {
     "type": "object",
     "properties": {
-        "precio": {"type": ["number", "null"]},
-        "moneda": {"type": ["string", "null"]},
-        "m2_terreno": {"type": ["number", "null"]},
-        "m2_construccion": {"type": ["number", "null"]},
-        "recamaras": {"type": ["number", "null"]},
-        "banos": {"type": ["number", "null"]},
-        "estacionamientos": {"type": ["number", "null"]},
+        "precio": {"type": "number"},
+        "moneda": {"type": "string"},
+        "m2_terreno": {"type": "number"},
+        "m2_construccion": {"type": "number"},
+        "recamaras": {"type": "number"},
+        "banos": {"type": "number"},
+        "estacionamientos": {"type": "number"},
     },
 }
 
@@ -148,44 +165,69 @@ def _formatea_estructurado_firecrawl(datos: Dict[str, Any]) -> str:
     return "DATO ESTRUCTURADO FIRECRAWL (alta confianza): " + ", ".join(partes) + ".\n\n"
 
 
-async def _firecrawl_scrape(url: str) -> Dict[str, Any]:
-    if not FIRECRAWL_API_KEY:
-        return {"ok": False, "error": "no_api_key", "page_text": "", "credits": 0}
-    formats: List[Any] = ["markdown"]
+# API v2 de Firecrawl (la actual). Antes se llamaba a /v1/scrape pero con el
+# formato JSON de v2 ({"type": "json", ...} dentro de "formats"); v1 sólo
+# acepta textos en "formats" y la extracción va en "jsonOptions", así que
+# Firecrawl rechazaba TODAS las páginas con 400 Bad Request.
+FIRECRAWL_SCRAPE_URL = "https://api.firecrawl.dev/v2/scrape"
+FIRECRAWL_SEARCH_URL = "https://api.firecrawl.dev/v2/search"
+
+
+def firecrawl_scrape_payload(url: str) -> Dict[str, Any]:
+    """Cuerpo de POST /v2/scrape (docs.firecrawl.dev/api-reference/endpoint/scrape)."""
+    formats: List[Dict[str, Any]] = [{"type": "markdown"}]
     if FIRECRAWL_STRUCTURED_EXTRACT:
-        # Además del markdown de siempre, se le pide a Firecrawl que rellene
-        # un esquema fijo (precio/m²/recámaras/baños/estacionamientos) con su
-        # propio LLM leyendo la página ya renderizada. Cuesta crédito extra
-        # (json mode), pero con el margen de plan que hay hoy sale barato
-        # comparado con dejar de tener precio/superficie limpios en vez de
-        # tener que exprimirlos del texto plano.
+        # Además del markdown, Firecrawl rellena un esquema fijo
+        # (precio/m²/recámaras/baños/estacionamientos) con su propio LLM
+        # leyendo la página ya renderizada. Cuesta crédito extra.
         formats.append({
             "type": "json",
             "prompt": _FIRECRAWL_LISTING_PROMPT,
             "schema": _FIRECRAWL_LISTING_SCHEMA,
         })
-    payload = {
+    return {
         "url": url,
         "formats": formats,
-        "proxy": "auto",
         "onlyMainContent": True,
-        "timeout": int(FIRECRAWL_TIMEOUT * 1000),
+        "proxy": "auto",                                        # basic | enhanced | auto
+        "timeout": max(1000, min(300000, int(FIRECRAWL_TIMEOUT * 1000))),   # milisegundos
+        "location": {"country": "MX", "languages": ["es-MX"]},
     }
+
+
+def firecrawl_search_payload(query: str) -> Dict[str, Any]:
+    """Cuerpo de POST /v2/search (docs.firecrawl.dev/api-reference/endpoint/search)."""
+    return {"query": query[:500], "limit": 8, "sources": ["web"], "country": "MX"}
+
+
+def _log_error_firecrawl(operacion: str, url: str, response) -> None:
+    """Motivo exacto del rechazo en los logs de Railway (sin la llave: el
+    cuerpo de la respuesta de Firecrawl no la incluye)."""
+    try:
+        cuerpo = (response.text or "")[:300].replace("\n", " ")
+    except Exception:
+        cuerpo = ""
+    if FIRECRAWL_API_KEY:
+        cuerpo = cuerpo.replace(FIRECRAWL_API_KEY, "***")
+    _log_firecrawl(f"error {operacion} http_{getattr(response, 'status_code', '?')} {url[:120]} — {cuerpo}")
+
+
+async def _firecrawl_scrape(url: str) -> Dict[str, Any]:
+    if not FIRECRAWL_API_KEY:
+        return {"ok": False, "error": "no_api_key", "page_text": "", "credits": 0}
     headers = {
         "Authorization": f"Bearer {FIRECRAWL_API_KEY}",
         "Content-Type": "application/json",
     }
     try:
         async with httpx.AsyncClient(timeout=FIRECRAWL_TIMEOUT + 5) as client:
-            response = await client.post(
-                "https://api.firecrawl.dev/v1/scrape",
-                json=payload,
-                headers=headers,
-            )
+            response = await client.post(FIRECRAWL_SCRAPE_URL, json=firecrawl_scrape_payload(url), headers=headers)
         if response.status_code != 200:
+            _log_error_firecrawl("scrape", url, response)
             return {"ok": False, "error": f"http_{response.status_code}", "page_text": "", "credits": 0}
         data_all = response.json() or {}
         if not data_all.get("success"):
+            _log_error_firecrawl("scrape", url, response)
             return {
                 "ok": False,
                 "error": data_all.get("error") or "no_success",
@@ -500,6 +542,13 @@ async def _search_tavily(client: httpx.AsyncClient, query: str) -> List[Dict[str
     return out
 
 
+def firecrawl_resultados_web(data: Any) -> List[Dict[str, Any]]:
+    """v2 regresa {"web": [...], "news": [...]}; v1 regresaba la lista directa."""
+    if isinstance(data, dict):
+        data = data.get("web") or []
+    return [x for x in (data or []) if isinstance(x, dict)]
+
+
 async def _search_firecrawl(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
     """Firecrawl como quinto proveedor de búsqueda, pero solo entra como
     respaldo (ver _collect_search_candidates) cuando los cuatro gratuitos no
@@ -509,20 +558,22 @@ async def _search_firecrawl(client: httpx.AsyncClient, query: str) -> List[Dict[
         return []
     try:
         response = await client.post(
-            "https://api.firecrawl.dev/v1/search",
-            json={"query": query, "limit": 8, "lang": "es", "country": "mx"},
+            FIRECRAWL_SEARCH_URL,
+            json=firecrawl_search_payload(query),
             headers={
                 "Authorization": f"Bearer {FIRECRAWL_API_KEY}",
                 "Content-Type": "application/json",
             },
         )
         if response.status_code != 200:
+            _log_error_firecrawl("search", query, response)
             return []
         data_all = response.json() or {}
         if not data_all.get("success"):
+            _log_error_firecrawl("search", query, response)
             return []
         out = []
-        for item in data_all.get("data") or []:
+        for item in firecrawl_resultados_web(data_all.get("data")):
             link = item.get("url")
             if link:
                 out.append({
@@ -566,41 +617,47 @@ async def _collect_search_candidates(req: AvmWebSearchRequest, colonias_vecinas:
         results.append(item)
         return True
 
-    async with httpx.AsyncClient(timeout=SEARCH_TIMEOUT, follow_redirects=True) as client:
-        for query in queries:
-            batches = await asyncio.gather(
-                _search_google_cse(client, query),
-                _search_serpapi(client, query),
-                _search_brave(client, query),
-                _search_tavily(client, query),
-                return_exceptions=True,
-            )
-            conteo_antes = len(results)
-            for batch in batches:
-                if isinstance(batch, Exception):
-                    continue
-                for item in batch:
-                    if _agregar(item, query) and len(results) >= MAX_SEARCH_RESULTS:
-                        return {
-                            "queries": queries,
-                            "results": results,
-                            "providers_configured": providers_configured,
-                        }
+    # Antes la primera búsqueda (la genérica) juntaba sola los 24 resultados
+    # y se cortaba ahí: las búsquedas por portal (site:inmuebles24.com,
+    # site:vivanuncios.com.mx, …) nunca corrían. Ahora cada búsqueda aporta
+    # su cuota y los resultados se intercalan, para que las páginas que sí
+    # se leen (las primeras AVM_MAX_URLS_TO_FETCH) cubran todos los portales.
+    cuota = max(3, math.ceil(MAX_SEARCH_RESULTS / max(1, len(queries))))
+    proveedores = (_search_google_cse, _search_brave, _search_tavily, _search_serpapi)
 
-            # Los cuatro proveedores gratuitos no devolvieron nada para esta
-            # query puntual (bloqueo momentáneo, límite de cuota, etc.):
-            # Firecrawl entra como quinto proveedor de respaldo en vez de
-            # simplemente perder esa query — solo aquí, para no gastarle
-            # crédito de más a algo que los gratuitos ya cubren casi siempre.
-            if len(results) == conteo_antes:
-                extra = await _search_firecrawl(client, query)
-                for item in extra:
-                    if _agregar(item, query) and len(results) >= MAX_SEARCH_RESULTS:
-                        return {
-                            "queries": queries,
-                            "results": results,
-                            "providers_configured": providers_configured,
-                        }
+    async def _una_query(client: httpx.AsyncClient, query: str) -> List[Dict[str, Any]]:
+        propios: List[Dict[str, Any]] = []
+        vistos = set()
+        # Proveedores en orden, y se deja de llamar en cuanto la búsqueda
+        # junta su cuota: no se gasta cuota de API de más.
+        for buscar in proveedores:
+            try:
+                lote = await buscar(client, query)
+            except Exception:
+                lote = []
+            for item in lote or []:
+                canon = _canonical_url(item.get("url", ""))
+                if canon and canon not in vistos:
+                    vistos.add(canon)
+                    propios.append(item)
+            if len(propios) >= cuota:
+                break
+        if not propios:
+            propios = await _search_firecrawl(client, query)
+        return propios[: cuota * 2]
+
+    async with httpx.AsyncClient(timeout=SEARCH_TIMEOUT, follow_redirects=True) as client:
+        por_query = await asyncio.gather(*[_una_query(client, q) for q in queries])
+
+    # Intercalado: el 1º de cada búsqueda, luego el 2º de cada una, etc.
+    ronda = 0
+    while len(results) < MAX_SEARCH_RESULTS and any(ronda < len(lista) for lista in por_query):
+        for query, lista in zip(queries, por_query):
+            if ronda < len(lista):
+                _agregar(dict(lista[ronda]), query)
+                if len(results) >= MAX_SEARCH_RESULTS:
+                    break
+        ronda += 1
     return {"queries": queries, "results": results, "providers_configured": providers_configured}
 
 
@@ -940,7 +997,8 @@ def _build_page_summary(html: str) -> str:
 
 
 async def _fetch_candidate_pages(
-    candidates: List[Dict[str, Any]], colonia: str = "", ciudad: str = ""
+    candidates: List[Dict[str, Any]], colonia: str = "", ciudad: str = "",
+    resumen: Optional[Dict[str, Any]] = None,
 ) -> List[Dict[str, Any]]:
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -949,7 +1007,8 @@ async def _fetch_candidate_pages(
     }
     sem_http = asyncio.Semaphore(3)
     sem_fc = asyncio.Semaphore(FIRECRAWL_CONCURRENCY)
-    stats = {"firecrawl_calls": 0, "firecrawl_credits": 0, "firecrawl_cache_hits": 0}
+    stats = {"firecrawl_calls": 0, "firecrawl_credits": 0, "firecrawl_cache_hits": 0,
+             "firecrawl_intentos": 0, "firecrawl_errores": {}}
 
     async def _try_httpx(url: str) -> Dict[str, Any]:
         async with sem_http:
@@ -968,8 +1027,12 @@ async def _fetch_candidate_pages(
         if cacheado is not None:
             stats["firecrawl_cache_hits"] += 1
             return {"ok": True, "page_text": cacheado, "credits": 0, "from_cache": True}
+        stats["firecrawl_intentos"] += 1
         async with sem_fc:
             result = await _firecrawl_scrape(url)
+        if not result.get("ok"):
+            err = str(result.get("error") or "error")[:60]
+            stats["firecrawl_errores"][err] = stats["firecrawl_errores"].get(err, 0) + 1
         if result.get("ok"):
             stats["firecrawl_calls"] += 1
             stats["firecrawl_credits"] += int(result.get("credits") or 0)
@@ -1011,7 +1074,13 @@ async def _fetch_candidate_pages(
                         "page_text": "",
                     }
 
-            direct = await _try_httpx(url)
+            try:
+                direct = await _try_httpx(url)
+            except Exception as exc:
+                # Los muros anti-bot muchas veces no responden 403: cortan la
+                # conexión o la dejan colgada hasta el timeout. Antes eso
+                # terminaba en "error" sin darle oportunidad a Firecrawl.
+                direct = {"ok": False, "status": 0, "text": "", "error": str(exc)[:120]}
             bloqueada = direct["ok"] and _pagina_bloqueada(direct["text"])
             if direct["ok"] and not bloqueada:
                 return {**item, "fetch_status": "ok", "page_text": direct["text"]}
@@ -1022,9 +1091,9 @@ async def _fetch_candidate_pages(
             # muro en vez de aceptar la página bloqueada como si fuera
             # evidencia real (eso era lo que dejaba un AVM entero sin
             # comparables verificables aunque sí hubiera oferta en la zona).
-            if FIRECRAWL_API_KEY and (bloqueada or status in (403, 429) or status >= 500):
+            if FIRECRAWL_API_KEY and (bloqueada or status in (0, 401, 403, 429) or status >= 500):
                 firecrawl = await _try_firecrawl(url)
-                etiqueta = "bloqueo" if bloqueada else str(status)
+                etiqueta = "bloqueo" if bloqueada else ("sin_respuesta" if status == 0 else str(status))
                 if firecrawl.get("ok"):
                     return {
                         **item,
@@ -1038,18 +1107,60 @@ async def _fetch_candidate_pages(
                 }
             if bloqueada:
                 return {**item, "fetch_status": "bloqueada_sin_firecrawl", "page_text": ""}
+            if status == 0:
+                return {**item, "fetch_status": "error", "fetch_error": direct.get("error", ""), "page_text": ""}
             return {**item, "fetch_status": f"http_{status}", "page_text": ""}
         except Exception as exc:
             return {**item, "fetch_status": "error", "fetch_error": str(exc)[:120], "page_text": ""}
 
     tasks = [one(candidate) for candidate in candidates[:MAX_URLS_TO_FETCH]]
     fetched = await asyncio.gather(*tasks) if tasks else []
-    if stats["firecrawl_calls"] or stats["firecrawl_cache_hits"]:
-        print(
-            f"[firecrawl] calls={stats['firecrawl_calls']} credits={stats['firecrawl_credits']} "
-            f"cache_hits={stats['firecrawl_cache_hits']}"
-        )
+    info = resumen_firecrawl(fetched, stats)
+    if resumen is not None:
+        resumen.update(info)
+    # Siempre, después de cada avalúo: si no se usó, se dice por qué.
+    errores = ", ".join(f"{k}×{v}" for k, v in stats["firecrawl_errores"].items()) or "ninguno"
+    linea = (f"calls={stats['firecrawl_calls']} intentos={stats['firecrawl_intentos']} "
+             f"credits={stats['firecrawl_credits']} cache_hits={stats['firecrawl_cache_hits']} "
+             f"paginas={len(fetched)} errores={errores}")
+    if info.get("motivo_no_uso"):
+        linea += f" — no se usó porque {info['motivo_no_uso']}"
+    _log_firecrawl(linea)
     return fetched
+
+
+def estado_lectura_simple(fetch_status: str) -> str:
+    """Traduce el estado técnico de cada página a lo que ve la persona."""
+    st = fetch_status or ""
+    if st.startswith("ok_firecrawl"):
+        return "leído con Firecrawl"
+    if st in ("ok", "ok_httpx_fallback"):
+        return "leído"
+    if st == "skipped_domain":
+        return "omitido"
+    return "bloqueado"
+
+
+def resumen_firecrawl(paginas: List[Dict[str, Any]], stats: Dict[str, Any]) -> Dict[str, Any]:
+    conteo = {"leído": 0, "leído con Firecrawl": 0, "bloqueado": 0, "omitido": 0}
+    for p in paginas:
+        conteo[estado_lectura_simple(p.get("fetch_status", ""))] += 1
+    motivo = ""
+    if not FIRECRAWL_API_KEY:
+        motivo = "falta FIRECRAWL_API_KEY en el servidor"
+    elif not stats.get("firecrawl_intentos") and not stats.get("firecrawl_cache_hits"):
+        motivo = ("ninguna página era de un portal protegido ni salió bloqueada"
+                  if paginas else "la búsqueda no encontró páginas que leer")
+    return {
+        "activo": bool(FIRECRAWL_API_KEY),
+        "intentos": stats.get("firecrawl_intentos", 0),
+        "leidas": stats.get("firecrawl_calls", 0),
+        "cache": stats.get("firecrawl_cache_hits", 0),
+        "creditos": stats.get("firecrawl_credits", 0),
+        "errores": dict(stats.get("firecrawl_errores") or {}),
+        "conteo": conteo,
+        "motivo_no_uso": motivo,
+    }
 
 
 def _subject_summary(req: AvmWebSearchRequest, tipo_label: str) -> str:
@@ -1226,7 +1337,8 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
             detail="No encontré URLs candidatas con las APIs de búsqueda configuradas. Prueba con otra colonia/zona o configura otra API de búsqueda.",
         )
 
-    paginas = await _fetch_candidate_pages(candidatos, colonia=req.colonia, ciudad=req.ciudad)
+    resumen_fc: Dict[str, Any] = {}
+    paginas = await _fetch_candidate_pages(candidatos, colonia=req.colonia, ciudad=req.ciudad, resumen=resumen_fc)
     resultado = await _claude_extract_and_value(
         req,
         tipo_label,
@@ -1253,8 +1365,10 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
         "url": page.get("url", ""),
         "portal": page.get("portal", ""),
         "estado_lectura": page.get("fetch_status", ""),
+        "lectura": estado_lectura_simple(page.get("fetch_status", "")),
         "provider": page.get("provider", ""),
     } for page in paginas]
+    resultado["firecrawl"] = resumen_fc
     resultado["queries_utilizadas"] = busqueda["queries"]
     resultado["proveedores_busqueda_configurados"] = busqueda["providers_configured"]
     resultado["colonias_colindantes_verificadas"] = colonias_vecinas

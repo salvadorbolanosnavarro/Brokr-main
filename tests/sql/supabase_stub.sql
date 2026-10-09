@@ -1,0 +1,84 @@
+-- Esqueleto mínimo tipo Supabase para probar migraciones en un Postgres local.
+-- NO es el esquema real: sólo las tablas/columnas que las migraciones tocan.
+do $$ begin
+  if not exists (select 1 from pg_roles where rolname = 'anon') then create role anon nologin; end if;
+  if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated nologin; end if;
+  if not exists (select 1 from pg_roles where rolname = 'service_role') then create role service_role nologin bypassrls; end if;
+end $$;
+create schema auth;
+create table auth.users (id uuid primary key, email text);
+create function auth.uid() returns uuid language sql stable as
+  $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+grant usage on schema auth to anon, authenticated;
+grant usage on schema public to anon, authenticated;
+
+create table public.organizaciones (id uuid primary key default gen_random_uuid(), nombre text);
+create table public.organizacion_miembros (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid, user_id uuid, rol_org text default 'agente',
+  activo boolean default true, permisos jsonb default '{}'::jsonb);
+
+create table public.propiedades (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid, org_id uuid, asignado_a uuid,
+  titulo text, tipo text, operacion text, estatus text default 'activa',
+  precio numeric, moneda text default 'MXN', colonia text, ciudad text, estado text,
+  amenidades text[], etiquetas text[], fotos text[], archivada boolean default false,
+  mostrar_ubicacion_exacta boolean default false, mostrar_precio boolean default true, eb_public_id text,
+  created_at timestamptz default now(), updated_at timestamptz default now());
+
+create table public.contactos (
+  id text primary key default ('c_' || floor(random() * 1e12)::text),
+  user_id uuid, org_id uuid, asignado_a uuid, nombre text, telefono text, wa text, email text,
+  tipo text, fuente text, estatus text, es_potencial boolean default false, probabilidad text,
+  etiquetas text[] default '{}',
+  created_at timestamptz default now(), updated_at timestamptz default now());
+
+create table public.tareas (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid, org_id uuid, asignado_a uuid, titulo text,
+  fecha timestamptz, completada boolean default false);
+
+-- Política "vieja" demasiado abierta, a propósito, para probar el candado.
+alter table public.propiedades enable row level security;
+create policy "vieja abierta" on public.propiedades for select using (true);
+alter table public.contactos enable row level security;
+create policy "vieja abierta" on public.contactos for select using (true);
+alter table public.tareas enable row level security;
+create policy "vieja abierta" on public.tareas for select using (true);
+
+create view public.propiedades_publicas as
+  select id, user_id, titulo, precio from public.propiedades where estatus = 'activa';
+
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant select on public.propiedades_publicas to anon;
+
+-- Storage mínimo
+create schema if not exists storage;
+create table if not exists storage.buckets (id text primary key, name text, public boolean);
+create table if not exists storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid);
+alter table storage.objects enable row level security;
+create or replace function auth.role() returns text language sql stable as $$ select coalesce(current_setting('request.jwt.claim.role', true), 'anon') $$;
+
+-- org_permiso (versión real en ajuste-easybroker.sql)
+create or replace function public.org_permiso(p_clave text) returns boolean language sql stable as $$ select true $$;
+
+-- Buscador (versión real en migracion-buscador-propiedades.sql)
+create table if not exists public.requerimientos_busqueda (
+  id uuid primary key default gen_random_uuid(), user_id uuid not null, contacto_id uuid not null,
+  activo boolean not null default true, operacion text not null default 'venta', tipo_inmueble text not null default 'casa',
+  colonia text, ciudad text, estado text, precio_min numeric, precio_max numeric, recamaras_min integer, notas text,
+  creado_en timestamptz not null default now(), actualizado_en timestamptz not null default now(), ultima_busqueda_en timestamptz,
+  unique (contacto_id));
+create table if not exists public.busqueda_resultados (
+  id uuid primary key default gen_random_uuid(), requerimiento_id uuid not null, user_id uuid not null, contacto_id uuid not null,
+  titulo text, url text not null, encontrado_en timestamptz not null default now());
+create table if not exists public.contactos_propiedades (
+  id uuid primary key default gen_random_uuid(), user_id uuid, contacto_id text, propiedad_id uuid, relacion text,
+  created_at timestamptz default now());
+
+-- Finanzas mínimo (versión real en migracion-finanzas.sql)
+create table if not exists public.fin_movimientos (
+  id uuid primary key default gen_random_uuid(), user_id uuid not null, tipo text not null, monto numeric not null,
+  fecha date not null default current_date, concepto text not null default '', propiedad_id uuid, contacto_id uuid,
+  origen text not null default 'manual', created_at timestamptz default now());

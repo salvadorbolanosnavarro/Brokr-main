@@ -7,6 +7,7 @@ by the current application; future clients require equivalent guards.
 """
 import os
 import smtplib
+import imaplib
 from urllib.parse import urlsplit
 import httpx
 
@@ -68,4 +69,8 @@ def install_staging_safety():
     httpx.Client.send = send_sync
     smtplib.SMTP.connect = no_smtp
     smtplib.SMTP_SSL.connect = no_smtp
+    def no_imap(*args,**kwargs):
+        raise imaplib.IMAP4.error("IMAP disabled in Broquer staging")
+    imaplib.IMAP4.open = no_imap
+    imaplib.IMAP4_SSL.open = no_imap
     _installed = True

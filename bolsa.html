@@ -87,12 +87,6 @@
       <div class="bk-field" style="margin:0;">
         <select class="bk-select" id="bl-f-tipo">
           <option value="">Tipo</option>
-          <option value="casa">Casa</option>
-          <option value="departamento">Departamento</option>
-          <option value="terreno">Terreno</option>
-          <option value="local">Local</option>
-          <option value="oficina">Oficina</option>
-          <option value="bodega">Bodega</option>
         </select>
       </div>
       <div class="bk-field" style="margin:0;">
@@ -197,6 +191,7 @@
 </div>
 
 <script src="app-shell.js" defer></script>
+<script src="inmuebles-catalogo.js"></script>
 <script>
 (function () {
   'use strict';
@@ -241,8 +236,25 @@
     var s = n.toLocaleString('es-MX', { maximumFractionDigits: 0 });
     return '$' + s + ' ' + (moneda || 'MXN');
   }
-  var TIPOS = { casa: 'Casa', departamento: 'Departamento', terreno: 'Terreno', local: 'Local', oficina: 'Oficina', bodega: 'Bodega' };
-  function tipoTxt(t) { return TIPOS[t] || (t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Inmueble'); }
+  var C = window.bkCat;
+  function tipoTxt(t) { return t ? C.tipoLabel(t) : 'Inmueble'; }
+  el('bl-f-tipo').innerHTML = C.tiposOptions('', { vacio: 'Tipo' });
+  el('bl-f-op').innerHTML = C.listaOptions(C.data.operaciones, '', 'Operación');
+  function precioCard(p) {
+    var ops = C.operaciones(p);
+    if (!ops.length) return esc(dinero(p.precio, p.moneda));
+    var extra = ops.length > 1
+      ? '<div style="font-size:var(--fs-xs);color:var(--mute);font-weight:400;">' + ops.slice(1).map(function (o) { return esc(C.opLabel(o.tipo) + ' ' + C.precioTexto(o)); }).join(' · ') + '</div>'
+      : '';
+    return '<span style="font-size:var(--fs-xs);color:var(--mute);font-weight:500;">' + esc(C.opLabel(ops[0].tipo)) + '</span> ' + esc(C.precioTexto(ops[0])) + extra;
+  }
+  function caracts(p) {
+    var ks = p.caracteristicas || [];
+    if (!ks.length) return '';
+    var max = 4;
+    return '<div class="bl-specs">' + ks.slice(0, max).map(function (k) { return '<span>' + esc(C.caractLabel(k)) + '</span>'; }).join('') +
+      (ks.length > max ? '<span>+' + (ks.length - max) + '</span>' : '') + '</div>';
+  }
 
   /* ── Tabs ── */
   var tabExp = el('bl-tab-explorar'), tabMis = el('bl-tab-mis');
@@ -257,6 +269,59 @@
     panMis.hidden = false; panExp.hidden = true;
     if (!misCargadas) cargarMis();
   };
+
+  /* ══ DETALLE (fotos, operaciones, características, video, tour, documentos) ══ */
+  var _ultimas = [];
+  function abrirDetalle(p) {
+    var ov = el('bl-detalle');
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'bl-detalle'; ov.className = 'bk-overlay bk-overlay--sheet';
+      ov.addEventListener('click', function (e) { if (e.target === ov || e.target.closest('[data-cerrar]')) ov.classList.remove('is-open'); });
+      document.body.appendChild(ov);
+    }
+    var fotos = (p.fotos || []).map(function (f) { return '<img loading="lazy" src="' + esc(f) + '" alt="" style="height:180px;border-radius:var(--r);flex-shrink:0;object-fit:cover"/>'; }).join('');
+    var ops = C.operaciones(p).map(function (o) {
+      return '<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:var(--mute)">' + esc(C.opLabel(o.tipo)) + '</span><strong>' + esc(C.precioTexto(o)) + '</strong></div>';
+    }).join('');
+    var car = C.caractPorGrupo(p.caracteristicas || []).map(function (gr) {
+      return '<div style="margin-top:10px"><div style="font-size:var(--fs-xs);font-weight:600;margin-bottom:4px">' + esc(gr.grupo) + '</div><div class="bl-specs">' +
+        gr.items.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div></div>';
+    }).join('');
+    ov.innerHTML = '<div class="bk-modal" role="dialog" aria-modal="true">' +
+      '<div class="bk-modal__head"><div class="bk-modal__title">' + esc(p.titulo || tipoTxt(p.subtipo || p.tipo)) + '</div>' +
+      '<button class="bk-btn bk-btn--ghost" type="button" data-cerrar aria-label="Cerrar"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button></div>' +
+      '<div class="bk-modal__body">' +
+        (fotos ? '<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px">' + fotos + '</div>' : '') +
+        '<div class="bl-ubi" style="margin-bottom:8px">' + esc([tipoTxt(p.subtipo || p.tipo), p.colonia, p.ciudad, p.estado].filter(Boolean).join(' · ')) + '</div>' +
+        (ops ? '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px">' + ops + '</div>' : '') +
+        '<div class="bl-specs">' + specs(p) + '</div>' + car +
+        (p.descripcion ? '<p style="white-space:pre-line;margin-top:14px">' + esc(p.descripcion) + '</p>' : '') +
+        C.multimediaHtml(p) +
+        (p.bolsa_notas ? '<div class="bl-notas">' + esc(p.bolsa_notas) + '</div>' : '') +
+      '</div>' +
+      (p.propia ? '' : '<div class="bk-modal__foot"><textarea class="bk-input" id="bl-sol-msg" rows="2" placeholder="Mensaje para el captador (opcional)" style="flex:1"></textarea>' +
+        '<button class="bk-btn bk-btn--forest" type="button" id="bl-solicitar" data-pid="' + esc(p.id) + '">Solicitar información</button></div>') +
+      '</div>';
+    ov.classList.add('is-open');
+  }
+  document.addEventListener('click', function (e) {
+    var card = e.target.closest('[data-bl-idx]');
+    if (!card || e.target.closest('a')) return;
+    var p = _ultimas[Number(card.dataset.blIdx)];
+    if (p) abrirDetalle(p);
+  });
+  document.addEventListener('click', async function (e) {
+    var b = e.target.closest('#bl-solicitar'); if (!b) return;
+    b.disabled = true;
+    try {
+      await api('/bolsa/solicitud', { method: 'POST', json: { propiedad_id: b.dataset.pid, mensaje: (el('bl-sol-msg') || {}).value || '' } });
+      b.textContent = 'Solicitud enviada';
+    } catch (err) { b.disabled = false; alert(err.message || 'No se pudo enviar la solicitud'); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && el('bl-detalle')) el('bl-detalle').classList.remove('is-open');
+    if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-bl-idx]')) e.target.click();
+  });
 
   /* ══ EXPLORAR ══ */
   var pagina = 1, paginas = 1;
@@ -287,13 +352,14 @@
            'WhatsApp</a>';
     }
     var notas = p.bolsa_notas ? '<div class="bl-notas">' + esc(p.bolsa_notas) + '</div>' : '';
-    return '<article class="bk-card bk-card--raise bk-card--hover bl-card">' +
+    return '<article class="bk-card bk-card--raise bk-card--hover bl-card" data-bl-idx="' + (_ultimas.indexOf(p)) + '" tabindex="0" role="button" aria-label="Ver detalle">' +
       '<div class="bl-foto">' + (foto ? '<img loading="lazy" src="' + esc(foto) + '" alt=""/>' : '') + com + '</div>' +
       '<div class="bl-body">' +
-        '<div class="bl-precio">' + esc(dinero(p.precio, p.moneda)) + (p.operacion === 'renta' ? ' <span style="font-size:var(--fs-xs);color:var(--mute);font-weight:400;">/ mes</span>' : '') + '</div>' +
-        '<div class="bl-titulo">' + esc(p.titulo || tipoTxt(p.tipo)) + '</div>' +
-        '<div class="bl-ubi">' + esc(ubi) + '</div>' +
+        '<div class="bl-precio">' + precioCard(p) + '</div>' +
+        '<div class="bl-titulo">' + esc(p.titulo || tipoTxt(p.subtipo || p.tipo)) + '</div>' +
+        '<div class="bl-ubi">' + esc((p.subtipo || p.tipo ? tipoTxt(p.subtipo || p.tipo) + ' · ' : '') + ubi) + '</div>' +
         '<div class="bl-specs">' + specs(p) + '</div>' +
+        caracts(p) +
         notas +
       '</div>' +
       '<div class="bl-agente"><span class="n">' + esc((p.agente && p.agente.nombre) || 'Agente Broquer') + '</span>' + wa + '</div>' +
@@ -325,6 +391,7 @@
         el('bl-empty').hidden = false;
         return;
       }
+      _ultimas = props;
       grid.innerHTML = props.map(tarjeta).join('');
       if (paginas > 1) {
         el('bl-pag').hidden = false;

@@ -1,5 +1,5 @@
 {
-  "count": 273,
+  "count": 348,
   "operations": [
     {
       "body": false,
@@ -137,6 +137,120 @@
       "path": "/agent/health",
       "responses": [
         "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:propiedad_id!"
+      ],
+      "path": "/alertas/clientes-potenciales/{propiedad_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/alertas/coincidencias/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/alertas/ligar-interesado",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/alertas/preparar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/alertas/registrar-envio",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/alertas/requerimiento/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PUT",
+      "params": [
+        "path:contacto_id!"
+      ],
+      "path": "/alertas/requerimiento/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:agente"
+      ],
+      "path": "/alertas/requerimientos",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:rid!"
+      ],
+      "path": "/alertas/requerimientos/{rid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:rid!"
+      ],
+      "path": "/alertas/requerimientos/{rid}",
+      "responses": [
+        "200",
+        "422"
       ]
     },
     {
@@ -383,6 +497,175 @@
       "body": true,
       "method": "POST",
       "params": [],
+      "path": "/bolsa/solicitud",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:asignado",
+        "query:canal",
+        "query:estado",
+        "query:fuente_id",
+        "query:limit",
+        "query:propiedad_id"
+      ],
+      "path": "/buzon",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/buzon/contador",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:token!"
+      ],
+      "path": "/buzon/entrada/{token}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:desde",
+        "query:hasta"
+      ],
+      "path": "/buzon/estadisticas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/buzon/manual",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/buzon/reglas",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PUT",
+      "params": [],
+      "path": "/buzon/reglas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/buzon/respuestas",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/buzon/respuestas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:rid!"
+      ],
+      "path": "/buzon/respuestas/{rid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:rid!"
+      ],
+      "path": "/buzon/respuestas/{rid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:lead_id!"
+      ],
+      "path": "/buzon/{lead_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [
+        "path:lead_id!"
+      ],
+      "path": "/buzon/{lead_id}/asignar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:lead_id!"
+      ],
+      "path": "/buzon/{lead_id}/respondido",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
       "path": "/chat",
       "responses": [
         "200",
@@ -394,6 +677,96 @@
       "method": "POST",
       "params": [],
       "path": "/chat-claude",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/cierres",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:mov_id!"
+      ],
+      "path": "/cierres/cobrado/{mov_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/cierres/importar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/cierres/plantilla.csv",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/cierres/por-cobrar",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:propiedad_id!"
+      ],
+      "path": "/cierres/propiedad/{propiedad_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:agente",
+        "query:desde",
+        "query:hasta"
+      ],
+      "path": "/cierres/reporte",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:agente",
+        "query:desde",
+        "query:hasta"
+      ],
+      "path": "/cierres/reporte.csv",
       "responses": [
         "200",
         "422"
@@ -645,6 +1018,215 @@
         "query:carpeta"
       ],
       "path": "/correo/mensaje/{uid_msg}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/crm/catalogos",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:cat_id!"
+      ],
+      "path": "/crm/categorias/{cat_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:cat_id!"
+      ],
+      "path": "/crm/categorias/{cat_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/contactos/fusionar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/contactos/lote",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/etapas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/etapas/orden",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:etapa_id!",
+        "query:mover_a"
+      ],
+      "path": "/crm/etapas/{etapa_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:etapa_id!"
+      ],
+      "path": "/crm/etapas/{etapa_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:tabla"
+      ],
+      "path": "/crm/etiquetas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/etiquetas/eliminar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/etiquetas/renombrar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/fuentes",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/fuentes/fusionar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:fuente_id!"
+      ],
+      "path": "/crm/fuentes/{fuente_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:fuente_id!"
+      ],
+      "path": "/crm/fuentes/{fuente_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/crm/tipos",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:tipo_id!",
+        "query:mover_a"
+      ],
+      "path": "/crm/tipos/{tipo_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:tipo_id!"
+      ],
+      "path": "/crm/tipos/{tipo_id}",
       "responses": [
         "200",
         "422"
@@ -1942,6 +2524,19 @@
     {
       "body": false,
       "method": "GET",
+      "params": [
+        "path:pid!",
+        "query:a"
+      ],
+      "path": "/p/{pid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
       "params": [],
       "path": "/ping",
       "responses": [
@@ -2250,6 +2845,15 @@
     },
     {
       "body": false,
+      "method": "POST",
+      "params": [],
+      "path": "/propiedades/lote",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
       "method": "PATCH",
       "params": [
         "path:prop_id!"
@@ -2279,12 +2883,265 @@
       ]
     },
     {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/acerca",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/buscar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/contacto",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/contacto",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:pid!",
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/inmueble/{pid}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:pagina!",
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/p/{pagina}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/renta",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/rentas-temporales",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/robots.txt",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/sitemap.xml",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:slug!"
+      ],
+      "path": "/s/{slug}/venta",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
       "body": true,
       "method": "POST",
       "params": [
         "path:slug!"
       ],
       "path": "/sitio/{slug}/lead",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/sitios/mios",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/dominio",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/dominio",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/dominio/verificar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/paginas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/paginas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:pagina_id!",
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/paginas/{pagina_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:pagina_id!",
+        "path:sitio_id!"
+      ],
+      "path": "/sitios/{sitio_id}/paginas/{pagina_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PUT",
+      "params": [
+        "path:tipo!"
+      ],
+      "path": "/sitios/{tipo}",
       "responses": [
         "200",
         "422"

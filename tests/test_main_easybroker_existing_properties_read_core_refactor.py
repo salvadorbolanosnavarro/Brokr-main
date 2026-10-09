@@ -40,7 +40,9 @@ class MainEasyBrokerExistingPropertiesReadCoreRefactorTests(unittest.TestCase):
             self.assertIn('await upsert_rows(\n                        "propiedades",', block)
         else:
             self.assertIn('filas_existentes = await get_rows_dep(\n                    "propiedades",', block)
-            self.assertIn('except httpx_dep.HTTPStatusError:\n                filas_existentes = []', block)
+            # Fase 9: primero con las columnas nuevas; si la base no las tiene,
+            # con las de siempre, y si eso falla, lista vacía.
+            self.assertIn('except httpx_dep.HTTPStatusError:\n                    filas_existentes = []', block)
             self.assertIn('await upsert_rows_dep(\n                            "propiedades",', block)
         self.assertIn('"user_id": f"eq.{user_id}"', block)
         self.assertIn('"eb_public_id": "not.is.null"', block)

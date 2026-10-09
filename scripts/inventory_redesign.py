@@ -9,7 +9,7 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = '3d792b52c1265cfd09ed05b41df8a7d4bc02da2f'
+BASE = '1f5fc8d5a5a7650bd315bfead3515d708f828bae'
 def git(*args):
     return subprocess.check_output(['git', *args], cwd=ROOT, text=True)
 class Page(HTMLParser):
@@ -55,13 +55,16 @@ for name in files:
         for d in node.decorator_list:
             if isinstance(d,ast.Call) and isinstance(d.func,ast.Attribute) and d.func.attr in ('get','post','put','patch','delete','websocket') and d.args:
                 routes.append({'file':name,'handler':node.name,'method':d.func.attr.upper(),'path_expression':ast.unparse(d.args[0]),'path':prefixes.get(getattr(d.func.value,'id',''),'') + (d.args[0].value if isinstance(d.args[0],ast.Constant) else ast.unparse(d.args[0]))})
+declared_routes=routes
+golden=json.loads((ROOT/'tests/golden/http_contract_effective.json').read_text())
+routes=[{'method':r['method'],'path':r['path'],'file':'Contrato HTTP efectivo actual','handler':'registro de main','path_expression':repr(r['path'])} for r in golden['operations']]
 changed=git('diff','--name-only',BASE,'--','core','routers','main.py','tests').splitlines()
-report={'baseline':BASE,'pages':pages,'routes':routes,'changed_backend_or_existing_tests':changed,
-    'warning':'Static inventory, not a certification of functional or visual parity. Local APIRouter prefixes expanded; nested mounts and dynamic route registrations require runtime comparison.'}
+report={'baseline':BASE,'pages':pages,'routes':routes,'route_declarations':declared_routes,'changed_backend_or_existing_tests':changed,
+    'warning':'Static inventory, not a certification of functional or visual parity. Endpoint table uses the effective HTTP golden contract from the current main baseline; runtime comparison remains pending.'}
 (ROOT/'redesign-inventory.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
 lines=['# Cobertura completa de Broquer','',
  'Las ocho referencias definen el lenguaje visual; todas las pantallas y flujos originales forman parte de la migración.', '',
- f'Inventario reproducible: `{BASE}`. {len(pages)} HTML rastreados y {len(routes)} declaraciones de endpoints (prefijos locales expandidos; falta comparar montajes dinámicos).',
+ f'Inventario reproducible: `{BASE}`. {len(pages)} HTML rastreados y {len(routes)} operaciones del contrato HTTP efectivo actual (se conserva también el inventario de declaraciones).',
  'La presencia del código no certifica su funcionamiento. Todos los flujos requieren validación con servicios de pruebas.', '',
  '| Pantalla | Rediseño | Mock | Prueba real | Datos / vacío / error / carga | Roles | Móvil iPhone real | IDs retirados |',
  '| --- | --- | --- | --- | --- | --- | --- | --- |']
@@ -74,8 +77,8 @@ for p in pages:
     latest={r['width']:r for r in runs}
     passed=len(latest)>=2 and all(not r.get('failure') and not r.get('overflow') and not r.get('errors') for r in latest.values())
     redesign='Rediseñado; fidelidad pendiente' if p['shared_shell'] or p['path'] in {'login.html','registro.html','reset-password.html','unirse.html','firmar.html','verificar-firma.html','expediente.html'} else 'Pendiente de revisión visual'
-    lines.append(f"| `{p['path']}` | {redesign} | {'Probado con mock: superficie' if passed else 'Pendiente'} | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | {', '.join(p['removed_control_ids']) or 'Ninguno'} |")
-lines += ['', '## Cada endpoint', '', 'Estas filas conservan todos los handlers inventariados. El mock de la interfaz no demuestra que un endpoint funcione. Las integraciones externas se bloquearán en staging y se validarán por separado.', '', '| Método | Ruta declarada con prefijo local | Fuente / handler | Mock endpoint | Prueba real |', '| --- | --- | --- | --- | --- |']
+    lines.append(f"| `{p['path']}` | {redesign} | {'Probado con mock: superficie en versión previa' if passed else 'Pendiente'} | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | {', '.join(p['removed_control_ids']) or 'Ninguno'} |")
+lines += ['', '## Cada endpoint', '', 'Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON conserva además cada declaración con su handler. El mock de la interfaz no demuestra que un endpoint funcione. Las integraciones externas se bloquearán en staging y se validarán por separado.', '', '| Método | Ruta declarada con prefijo local | Fuente / handler | Mock endpoint | Prueba real |', '| --- | --- | --- | --- | --- |']
 for route in routes:
     lines.append(f"| {route['method']} | `{route['path']}` | `{route['file']}: {route['handler']}` | Pendiente | Pendiente |")
 lines+=['','## Criterios de cobertura','',

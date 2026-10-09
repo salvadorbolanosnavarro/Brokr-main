@@ -76,3 +76,24 @@ completo actual no está en el repo: falta la exportación de producción (solo
 definiciones) para generar y validar la migración exacta. No hay base de pruebas
 conectada y no se han certificado escrituras reales ni matriz completa de roles.
 Cloudflare mostró login; este avance no equivale a un despliegue publicado.
+
+## Actualización al Broquer actual
+
+Se incorporó en la rama del PR el main 1f5fc8d5a5a7650bd315bfead3515d708f828bae,
+sin modificar main ni producción. El alcance actual creció a **55 HTML y 348
+operaciones HTTP**: se conserva también la lista de declaraciones y handlers.
+Incluye Buzón, alertas, ajustes CRM, cierres, catálogo de inmuebles, mejoras del
+sitio público y AVM/Firecrawl. Regenerado avm-runtime.js desde el JSX actualizado.
+El contador de Buzón también se conserva en la cabecera nueva.
+
+Se ejecutaron 61 pruebas existentes de las funciones incorporadas: 59 aprobaron
+inicialmente y dos de AVM fallaron por faltar socksio en el entorno de ejecución.
+Después de instalar esa dependencia local se repitieron únicamente esas dos.
+No se modificaron las pruebas ni sus contratos. La nueva compilación estática
+incluye los 55 HTML. Los mocks de navegador anteriores se identifican como
+evidencia de la versión previa; no certifican estas funciones incorporadas.
+No se pudo renovar el recorrido visual: la descarga del navegador devolvió un
+archivo inválido. No se considera aprobado el recorrido de esta versión.
+
+La protección de correo también bloquea IMAP: no conecta cuentas de correo
+reales. Las integraciones nuevas externas siguen bloqueadas por HTTPX en staging.

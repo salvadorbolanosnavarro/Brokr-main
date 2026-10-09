@@ -1068,6 +1068,31 @@ input:focus, select:focus, textarea:focus {
                 </div>
               )}
 
+              {(resultado.fuentes_consultadas || []).length > 0 && (() => {
+                const fc = resultado.firecrawl || {};
+                const fuentes = (resultado.fuentes_consultadas || []).filter(f => f.lectura !== "omitido");
+                const color = (l) => l === "bloqueado" ? "var(--danger)" : (l === "leído con Firecrawl" ? "var(--sky-blue-press)" : "var(--success)");
+                const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return u || ""; } };
+                return (
+                  <div className="opinion-section">
+                    <div className="opinion-section-title">Fuentes consultadas</div>
+                    <div style={{ fontSize: 12, color: "var(--ink)", marginBottom: 8, lineHeight: 1.5 }}>
+                      {fc.activo
+                        ? <span><strong>Firecrawl activo.</strong> {fc.leidas || 0} página(s) leída(s) con Firecrawl{fc.cache ? `, ${fc.cache} desde caché` : ""}{fc.intentos > (fc.leidas || 0) ? `, ${fc.intentos - (fc.leidas || 0)} intento(s) fallido(s)` : ""}{fc.motivo_no_uso ? ` (no se usó porque ${fc.motivo_no_uso})` : ""}.</span>
+                        : <span><strong>Firecrawl inactivo</strong>{fc.motivo_no_uso ? `: ${fc.motivo_no_uso}` : ""}. Los portales que bloquean a los robots no se pudieron leer.</span>}
+                    </div>
+                    {fuentes.map((f, i) => (
+                      <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12, padding: "5px 0", borderTop: i ? "1px solid var(--gray-200)" : "none" }}>
+                        <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
+                          {f.portal || host(f.url)}{f.titulo ? ` · ${f.titulo}` : ""}
+                        </a>
+                        <span style={{ color: color(f.lectura), fontWeight: 700, flexShrink: 0 }}>{f.lectura || "bloqueado"}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
               {resultado.advertencias && (
                 <div style={{ background: "var(--warn-soft)", borderLeft: "3px solid var(--warn)", borderRadius: 8, padding: "8px 12px", fontSize: 12, color: "var(--forest)", marginBottom: 14 }}>
                   <strong>Nota:</strong> {resultado.advertencias}

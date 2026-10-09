@@ -30,12 +30,13 @@ class Isolation(unittest.TestCase):
         for change in ({'STRIPE_SECRET_KEY':'sk_live_fixture'},{'RECORDATORIOS_ACTIVOS':'true'},{'BROQUER_STAGING_PROJECT_NAME':'broquer-beta'},{'SUPABASE_URL':build.PROD_DB}):
             with self.assertRaises(RuntimeError):safety.validate(ENV|change)
     def test_outbound_block(self):
-        import httpx,smtplib
+        import httpx,smtplib,imaplib
         # Restore patches after testing; no network request is ever issued.
-        with patch.dict(safety.os.environ,ENV,clear=True),patch.object(httpx.Client,'send'),patch.object(httpx.AsyncClient,'send'),patch.object(smtplib.SMTP,'connect'),patch.object(smtplib.SMTP_SSL,'connect'):
+        with patch.dict(safety.os.environ,ENV,clear=True),patch.object(httpx.Client,'send'),patch.object(httpx.AsyncClient,'send'),patch.object(smtplib.SMTP,'connect'),patch.object(smtplib.SMTP_SSL,'connect'),patch.object(imaplib.IMAP4,'open'),patch.object(imaplib.IMAP4_SSL,'open'):
             safety.install_staging_safety()
             for url in ('https://graph.facebook.com/me','https://api.resend.com/emails','https://api.push.apple.com/3/device/fake','https://api.broquer.app/test','https://api.stripe.com/v1/customers'):
                 with self.assertRaises(httpx.RequestError):httpx.Client().send(httpx.Request('POST',url))
             with self.assertRaises(smtplib.SMTPException):smtplib.SMTP('localhost')
+            with self.assertRaises(imaplib.IMAP4.error):imaplib.IMAP4_SSL('example.test')
             safety._installed=False
 if __name__=='__main__':unittest.main()

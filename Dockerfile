@@ -32,6 +32,10 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+# Sin esto Python guarda los print() en un búfer y no salen en los logs de
+# Railway (p. ej. las líneas "[firecrawl] …" del AVM).
+ENV PYTHONUNBUFFERED=1
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

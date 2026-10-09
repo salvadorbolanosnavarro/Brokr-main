@@ -7,6 +7,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <title>Inmuebles — Broquer</title>
 <link rel="stylesheet" href="brokr-theme.css"/>
+<link rel="stylesheet" href="propiedades-plus.css"/>
 <style>
 /* layout owned by app-shell.js (.bk-page is the scroll container) */
 
@@ -994,13 +995,11 @@
         <div class="pf-section">Información básica</div>
         <div class="pf-row"><div class="pf-field full"><label>Título</label><input type="text" name="titulo" placeholder="Casa en venta en Las Palmas" required/></div></div>
         <div class="pf-row">
-          <div class="pf-field"><label>Tipo</label><select name="tipo" required><option value="">Seleccionar</option><option value="casa">Casa</option><option value="departamento">Departamento</option><option value="terreno">Terreno</option><option value="local">Local comercial</option><option value="oficina">Oficina</option><option value="bodega">Bodega</option></select></div>
-          <div class="pf-field"><label>Operación</label><select name="operacion" required onchange="pfActualizarComision(this.value)"><option value="">Seleccionar</option><option value="venta">Venta</option><option value="renta">Renta</option></select></div>
+          <div class="pf-field"><label>Tipo</label><select name="tipo" required><option value="">Seleccionar</option></select></div>
           <div class="pf-field"><label>Estatus</label><select name="estatus"><option value="activa">Activa</option><option value="reservada">Reservada</option><option value="en_proceso">En proceso</option><option value="vendida">Vendida</option><option value="rentada">Rentada</option><option value="suspendida">Suspendida</option><option value="no_activa">No activo (por revisar)</option><option value="ajena">Ajena (de otro colega)</option></select></div>
         </div>
-        <div class="pf-row">
-          <div class="pf-field"><label>Precio</label><input type="text" name="precio" placeholder="$2,500,000" oninput="propFmtMoney(this)" required/></div>
-          <div class="pf-field"><label>Moneda</label><select name="moneda"><option value="MXN">MXN</option><option value="USD">USD</option></select></div>
+        <div id="px-ops-wrap"></div>
+        <div class="pf-row" style="margin-top:12px">
           <div class="pf-field" id="pf-comision-field" style="display:none">
             <label id="pf-comision-label">Comisión (%)</label>
             <input type="number" name="comision_venta_pct" id="pf-comision-input" placeholder="5" min="0" step="0.5"/>
@@ -1021,8 +1020,8 @@
         </div>
         <div class="pf-row">
           <div class="pf-field"><label>Colonia</label><input type="text" name="colonia" placeholder="Las Palmas" required/></div>
-          <div class="pf-field"><label>Ciudad</label><input type="text" name="ciudad" value="Morelia"/></div>
-          <div class="pf-field"><label>Estado</label><input type="text" name="estado" value="Michoacán"/></div>
+          <div class="pf-field"><label>Ciudad</label><input type="text" name="ciudad" placeholder="Ej. Morelia"/></div>
+          <div class="pf-field"><label>Estado</label><input type="text" name="estado" placeholder="Ej. Michoacán"/></div>
           <div class="pf-field"><label>C.P.</label><input type="text" name="cp" placeholder="58070"/></div>
         </div>
         <div class="pf-row">
@@ -1052,10 +1051,7 @@
           <div class="pf-field"><label>Nivel / piso</label><input type="text" name="nivel" placeholder="PB, 3, etc."/></div>
           <div class="pf-field"><label>Mantenimiento</label><input type="text" name="mantenimiento" placeholder="$2,500" oninput="propFmtMoney(this)"/></div>
         </div>
-        <div class="pf-row"><div class="pf-field full">
-          <label>Amenidades <span style="color:var(--mute); font-weight:400;">— separadas por coma</span></label>
-          <input type="text" name="amenidades_raw" placeholder="Alberca, Gimnasio, Seguridad 24h, Elevador"/>
-        </div></div>
+        <div id="px-campos-extra"></div>
 
         <div class="pf-section">Exclusividad y colaboración</div>
         <div class="pf-row">
@@ -1306,6 +1302,7 @@ async function cargarPermisoEliminar() {
     const org = await r.json();
     pEsEmpresa = org.es_empresa === true;
     pEsAdminOrg = org.es_admin === true;
+    window.pPermisos = org.permisos || {};
     pOrgId = org.org_id || null;
     if (pOrgId) pCategorias = await catCargar(pOrgId);
     puedeEliminar = !org.es_empresa || org.es_admin === true;
@@ -1482,6 +1479,7 @@ function renderPage() {
   const pageItems = filteredProps.slice(start, start + PAGE_SIZE);
   renderProps(pageItems, total);
   renderPager(totalPages, total);
+  if (window.pxPintarMapa) pxPintarMapa();
 }
 
 function renderPager(totalPages, total) {
@@ -1541,8 +1539,11 @@ function renderProps(props, totalForCount) {
     if (p.banos) specs.push(`<span><strong>${p.banos}</strong> baños</span>`);
     if (p.m2_construccion) specs.push(`<span><strong>${p.m2_construccion}</strong> m²</span>`);
 
-    const opLabel = p.operacion === 'venta' ? 'En venta' : (p.operacion === 'renta' ? 'En renta' : '');
-    const ubic = p.colonia + (p.ciudad ? ', ' + p.ciudad : '');
+    const opsP = window.bkCat ? bkCat.operaciones(p) : [];
+    const opLabel = opsP.length
+      ? opsP.map(o => bkCat.opLabel(o.tipo)).join(' · ')
+      : (p.operacion === 'venta' ? 'En venta' : (p.operacion === 'renta' ? 'En renta' : ''));
+    const ubic = [p.colonia, p.ciudad].filter(Boolean).join(', ');
 
     return `<div class="prop-card ${selectedIds.has(p.id) ? 'is-selected' : ''} ${p.archivada ? 'is-archived' : ''}" data-id="${p.id}" onclick="onPropCardClick(event, '${p.id}')">
       <div class="prop-check" onclick="event.stopPropagation();toggleSelectProp('${p.id}')">
@@ -1660,8 +1661,9 @@ function filterProps() {
   filteredProps = allProps.filter(p => {
     if (mostrandoArchivadas ? p.archivada !== true : p.archivada === true) return false;
     if (q && !(p.titulo+p.colonia+p.ciudad+p.descripcion+'').toLowerCase().includes(q)) return false;
-    if (op && p.operacion !== op) return false;
-    if (tipo && p.tipo !== tipo) return false;
+    if (op && !(window.bkCat ? bkCat.tieneOperacion(p, op) : p.operacion === op)) return false;
+    if (tipo && (p.subtipo || p.tipo) !== tipo) return false;
+    if (window.pxPasaFiltros && !pxPasaFiltros(p)) return false;
     if (selectedEst.length > 0 && !selectedEst.includes(p.estatus)) return false;
     if (precioMin !== null && (p.precio == null || Number(p.precio) < precioMin)) return false;
     if (precioMax !== null && (p.precio == null || Number(p.precio) > precioMax)) return false;
@@ -1749,11 +1751,18 @@ function openPropForm(id) {
     form.elements['fotos_raw'].value = JSON.stringify(p.fotos||[]);
     form.elements['prop_id'].value = id;
     uploadedFotoUrls = p.fotos?.length ? [...p.fotos] : [];
+    if (window.pxFormCargar) pxFormCargar(p);
+    if (comInput) {
+      comInput.value = p.operacion === 'renta'
+        ? (p.comision_renta_meses != null ? p.comision_renta_meses : '')
+        : (p.comision_venta_pct != null ? p.comision_venta_pct : '');
+    }
   } else {
     g('prop-modal-title').textContent = 'Nuevo inmueble';
     form.elements['prop_id'].value = '';
     pfActualizarComision('');
     pfToggleBolsa(false);
+    if (window.pxFormCargar) pxFormCargar(null);
   }
   renderFotosPreview();
   // El checkbox de FB solo aplica a propiedades NUEVAS y solo si el usuario tiene FB conectado
@@ -1810,7 +1819,13 @@ async function saveProp(e) {
   }
   delete data.fotos_raw;
   data.fotos = fotosRaw.length ? fotosRaw : uploadedFotoUrls;
-  // Amenidades: CSV → text[]
+  // Operaciones, subtipo, características y campos nuevos (propiedades-plus.js)
+  if (window.pxFormAplicar) {
+    delete data.caracteristicas;
+    pxFormAplicar(data, form);
+    camposForm.add('amenidades');
+  }
+  // Amenidades: CSV → text[] (formularios viejos)
   if ('amenidades_raw' in data) {
     const am = (data.amenidades_raw || '').split(',').map(s => s.trim()).filter(Boolean);
     data.amenidades = am.length ? am : null;
@@ -1859,6 +1874,7 @@ async function saveProp(e) {
   if (data.precio) data.precio = getRawNum(String(data.precio));
   if (data.mantenimiento) data.mantenimiento = getRawNum(String(data.mantenimiento));
   ['m2_construccion','m2_terreno','m2_superficie_no_cubierta','recamaras','banos','medio_bano','estacionamientos','anio_construccion'].forEach(k => { if (data[k]) data[k] = Number(data[k]); });
+  if (!data.mantenimiento_incluido) data.mantenimiento_incluido = 'no_indicado';
   data.updated_at = new Date().toISOString();
   const id = data.prop_id; delete data.prop_id;
 
@@ -1870,7 +1886,7 @@ async function saveProp(e) {
   // explícito. Los *_raw/_sel son solo del formulario (no son columnas),
   // así que se excluyen.
   if (id) {
-    const NO_ES_COLUMNA = new Set(['fotos_raw', 'amenidades_raw', 'etiquetas_raw', 'comision_compartida_sel', 'prop_id']);
+    const NO_ES_COLUMNA = new Set(['fotos_raw', 'amenidades_raw', 'etiquetas_raw', 'comision_compartida_sel', 'prop_id', 'operaciones_json']);
     camposForm.forEach(k => {
       if (!NO_ES_COLUMNA.has(k) && !(k in data)) data[k] = null;
     });
@@ -1890,7 +1906,15 @@ async function saveProp(e) {
   try {
     btn.innerHTML = 'Guardando…'; btn.disabled = true;
     const esNueva = !id;
-    if (id) { await sbPatchInmueble(id, data); } else { await sbFetch('propiedades', 'POST', data); }
+    if (id) { await sbPatchInmueble(id, data); }
+    else {
+      try { await sbFetch('propiedades', 'POST', data); }
+      catch (errAlta) {
+        // Migración de paridad pendiente en esta base: guardar sin los campos nuevos.
+        if (window.pxEsErrorColumna && pxEsErrorColumna(errAlta)) await sbFetch('propiedades', 'POST', pxQuitarExtendidas(data));
+        else throw errAlta;
+      }
+    }
     propFormDirty = false; // ya se guardó — cerrar no debe pedir confirmación
     closePropModal(); await loadProps();
     mostrarToast(esNueva ? 'Inmueble creado' : 'Inmueble actualizado');
@@ -2120,8 +2144,10 @@ function crearFichaDesde(id) {
   // Mapeo de campos: propiedades (esquema Brokr) → ficha-manual (form IDs)
   const prefill = {
     propId:    p.id, // para saber luego que NO duplicar al guardar
-    tipo:      p.tipo,
+    tipo:      window.bkCat ? bkCat.tipoLabel(bkCat.tipoDe(p)) : p.tipo,
     operacion: p.operacion,
+    amen:      window.pxAmenidadesTexto ? pxAmenidadesTexto(p) : (p.amenidades || []).join(', '),
+    mm:        (p.videos || []).concat(p.tours || []).join('\n'),
     precio:    p.precio,
     moneda:    p.moneda || 'MXN',
     colonia:   p.colonia,
@@ -2784,12 +2810,15 @@ else { window.addEventListener('brokr-shell-ready', () => { loadProps(); _preloa
   </div>
 </div>
 
+<script src="inmuebles-catalogo.js" defer></script>
 <script src="propiedades-editor.js" defer></script>
 <script src="historial-adjuntos.js" defer></script>
 <script src="ficha-comun.js" defer></script>
 <script src="categorias.js" defer></script>
 <script src="propiedades-ficha.js" defer></script>
 <script src="propiedades-lightbox.js" defer></script>
+<script src="bk-api.js" defer></script>
+<script src="propiedades-plus.js" defer></script>
 <script src="app-shell.js" defer></script>
 </body>
 </html>

@@ -1087,7 +1087,57 @@ function AvmIA() {
       style: {
         lineHeight: 1.5
       }
-    }, r)))), resultado.advertencias && /*#__PURE__*/React.createElement("div", {
+    }, r)))), (resultado.fuentes_consultadas || []).length > 0 && (() => {
+      const fc = resultado.firecrawl || {};
+      const fuentes = (resultado.fuentes_consultadas || []).filter(f => f.lectura !== "omitido");
+      const color = l => l === "bloqueado" ? "var(--danger)" : l === "leído con Firecrawl" ? "var(--sky-blue-press)" : "var(--success)";
+      const host = u => {
+        try {
+          return new URL(u).hostname.replace(/^www\./, "");
+        } catch (e) {
+          return u || "";
+        }
+      };
+      return /*#__PURE__*/React.createElement("div", {
+        className: "opinion-section"
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "opinion-section-title"
+      }, "Fuentes consultadas"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: 12,
+          color: "var(--ink)",
+          marginBottom: 8,
+          lineHeight: 1.5
+        }
+      }, fc.activo ? /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("strong", null, "Firecrawl activo."), " ", fc.leidas || 0, " p\xE1gina(s) le\xEDda(s) con Firecrawl", fc.cache ? `, ${fc.cache} desde caché` : "", fc.intentos > (fc.leidas || 0) ? `, ${fc.intentos - (fc.leidas || 0)} intento(s) fallido(s)` : "", fc.motivo_no_uso ? ` (no se usó porque ${fc.motivo_no_uso})` : "", ".") : /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("strong", null, "Firecrawl inactivo"), fc.motivo_no_uso ? `: ${fc.motivo_no_uso}` : "", ". Los portales que bloquean a los robots no se pudieron leer.")), fuentes.map((f, i) => /*#__PURE__*/React.createElement("div", {
+        key: i,
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 10,
+          fontSize: 12,
+          padding: "5px 0",
+          borderTop: i ? "1px solid var(--gray-200)" : "none"
+        }
+      }, /*#__PURE__*/React.createElement("a", {
+        href: f.url,
+        target: "_blank",
+        rel: "noopener noreferrer",
+        style: {
+          color: "var(--ink)",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          minWidth: 0
+        }
+      }, f.portal || host(f.url), f.titulo ? ` · ${f.titulo}` : ""), /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: color(f.lectura),
+          fontWeight: 700,
+          flexShrink: 0
+        }
+      }, f.lectura || "bloqueado"))));
+    })(), resultado.advertencias && /*#__PURE__*/React.createElement("div", {
       style: {
         background: "var(--warn-soft)",
         borderLeft: "3px solid var(--warn)",

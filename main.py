@@ -626,6 +626,31 @@ app.include_router(bulk_delete_router)
 from routers.propiedades_actualizar import router as propiedades_actualizar_router
 app.include_router(propiedades_actualizar_router)
 
+# Ajustes de CRM (etapas, tipos, fuentes, etiquetas), fusión de duplicados y
+# lote de contactos (ver routers/crm.py).
+from routers.crm import router as crm_router
+app.include_router(crm_router)
+
+# Buzón: bandeja única de leads, asignación y webhook de entrada (Zapier).
+from routers.buzon import router as buzon_router
+app.include_router(buzon_router)
+
+# Alertas de búsqueda: requerimiento ampliado, coincidencias, clientes
+# potenciales y ciclo diario (ver routers/alertas.py).
+from routers.alertas import router as alertas_router
+app.include_router(alertas_router)
+
+# Cierres y comisiones: modal de cierre, ingresos por cobrar, PLD y reporte
+# de operaciones cerradas (ver routers/cierres.py).
+from routers.cierres import router as cierres_router
+app.include_router(cierres_router)
+
+# Fase 7 · Sitio web de la inmobiliaria y del asesor: configuración, páginas,
+# dominio propio y páginas públicas renderizadas en servidor (routers/sitios.py).
+from routers.sitios import router as sitios_router, instalar_middleware as instalar_sitios_middleware
+app.include_router(sitios_router)
+instalar_sitios_middleware(app)
+
 app.include_router(admin_usage_router)
 app.include_router(account_delete_router)
 app.include_router(avm_legacy_router)

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>Alertas de búsqueda · Broquer</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<link rel="stylesheet" href="crm-plus.css"/>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+</head>
+<body data-app="alertas">
+<div class="crm-scroll">
+  <div class="crm-nuevo" style="margin-bottom:var(--sp-4)">
+    <select class="bk-select" id="al-agente" aria-label="Agente"><option value="">Todo el equipo</option></select>
+    <select class="bk-select" id="al-estado" aria-label="Estado"><option value="activos">Activas</option><option value="pausados">Pausadas</option><option value="">Todas</option></select>
+  </div>
+  <div id="al-lista" class="crm-lista"><div class="bk-cargando">Cargando…</div></div>
+</div>
+<script src="app-shell.js" defer></script>
+<script src="inmuebles-catalogo.js" defer></script>
+<script src="bk-api.js" defer></script>
+<script src="alertas.js" defer></script>
+</body>
+</html>

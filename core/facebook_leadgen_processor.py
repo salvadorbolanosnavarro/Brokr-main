@@ -81,6 +81,19 @@ async def find_facebook_page_owner(page_id: str) -> dict:
     return {}
 
 
+async def _al_buzon(org_id, user_id, contacto_id, nombre, telefono, email, leadgen_id) -> None:
+    """El lead de Meta también entra al Buzón (canal "meta"). Nunca truena."""
+    if not org_id:
+        return
+    try:
+        from core.buzon import registrar_lead
+        await registrar_lead(org_id=org_id, user_id=user_id, canal="meta", nombre=nombre or "",
+                             telefono=telefono or "", email=email or "", fuente="Facebook Lead Ads",
+                             referencia=str(leadgen_id), contacto_id=contacto_id)
+    except Exception as exc:
+        _log.warning("Lead %s no entró al Buzón: %s", leadgen_id, exc)
+
+
 async def process_facebook_lead(value: dict) -> None:
     """Download one Meta Lead Ad lead and persist it as a CRM prospect.
 
@@ -275,6 +288,7 @@ async def process_facebook_lead(value: dict) -> None:
                     }
                 )
                 _log.info("Lead %s emparejado con el contacto %s", leadgen_id, existing["id"])
+                await _al_buzon(org_id, user_id, existing["id"], name, phone, email, leadgen_id)
                 return
 
             try:
@@ -294,6 +308,7 @@ async def process_facebook_lead(value: dict) -> None:
                     }
                 )
                 return
+            await _al_buzon(org_id, user_id, contact["id"], name, phone, email, leadgen_id)
     except Exception as exc:
         await _annotate({"error_detail": f"Error guardando el contacto: {exc}"})
         return

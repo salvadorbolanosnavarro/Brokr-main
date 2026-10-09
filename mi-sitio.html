@@ -9,6 +9,7 @@
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#081C4E"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
+<link rel="stylesheet" href="mi-sitio-web.css"/>
 <style>
 /* layout owned by app-shell.js (.bk-page es el scroll container;
    el encabezado de página lo pinta el shell desde PAGE_META['mi-sitio']) */
@@ -139,6 +140,8 @@
 <div class="bk-toast-stack" id="toast-stack"></div>
 
 <script src="app-shell.js" defer></script>
+<script src="bk-api.js" defer></script>
+<script src="mi-sitio-web.js" defer></script>
 <script>
 function g(id) { return document.getElementById(id); }
 function esc(s) {

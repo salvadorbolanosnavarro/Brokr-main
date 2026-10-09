@@ -1,5 +1,5 @@
 {
-  "baseline": "3d792b52c1265cfd09ed05b41df8a7d4bc02da2f",
+  "baseline": "1f5fc8d5a5a7650bd315bfead3515d708f828bae",
   "pages": [
     {
       "path": "404.html",
@@ -347,6 +347,35 @@
       "runtime_status": "not-certified"
     },
     {
+      "path": "alertas.html",
+      "exists": true,
+      "app": "alertas",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": false,
+      "controls": [
+        {
+          "tag": "select",
+          "id": "al-agente"
+        },
+        {
+          "tag": "select",
+          "id": "al-estado"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "mobile-inputs.js",
+        "app-shell.js",
+        "inmuebles-catalogo.js",
+        "bk-api.js",
+        "alertas.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
       "path": "aviso-privacidad.html",
       "exists": true,
       "app": null,
@@ -569,7 +598,8 @@
       ],
       "scripts": [
         "mobile-inputs.js",
-        "app-shell.js"
+        "app-shell.js",
+        "inmuebles-catalogo.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -650,7 +680,60 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
-        "app-shell.js"
+        "app-shell.js",
+        "inmuebles-catalogo.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "buzon.html",
+      "exists": true,
+      "app": "buzon",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": false,
+      "controls": [
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "button"
+        },
+        {
+          "tag": "select",
+          "id": "bz-f-canal"
+        },
+        {
+          "tag": "select",
+          "id": "bz-f-fuente"
+        },
+        {
+          "tag": "select",
+          "id": "bz-f-asignado"
+        },
+        {
+          "tag": "select",
+          "id": "bz-f-prop"
+        },
+        {
+          "tag": "button",
+          "id": "bz-nuevo"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "mobile-inputs.js",
+        "app-shell.js",
+        "bk-api.js",
+        "buzon.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -1030,7 +1113,11 @@
         "categorias.js",
         "clientes-ficha.js",
         "tarea-nueva.js",
-        "app-shell.js"
+        "app-shell.js",
+        "inmuebles-catalogo.js",
+        "bk-api.js",
+        "ficha-requerimiento.js",
+        "crm-plus.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -1414,7 +1501,11 @@
         "ficha-comun.js",
         "categorias.js",
         "contactos-ficha.js",
-        "app-shell.js"
+        "app-shell.js",
+        "inmuebles-catalogo.js",
+        "bk-api.js",
+        "ficha-requerimiento.js",
+        "crm-plus.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -2187,6 +2278,26 @@
       "runtime_status": "not-certified"
     },
     {
+      "path": "crm-ajustes.html",
+      "exists": true,
+      "app": "crm-ajustes",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": false,
+      "controls": [],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "mobile-inputs.js",
+        "app-shell.js",
+        "bk-api.js",
+        "crm-ajustes.js",
+        "crm-ajustes-buzon.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
       "path": "cumplimiento.html",
       "exists": true,
       "app": "cumplimiento",
@@ -2843,7 +2954,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
-        "app-shell.js"
+        "app-shell.js",
+        "bk-api.js",
+        "estadisticas-plus.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -3349,6 +3462,10 @@
           "type": "text"
         },
         {
+          "tag": "textarea",
+          "id": "d-mm"
+        },
+        {
           "tag": "input",
           "id": "ficha-save-inmueble",
           "type": "checkbox"
@@ -3550,7 +3667,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
-        "app-shell.js"
+        "app-shell.js",
+        "bk-api.js",
+        "finanzas-plus.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -4475,7 +4594,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
-        "app-shell.js"
+        "app-shell.js",
+        "bk-api.js",
+        "mi-sitio-web.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -4747,20 +4868,7 @@
         },
         {
           "tag": "select",
-          "name": "operacion"
-        },
-        {
-          "tag": "select",
           "name": "estatus"
-        },
-        {
-          "tag": "input",
-          "name": "precio",
-          "type": "text"
-        },
-        {
-          "tag": "select",
-          "name": "moneda"
         },
         {
           "tag": "input",
@@ -4866,11 +4974,6 @@
         {
           "tag": "input",
           "name": "mantenimiento",
-          "type": "text"
-        },
-        {
-          "tag": "input",
-          "name": "amenidades_raw",
           "type": "text"
         },
         {
@@ -5189,12 +5292,15 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "inmuebles-catalogo.js",
         "propiedades-editor.js",
         "historial-adjuntos.js",
         "ficha-comun.js",
         "categorias.js",
         "propiedades-ficha.js",
         "propiedades-lightbox.js",
+        "bk-api.js",
+        "propiedades-plus.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -5372,6 +5478,7 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "inmuebles-catalogo.js",
         "sitio-engine.js"
       ],
       "runtime_status": "not-certified"
@@ -5623,7 +5730,8 @@
         "ficha-comun.js",
         "categorias.js",
         "historial-adjuntos.js",
-        "tarea-nueva.js"
+        "tarea-nueva.js",
+        "tareas-calendario.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -6262,6 +6370,2444 @@
   ],
   "routes": [
     {
+      "method": "GET",
+      "path": "/",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/'"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/me",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/admin/me'"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/org/convertir",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/admin/org/convertir'"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/org/desconvertir",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/admin/org/desconvertir'"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/org/lista",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/admin/org/lista'"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/user/acceso-completo",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/admin/user/acceso-completo'"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/user/activo",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/admin/user/activo'"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/user/eliminar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/admin/user/eliminar'"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/user/modulos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/admin/user/modulos'"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/user/rol",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/admin/user/rol'"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/user/{user_id}/uso",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/admin/user/{user_id}/uso'"
+    },
+    {
+      "method": "GET",
+      "path": "/admin/users",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/admin/users'"
+    },
+    {
+      "method": "POST",
+      "path": "/agent",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/agent'"
+    },
+    {
+      "method": "GET",
+      "path": "/agent/health",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/agent/health'"
+    },
+    {
+      "method": "GET",
+      "path": "/alertas/clientes-potenciales/{propiedad_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/alertas/clientes-potenciales/{propiedad_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/alertas/coincidencias/{contacto_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/alertas/coincidencias/{contacto_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/alertas/ligar-interesado",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/alertas/ligar-interesado'"
+    },
+    {
+      "method": "POST",
+      "path": "/alertas/preparar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/alertas/preparar'"
+    },
+    {
+      "method": "POST",
+      "path": "/alertas/registrar-envio",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/alertas/registrar-envio'"
+    },
+    {
+      "method": "GET",
+      "path": "/alertas/requerimiento/{contacto_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/alertas/requerimiento/{contacto_id}'"
+    },
+    {
+      "method": "PUT",
+      "path": "/alertas/requerimiento/{contacto_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/alertas/requerimiento/{contacto_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/alertas/requerimientos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/alertas/requerimientos'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/alertas/requerimientos/{rid}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/alertas/requerimientos/{rid}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/alertas/requerimientos/{rid}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/alertas/requerimientos/{rid}'"
+    },
+    {
+      "method": "POST",
+      "path": "/api/avm-claude",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/avm-claude'"
+    },
+    {
+      "method": "POST",
+      "path": "/api/avm-websearch",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/avm-websearch'"
+    },
+    {
+      "method": "GET",
+      "path": "/api/buscador",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/buscador'"
+    },
+    {
+      "method": "POST",
+      "path": "/api/buscador/buscar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/buscador/buscar'"
+    },
+    {
+      "method": "POST",
+      "path": "/api/buscador/escanear/{contacto_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/buscador/escanear/{contacto_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/api/buscador/requerimiento/{contacto_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/buscador/requerimiento/{contacto_id}'"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/buscador/requerimiento/{contacto_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/buscador/requerimiento/{contacto_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/api/buscador/resultados/{contacto_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/buscador/resultados/{contacto_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/api/colonias",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/colonias'"
+    },
+    {
+      "method": "POST",
+      "path": "/api/comparables",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/comparables'"
+    },
+    {
+      "method": "POST",
+      "path": "/api/comparables-cercanos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/comparables-cercanos'"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inpc/{anio}/{mes}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/inpc/{anio}/{mes}'"
+    },
+    {
+      "method": "GET",
+      "path": "/api/udis/{fecha}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/api/udis/{fecha}'"
+    },
+    {
+      "method": "GET",
+      "path": "/auth/correo-existe",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/auth/correo-existe'"
+    },
+    {
+      "method": "POST",
+      "path": "/avm",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/avm'"
+    },
+    {
+      "method": "POST",
+      "path": "/avm-pdf",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/avm-pdf'"
+    },
+    {
+      "method": "GET",
+      "path": "/avm-pdf/{token}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/avm-pdf/{token}'"
+    },
+    {
+      "method": "GET",
+      "path": "/bolsa/mis",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/bolsa/mis'"
+    },
+    {
+      "method": "GET",
+      "path": "/bolsa/propiedades",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/bolsa/propiedades'"
+    },
+    {
+      "method": "POST",
+      "path": "/bolsa/publicar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/bolsa/publicar'"
+    },
+    {
+      "method": "POST",
+      "path": "/bolsa/retirar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/bolsa/retirar'"
+    },
+    {
+      "method": "POST",
+      "path": "/bolsa/solicitud",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/bolsa/solicitud'"
+    },
+    {
+      "method": "GET",
+      "path": "/buzon",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon'"
+    },
+    {
+      "method": "GET",
+      "path": "/buzon/contador",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/contador'"
+    },
+    {
+      "method": "POST",
+      "path": "/buzon/entrada/{token}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/entrada/{token}'"
+    },
+    {
+      "method": "GET",
+      "path": "/buzon/estadisticas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/estadisticas'"
+    },
+    {
+      "method": "POST",
+      "path": "/buzon/manual",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/manual'"
+    },
+    {
+      "method": "GET",
+      "path": "/buzon/reglas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/reglas'"
+    },
+    {
+      "method": "PUT",
+      "path": "/buzon/reglas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/reglas'"
+    },
+    {
+      "method": "GET",
+      "path": "/buzon/respuestas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/respuestas'"
+    },
+    {
+      "method": "POST",
+      "path": "/buzon/respuestas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/respuestas'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/buzon/respuestas/{rid}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/respuestas/{rid}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/buzon/respuestas/{rid}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/respuestas/{rid}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/buzon/{lead_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/{lead_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/buzon/{lead_id}/asignar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/{lead_id}/asignar'"
+    },
+    {
+      "method": "POST",
+      "path": "/buzon/{lead_id}/respondido",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/buzon/{lead_id}/respondido'"
+    },
+    {
+      "method": "POST",
+      "path": "/chat",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/chat'"
+    },
+    {
+      "method": "POST",
+      "path": "/chat-claude",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/chat-claude'"
+    },
+    {
+      "method": "POST",
+      "path": "/cierres",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/cierres'"
+    },
+    {
+      "method": "POST",
+      "path": "/cierres/cobrado/{mov_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/cierres/cobrado/{mov_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/cierres/importar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/cierres/importar'"
+    },
+    {
+      "method": "GET",
+      "path": "/cierres/plantilla.csv",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/cierres/plantilla.csv'"
+    },
+    {
+      "method": "GET",
+      "path": "/cierres/por-cobrar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/cierres/por-cobrar'"
+    },
+    {
+      "method": "GET",
+      "path": "/cierres/propiedad/{propiedad_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/cierres/propiedad/{propiedad_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/cierres/reporte",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/cierres/reporte'"
+    },
+    {
+      "method": "GET",
+      "path": "/cierres/reporte.csv",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/cierres/reporte.csv'"
+    },
+    {
+      "method": "GET",
+      "path": "/colonias",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/colonias'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/config/eb-key",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/config/eb-key'"
+    },
+    {
+      "method": "GET",
+      "path": "/config/eb-key",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/config/eb-key'"
+    },
+    {
+      "method": "POST",
+      "path": "/config/eb-key",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/config/eb-key'"
+    },
+    {
+      "method": "GET",
+      "path": "/config/public",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/config/public'"
+    },
+    {
+      "method": "POST",
+      "path": "/contactos/eliminar-masivo",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contactos/eliminar-masivo'"
+    },
+    {
+      "method": "POST",
+      "path": "/contactos/importar-archivo",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contactos/importar-archivo'"
+    },
+    {
+      "method": "POST",
+      "path": "/contactos/importar-eb",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contactos/importar-eb'"
+    },
+    {
+      "method": "POST",
+      "path": "/contrato",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contrato'"
+    },
+    {
+      "method": "POST",
+      "path": "/contrato/machote/abrir",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contrato/machote/abrir'"
+    },
+    {
+      "method": "POST",
+      "path": "/contrato/machote/crear",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contrato/machote/crear'"
+    },
+    {
+      "method": "POST",
+      "path": "/contrato/machote/sugerir",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contrato/machote/sugerir'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/contrato/machote/{machote_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contrato/machote/{machote_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/contrato/machote/{machote_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contrato/machote/{machote_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/contrato/machote/{machote_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contrato/machote/{machote_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/contrato/machote/{machote_id}/generar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contrato/machote/{machote_id}/generar'"
+    },
+    {
+      "method": "POST",
+      "path": "/contrato/machote/{machote_id}/preview",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contrato/machote/{machote_id}/preview'"
+    },
+    {
+      "method": "GET",
+      "path": "/contrato/machotes",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/contrato/machotes'"
+    },
+    {
+      "method": "GET",
+      "path": "/correo/bandeja",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/correo/bandeja'"
+    },
+    {
+      "method": "POST",
+      "path": "/correo/conectar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/correo/conectar'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/correo/desconectar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/correo/desconectar'"
+    },
+    {
+      "method": "POST",
+      "path": "/correo/enviar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/correo/enviar'"
+    },
+    {
+      "method": "GET",
+      "path": "/correo/estado",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/correo/estado'"
+    },
+    {
+      "method": "GET",
+      "path": "/correo/mensaje/{uid_msg}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/correo/mensaje/{uid_msg}'"
+    },
+    {
+      "method": "GET",
+      "path": "/crm/catalogos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/catalogos'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/crm/categorias/{cat_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/categorias/{cat_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/crm/categorias/{cat_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/categorias/{cat_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/crm/contactos/fusionar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/contactos/fusionar'"
+    },
+    {
+      "method": "POST",
+      "path": "/crm/contactos/lote",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/contactos/lote'"
+    },
+    {
+      "method": "POST",
+      "path": "/crm/etapas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/etapas'"
+    },
+    {
+      "method": "POST",
+      "path": "/crm/etapas/orden",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/etapas/orden'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/crm/etapas/{etapa_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/etapas/{etapa_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/crm/etapas/{etapa_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/etapas/{etapa_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/crm/etiquetas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/etiquetas'"
+    },
+    {
+      "method": "POST",
+      "path": "/crm/etiquetas/eliminar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/etiquetas/eliminar'"
+    },
+    {
+      "method": "POST",
+      "path": "/crm/etiquetas/renombrar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/etiquetas/renombrar'"
+    },
+    {
+      "method": "POST",
+      "path": "/crm/fuentes",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/fuentes'"
+    },
+    {
+      "method": "POST",
+      "path": "/crm/fuentes/fusionar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/fuentes/fusionar'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/crm/fuentes/{fuente_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/fuentes/{fuente_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/crm/fuentes/{fuente_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/fuentes/{fuente_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/crm/tipos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/tipos'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/crm/tipos/{tipo_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/tipos/{tipo_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/crm/tipos/{tipo_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/crm/tipos/{tipo_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/demo-live/accion",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/demo-live/accion'"
+    },
+    {
+      "method": "POST",
+      "path": "/demo-live/avm",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/demo-live/avm'"
+    },
+    {
+      "method": "POST",
+      "path": "/demo-live/chat",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/demo-live/chat'"
+    },
+    {
+      "method": "POST",
+      "path": "/demo-live/contacto/crear",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/demo-live/contacto/crear'"
+    },
+    {
+      "method": "GET",
+      "path": "/demo-live/estado/{session_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/demo-live/estado/{session_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/demo-live/propiedad/crear",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/demo-live/propiedad/crear'"
+    },
+    {
+      "method": "POST",
+      "path": "/demo-live/sesion",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/demo-live/sesion'"
+    },
+    {
+      "method": "POST",
+      "path": "/demo-live/whatsapp/enviar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/demo-live/whatsapp/enviar'"
+    },
+    {
+      "method": "GET",
+      "path": "/demo-live/whatsapp/{session_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/demo-live/whatsapp/{session_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/demo/agendar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/demo/agendar'"
+    },
+    {
+      "method": "GET",
+      "path": "/easybroker/diagnostico",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/easybroker/diagnostico'"
+    },
+    {
+      "method": "GET",
+      "path": "/easybroker/fotos-pendientes",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/easybroker/fotos-pendientes'"
+    },
+    {
+      "method": "POST",
+      "path": "/easybroker/import-all",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/easybroker/import-all'"
+    },
+    {
+      "method": "POST",
+      "path": "/easybroker/import-stats",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/easybroker/import-stats'"
+    },
+    {
+      "method": "GET",
+      "path": "/easybroker/migracion/estado",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/easybroker/migracion/estado'"
+    },
+    {
+      "method": "POST",
+      "path": "/easybroker/migracion/iniciar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/easybroker/migracion/iniciar'"
+    },
+    {
+      "method": "POST",
+      "path": "/easybroker/migrar-fotos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/easybroker/migrar-fotos'"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/ad-accounts",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/ad-accounts'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/ad-description",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/ad-description'"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/audiences",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/audiences'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/audiences/from-contacts",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/audiences/from-contacts'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/audiences/lookalike",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/audiences/lookalike'"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/callback",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/callback'"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/campaign/review",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/campaign/review'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/campaign/toggle",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/campaign/toggle'"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/campaigns",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/campaigns'"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/city-search",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/city-search'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/facebook/connection",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/connection'"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/connection",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/connection'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/create-ad",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/create-ad'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/encrypt-tokens",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/encrypt-tokens'"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/insights",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/insights'"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/leadgen/status",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/leadgen/status'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/leadgen/subscribe",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/leadgen/subscribe'"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/leadgen/webhook",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/leadgen/webhook'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/leadgen/webhook",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/leadgen/webhook'"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/page-posts",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/page-posts'"
+    },
+    {
+      "method": "GET",
+      "path": "/facebook/pages",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/pages'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/publish",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/publish'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/publish-property",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/publish-property'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/qa-selfcheck",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/qa-selfcheck'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/reconcile",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/reconcile'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/refresh-token",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/refresh-token'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/save-page",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/save-page'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/select-ad-account",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/select-ad-account'"
+    },
+    {
+      "method": "POST",
+      "path": "/facebook/select-page",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/facebook/select-page'"
+    },
+    {
+      "method": "POST",
+      "path": "/ficha-manual/descripcion",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/ficha-manual/descripcion'"
+    },
+    {
+      "method": "POST",
+      "path": "/ficha-pdf",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/ficha-pdf'"
+    },
+    {
+      "method": "GET",
+      "path": "/ficha-pdf/{token}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/ficha-pdf/{token}'"
+    },
+    {
+      "method": "GET",
+      "path": "/finanzas/categorias",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/categorias'"
+    },
+    {
+      "method": "POST",
+      "path": "/finanzas/categorias",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/categorias'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/finanzas/categorias/{cat_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/categorias/{cat_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/finanzas/categorias/{cat_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/categorias/{cat_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/finanzas/comisiones-pendientes",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/comisiones-pendientes'"
+    },
+    {
+      "method": "GET",
+      "path": "/finanzas/cuentas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/cuentas'"
+    },
+    {
+      "method": "POST",
+      "path": "/finanzas/cuentas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/cuentas'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/finanzas/cuentas/{cuenta_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/cuentas/{cuenta_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/finanzas/cuentas/{cuenta_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/cuentas/{cuenta_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/finanzas/movimientos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/movimientos'"
+    },
+    {
+      "method": "POST",
+      "path": "/finanzas/movimientos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/movimientos'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/finanzas/movimientos/{mov_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/movimientos/{mov_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/finanzas/movimientos/{mov_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/movimientos/{mov_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/finanzas/movimientos/{mov_id}/comprobante",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/movimientos/{mov_id}/comprobante'"
+    },
+    {
+      "method": "POST",
+      "path": "/finanzas/movimientos/{mov_id}/comprobante",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/movimientos/{mov_id}/comprobante'"
+    },
+    {
+      "method": "POST",
+      "path": "/finanzas/reporte",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/reporte'"
+    },
+    {
+      "method": "GET",
+      "path": "/finanzas/reporte.csv",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/reporte.csv'"
+    },
+    {
+      "method": "GET",
+      "path": "/finanzas/reporte/{token}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/reporte/{token}'"
+    },
+    {
+      "method": "GET",
+      "path": "/finanzas/resumen",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/resumen'"
+    },
+    {
+      "method": "POST",
+      "path": "/finanzas/ticket",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/finanzas/ticket'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/firmas/campos/{campo_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/campos/{campo_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/desde-contrato",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/desde-contrato'"
+    },
+    {
+      "method": "GET",
+      "path": "/firmas/desde-contrato/{job_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/desde-contrato/{job_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/firmas/documentos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/documentos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/firmas/documentos/{documento_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/firmas/documentos/{documento_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/firmas/documentos/{documento_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/firmas/documentos/{documento_id}/archivo",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}/archivo'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/documentos/{documento_id}/archivo",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}/archivo'"
+    },
+    {
+      "method": "GET",
+      "path": "/firmas/documentos/{documento_id}/campos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}/campos'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/documentos/{documento_id}/campos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}/campos'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/documentos/{documento_id}/cancelar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}/cancelar'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/documentos/{documento_id}/enviar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}/enviar'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/documentos/{documento_id}/firmantes",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}/firmantes'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/documentos/{documento_id}/nom151",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}/nom151'"
+    },
+    {
+      "method": "GET",
+      "path": "/firmas/documentos/{documento_id}/paginas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}/paginas'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/documentos/{documento_id}/rubricar-todas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}/rubricar-todas'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/documentos/{documento_id}/sellar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/documentos/{documento_id}/sellar'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/firmas/firmantes/{firmante_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/firmantes/{firmante_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/firmas/firmantes/{firmante_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/firmantes/{firmante_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/firmantes/{firmante_id}/recordar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/firmantes/{firmante_id}/recordar'"
+    },
+    {
+      "method": "GET",
+      "path": "/firmas/mi-acceso",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/mi-acceso'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/probar-correo",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/probar-correo'"
+    },
+    {
+      "method": "GET",
+      "path": "/firmas/publico/{token}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/publico/{token}'"
+    },
+    {
+      "method": "GET",
+      "path": "/firmas/publico/{token}/archivo",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/publico/{token}/archivo'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/publico/{token}/codigo",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/publico/{token}/codigo'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/publico/{token}/firmar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/publico/{token}/firmar'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/publico/{token}/ine",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/publico/{token}/ine'"
+    },
+    {
+      "method": "POST",
+      "path": "/firmas/publico/{token}/rechazar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/publico/{token}/rechazar'"
+    },
+    {
+      "method": "GET",
+      "path": "/firmas/salud",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/salud'"
+    },
+    {
+      "method": "GET",
+      "path": "/firmas/verificar/{folio}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/firmas/verificar/{folio}'"
+    },
+    {
+      "method": "POST",
+      "path": "/images/clean",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/images/clean'"
+    },
+    {
+      "method": "GET",
+      "path": "/instagram/feed",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/instagram/feed'"
+    },
+    {
+      "method": "POST",
+      "path": "/isr-pdf",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/isr-pdf'"
+    },
+    {
+      "method": "GET",
+      "path": "/isr-pdf/{token}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/isr-pdf/{token}'"
+    },
+    {
+      "method": "GET",
+      "path": "/noticias",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/noticias'"
+    },
+    {
+      "method": "GET",
+      "path": "/org",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org'"
+    },
+    {
+      "method": "POST",
+      "path": "/org/aceptar-invitacion",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/aceptar-invitacion'"
+    },
+    {
+      "method": "POST",
+      "path": "/org/asignar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/asignar'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/org/contactos/{contacto_id}/etapa",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/contactos/{contacto_id}/etapa'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/org/invitacion/{inv_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/invitacion/{inv_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/org/invitacion/{token}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/invitacion/{token}'"
+    },
+    {
+      "method": "GET",
+      "path": "/org/invitaciones",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/invitaciones'"
+    },
+    {
+      "method": "POST",
+      "path": "/org/invitar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/invitar'"
+    },
+    {
+      "method": "POST",
+      "path": "/org/miembro/activo",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/miembro/activo'"
+    },
+    {
+      "method": "POST",
+      "path": "/org/miembro/permisos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/miembro/permisos'"
+    },
+    {
+      "method": "POST",
+      "path": "/org/miembro/rol",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/miembro/rol'"
+    },
+    {
+      "method": "GET",
+      "path": "/org/miembros",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/miembros'"
+    },
+    {
+      "method": "POST",
+      "path": "/org/nombre",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/nombre'"
+    },
+    {
+      "method": "POST",
+      "path": "/org/tareas/contactos-vinculados",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/tareas/contactos-vinculados'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/org/tareas/{tarea_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/tareas/{tarea_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/p/{pid}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/p/{pid}'"
+    },
+    {
+      "method": "GET",
+      "path": "/ping",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/ping'"
+    },
+    {
+      "method": "POST",
+      "path": "/pld/avisos/generar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/avisos/generar'"
+    },
+    {
+      "method": "POST",
+      "path": "/pld/avisos/{aviso_id}/descartar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/avisos/{aviso_id}/descartar'"
+    },
+    {
+      "method": "POST",
+      "path": "/pld/avisos/{aviso_id}/modificatorio",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/avisos/{aviso_id}/modificatorio'"
+    },
+    {
+      "method": "POST",
+      "path": "/pld/avisos/{aviso_id}/presentado",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/avisos/{aviso_id}/presentado'"
+    },
+    {
+      "method": "POST",
+      "path": "/pld/avisos/{aviso_id}/rechazado",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/avisos/{aviso_id}/rechazado'"
+    },
+    {
+      "method": "POST",
+      "path": "/pld/avisos/{aviso_id}/subido",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/avisos/{aviso_id}/subido'"
+    },
+    {
+      "method": "GET",
+      "path": "/pld/avisos/{aviso_id}/xml",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/avisos/{aviso_id}/xml'"
+    },
+    {
+      "method": "GET",
+      "path": "/pld/bitacora",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/bitacora'"
+    },
+    {
+      "method": "GET",
+      "path": "/pld/catalogos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/catalogos'"
+    },
+    {
+      "method": "GET",
+      "path": "/pld/config",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/config'"
+    },
+    {
+      "method": "PUT",
+      "path": "/pld/config",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/config'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/pld/documentos/{documento_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/documentos/{documento_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/pld/documentos/{documento_id}/ver",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/documentos/{documento_id}/ver'"
+    },
+    {
+      "method": "POST",
+      "path": "/pld/expedientes/{expediente_id}/documentos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/expedientes/{expediente_id}/documentos'"
+    },
+    {
+      "method": "POST",
+      "path": "/pld/expedientes/{expediente_id}/liga",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/expedientes/{expediente_id}/liga'"
+    },
+    {
+      "method": "GET",
+      "path": "/pld/expedientes/{expediente_id}/revision",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/expedientes/{expediente_id}/revision'"
+    },
+    {
+      "method": "POST",
+      "path": "/pld/operaciones",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/operaciones'"
+    },
+    {
+      "method": "POST",
+      "path": "/pld/operaciones/simular",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/operaciones/simular'"
+    },
+    {
+      "method": "GET",
+      "path": "/pld/publico/{token}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/publico/{token}'"
+    },
+    {
+      "method": "POST",
+      "path": "/pld/publico/{token}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/publico/{token}'"
+    },
+    {
+      "method": "POST",
+      "path": "/pld/publico/{token}/documentos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/publico/{token}/documentos'"
+    },
+    {
+      "method": "GET",
+      "path": "/pld/resumen",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/resumen'"
+    },
+    {
+      "method": "GET",
+      "path": "/pld/salud",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/pld/salud'"
+    },
+    {
+      "method": "GET",
+      "path": "/profile/status",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/profile/status'"
+    },
+    {
+      "method": "GET",
+      "path": "/propiedad/{property_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/propiedad/{property_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/propiedades",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/propiedades'"
+    },
+    {
+      "method": "POST",
+      "path": "/propiedades/eliminar-masivo",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/propiedades/eliminar-masivo'"
+    },
+    {
+      "method": "POST",
+      "path": "/propiedades/lote",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/propiedades/lote'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/propiedades/{prop_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/propiedades/{prop_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/push/estado",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/push/estado'"
+    },
+    {
+      "method": "POST",
+      "path": "/push/prueba",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/push/prueba'"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/s/{slug}'"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}/acerca",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/s/{slug}/acerca'"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}/buscar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/s/{slug}/buscar'"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}/contacto",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/s/{slug}/contacto'"
+    },
+    {
+      "method": "POST",
+      "path": "/s/{slug}/contacto",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/s/{slug}/contacto'"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}/inmueble/{pid}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/s/{slug}/inmueble/{pid}'"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}/p/{pagina}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/s/{slug}/p/{pagina}'"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}/renta",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/s/{slug}/renta'"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}/rentas-temporales",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/s/{slug}/rentas-temporales'"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}/robots.txt",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/s/{slug}/robots.txt'"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}/sitemap.xml",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/s/{slug}/sitemap.xml'"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}/venta",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/s/{slug}/venta'"
+    },
+    {
+      "method": "POST",
+      "path": "/sitio/{slug}/lead",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/sitio/{slug}/lead'"
+    },
+    {
+      "method": "GET",
+      "path": "/sitios/mios",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/sitios/mios'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/sitios/{sitio_id}/dominio",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/sitios/{sitio_id}/dominio'"
+    },
+    {
+      "method": "POST",
+      "path": "/sitios/{sitio_id}/dominio",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/sitios/{sitio_id}/dominio'"
+    },
+    {
+      "method": "GET",
+      "path": "/sitios/{sitio_id}/dominio/verificar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/sitios/{sitio_id}/dominio/verificar'"
+    },
+    {
+      "method": "GET",
+      "path": "/sitios/{sitio_id}/paginas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/sitios/{sitio_id}/paginas'"
+    },
+    {
+      "method": "POST",
+      "path": "/sitios/{sitio_id}/paginas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/sitios/{sitio_id}/paginas'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/sitios/{sitio_id}/paginas/{pagina_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/sitios/{sitio_id}/paginas/{pagina_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/sitios/{sitio_id}/paginas/{pagina_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/sitios/{sitio_id}/paginas/{pagina_id}'"
+    },
+    {
+      "method": "PUT",
+      "path": "/sitios/{tipo}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/sitios/{tipo}'"
+    },
+    {
+      "method": "POST",
+      "path": "/solicitud-arrendamiento/analizar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/solicitud-arrendamiento/analizar'"
+    },
+    {
+      "method": "POST",
+      "path": "/soporte/mensaje",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/soporte/mensaje'"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/activate",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/subscription/activate'"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/cancel",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/subscription/cancel'"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/checkout",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/subscription/checkout'"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/empresa/asientos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/subscription/empresa/asientos'"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/empresa/checkout",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/subscription/empresa/checkout'"
+    },
+    {
+      "method": "GET",
+      "path": "/subscription/empresa/plan",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/subscription/empresa/plan'"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/revenuecat-webhook",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/subscription/revenuecat-webhook'"
+    },
+    {
+      "method": "GET",
+      "path": "/subscription/status",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/subscription/status'"
+    },
+    {
+      "method": "POST",
+      "path": "/subscription/webhook",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/subscription/webhook'"
+    },
+    {
+      "method": "POST",
+      "path": "/telemetria/sesion-modulo",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/telemetria/sesion-modulo'"
+    },
+    {
+      "method": "POST",
+      "path": "/transcribir",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/transcribir'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/usuario/eliminar-cuenta",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/usuario/eliminar-cuenta'"
+    },
+    {
+      "method": "GET",
+      "path": "/video/estado/{job_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/video/estado/{job_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/video/generar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/video/generar'"
+    },
+    {
+      "method": "GET",
+      "path": "/video/mis-videos",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/video/mis-videos'"
+    },
+    {
+      "method": "GET",
+      "path": "/video/propiedad/{propiedad_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/video/propiedad/{propiedad_id}'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/video/{job_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/video/{job_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp-chatgpt/complete-signup",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp-chatgpt/complete-signup'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp-chatgpt/config",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp-chatgpt/config'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp-chatgpt/numbers",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp-chatgpt/numbers'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp-chatgpt/send-test",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp-chatgpt/send-test'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/agendar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/agendar'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/app-webhook",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/app-webhook'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/app-webhook",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/app-webhook'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/automatizaciones",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/automatizaciones'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/automatizaciones",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/automatizaciones'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/whatsapp2/automatizaciones/{auto_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/automatizaciones/{auto_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/whatsapp2/automatizaciones/{auto_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/automatizaciones/{auto_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/campanas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/campanas'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/campanas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/campanas'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/campanas/audiencia",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/campanas/audiencia'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/campanas/{campana_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/campanas/{campana_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/connect",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/connect'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/whatsapp2/contactos/{contacto_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/contactos/{contacto_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/contactos/{contacto_id}/notas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/contactos/{contacto_id}/notas'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/conversaciones",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/conversaciones'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/whatsapp2/conversaciones/{conversacion_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/conversaciones/{conversacion_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/whatsapp2/conversaciones/{conversacion_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/conversaciones/{conversacion_id}'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/conversaciones/{conversacion_id}/lectura",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/conversaciones/{conversacion_id}/lectura'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/entrenamiento",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/entrenamiento'"
+    },
+    {
+      "method": "PUT",
+      "path": "/whatsapp2/entrenamiento",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/entrenamiento'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/estadisticas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/estadisticas'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/etiquetas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/etiquetas'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/mensajes",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/mensajes'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/mensajes",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/mensajes'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/mensajes/plantilla",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/mensajes/plantilla'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/whatsapp2/mensajes/{mensaje_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/mensajes/{mensaje_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/numeros",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/numeros'"
+    },
+    {
+      "method": "DELETE",
+      "path": "/whatsapp2/numeros/{numero_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/numeros/{numero_id}'"
+    },
+    {
+      "method": "PATCH",
+      "path": "/whatsapp2/numeros/{numero_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/numeros/{numero_id}'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/numeros/{numero_id}/app-suscrito",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/numeros/{numero_id}/app-suscrito'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/numeros/{numero_id}/verificar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/numeros/{numero_id}/verificar'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/plantillas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/plantillas'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/plantillas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/plantillas'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/probar",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/probar'"
+    },
+    {
+      "method": "GET",
+      "path": "/whatsapp2/webhook",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/webhook'"
+    },
+    {
+      "method": "POST",
+      "path": "/whatsapp2/webhook",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/whatsapp2/webhook'"
+    }
+  ],
+  "route_declarations": [
+    {
       "file": "routers/account_delete.py",
       "handler": "eliminar_cuenta_y_datos",
       "method": "DELETE",
@@ -6344,6 +8890,76 @@
       "method": "GET",
       "path_expression": "'/agent/health'",
       "path": "/agent/health"
+    },
+    {
+      "file": "routers/alertas.py",
+      "handler": "ver_requerimiento",
+      "method": "GET",
+      "path_expression": "'/requerimiento/{contacto_id}'",
+      "path": "/alertas/requerimiento/{contacto_id}"
+    },
+    {
+      "file": "routers/alertas.py",
+      "handler": "guardar_requerimiento",
+      "method": "PUT",
+      "path_expression": "'/requerimiento/{contacto_id}'",
+      "path": "/alertas/requerimiento/{contacto_id}"
+    },
+    {
+      "file": "routers/alertas.py",
+      "handler": "ver_coincidencias",
+      "method": "GET",
+      "path_expression": "'/coincidencias/{contacto_id}'",
+      "path": "/alertas/coincidencias/{contacto_id}"
+    },
+    {
+      "file": "routers/alertas.py",
+      "handler": "preparar_envio",
+      "method": "POST",
+      "path_expression": "'/preparar'",
+      "path": "/alertas/preparar"
+    },
+    {
+      "file": "routers/alertas.py",
+      "handler": "registrar_envio",
+      "method": "POST",
+      "path_expression": "'/registrar-envio'",
+      "path": "/alertas/registrar-envio"
+    },
+    {
+      "file": "routers/alertas.py",
+      "handler": "clientes_potenciales",
+      "method": "GET",
+      "path_expression": "'/clientes-potenciales/{propiedad_id}'",
+      "path": "/alertas/clientes-potenciales/{propiedad_id}"
+    },
+    {
+      "file": "routers/alertas.py",
+      "handler": "ligar_interesado",
+      "method": "POST",
+      "path_expression": "'/ligar-interesado'",
+      "path": "/alertas/ligar-interesado"
+    },
+    {
+      "file": "routers/alertas.py",
+      "handler": "listar",
+      "method": "GET",
+      "path_expression": "'/requerimientos'",
+      "path": "/alertas/requerimientos"
+    },
+    {
+      "file": "routers/alertas.py",
+      "handler": "pausar",
+      "method": "PATCH",
+      "path_expression": "'/requerimientos/{rid}'",
+      "path": "/alertas/requerimientos/{rid}"
+    },
+    {
+      "file": "routers/alertas.py",
+      "handler": "eliminar",
+      "method": "DELETE",
+      "path_expression": "'/requerimientos/{rid}'",
+      "path": "/alertas/requerimientos/{rid}"
     },
     {
       "file": "routers/avm_apify.py",
@@ -6437,6 +9053,13 @@
       "path": "/bolsa/retirar"
     },
     {
+      "file": "routers/bolsa.py",
+      "handler": "bolsa_solicitud",
+      "method": "POST",
+      "path_expression": "'/solicitud'",
+      "path": "/bolsa/solicitud"
+    },
+    {
       "file": "routers/bulk_delete.py",
       "handler": "propiedades_eliminar_masivo",
       "method": "POST",
@@ -6493,6 +9116,104 @@
       "path": "/api/buscador"
     },
     {
+      "file": "routers/buzon.py",
+      "handler": "listar",
+      "method": "GET",
+      "path_expression": "''",
+      "path": "/buzon"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "contador",
+      "method": "GET",
+      "path_expression": "'/contador'",
+      "path": "/buzon/contador"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "estadisticas",
+      "method": "GET",
+      "path_expression": "'/estadisticas'",
+      "path": "/buzon/estadisticas"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "cambiar",
+      "method": "PATCH",
+      "path_expression": "'/{lead_id}'",
+      "path": "/buzon/{lead_id}"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "asignar",
+      "method": "POST",
+      "path_expression": "'/{lead_id}/asignar'",
+      "path": "/buzon/{lead_id}/asignar"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "respondido",
+      "method": "POST",
+      "path_expression": "'/{lead_id}/respondido'",
+      "path": "/buzon/{lead_id}/respondido"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "alta_manual",
+      "method": "POST",
+      "path_expression": "'/manual'",
+      "path": "/buzon/manual"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "entrada",
+      "method": "POST",
+      "path_expression": "'/entrada/{token}'",
+      "path": "/buzon/entrada/{token}"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "respuestas",
+      "method": "GET",
+      "path_expression": "'/respuestas'",
+      "path": "/buzon/respuestas"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "crear_respuesta",
+      "method": "POST",
+      "path_expression": "'/respuestas'",
+      "path": "/buzon/respuestas"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "editar_respuesta",
+      "method": "PATCH",
+      "path_expression": "'/respuestas/{rid}'",
+      "path": "/buzon/respuestas/{rid}"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "borrar_respuesta",
+      "method": "DELETE",
+      "path_expression": "'/respuestas/{rid}'",
+      "path": "/buzon/respuestas/{rid}"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "ver_reglas",
+      "method": "GET",
+      "path_expression": "'/reglas'",
+      "path": "/buzon/reglas"
+    },
+    {
+      "file": "routers/buzon.py",
+      "handler": "guardar_reglas",
+      "method": "PUT",
+      "path_expression": "'/reglas'",
+      "path": "/buzon/reglas"
+    },
+    {
       "file": "routers/chat.py",
       "handler": "chat_proxy",
       "method": "POST",
@@ -6505,6 +9226,62 @@
       "method": "POST",
       "path_expression": "'/chat-claude'",
       "path": "/chat-claude"
+    },
+    {
+      "file": "routers/cierres.py",
+      "handler": "cierre_de_propiedad",
+      "method": "GET",
+      "path_expression": "'/propiedad/{propiedad_id}'",
+      "path": "/cierres/propiedad/{propiedad_id}"
+    },
+    {
+      "file": "routers/cierres.py",
+      "handler": "guardar_cierre",
+      "method": "POST",
+      "path_expression": "''",
+      "path": "/cierres"
+    },
+    {
+      "file": "routers/cierres.py",
+      "handler": "por_cobrar",
+      "method": "GET",
+      "path_expression": "'/por-cobrar'",
+      "path": "/cierres/por-cobrar"
+    },
+    {
+      "file": "routers/cierres.py",
+      "handler": "marcar_cobrado",
+      "method": "POST",
+      "path_expression": "'/cobrado/{mov_id}'",
+      "path": "/cierres/cobrado/{mov_id}"
+    },
+    {
+      "file": "routers/cierres.py",
+      "handler": "reporte",
+      "method": "GET",
+      "path_expression": "'/reporte'",
+      "path": "/cierres/reporte"
+    },
+    {
+      "file": "routers/cierres.py",
+      "handler": "reporte_csv",
+      "method": "GET",
+      "path_expression": "'/reporte.csv'",
+      "path": "/cierres/reporte.csv"
+    },
+    {
+      "file": "routers/cierres.py",
+      "handler": "plantilla",
+      "method": "GET",
+      "path_expression": "'/plantilla.csv'",
+      "path": "/cierres/plantilla.csv"
+    },
+    {
+      "file": "routers/cierres.py",
+      "handler": "importar",
+      "method": "POST",
+      "path_expression": "'/importar'",
+      "path": "/cierres/importar"
     },
     {
       "file": "routers/contact_file_import.py",
@@ -6561,6 +9338,139 @@
       "method": "POST",
       "path_expression": "'/correo/enviar'",
       "path": "/correo/enviar"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "catalogos",
+      "method": "GET",
+      "path_expression": "'/catalogos'",
+      "path": "/crm/catalogos"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "crear_etapa",
+      "method": "POST",
+      "path_expression": "'/etapas'",
+      "path": "/crm/etapas"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "editar_etapa",
+      "method": "PATCH",
+      "path_expression": "'/etapas/{etapa_id}'",
+      "path": "/crm/etapas/{etapa_id}"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "ordenar_etapas",
+      "method": "POST",
+      "path_expression": "'/etapas/orden'",
+      "path": "/crm/etapas/orden"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "eliminar_etapa",
+      "method": "DELETE",
+      "path_expression": "'/etapas/{etapa_id}'",
+      "path": "/crm/etapas/{etapa_id}"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "crear_tipo",
+      "method": "POST",
+      "path_expression": "'/tipos'",
+      "path": "/crm/tipos"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "renombrar_tipo",
+      "method": "PATCH",
+      "path_expression": "'/tipos/{tipo_id}'",
+      "path": "/crm/tipos/{tipo_id}"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "eliminar_tipo",
+      "method": "DELETE",
+      "path_expression": "'/tipos/{tipo_id}'",
+      "path": "/crm/tipos/{tipo_id}"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "crear_fuente",
+      "method": "POST",
+      "path_expression": "'/fuentes'",
+      "path": "/crm/fuentes"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "renombrar_fuente",
+      "method": "PATCH",
+      "path_expression": "'/fuentes/{fuente_id}'",
+      "path": "/crm/fuentes/{fuente_id}"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "fusionar_fuentes",
+      "method": "POST",
+      "path_expression": "'/fuentes/fusionar'",
+      "path": "/crm/fuentes/fusionar"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "eliminar_fuente",
+      "method": "DELETE",
+      "path_expression": "'/fuentes/{fuente_id}'",
+      "path": "/crm/fuentes/{fuente_id}"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "etiquetas",
+      "method": "GET",
+      "path_expression": "'/etiquetas'",
+      "path": "/crm/etiquetas"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "renombrar_etiqueta",
+      "method": "POST",
+      "path_expression": "'/etiquetas/renombrar'",
+      "path": "/crm/etiquetas/renombrar"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "eliminar_etiqueta",
+      "method": "POST",
+      "path_expression": "'/etiquetas/eliminar'",
+      "path": "/crm/etiquetas/eliminar"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "renombrar_categoria",
+      "method": "PATCH",
+      "path_expression": "'/categorias/{cat_id}'",
+      "path": "/crm/categorias/{cat_id}"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "eliminar_categoria",
+      "method": "DELETE",
+      "path_expression": "'/categorias/{cat_id}'",
+      "path": "/crm/categorias/{cat_id}"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "fusionar_contactos",
+      "method": "POST",
+      "path_expression": "'/contactos/fusionar'",
+      "path": "/crm/contactos/fusionar"
+    },
+    {
+      "file": "routers/crm.py",
+      "handler": "contactos_lote",
+      "method": "POST",
+      "path_expression": "'/contactos/lote'",
+      "path": "/crm/contactos/lote"
     },
     {
       "file": "routers/cumplimiento.py",
@@ -7732,6 +10642,13 @@
       "path": "/propiedades/{prop_id}"
     },
     {
+      "file": "routers/propiedades_actualizar.py",
+      "handler": "propiedades_lote",
+      "method": "POST",
+      "path_expression": "'/propiedades/lote'",
+      "path": "/propiedades/lote"
+    },
+    {
       "file": "routers/public_config.py",
       "handler": "get_public_config",
       "method": "GET",
@@ -7751,6 +10668,160 @@
       "method": "POST",
       "path_expression": "'/subscription/revenuecat-webhook'",
       "path": "/subscription/revenuecat-webhook"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "mis_sitios",
+      "method": "GET",
+      "path_expression": "'/sitios/mios'",
+      "path": "/sitios/mios"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "guardar_sitio",
+      "method": "PUT",
+      "path_expression": "'/sitios/{tipo}'",
+      "path": "/sitios/{tipo}"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "paginas",
+      "method": "GET",
+      "path_expression": "'/sitios/{sitio_id}/paginas'",
+      "path": "/sitios/{sitio_id}/paginas"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "crear_pagina",
+      "method": "POST",
+      "path_expression": "'/sitios/{sitio_id}/paginas'",
+      "path": "/sitios/{sitio_id}/paginas"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "editar_pagina",
+      "method": "PATCH",
+      "path_expression": "'/sitios/{sitio_id}/paginas/{pagina_id}'",
+      "path": "/sitios/{sitio_id}/paginas/{pagina_id}"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "borrar_pagina",
+      "method": "DELETE",
+      "path_expression": "'/sitios/{sitio_id}/paginas/{pagina_id}'",
+      "path": "/sitios/{sitio_id}/paginas/{pagina_id}"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "conectar_dominio",
+      "method": "POST",
+      "path_expression": "'/sitios/{sitio_id}/dominio'",
+      "path": "/sitios/{sitio_id}/dominio"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "verificar_dominio",
+      "method": "GET",
+      "path_expression": "'/sitios/{sitio_id}/dominio/verificar'",
+      "path": "/sitios/{sitio_id}/dominio/verificar"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "quitar_dominio",
+      "method": "DELETE",
+      "path_expression": "'/sitios/{sitio_id}/dominio'",
+      "path": "/sitios/{sitio_id}/dominio"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "sitio_inicio",
+      "method": "GET",
+      "path_expression": "'/s/{slug}'",
+      "path": "/s/{slug}"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "sitio_venta",
+      "method": "GET",
+      "path_expression": "'/s/{slug}/venta'",
+      "path": "/s/{slug}/venta"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "sitio_renta",
+      "method": "GET",
+      "path_expression": "'/s/{slug}/renta'",
+      "path": "/s/{slug}/renta"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "sitio_temporales",
+      "method": "GET",
+      "path_expression": "'/s/{slug}/rentas-temporales'",
+      "path": "/s/{slug}/rentas-temporales"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "sitio_buscar",
+      "method": "GET",
+      "path_expression": "'/s/{slug}/buscar'",
+      "path": "/s/{slug}/buscar"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "sitio_inmueble",
+      "method": "GET",
+      "path_expression": "'/s/{slug}/inmueble/{pid}'",
+      "path": "/s/{slug}/inmueble/{pid}"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "sitio_acerca",
+      "method": "GET",
+      "path_expression": "'/s/{slug}/acerca'",
+      "path": "/s/{slug}/acerca"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "sitio_contacto",
+      "method": "GET",
+      "path_expression": "'/s/{slug}/contacto'",
+      "path": "/s/{slug}/contacto"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "sitio_lead",
+      "method": "POST",
+      "path_expression": "'/s/{slug}/contacto'",
+      "path": "/s/{slug}/contacto"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "sitio_pagina",
+      "method": "GET",
+      "path_expression": "'/s/{slug}/p/{pagina}'",
+      "path": "/s/{slug}/p/{pagina}"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "sitio_sitemap",
+      "method": "GET",
+      "path_expression": "'/s/{slug}/sitemap.xml'",
+      "path": "/s/{slug}/sitemap.xml"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "sitio_robots",
+      "method": "GET",
+      "path_expression": "'/s/{slug}/robots.txt'",
+      "path": "/s/{slug}/robots.txt"
+    },
+    {
+      "file": "routers/sitios.py",
+      "handler": "ficha_compartida",
+      "method": "GET",
+      "path_expression": "'/p/{pid}'",
+      "path": "/p/{pid}"
     },
     {
       "file": "routers/solicitud_arrendamiento.py",
@@ -8139,7 +11210,8 @@
     }
   ],
   "changed_backend_or_existing_tests": [
+    "core/staging_safety.py",
     "main.py"
   ],
-  "warning": "Static inventory, not a certification of functional or visual parity. Local APIRouter prefixes expanded; nested mounts and dynamic route registrations require runtime comparison."
+  "warning": "Static inventory, not a certification of functional or visual parity. Endpoint table uses the effective HTTP golden contract from the current main baseline; runtime comparison remains pending."
 }

@@ -284,12 +284,18 @@
   const MODS = [
     // CRM — el inventario y la gente.
     { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',       group:'crm',         icon:'building' },
-    { key:'contactos',    href:'contactos.html',     label:'Directorio',         group:'crm',         icon:'users' },
-    { key:'clientes',     href:'clientes.html',      label:'Clientes',           group:'crm',         icon:'apreton' },
+    // Contactos: un solo módulo con dos vistas (Lista = contactos.html,
+    // Pipeline = clientes.html). Clientes queda oculto del menú pero sus
+    // ligas siguen vivas (y resaltan "Contactos", ver NAV_ALIAS).
+    { key:'contactos',    href:'contactos.html',     label:'Contactos',          group:'crm',         icon:'users' },
+    { key:'clientes',     href:'clientes.html',      label:'Pipeline de contactos', group:'crm',      icon:'apreton', hidden:true },
+    { key:'alertas',      href:'alertas.html',       label:'Alertas de búsqueda', group:'crm',         icon:'search', hidden:true },
+    { key:'crm-ajustes',  href:'crm-ajustes.html',   label:'Ajustes de CRM',     group:'crm',         icon:'cog', hidden:true },
     { key:'tareas',       href:'tareas.html',        label:'Tareas',              group:'crm',         icon:'check' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',        group:'crm',         icon:'chart' },
     { key:'bolsa',        href:'bolsa.html',         label:'Bolsa inmobiliaria',  group:'crm',         icon:'apreton', hidden:true },
     // Seguimiento — hablar con el prospecto hasta que se convierte en cliente.
+    { key:'buzon',        href:'buzon.html',         label:'Buzón',               group:'seguimiento', icon:'inbox' },
     { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',            group:'seguimiento', icon:'whatsapp' },
     { key:'correo',       href:'correo.html',        label:'Correo',              group:'seguimiento', icon:'mail', hidden:true },
     // Documentos — en el orden real de la operación: se redacta, se firma, se reporta.
@@ -316,8 +322,10 @@
   const CONTEXT_LABELS = {
     'home':         'Dashboard principal — menú de módulos',
     'props':        'Tus Inmuebles — catálogo de propiedades',
-    'contactos':    'Directorio — todos tus contactos, sin importar su rol o etapa',
-    'clientes':     'Clientes — tu pipeline de venta en kanban: prospectos potenciales por etapa',
+    'contactos':    'Contactos (vista Lista) — todos tus contactos, sin importar su rol o etapa',
+    'clientes':     'Contactos (vista Pipeline) — tu pipeline de venta en kanban: prospectos potenciales por etapa',
+    'buzon':        'Buzón — bandeja única de leads de todos los canales: asignar, nota interna, respuestas guardadas y tiempo de primera respuesta',
+    'crm-ajustes':  'Ajustes de CRM — etapas del pipeline, tipos de contacto, fuentes de captación, etiquetas y categorías',
     'equipo':       'Equipo — miembros de la cuenta, roles y permisos',
     'tareas':       'Tareas — pendientes y actividad del CRM',
     'estadisticas': 'Estadísticas — captación, pipeline e inmuebles con más interés',
@@ -343,7 +351,10 @@
      Inyectado por el shell arriba del contenido de CADA módulo, idéntico
      en posición/tamaño/estilo. 'home' se excluye (tiene su propio hero). */
   const PAGE_META = {
+    'buzon':         { title:'Buzón',                  sub:'Todo lo que entra, en un solo lugar: WhatsApp, tu sitio, la Bolsa, Zapier y llamadas.' },
     'equipo':        { title:'Equipo',                 sub:'Quién trabaja en tu cuenta y qué puede ver cada quien.' },
+    'alertas':       { title:'Alertas de búsqueda',    sub:'Lo que busca cada cliente del equipo y los inmuebles nuevos que le coinciden.' },
+    'crm-ajustes':   { title:'Ajustes de CRM',         sub:'Etapas del pipeline, tipos de contacto, fuentes, etiquetas y categorías de tu cuenta.' },
     'bolsa':         { title:'Bolsa inmobiliaria',     sub:'Comparte inventario con otros agentes Broquer y cierra en equipo con comisión compartida.' },
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
     'cumplimiento':  { title:'Cumplimiento',           sub:'El expediente de identificación de cada cliente, el control de umbrales y los avisos a la UIF, en un solo lugar.' },
@@ -362,6 +373,7 @@
     'correo':        { title:'Correo',                  sub:'Tu bandeja de entrada conectada a Broquer: lee, responde y redacta sin salir.' },
   };
   const ICONS = {
+    inbox:      '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859M2.25 13.5V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.5M2.25 13.5l2.4-7.2A2.25 2.25 0 016.79 4.5h10.42a2.25 2.25 0 012.14 1.8l2.4 7.2"/>',
     mail:       '<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>',
     home:       '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>',
     nums123:    '<text x="12" y="16.5" text-anchor="middle" font-size="11.5" font-weight="800" fill="currentColor" stroke="none" font-family="inherit">123</text>',
@@ -931,7 +943,8 @@ body[data-app="verificador"] .top-header { display: none !important; }
    pisar al .bk-badge de estado del theme que usan bolsa, cumplimiento, equipo,
    firmas y whatsapp — esta hoja se re-ancla al final del head y ganaba. */
 .bk-bnav__ico .bk-badge,
-.bk-sheet__ico .bk-badge {
+.bk-sheet__ico .bk-badge,
+.bk-sb-ico > .bk-badge {
   position: absolute; top: -5px; right: -8px;
   min-width: 17px; height: 17px; padding: 0 4px;
   border-radius: 9px;
@@ -942,7 +955,9 @@ body[data-app="verificador"] .top-header { display: none !important; }
   font-variant-numeric: tabular-nums;
 }
 .bk-bnav__ico .bk-badge.is-on,
-.bk-sheet__ico .bk-badge.is-on { display: block; }
+.bk-sheet__ico .bk-badge.is-on,
+.bk-sb-ico > .bk-badge.is-on { display: block; }
+.bk-sb-ico > .bk-badge { top: 2px; right: 10px; }
 
 /* ── Hoja de módulos CRM (solo móvil) ── */
 .bk-sheet-back {
@@ -1484,6 +1499,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
      DOM injection
      ════════════════════════════════════════════════════════════════ */
   const activeKey = (document.body.getAttribute('data-app') || 'home').toLowerCase();
+  // Pantallas que viven dentro de otro módulo del menú.
+  const NAV_ALIAS = { clientes: 'contactos', 'crm-ajustes': 'contactos', alertas: 'contactos' };
+  const navKey = NAV_ALIAS[activeKey] || activeKey;
   const activeMod = MODS.find(m => m.key === activeKey) || MODS[0];
 
   function buildSidebarLink(m, active) {
@@ -1500,7 +1518,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
   function buildRailIcon(m, active) {
     const on = m.key === active;
     return `<a href="${m.href}" class="bk-sb-ico${on ? ' is-active' : ''}" aria-label="${m.label}">
-      ${svg(m.icon)}<span class="bk-sb-ico__label">${m.label}</span>
+      ${svg(m.icon)}${m.key === 'buzon' ? '<i class="bk-badge" id="bk-rail-buzon-badge"></i>' : ''}<span class="bk-sb-ico__label">${m.label}</span>
     </a>`;
   }
   function buildRailItem(grupo, items, grupoActivo) {
@@ -1603,7 +1621,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         </div>
         <div class="bk-sb-cols">
           <nav class="bk-rail" id="bk-rail" aria-label="Módulos">
-            ${modsSueltos.map(m => buildRailIcon(m, activeKey)).join('')}
+            ${modsSueltos.map(m => buildRailIcon(m, navKey)).join('')}
             ${buildRailItem(GRUPOS.find(g => g.key === 'mas'), porGrupo('mas'), activeMod.group)}
           </nav>
         </div>
@@ -1637,7 +1655,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         <a href="index.html" ${activeKey === 'home' ? 'aria-current="page"' : ''}>Inicio</a>
         <a href="facebook-ads.html" ${modulosOff.has('facebook-ads') ? 'hidden' : ''} ${activeKey === 'facebook-ads' ? 'aria-current="page"' : ''}>Campañas</a>
         <a href="tareas.html" ${modulosOff.has('tareas') ? 'hidden' : ''} ${activeKey === 'tareas' ? 'aria-current="page"' : ''}>Agenda</a>
-        <details class="bk-tools-menu"><summary>Herramientas</summary><div class="bk-tools-menu__list">${MODS.filter(visible).map(m => `<a href="${m.href}">${svg(m.icon,18)}${m.label}</a>`).join('')}</div></details>
+        <details class="bk-tools-menu"><summary>Herramientas</summary><div class="bk-tools-menu__list">${MODS.filter(visible).map(m => `<a href="${m.href}">${svg(m.icon,18)}${m.label}${m.key === 'buzon' ? '<i class="bk-badge" id="bk-design-buzon-badge"></i>' : ''}</a>`).join('')}</div></details>
       </nav>
       <div class="bk-design-utilities">
         <button class="bk-design-assistant" type="button" aria-label="Abrir Broq">${svg('mic',18)}<span>Broq</span></button>
@@ -1697,7 +1715,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         { n: 'Nuevo inmueble', href: 'propiedades.html' },
         { n: 'Nuevo contacto', href: 'contactos.html' },
         { n: 'Nueva tarea', href: 'tareas.html' },
-        { n: 'Nuevo cliente', href: 'clientes.html' },
+        { n: 'Nuevo cliente (pipeline)', href: 'clientes.html' },
       ];
       const grupoLabel = k => (GRUPOS.find(g => g.key === k) || {}).label || '';
       const bg = document.createElement('div');
@@ -1835,8 +1853,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
     sheet.setAttribute('aria-label', 'Módulos');
 
     function sheetItem(m) {
-      const act = m.key === activeKey ? ' is-active' : '';
-      const badge = m.key === 'whatsapp' ? '<i class="bk-badge" id="bk-sheet-badge"></i>' : '';
+      const act = m.key === navKey ? ' is-active' : '';
+      const badge = m.key === 'whatsapp' ? '<i class="bk-badge" id="bk-sheet-badge"></i>'
+        : (m.key === 'buzon' ? '<i class="bk-badge" id="bk-sheet-buzon-badge"></i>' : '');
       // "Mi sitio" en móvil/iOS no abre la pantalla de configuración: abre el sitio público.
       const attrs = m.key === 'mi-sitio'
         ? `href="javascript:void(0)" onclick="bkOpenMiSitio()"`
@@ -2350,8 +2369,8 @@ body[data-app="facebook-ads"]{--page-max:980px}
         num_exterior: txt(ac.num_exterior),
         num_interior: txt(ac.num_interior),
         colonia: txt(ac.colonia),
-        ciudad: txt(ac.ciudad) || 'Morelia',
-        estado: txt(ac.estado) || 'Michoacán',
+        ciudad: txt(ac.ciudad),
+        estado: txt(ac.estado),
         cp: txt(ac.cp),
         m2_construccion: num(ac.m2_construccion),
         m2_terreno: num(ac.m2_terreno),
@@ -4570,6 +4589,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // ─── Mensajes de WhatsApp sin leer: globito + notificación ────
     // WhatsApp ya está abierto para todos: todo agente sondea sus no leídos.
     setupChatsBadge(profile);
+    setupBuzonBadge(profile);
 
     // ─── Cita nueva agendada por la IA de WhatsApp: aviso inmediato (web) ──
     setupCitasNotify(profile);
@@ -4685,6 +4705,37 @@ body[data-app="facebook-ads"]{--page-max:980px}
     document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
     // La pestaña de chats avisa al shell cuando el agente lee un chat.
     window.addEventListener('brokr-chats-leidos', tick);
+  }
+
+  /* Buzón: contador de leads "sin atender" en el menú + aviso web cuando
+     entra uno nuevo (en iOS el aviso real es el push de asignación). */
+  function setupBuzonBadge(profile) {
+    if (!profile?.user?.id) return;
+    let prev = null;
+    async function tick() {
+      let n = 0;
+      try {
+        const r = await fetch(API_BASE + '/buzon/contador', { headers: { Authorization: 'Bearer ' + getToken() } });
+        if (r.ok) n = Number((await r.json()).sin_atender) || 0;
+      } catch (e) { return; }
+      ['bk-rail-buzon-badge', 'bk-sheet-buzon-badge', 'bk-design-buzon-badge'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = n > 99 ? '99+' : String(n); el.classList.toggle('is-on', n > 0); }
+      });
+      window.dispatchEvent(new CustomEvent('brokr-buzon-contador', { detail: n }));
+      if (prev !== null && n > prev && activeKey !== 'buzon' && !IS_IOS_NATIVE) {
+        try {
+          if ('Notification' in window && Notification.permission === 'granted') {
+            const no = new Notification('Broquer · Buzón', { body: 'Entró un lead nuevo.', icon: 'icon-192.png', tag: 'broquer-buzon' });
+            no.onclick = () => { window.focus(); location.href = 'buzon.html'; };
+          }
+        } catch (e) {}
+      }
+      prev = n;
+    }
+    tick();
+    setInterval(() => { if (!document.hidden) tick(); }, 45000);
+    window.addEventListener('brokr-buzon-cambio', tick);
   }
 
   function _avisoWeb(nuevos) {
