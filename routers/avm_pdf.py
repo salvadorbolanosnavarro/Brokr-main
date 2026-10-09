@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from core.avm_fuentes import sanear_resultado
+
 
 def create_router(get_context):
     router = APIRouter()
@@ -29,6 +31,9 @@ def create_router(get_context):
 
         if not resultado:
             raise HTTPException(status_code=400, detail="Resultado vacío")
+        # El resultado llega del navegador (pudo generarse con una versión
+        # anterior): sin ligas no consultadas ni menciones internas.
+        resultado = sanear_resultado(dict(resultado))
 
         def fmt_mx(n):
             try:
