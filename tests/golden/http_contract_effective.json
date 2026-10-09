@@ -1,5 +1,5 @@
 {
-  "count": 348,
+  "count": 349,
   "operations": [
     {
       "body": false,
@@ -8,6 +8,16 @@
       "path": "/",
       "responses": [
         "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/adjuntos/ligas",
+      "responses": [
+        "200",
+        "422"
       ]
     },
     {
