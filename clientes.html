@@ -934,7 +934,8 @@ async function _userId() {
   } catch { return null; }
 }
 
-const LS_CACHE = 'brokr_clientes_cache';   // solo cache offline, NO fuente de verdad
+// Copia por cuenta (sb_user.id): nunca mostrar la lista de otra cuenta del mismo navegador.
+const LS_CACHE = (() => { try { localStorage.removeItem('brokr_clientes_cache'); const u = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'); if (u && u.id) return 'brokr_clientes_cache:' + u.id; } catch (e) {} return 'brokr_clientes_cache:' + Math.random(); })();   // solo cache offline, NO fuente de verdad
 let _contactosMem = [];
 
 /* Trae todos los contactos del usuario logueado, ordenados por updated_at desc */

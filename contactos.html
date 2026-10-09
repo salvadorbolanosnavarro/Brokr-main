@@ -1085,7 +1085,8 @@ function esc(s) {
 /* ── Conexión a Supabase ─────────────────────────────────────────
    Usamos el helper window.brokrSb expuesto por app-shell.js.
    Ese helper renueva el token automáticamente si está por expirar. */
-const LS_CACHE = 'brokr_contactos_cache';   // solo cache offline, NO fuente de verdad
+// Copia por cuenta (sb_user.id): nunca mostrar la lista de otra cuenta del mismo navegador.
+const LS_CACHE = (() => { try { localStorage.removeItem('brokr_contactos_cache'); const u = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'); if (u && u.id) return 'brokr_contactos_cache:' + u.id; } catch (e) {} return 'brokr_contactos_cache:' + Math.random(); })();   // solo cache offline, NO fuente de verdad
 let _contactosMem = [];
 let _userIdCache = null;
 
