@@ -4,6 +4,8 @@ Behavior-preserving extraction from whatsapp.py. This intentionally mirrors the
 current implementation rather than the older prepared connection router.
 """
 
+from routers.whatsapp_number_owner import preparar_cambio_de_dueno
+
 
 async def wa2_connect_core(
     req, request, *, _require_user, META_APP_ID, META_APP_SECRET, HTTPException,
@@ -87,6 +89,10 @@ async def wa2_connect_core(
                 datetime.now(timezone.utc).timestamp() + int(expires_in), timezone.utc).isoformat()
         except Exception:
             pass
+
+    # Si el número estaba en otra cuenta, acomodar su historial antes de
+    # guardarlo a nombre de esta (ver routers/whatsapp_number_owner.py).
+    await preparar_cambio_de_dueno(phone_number_id, user_id, _now())
 
     existing = await sb_get("wa2_numeros", {"phone_number_id": f"eq.{phone_number_id}", "select": "id", "limit": "1"})
     if existing:
