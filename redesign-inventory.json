@@ -7,12 +7,13 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": false,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [],
       "removed_control_ids": [],
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "sitio-engine.js"
       ],
       "runtime_status": "not-certified"
@@ -23,7 +24,7 @@
       "app": "mi-modulo",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "form"
@@ -55,6 +56,7 @@
         "#"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -65,7 +67,7 @@
       "app": "admin",
       "shared_shell": false,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -339,7 +341,9 @@
       "links": [
         "index.html"
       ],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -348,14 +352,16 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [],
       "removed_control_ids": [],
       "removed_ids": [],
       "links": [
         "javascript:history.back()"
       ],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -372,6 +378,7 @@
       "scripts": [
         "vendor/react-18.2.0/react.production.min.js",
         "vendor/react-18.2.0/react-dom.production.min.js",
+        "mobile-inputs.js",
         "app-shell.js",
         "avm-runtime.js"
       ],
@@ -383,7 +390,7 @@
       "app": "bandeja",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "input",
@@ -429,6 +436,7 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -439,7 +447,7 @@
       "app": "blog",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "input",
@@ -465,6 +473,7 @@
         "propiedades.html"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -475,7 +484,7 @@
       "app": "bolsa",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -559,6 +568,7 @@
         "propiedades.html"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -569,7 +579,7 @@
       "app": "buscador",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "select",
@@ -639,6 +649,7 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -1013,6 +1024,7 @@
         "#"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "historial-adjuntos.js",
         "ficha-comun.js",
         "categorias.js",
@@ -1397,6 +1409,7 @@
         "#"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "historial-adjuntos.js",
         "ficha-comun.js",
         "categorias.js",
@@ -1411,7 +1424,7 @@
       "app": "contratos",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -2066,6 +2079,7 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -2076,7 +2090,7 @@
       "app": "correo",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "select",
@@ -2167,6 +2181,7 @@
         "https://myaccount.google.com/apppasswords"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -2177,7 +2192,7 @@
       "app": "cumplimiento",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -2686,6 +2701,7 @@
         "blog.html?art=alta-padron-actividades-vulnerables"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "cumplimiento-aviso.js",
         "app-shell.js"
       ],
@@ -2697,7 +2713,7 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [],
       "removed_control_ids": [],
       "removed_ids": [],
@@ -2709,7 +2725,9 @@
         "mailto:hola@broquer.app?subject=Broquer%20para%20Empresas&body=Hola%2C%20me%20interesa%20Broquer%20para%20Empresas.%0A%0ANombre%20de%20mi%20agencia%3A%20%0AN%C3%BAmero%20de%20agentes%3A%20%0ACiudad%3A%20",
         "soporte.html"
       ],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -2718,7 +2736,7 @@
       "app": "equipo",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -2762,6 +2780,7 @@
         "empresas.html"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -2769,10 +2788,10 @@
     {
       "path": "estadisticas.html",
       "exists": true,
-      "app": "estadisticas",
+      "app": null,
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -2823,6 +2842,7 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -3086,7 +3106,9 @@
       "removed_control_ids": [],
       "removed_ids": [],
       "links": [],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -3205,6 +3227,7 @@
         "image-cleaner.html"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -3215,12 +3238,14 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [],
       "removed_control_ids": [],
       "removed_ids": [],
       "links": [],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -3229,7 +3254,7 @@
       "app": "ficha-manual",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "input",
@@ -3342,6 +3367,7 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -3352,7 +3378,7 @@
       "app": "finanzas",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -3523,6 +3549,7 @@
         "isr.html"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -3600,7 +3627,9 @@
       "links": [
         "verificar-firma.html"
       ],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -3609,7 +3638,7 @@
       "app": "firmas",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "input",
@@ -3741,6 +3770,7 @@
         "#"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -3751,7 +3781,7 @@
       "app": "guia",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -3779,6 +3809,7 @@
         "whatsapp.html"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js",
         "soporte-form.js"
       ],
@@ -3790,7 +3821,7 @@
       "app": "image-cleaner",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "input",
@@ -3879,6 +3910,7 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -4034,6 +4066,7 @@
         "whatsapp.html"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "home-design.js",
         "app-shell.js",
         "capacitor-bridge.js",
@@ -4044,10 +4077,10 @@
     {
       "path": "isr.html",
       "exists": true,
-      "app": "isr",
+      "app": null,
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "select",
@@ -4186,6 +4219,7 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -4196,7 +4230,7 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -4257,7 +4291,9 @@
         "registro.html",
         "soporte.html"
       ],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -4266,7 +4302,7 @@
       "app": "clientes",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [],
       "removed_control_ids": [],
       "removed_ids": [],
@@ -4274,6 +4310,7 @@
         "clientes.html"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -4284,7 +4321,7 @@
       "app": "legal",
       "shared_shell": false,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -4312,6 +4349,7 @@
         "https://www.whatsapp.com/legal/business-terms"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -4419,6 +4457,7 @@
         "legal.html#privacidad"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "capacitor-bridge.js"
       ],
       "runtime_status": "not-certified"
@@ -4429,12 +4468,13 @@
       "app": "mi-sitio",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [],
       "removed_control_ids": [],
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -4445,7 +4485,7 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [],
       "removed_control_ids": [],
       "removed_ids": [],
@@ -4454,7 +4494,9 @@
         "preview-campanas.html",
         "preview-inicio.html"
       ],
-      "scripts": [],
+      "scripts": [
+        "../mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -4463,7 +4505,7 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": false,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button"
@@ -4498,7 +4540,9 @@
         "preview-campanas.html",
         "preview-inicio.html"
       ],
-      "scripts": [],
+      "scripts": [
+        "../mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -4507,7 +4551,7 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": false,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button"
@@ -4529,7 +4573,9 @@
         "preview-campanas.html",
         "preview-inicio.html"
       ],
-      "scripts": [],
+      "scripts": [
+        "../mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -4538,7 +4584,7 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": false,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button"
@@ -4573,7 +4619,9 @@
         "preview-campanas.html",
         "preview-inicio.html"
       ],
-      "scripts": [],
+      "scripts": [
+        "../mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -5140,6 +5188,7 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "propiedades-editor.js",
         "historial-adjuntos.js",
         "ficha-comun.js",
@@ -5189,7 +5238,9 @@
       "links": [
         "legal.html"
       ],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -5226,7 +5277,9 @@
       "links": [
         "login.html"
       ],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -5235,7 +5288,7 @@
       "app": "robin",
       "shared_shell": false,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -5301,7 +5354,9 @@
       "removed_control_ids": [],
       "removed_ids": [],
       "links": [],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -5310,12 +5365,13 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": false,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [],
       "removed_control_ids": [],
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "sitio-engine.js"
       ],
       "runtime_status": "not-certified"
@@ -5326,7 +5382,7 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -5410,6 +5466,7 @@
         "mailto:hola@broquer.app"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "soporte-form.js"
       ],
       "runtime_status": "not-certified"
@@ -5561,6 +5618,7 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js",
         "ficha-comun.js",
         "categorias.js",
@@ -5596,7 +5654,9 @@
       "removed_control_ids": [],
       "removed_ids": [],
       "links": [],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -5605,12 +5665,13 @@
       "app": "verificador",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [],
       "removed_control_ids": [],
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -5642,7 +5703,9 @@
       "removed_control_ids": [],
       "removed_ids": [],
       "links": [],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -5651,7 +5714,7 @@
       "app": "video",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "input",
@@ -5714,6 +5777,7 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -5724,7 +5788,7 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -5746,7 +5810,9 @@
         "registro.html",
         "soporte.html"
       ],
-      "scripts": [],
+      "scripts": [
+        "../mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -5755,12 +5821,14 @@
       "app": null,
       "shared_shell": false,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [],
       "removed_control_ids": [],
       "removed_ids": [],
       "links": [],
-      "scripts": [],
+      "scripts": [
+        "mobile-inputs.js"
+      ],
       "runtime_status": "not-certified"
     },
     {
@@ -5769,7 +5837,7 @@
       "app": "whatsapp-chatgpt",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "button",
@@ -5833,6 +5901,7 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -5843,7 +5912,7 @@
       "app": "whatsapp",
       "shared_shell": true,
       "shared_theme": true,
-      "source_unchanged": true,
+      "source_unchanged": false,
       "controls": [
         {
           "tag": "select",
@@ -6185,6 +6254,7 @@
         "soporte.html#pago-meta-whatsapp"
       ],
       "scripts": [
+        "mobile-inputs.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -6195,1611 +6265,1881 @@
       "file": "routers/account_delete.py",
       "handler": "eliminar_cuenta_y_datos",
       "method": "DELETE",
-      "path_expression": "'/usuario/eliminar-cuenta'"
+      "path_expression": "'/usuario/eliminar-cuenta'",
+      "path": "/usuario/eliminar-cuenta"
     },
     {
       "file": "routers/admin_accounts.py",
       "handler": "admin_set_rol",
       "method": "POST",
-      "path_expression": "'/admin/user/rol'"
+      "path_expression": "'/admin/user/rol'",
+      "path": "/admin/user/rol"
     },
     {
       "file": "routers/admin_accounts.py",
       "handler": "admin_set_activo",
       "method": "POST",
-      "path_expression": "'/admin/user/activo'"
+      "path_expression": "'/admin/user/activo'",
+      "path": "/admin/user/activo"
     },
     {
       "file": "routers/admin_accounts.py",
       "handler": "admin_set_modulos",
       "method": "POST",
-      "path_expression": "'/admin/user/modulos'"
+      "path_expression": "'/admin/user/modulos'",
+      "path": "/admin/user/modulos"
     },
     {
       "file": "routers/admin_accounts.py",
       "handler": "admin_set_acceso_completo",
       "method": "POST",
-      "path_expression": "'/admin/user/acceso-completo'"
+      "path_expression": "'/admin/user/acceso-completo'",
+      "path": "/admin/user/acceso-completo"
     },
     {
       "file": "routers/admin_delete.py",
       "handler": "admin_eliminar_usuario",
       "method": "POST",
-      "path_expression": "'/admin/user/eliminar'"
+      "path_expression": "'/admin/user/eliminar'",
+      "path": "/admin/user/eliminar"
     },
     {
       "file": "routers/admin_read.py",
       "handler": "admin_me",
       "method": "GET",
-      "path_expression": "'/admin/me'"
+      "path_expression": "'/admin/me'",
+      "path": "/admin/me"
     },
     {
       "file": "routers/admin_read.py",
       "handler": "admin_list_users",
       "method": "GET",
-      "path_expression": "'/admin/users'"
+      "path_expression": "'/admin/users'",
+      "path": "/admin/users"
     },
     {
       "file": "routers/admin_usage.py",
       "handler": "admin_user_uso",
       "method": "GET",
-      "path_expression": "'/admin/user/{user_id}/uso'"
+      "path_expression": "'/admin/user/{user_id}/uso'",
+      "path": "/admin/user/{user_id}/uso"
     },
     {
       "file": "routers/agente.py",
       "handler": "agent",
       "method": "POST",
-      "path_expression": "'/agent'"
+      "path_expression": "'/agent'",
+      "path": "/agent"
     },
     {
       "file": "routers/agente.py",
       "handler": "transcribir",
       "method": "POST",
-      "path_expression": "'/transcribir'"
+      "path_expression": "'/transcribir'",
+      "path": "/transcribir"
     },
     {
       "file": "routers/agente.py",
       "handler": "agent_health",
       "method": "GET",
-      "path_expression": "'/agent/health'"
+      "path_expression": "'/agent/health'",
+      "path": "/agent/health"
     },
     {
       "file": "routers/avm_apify.py",
       "handler": "buscar_comparables",
       "method": "POST",
-      "path_expression": "'/api/comparables'"
+      "path_expression": "'/api/comparables'",
+      "path": "/api/comparables"
     },
     {
       "file": "routers/avm_claude.py",
       "handler": "avm_claude",
       "method": "POST",
-      "path_expression": "'/api/avm-claude'"
+      "path_expression": "'/api/avm-claude'",
+      "path": "/api/avm-claude"
     },
     {
       "file": "routers/avm_legacy.py",
       "handler": "calcular_avm",
       "method": "POST",
-      "path_expression": "'/avm'"
+      "path_expression": "'/avm'",
+      "path": "/avm"
     },
     {
       "file": "routers/avm_nearby.py",
       "handler": "comparables_cercanos",
       "method": "POST",
-      "path_expression": "'/api/comparables-cercanos'"
+      "path_expression": "'/api/comparables-cercanos'",
+      "path": "/api/comparables-cercanos"
     },
     {
       "file": "routers/avm_pdf.py",
       "handler": "generar_avm_pdf",
       "method": "POST",
-      "path_expression": "'/avm-pdf'"
+      "path_expression": "'/avm-pdf'",
+      "path": "/avm-pdf"
     },
     {
       "file": "routers/avm_places.py",
       "handler": "buscar_colonias",
       "method": "GET",
-      "path_expression": "'/api/colonias'"
+      "path_expression": "'/api/colonias'",
+      "path": "/api/colonias"
     },
     {
       "file": "routers/avm_websearch.py",
       "handler": "avm_websearch",
       "method": "POST",
-      "path_expression": "'/api/avm-websearch'"
+      "path_expression": "'/api/avm-websearch'",
+      "path": "/api/avm-websearch"
     },
     {
       "file": "routers/banxico.py",
       "handler": "api_inpc",
       "method": "GET",
-      "path_expression": "'/api/inpc/{anio}/{mes}'"
+      "path_expression": "'/api/inpc/{anio}/{mes}'",
+      "path": "/api/inpc/{anio}/{mes}"
     },
     {
       "file": "routers/banxico.py",
       "handler": "api_udis",
       "method": "GET",
-      "path_expression": "'/api/udis/{fecha}'"
+      "path_expression": "'/api/udis/{fecha}'",
+      "path": "/api/udis/{fecha}"
     },
     {
       "file": "routers/bolsa.py",
       "handler": "bolsa_propiedades",
       "method": "GET",
-      "path_expression": "'/propiedades'"
+      "path_expression": "'/propiedades'",
+      "path": "/bolsa/propiedades"
     },
     {
       "file": "routers/bolsa.py",
       "handler": "bolsa_mis",
       "method": "GET",
-      "path_expression": "'/mis'"
+      "path_expression": "'/mis'",
+      "path": "/bolsa/mis"
     },
     {
       "file": "routers/bolsa.py",
       "handler": "bolsa_publicar",
       "method": "POST",
-      "path_expression": "'/publicar'"
+      "path_expression": "'/publicar'",
+      "path": "/bolsa/publicar"
     },
     {
       "file": "routers/bolsa.py",
       "handler": "bolsa_retirar",
       "method": "POST",
-      "path_expression": "'/retirar'"
+      "path_expression": "'/retirar'",
+      "path": "/bolsa/retirar"
     },
     {
       "file": "routers/bulk_delete.py",
       "handler": "propiedades_eliminar_masivo",
       "method": "POST",
-      "path_expression": "'/propiedades/eliminar-masivo'"
+      "path_expression": "'/propiedades/eliminar-masivo'",
+      "path": "/propiedades/eliminar-masivo"
     },
     {
       "file": "routers/bulk_delete.py",
       "handler": "contactos_eliminar_masivo",
       "method": "POST",
-      "path_expression": "'/contactos/eliminar-masivo'"
+      "path_expression": "'/contactos/eliminar-masivo'",
+      "path": "/contactos/eliminar-masivo"
     },
     {
       "file": "routers/buscador_propiedades.py",
       "handler": "buscar_manual",
       "method": "POST",
-      "path_expression": "'/api/buscador/buscar'"
+      "path_expression": "'/api/buscador/buscar'",
+      "path": "/api/buscador/buscar"
     },
     {
       "file": "routers/buscador_propiedades.py",
       "handler": "obtener_requerimiento",
       "method": "GET",
-      "path_expression": "'/api/buscador/requerimiento/{contacto_id}'"
+      "path_expression": "'/api/buscador/requerimiento/{contacto_id}'",
+      "path": "/api/buscador/requerimiento/{contacto_id}"
     },
     {
       "file": "routers/buscador_propiedades.py",
       "handler": "guardar_requerimiento",
       "method": "PUT",
-      "path_expression": "'/api/buscador/requerimiento/{contacto_id}'"
+      "path_expression": "'/api/buscador/requerimiento/{contacto_id}'",
+      "path": "/api/buscador/requerimiento/{contacto_id}"
     },
     {
       "file": "routers/buscador_propiedades.py",
       "handler": "obtener_resultados",
       "method": "GET",
-      "path_expression": "'/api/buscador/resultados/{contacto_id}'"
+      "path_expression": "'/api/buscador/resultados/{contacto_id}'",
+      "path": "/api/buscador/resultados/{contacto_id}"
     },
     {
       "file": "routers/buscador_propiedades.py",
       "handler": "escanear_ahora",
       "method": "POST",
-      "path_expression": "'/api/buscador/escanear/{contacto_id}'"
+      "path_expression": "'/api/buscador/escanear/{contacto_id}'",
+      "path": "/api/buscador/escanear/{contacto_id}"
     },
     {
       "file": "routers/buscador_propiedades.py",
       "handler": "listar_requerimientos",
       "method": "GET",
-      "path_expression": "'/api/buscador'"
+      "path_expression": "'/api/buscador'",
+      "path": "/api/buscador"
     },
     {
       "file": "routers/chat.py",
       "handler": "chat_proxy",
       "method": "POST",
-      "path_expression": "'/chat'"
+      "path_expression": "'/chat'",
+      "path": "/chat"
     },
     {
       "file": "routers/chat_claude.py",
       "handler": "chat_claude_proxy",
       "method": "POST",
-      "path_expression": "'/chat-claude'"
+      "path_expression": "'/chat-claude'",
+      "path": "/chat-claude"
     },
     {
       "file": "routers/contact_file_import.py",
       "handler": "importar_contactos_archivo",
       "method": "POST",
-      "path_expression": "'/contactos/importar-archivo'"
+      "path_expression": "'/contactos/importar-archivo'",
+      "path": "/contactos/importar-archivo"
     },
     {
       "file": "routers/contracts_basic.py",
       "handler": "generar_contrato",
       "method": "POST",
-      "path_expression": "'/contrato'"
+      "path_expression": "'/contrato'",
+      "path": "/contrato"
     },
     {
       "file": "routers/correo.py",
       "handler": "correo_estado",
       "method": "GET",
-      "path_expression": "'/correo/estado'"
+      "path_expression": "'/correo/estado'",
+      "path": "/correo/estado"
     },
     {
       "file": "routers/correo.py",
       "handler": "correo_conectar",
       "method": "POST",
-      "path_expression": "'/correo/conectar'"
+      "path_expression": "'/correo/conectar'",
+      "path": "/correo/conectar"
     },
     {
       "file": "routers/correo.py",
       "handler": "correo_desconectar",
       "method": "DELETE",
-      "path_expression": "'/correo/desconectar'"
+      "path_expression": "'/correo/desconectar'",
+      "path": "/correo/desconectar"
     },
     {
       "file": "routers/correo.py",
       "handler": "correo_bandeja",
       "method": "GET",
-      "path_expression": "'/correo/bandeja'"
+      "path_expression": "'/correo/bandeja'",
+      "path": "/correo/bandeja"
     },
     {
       "file": "routers/correo.py",
       "handler": "correo_mensaje",
       "method": "GET",
-      "path_expression": "'/correo/mensaje/{uid_msg}'"
+      "path_expression": "'/correo/mensaje/{uid_msg}'",
+      "path": "/correo/mensaje/{uid_msg}"
     },
     {
       "file": "routers/correo.py",
       "handler": "correo_enviar",
       "method": "POST",
-      "path_expression": "'/correo/enviar'"
+      "path_expression": "'/correo/enviar'",
+      "path": "/correo/enviar"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "obtener_config",
       "method": "GET",
-      "path_expression": "'/config'"
+      "path_expression": "'/config'",
+      "path": "/pld/config"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "guardar_config",
       "method": "PUT",
-      "path_expression": "'/config'"
+      "path_expression": "'/config'",
+      "path": "/pld/config"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "revision_expediente",
       "method": "GET",
-      "path_expression": "'/expedientes/{expediente_id}/revision'"
+      "path_expression": "'/expedientes/{expediente_id}/revision'",
+      "path": "/pld/expedientes/{expediente_id}/revision"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "simular_operacion",
       "method": "POST",
-      "path_expression": "'/operaciones/simular'"
+      "path_expression": "'/operaciones/simular'",
+      "path": "/pld/operaciones/simular"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "guardar_operacion",
       "method": "POST",
-      "path_expression": "'/operaciones'"
+      "path_expression": "'/operaciones'",
+      "path": "/pld/operaciones"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "crear_liga",
       "method": "POST",
-      "path_expression": "'/expedientes/{expediente_id}/liga'"
+      "path_expression": "'/expedientes/{expediente_id}/liga'",
+      "path": "/pld/expedientes/{expediente_id}/liga"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "publico_leer",
       "method": "GET",
-      "path_expression": "'/publico/{token}'"
+      "path_expression": "'/publico/{token}'",
+      "path": "/pld/publico/{token}"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "publico_guardar",
       "method": "POST",
-      "path_expression": "'/publico/{token}'"
+      "path_expression": "'/publico/{token}'",
+      "path": "/pld/publico/{token}"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "subir_documento",
       "method": "POST",
-      "path_expression": "'/expedientes/{expediente_id}/documentos'"
+      "path_expression": "'/expedientes/{expediente_id}/documentos'",
+      "path": "/pld/expedientes/{expediente_id}/documentos"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "subir_documento_cliente",
       "method": "POST",
-      "path_expression": "'/publico/{token}/documentos'"
+      "path_expression": "'/publico/{token}/documentos'",
+      "path": "/pld/publico/{token}/documentos"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "quitar_documento",
       "method": "DELETE",
-      "path_expression": "'/documentos/{documento_id}'"
+      "path_expression": "'/documentos/{documento_id}'",
+      "path": "/pld/documentos/{documento_id}"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "ver_documento",
       "method": "GET",
-      "path_expression": "'/documentos/{documento_id}/ver'"
+      "path_expression": "'/documentos/{documento_id}/ver'",
+      "path": "/pld/documentos/{documento_id}/ver"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "generar_aviso",
       "method": "POST",
-      "path_expression": "'/avisos/generar'"
+      "path_expression": "'/avisos/generar'",
+      "path": "/pld/avisos/generar"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "descargar_xml",
       "method": "GET",
-      "path_expression": "'/avisos/{aviso_id}/xml'"
+      "path_expression": "'/avisos/{aviso_id}/xml'",
+      "path": "/pld/avisos/{aviso_id}/xml"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "marcar_subido",
       "method": "POST",
-      "path_expression": "'/avisos/{aviso_id}/subido'"
+      "path_expression": "'/avisos/{aviso_id}/subido'",
+      "path": "/pld/avisos/{aviso_id}/subido"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "marcar_presentado",
       "method": "POST",
-      "path_expression": "'/avisos/{aviso_id}/presentado'"
+      "path_expression": "'/avisos/{aviso_id}/presentado'",
+      "path": "/pld/avisos/{aviso_id}/presentado"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "marcar_rechazado",
       "method": "POST",
-      "path_expression": "'/avisos/{aviso_id}/rechazado'"
+      "path_expression": "'/avisos/{aviso_id}/rechazado'",
+      "path": "/pld/avisos/{aviso_id}/rechazado"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "descartar_aviso",
       "method": "POST",
-      "path_expression": "'/avisos/{aviso_id}/descartar'"
+      "path_expression": "'/avisos/{aviso_id}/descartar'",
+      "path": "/pld/avisos/{aviso_id}/descartar"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "generar_modificatorio",
       "method": "POST",
-      "path_expression": "'/avisos/{aviso_id}/modificatorio'"
+      "path_expression": "'/avisos/{aviso_id}/modificatorio'",
+      "path": "/pld/avisos/{aviso_id}/modificatorio"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "resumen",
       "method": "GET",
-      "path_expression": "'/resumen'"
+      "path_expression": "'/resumen'",
+      "path": "/pld/resumen"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "leer_bitacora",
       "method": "GET",
-      "path_expression": "'/bitacora'"
+      "path_expression": "'/bitacora'",
+      "path": "/pld/bitacora"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "catalogos_uif",
       "method": "GET",
-      "path_expression": "'/catalogos'"
+      "path_expression": "'/catalogos'",
+      "path": "/pld/catalogos"
     },
     {
       "file": "routers/cumplimiento.py",
       "handler": "salud",
       "method": "GET",
-      "path_expression": "'/salud'"
+      "path_expression": "'/salud'",
+      "path": "/pld/salud"
     },
     {
       "file": "routers/demo.py",
       "handler": "demo_agendar",
       "method": "POST",
-      "path_expression": "'/demo/agendar'"
+      "path_expression": "'/demo/agendar'",
+      "path": "/demo/agendar"
     },
     {
       "file": "routers/demo_live.py",
       "handler": "crear_sesion",
       "method": "POST",
-      "path_expression": "'/sesion'"
+      "path_expression": "'/sesion'",
+      "path": "/demo-live/sesion"
     },
     {
       "file": "routers/demo_live.py",
       "handler": "estado_sesion",
       "method": "GET",
-      "path_expression": "'/estado/{session_id}'"
+      "path_expression": "'/estado/{session_id}'",
+      "path": "/demo-live/estado/{session_id}"
     },
     {
       "file": "routers/demo_live.py",
       "handler": "registrar_accion",
       "method": "POST",
-      "path_expression": "'/accion'"
+      "path_expression": "'/accion'",
+      "path": "/demo-live/accion"
     },
     {
       "file": "routers/demo_live.py",
       "handler": "avm_demo",
       "method": "POST",
-      "path_expression": "'/avm'"
+      "path_expression": "'/avm'",
+      "path": "/demo-live/avm"
     },
     {
       "file": "routers/demo_live.py",
       "handler": "chat_demo",
       "method": "POST",
-      "path_expression": "'/chat'"
+      "path_expression": "'/chat'",
+      "path": "/demo-live/chat"
     },
     {
       "file": "routers/demo_live.py",
       "handler": "whatsapp_demo",
       "method": "GET",
-      "path_expression": "'/whatsapp/{session_id}'"
+      "path_expression": "'/whatsapp/{session_id}'",
+      "path": "/demo-live/whatsapp/{session_id}"
     },
     {
       "file": "routers/demo_live.py",
       "handler": "wa_enviar",
       "method": "POST",
-      "path_expression": "'/whatsapp/enviar'"
+      "path_expression": "'/whatsapp/enviar'",
+      "path": "/demo-live/whatsapp/enviar"
     },
     {
       "file": "routers/demo_live.py",
       "handler": "crear_contacto",
       "method": "POST",
-      "path_expression": "'/contacto/crear'"
+      "path_expression": "'/contacto/crear'",
+      "path": "/demo-live/contacto/crear"
     },
     {
       "file": "routers/demo_live.py",
       "handler": "crear_propiedad",
       "method": "POST",
-      "path_expression": "'/propiedad/crear'"
+      "path_expression": "'/propiedad/crear'",
+      "path": "/demo-live/propiedad/crear"
     },
     {
       "file": "routers/easybroker_catalog.py",
       "handler": "get_propiedades",
       "method": "GET",
-      "path_expression": "'/propiedades'"
+      "path_expression": "'/propiedades'",
+      "path": "/propiedades"
     },
     {
       "file": "routers/easybroker_colonias.py",
       "handler": "get_colonias",
       "method": "GET",
-      "path_expression": "'/colonias'"
+      "path_expression": "'/colonias'",
+      "path": "/colonias"
     },
     {
       "file": "routers/easybroker_config.py",
       "handler": "set_eb_key",
       "method": "POST",
-      "path_expression": "'/config/eb-key'"
+      "path_expression": "'/config/eb-key'",
+      "path": "/config/eb-key"
     },
     {
       "file": "routers/easybroker_config.py",
       "handler": "delete_eb_key",
       "method": "DELETE",
-      "path_expression": "'/config/eb-key'"
+      "path_expression": "'/config/eb-key'",
+      "path": "/config/eb-key"
     },
     {
       "file": "routers/easybroker_config.py",
       "handler": "get_eb_key",
       "method": "GET",
-      "path_expression": "'/config/eb-key'"
+      "path_expression": "'/config/eb-key'",
+      "path": "/config/eb-key"
     },
     {
       "file": "routers/easybroker_contact_import.py",
       "handler": "importar_contactos_eb",
       "method": "POST",
-      "path_expression": "'/contactos/importar-eb'"
+      "path_expression": "'/contactos/importar-eb'",
+      "path": "/contactos/importar-eb"
     },
     {
       "file": "routers/easybroker_diagnostics.py",
       "handler": "easybroker_diagnostico",
       "method": "GET",
-      "path_expression": "'/easybroker/diagnostico'"
+      "path_expression": "'/easybroker/diagnostico'",
+      "path": "/easybroker/diagnostico"
     },
     {
       "file": "routers/easybroker_import_stats.py",
       "handler": "easybroker_import_stats",
       "method": "POST",
-      "path_expression": "'/easybroker/import-stats'"
+      "path_expression": "'/easybroker/import-stats'",
+      "path": "/easybroker/import-stats"
     },
     {
       "file": "routers/easybroker_migration.py",
       "handler": "migracion_eb_iniciar",
       "method": "POST",
-      "path_expression": "'/easybroker/migracion/iniciar'"
+      "path_expression": "'/easybroker/migracion/iniciar'",
+      "path": "/easybroker/migracion/iniciar"
     },
     {
       "file": "routers/easybroker_migration.py",
       "handler": "migracion_eb_estado",
       "method": "GET",
-      "path_expression": "'/easybroker/migracion/estado'"
+      "path_expression": "'/easybroker/migracion/estado'",
+      "path": "/easybroker/migracion/estado"
     },
     {
       "file": "routers/easybroker_migration.py",
       "handler": "easybroker_import_all",
       "method": "POST",
-      "path_expression": "'/easybroker/import-all'"
+      "path_expression": "'/easybroker/import-all'",
+      "path": "/easybroker/import-all"
     },
     {
       "file": "routers/easybroker_photo_status.py",
       "handler": "easybroker_fotos_pendientes",
       "method": "GET",
-      "path_expression": "'/easybroker/fotos-pendientes'"
+      "path_expression": "'/easybroker/fotos-pendientes'",
+      "path": "/easybroker/fotos-pendientes"
     },
     {
       "file": "routers/easybroker_photo_status.py",
       "handler": "easybroker_migrar_fotos",
       "method": "POST",
-      "path_expression": "'/easybroker/migrar-fotos'"
+      "path_expression": "'/easybroker/migrar-fotos'",
+      "path": "/easybroker/migrar-fotos"
     },
     {
       "file": "routers/easybroker_properties.py",
       "handler": "get_propiedad",
       "method": "GET",
-      "path_expression": "'/propiedad/{property_id}'"
+      "path_expression": "'/propiedad/{property_id}'",
+      "path": "/propiedad/{property_id}"
     },
     {
       "file": "routers/facebook_ad_accounts.py",
       "handler": "facebook_ad_accounts",
       "method": "GET",
-      "path_expression": "'/facebook/ad-accounts'"
+      "path_expression": "'/facebook/ad-accounts'",
+      "path": "/facebook/ad-accounts"
     },
     {
       "file": "routers/facebook_ad_description.py",
       "handler": "facebook_ad_description",
       "method": "POST",
-      "path_expression": "'/facebook/ad-description'"
+      "path_expression": "'/facebook/ad-description'",
+      "path": "/facebook/ad-description"
     },
     {
       "file": "routers/facebook_audiences.py",
       "handler": "facebook_audience_from_contacts",
       "method": "POST",
-      "path_expression": "'/facebook/audiences/from-contacts'"
+      "path_expression": "'/facebook/audiences/from-contacts'",
+      "path": "/facebook/audiences/from-contacts"
     },
     {
       "file": "routers/facebook_audiences.py",
       "handler": "facebook_audience_lookalike",
       "method": "POST",
-      "path_expression": "'/facebook/audiences/lookalike'"
+      "path_expression": "'/facebook/audiences/lookalike'",
+      "path": "/facebook/audiences/lookalike"
     },
     {
       "file": "routers/facebook_audiences_read.py",
       "handler": "facebook_audiences_list",
       "method": "GET",
-      "path_expression": "'/facebook/audiences'"
+      "path_expression": "'/facebook/audiences'",
+      "path": "/facebook/audiences"
     },
     {
       "file": "routers/facebook_campaign_review.py",
       "handler": "facebook_campaign_review",
       "method": "GET",
-      "path_expression": "'/facebook/campaign/review'"
+      "path_expression": "'/facebook/campaign/review'",
+      "path": "/facebook/campaign/review"
     },
     {
       "file": "routers/facebook_campaign_toggle.py",
       "handler": "facebook_campaign_toggle",
       "method": "POST",
-      "path_expression": "'/facebook/campaign/toggle'"
+      "path_expression": "'/facebook/campaign/toggle'",
+      "path": "/facebook/campaign/toggle"
     },
     {
       "file": "routers/facebook_campaigns.py",
       "handler": "facebook_campaigns_list",
       "method": "GET",
-      "path_expression": "'/facebook/campaigns'"
+      "path_expression": "'/facebook/campaigns'",
+      "path": "/facebook/campaigns"
     },
     {
       "file": "routers/facebook_city_search.py",
       "handler": "facebook_city_search",
       "method": "GET",
-      "path_expression": "'/facebook/city-search'"
+      "path_expression": "'/facebook/city-search'",
+      "path": "/facebook/city-search"
     },
     {
       "file": "routers/facebook_connection_read.py",
       "handler": "facebook_get_connection",
       "method": "GET",
-      "path_expression": "'/facebook/connection'"
+      "path_expression": "'/facebook/connection'",
+      "path": "/facebook/connection"
     },
     {
       "file": "routers/facebook_create_ad.py",
       "handler": "facebook_create_ad",
       "method": "POST",
-      "path_expression": "'/facebook/create-ad'"
+      "path_expression": "'/facebook/create-ad'",
+      "path": "/facebook/create-ad"
     },
     {
       "file": "routers/facebook_disconnect.py",
       "handler": "facebook_disconnect",
       "method": "DELETE",
-      "path_expression": "'/facebook/connection'"
+      "path_expression": "'/facebook/connection'",
+      "path": "/facebook/connection"
     },
     {
       "file": "routers/facebook_encrypt_tokens.py",
       "handler": "facebook_encrypt_tokens",
       "method": "POST",
-      "path_expression": "'/facebook/encrypt-tokens'"
+      "path_expression": "'/facebook/encrypt-tokens'",
+      "path": "/facebook/encrypt-tokens"
     },
     {
       "file": "routers/facebook_insights_read.py",
       "handler": "facebook_insights",
       "method": "GET",
-      "path_expression": "'/facebook/insights'"
+      "path_expression": "'/facebook/insights'",
+      "path": "/facebook/insights"
     },
     {
       "file": "routers/facebook_leadgen_status.py",
       "handler": "facebook_leadgen_status",
       "method": "GET",
-      "path_expression": "'/facebook/leadgen/status'"
+      "path_expression": "'/facebook/leadgen/status'",
+      "path": "/facebook/leadgen/status"
     },
     {
       "file": "routers/facebook_leadgen_subscribe.py",
       "handler": "facebook_leadgen_subscribe",
       "method": "POST",
-      "path_expression": "'/facebook/leadgen/subscribe'"
+      "path_expression": "'/facebook/leadgen/subscribe'",
+      "path": "/facebook/leadgen/subscribe"
     },
     {
       "file": "routers/facebook_leadgen_verify.py",
       "handler": "facebook_leadgen_verify",
       "method": "GET",
-      "path_expression": "'/facebook/leadgen/webhook'"
+      "path_expression": "'/facebook/leadgen/webhook'",
+      "path": "/facebook/leadgen/webhook"
     },
     {
       "file": "routers/facebook_leadgen_webhook.py",
       "handler": "facebook_leadgen_webhook",
       "method": "POST",
-      "path_expression": "'/facebook/leadgen/webhook'"
+      "path_expression": "'/facebook/leadgen/webhook'",
+      "path": "/facebook/leadgen/webhook"
     },
     {
       "file": "routers/facebook_oauth_callback.py",
       "handler": "facebook_callback",
       "method": "GET",
-      "path_expression": "'/facebook/callback'"
+      "path_expression": "'/facebook/callback'",
+      "path": "/facebook/callback"
     },
     {
       "file": "routers/facebook_page_posts.py",
       "handler": "facebook_page_posts",
       "method": "GET",
-      "path_expression": "'/facebook/page-posts'"
+      "path_expression": "'/facebook/page-posts'",
+      "path": "/facebook/page-posts"
     },
     {
       "file": "routers/facebook_pages.py",
       "handler": "facebook_list_pages",
       "method": "GET",
-      "path_expression": "'/facebook/pages'"
+      "path_expression": "'/facebook/pages'",
+      "path": "/facebook/pages"
     },
     {
       "file": "routers/facebook_publish.py",
       "handler": "facebook_publish",
       "method": "POST",
-      "path_expression": "'/facebook/publish'"
+      "path_expression": "'/facebook/publish'",
+      "path": "/facebook/publish"
     },
     {
       "file": "routers/facebook_publish_property.py",
       "handler": "facebook_publish_property",
       "method": "POST",
-      "path_expression": "'/facebook/publish-property'"
+      "path_expression": "'/facebook/publish-property'",
+      "path": "/facebook/publish-property"
     },
     {
       "file": "routers/facebook_qa_selfcheck.py",
       "handler": "facebook_qa_selfcheck",
       "method": "POST",
-      "path_expression": "'/facebook/qa-selfcheck'"
+      "path_expression": "'/facebook/qa-selfcheck'",
+      "path": "/facebook/qa-selfcheck"
     },
     {
       "file": "routers/facebook_reconcile.py",
       "handler": "facebook_reconcile",
       "method": "POST",
-      "path_expression": "'/facebook/reconcile'"
+      "path_expression": "'/facebook/reconcile'",
+      "path": "/facebook/reconcile"
     },
     {
       "file": "routers/facebook_refresh_token.py",
       "handler": "facebook_refresh_token",
       "method": "POST",
-      "path_expression": "'/facebook/refresh-token'"
+      "path_expression": "'/facebook/refresh-token'",
+      "path": "/facebook/refresh-token"
     },
     {
       "file": "routers/facebook_save_page.py",
       "handler": "facebook_save_page",
       "method": "POST",
-      "path_expression": "'/facebook/save-page'"
+      "path_expression": "'/facebook/save-page'",
+      "path": "/facebook/save-page"
     },
     {
       "file": "routers/facebook_select_ad_account.py",
       "handler": "facebook_select_ad_account",
       "method": "POST",
-      "path_expression": "'/facebook/select-ad-account'"
+      "path_expression": "'/facebook/select-ad-account'",
+      "path": "/facebook/select-ad-account"
     },
     {
       "file": "routers/facebook_select_page.py",
       "handler": "facebook_select_page",
       "method": "POST",
-      "path_expression": "'/facebook/select-page'"
+      "path_expression": "'/facebook/select-page'",
+      "path": "/facebook/select-page"
     },
     {
       "file": "routers/ficha_manual.py",
       "handler": "generar_descripcion_ficha_manual",
       "method": "POST",
-      "path_expression": "'/ficha-manual/descripcion'"
+      "path_expression": "'/ficha-manual/descripcion'",
+      "path": "/ficha-manual/descripcion"
     },
     {
       "file": "routers/ficha_pdf.py",
       "handler": "generar_ficha_pdf",
       "method": "POST",
-      "path_expression": "'/ficha-pdf'"
+      "path_expression": "'/ficha-pdf'",
+      "path": "/ficha-pdf"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "listar_categorias",
       "method": "GET",
-      "path_expression": "'/categorias'"
+      "path_expression": "'/categorias'",
+      "path": "/finanzas/categorias"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "crear_categoria",
       "method": "POST",
-      "path_expression": "'/categorias'"
+      "path_expression": "'/categorias'",
+      "path": "/finanzas/categorias"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "editar_categoria",
       "method": "PATCH",
-      "path_expression": "'/categorias/{cat_id}'"
+      "path_expression": "'/categorias/{cat_id}'",
+      "path": "/finanzas/categorias/{cat_id}"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "borrar_categoria",
       "method": "DELETE",
-      "path_expression": "'/categorias/{cat_id}'"
+      "path_expression": "'/categorias/{cat_id}'",
+      "path": "/finanzas/categorias/{cat_id}"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "listar_cuentas",
       "method": "GET",
-      "path_expression": "'/cuentas'"
+      "path_expression": "'/cuentas'",
+      "path": "/finanzas/cuentas"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "crear_cuenta",
       "method": "POST",
-      "path_expression": "'/cuentas'"
+      "path_expression": "'/cuentas'",
+      "path": "/finanzas/cuentas"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "editar_cuenta",
       "method": "PATCH",
-      "path_expression": "'/cuentas/{cuenta_id}'"
+      "path_expression": "'/cuentas/{cuenta_id}'",
+      "path": "/finanzas/cuentas/{cuenta_id}"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "borrar_cuenta",
       "method": "DELETE",
-      "path_expression": "'/cuentas/{cuenta_id}'"
+      "path_expression": "'/cuentas/{cuenta_id}'",
+      "path": "/finanzas/cuentas/{cuenta_id}"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "listar_movimientos",
       "method": "GET",
-      "path_expression": "'/movimientos'"
+      "path_expression": "'/movimientos'",
+      "path": "/finanzas/movimientos"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "crear_movimiento",
       "method": "POST",
-      "path_expression": "'/movimientos'"
+      "path_expression": "'/movimientos'",
+      "path": "/finanzas/movimientos"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "editar_movimiento",
       "method": "PATCH",
-      "path_expression": "'/movimientos/{mov_id}'"
+      "path_expression": "'/movimientos/{mov_id}'",
+      "path": "/finanzas/movimientos/{mov_id}"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "borrar_movimiento",
       "method": "DELETE",
-      "path_expression": "'/movimientos/{mov_id}'"
+      "path_expression": "'/movimientos/{mov_id}'",
+      "path": "/finanzas/movimientos/{mov_id}"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "subir_comprobante",
       "method": "POST",
-      "path_expression": "'/movimientos/{mov_id}/comprobante'"
+      "path_expression": "'/movimientos/{mov_id}/comprobante'",
+      "path": "/finanzas/movimientos/{mov_id}/comprobante"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "liga_comprobante",
       "method": "GET",
-      "path_expression": "'/movimientos/{mov_id}/comprobante'"
+      "path_expression": "'/movimientos/{mov_id}/comprobante'",
+      "path": "/finanzas/movimientos/{mov_id}/comprobante"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "leer_ticket",
       "method": "POST",
-      "path_expression": "'/ticket'"
+      "path_expression": "'/ticket'",
+      "path": "/finanzas/ticket"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "comisiones_pendientes",
       "method": "GET",
-      "path_expression": "'/comisiones-pendientes'"
+      "path_expression": "'/comisiones-pendientes'",
+      "path": "/finanzas/comisiones-pendientes"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "resumen",
       "method": "GET",
-      "path_expression": "'/resumen'"
+      "path_expression": "'/resumen'",
+      "path": "/finanzas/resumen"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "generar_reporte",
       "method": "POST",
-      "path_expression": "'/reporte'"
+      "path_expression": "'/reporte'",
+      "path": "/finanzas/reporte"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "descargar_reporte",
       "method": "GET",
-      "path_expression": "'/reporte/{token}'"
+      "path_expression": "'/reporte/{token}'",
+      "path": "/finanzas/reporte/{token}"
     },
     {
       "file": "routers/finanzas.py",
       "handler": "reporte_csv",
       "method": "GET",
-      "path_expression": "'/reporte.csv'"
+      "path_expression": "'/reporte.csv'",
+      "path": "/finanzas/reporte.csv"
     },
     {
       "file": "routers/firmas.py",
       "handler": "listar_documentos",
       "method": "GET",
-      "path_expression": "'/documentos'"
+      "path_expression": "'/documentos'",
+      "path": "/firmas/documentos"
     },
     {
       "file": "routers/firmas.py",
       "handler": "crear_documento",
       "method": "POST",
-      "path_expression": "'/documentos'"
+      "path_expression": "'/documentos'",
+      "path": "/firmas/documentos"
     },
     {
       "file": "routers/firmas.py",
       "handler": "ver_documento",
       "method": "GET",
-      "path_expression": "'/documentos/{documento_id}'"
+      "path_expression": "'/documentos/{documento_id}'",
+      "path": "/firmas/documentos/{documento_id}"
     },
     {
       "file": "routers/firmas.py",
       "handler": "editar_documento",
       "method": "PATCH",
-      "path_expression": "'/documentos/{documento_id}'"
+      "path_expression": "'/documentos/{documento_id}'",
+      "path": "/firmas/documentos/{documento_id}"
     },
     {
       "file": "routers/firmas.py",
       "handler": "borrar_documento",
       "method": "DELETE",
-      "path_expression": "'/documentos/{documento_id}'"
+      "path_expression": "'/documentos/{documento_id}'",
+      "path": "/firmas/documentos/{documento_id}"
     },
     {
       "file": "routers/firmas.py",
       "handler": "cancelar_documento",
       "method": "POST",
-      "path_expression": "'/documentos/{documento_id}/cancelar'"
+      "path_expression": "'/documentos/{documento_id}/cancelar'",
+      "path": "/firmas/documentos/{documento_id}/cancelar"
     },
     {
       "file": "routers/firmas.py",
       "handler": "subir_archivo",
       "method": "POST",
-      "path_expression": "'/documentos/{documento_id}/archivo'"
+      "path_expression": "'/documentos/{documento_id}/archivo'",
+      "path": "/firmas/documentos/{documento_id}/archivo"
     },
     {
       "file": "routers/firmas.py",
       "handler": "desde_contrato",
       "method": "POST",
-      "path_expression": "'/desde-contrato'"
+      "path_expression": "'/desde-contrato'",
+      "path": "/firmas/desde-contrato"
     },
     {
       "file": "routers/firmas.py",
       "handler": "desde_contrato_estado",
       "method": "GET",
-      "path_expression": "'/desde-contrato/{job_id}'"
+      "path_expression": "'/desde-contrato/{job_id}'",
+      "path": "/firmas/desde-contrato/{job_id}"
     },
     {
       "file": "routers/firmas.py",
       "handler": "abrir_archivo",
       "method": "GET",
-      "path_expression": "'/documentos/{documento_id}/archivo'"
+      "path_expression": "'/documentos/{documento_id}/archivo'",
+      "path": "/firmas/documentos/{documento_id}/archivo"
     },
     {
       "file": "routers/firmas.py",
       "handler": "agregar_firmante",
       "method": "POST",
-      "path_expression": "'/documentos/{documento_id}/firmantes'"
+      "path_expression": "'/documentos/{documento_id}/firmantes'",
+      "path": "/firmas/documentos/{documento_id}/firmantes"
     },
     {
       "file": "routers/firmas.py",
       "handler": "editar_firmante",
       "method": "PATCH",
-      "path_expression": "'/firmantes/{firmante_id}'"
+      "path_expression": "'/firmantes/{firmante_id}'",
+      "path": "/firmas/firmantes/{firmante_id}"
     },
     {
       "file": "routers/firmas.py",
       "handler": "quitar_firmante",
       "method": "DELETE",
-      "path_expression": "'/firmantes/{firmante_id}'"
+      "path_expression": "'/firmantes/{firmante_id}'",
+      "path": "/firmas/firmantes/{firmante_id}"
     },
     {
       "file": "routers/firmas.py",
       "handler": "enviar_a_firma",
       "method": "POST",
-      "path_expression": "'/documentos/{documento_id}/enviar'"
+      "path_expression": "'/documentos/{documento_id}/enviar'",
+      "path": "/firmas/documentos/{documento_id}/enviar"
     },
     {
       "file": "routers/firmas.py",
       "handler": "recordar",
       "method": "POST",
-      "path_expression": "'/firmantes/{firmante_id}/recordar'"
+      "path_expression": "'/firmantes/{firmante_id}/recordar'",
+      "path": "/firmas/firmantes/{firmante_id}/recordar"
     },
     {
       "file": "routers/firmas.py",
       "handler": "publico_leer",
       "method": "GET",
-      "path_expression": "'/publico/{token}'"
+      "path_expression": "'/publico/{token}'",
+      "path": "/firmas/publico/{token}"
     },
     {
       "file": "routers/firmas.py",
       "handler": "publico_archivo",
       "method": "GET",
-      "path_expression": "'/publico/{token}/archivo'"
+      "path_expression": "'/publico/{token}/archivo'",
+      "path": "/firmas/publico/{token}/archivo"
     },
     {
       "file": "routers/firmas.py",
       "handler": "publico_ine",
       "method": "POST",
-      "path_expression": "'/publico/{token}/ine'"
+      "path_expression": "'/publico/{token}/ine'",
+      "path": "/firmas/publico/{token}/ine"
     },
     {
       "file": "routers/firmas.py",
       "handler": "publico_pedir_codigo",
       "method": "POST",
-      "path_expression": "'/publico/{token}/codigo'"
+      "path_expression": "'/publico/{token}/codigo'",
+      "path": "/firmas/publico/{token}/codigo"
     },
     {
       "file": "routers/firmas.py",
       "handler": "publico_firmar",
       "method": "POST",
-      "path_expression": "'/publico/{token}/firmar'"
+      "path_expression": "'/publico/{token}/firmar'",
+      "path": "/firmas/publico/{token}/firmar"
     },
     {
       "file": "routers/firmas.py",
       "handler": "publico_rechazar",
       "method": "POST",
-      "path_expression": "'/publico/{token}/rechazar'"
+      "path_expression": "'/publico/{token}/rechazar'",
+      "path": "/firmas/publico/{token}/rechazar"
     },
     {
       "file": "routers/firmas.py",
       "handler": "resellar",
       "method": "POST",
-      "path_expression": "'/documentos/{documento_id}/sellar'"
+      "path_expression": "'/documentos/{documento_id}/sellar'",
+      "path": "/firmas/documentos/{documento_id}/sellar"
     },
     {
       "file": "routers/firmas.py",
       "handler": "reintentar_nom151",
       "method": "POST",
-      "path_expression": "'/documentos/{documento_id}/nom151'"
+      "path_expression": "'/documentos/{documento_id}/nom151'",
+      "path": "/firmas/documentos/{documento_id}/nom151"
     },
     {
       "file": "routers/firmas.py",
       "handler": "ver_paginas",
       "method": "GET",
-      "path_expression": "'/documentos/{documento_id}/paginas'"
+      "path_expression": "'/documentos/{documento_id}/paginas'",
+      "path": "/firmas/documentos/{documento_id}/paginas"
     },
     {
       "file": "routers/firmas.py",
       "handler": "listar_campos",
       "method": "GET",
-      "path_expression": "'/documentos/{documento_id}/campos'"
+      "path_expression": "'/documentos/{documento_id}/campos'",
+      "path": "/firmas/documentos/{documento_id}/campos"
     },
     {
       "file": "routers/firmas.py",
       "handler": "crear_campo",
       "method": "POST",
-      "path_expression": "'/documentos/{documento_id}/campos'"
+      "path_expression": "'/documentos/{documento_id}/campos'",
+      "path": "/firmas/documentos/{documento_id}/campos"
     },
     {
       "file": "routers/firmas.py",
       "handler": "borrar_campo",
       "method": "DELETE",
-      "path_expression": "'/campos/{campo_id}'"
+      "path_expression": "'/campos/{campo_id}'",
+      "path": "/firmas/campos/{campo_id}"
     },
     {
       "file": "routers/firmas.py",
       "handler": "rubricar_todas",
       "method": "POST",
-      "path_expression": "'/documentos/{documento_id}/rubricar-todas'"
+      "path_expression": "'/documentos/{documento_id}/rubricar-todas'",
+      "path": "/firmas/documentos/{documento_id}/rubricar-todas"
     },
     {
       "file": "routers/firmas.py",
       "handler": "verificar",
       "method": "GET",
-      "path_expression": "'/verificar/{folio}'"
+      "path_expression": "'/verificar/{folio}'",
+      "path": "/firmas/verificar/{folio}"
     },
     {
       "file": "routers/firmas.py",
       "handler": "probar_correo",
       "method": "POST",
-      "path_expression": "'/probar-correo'"
+      "path_expression": "'/probar-correo'",
+      "path": "/firmas/probar-correo"
     },
     {
       "file": "routers/firmas.py",
       "handler": "mi_acceso",
       "method": "GET",
-      "path_expression": "'/mi-acceso'"
+      "path_expression": "'/mi-acceso'",
+      "path": "/firmas/mi-acceso"
     },
     {
       "file": "routers/firmas.py",
       "handler": "salud",
       "method": "GET",
-      "path_expression": "'/salud'"
+      "path_expression": "'/salud'",
+      "path": "/firmas/salud"
     },
     {
       "file": "routers/image_cleaner.py",
       "handler": "clean_images",
       "method": "POST",
-      "path_expression": "'/images/clean'"
+      "path_expression": "'/images/clean'",
+      "path": "/images/clean"
     },
     {
       "file": "routers/instagram.py",
       "handler": "instagram_feed",
       "method": "GET",
-      "path_expression": "'/instagram/feed'"
+      "path_expression": "'/instagram/feed'",
+      "path": "/instagram/feed"
     },
     {
       "file": "routers/isr_pdf.py",
       "handler": "generar_isr_pdf",
       "method": "POST",
-      "path_expression": "'/isr-pdf'"
+      "path_expression": "'/isr-pdf'",
+      "path": "/isr-pdf"
     },
     {
       "file": "routers/machotes.py",
       "handler": "abrir_machote",
       "method": "POST",
-      "path_expression": "'/contrato/machote/abrir'"
+      "path_expression": "'/contrato/machote/abrir'",
+      "path": "/contrato/machote/abrir"
     },
     {
       "file": "routers/machotes.py",
       "handler": "sugerir_campos_machote",
       "method": "POST",
-      "path_expression": "'/contrato/machote/sugerir'"
+      "path_expression": "'/contrato/machote/sugerir'",
+      "path": "/contrato/machote/sugerir"
     },
     {
       "file": "routers/machotes.py",
       "handler": "crear_machote",
       "method": "POST",
-      "path_expression": "'/contrato/machote/crear'"
+      "path_expression": "'/contrato/machote/crear'",
+      "path": "/contrato/machote/crear"
     },
     {
       "file": "routers/machotes.py",
       "handler": "listar_machotes",
       "method": "GET",
-      "path_expression": "'/contrato/machotes'"
+      "path_expression": "'/contrato/machotes'",
+      "path": "/contrato/machotes"
     },
     {
       "file": "routers/machotes.py",
       "handler": "obtener_machote",
       "method": "GET",
-      "path_expression": "'/contrato/machote/{machote_id}'"
+      "path_expression": "'/contrato/machote/{machote_id}'",
+      "path": "/contrato/machote/{machote_id}"
     },
     {
       "file": "routers/machotes.py",
       "handler": "actualizar_machote",
       "method": "PATCH",
-      "path_expression": "'/contrato/machote/{machote_id}'"
+      "path_expression": "'/contrato/machote/{machote_id}'",
+      "path": "/contrato/machote/{machote_id}"
     },
     {
       "file": "routers/machotes.py",
       "handler": "previsualizar_machote",
       "method": "POST",
-      "path_expression": "'/contrato/machote/{machote_id}/preview'"
+      "path_expression": "'/contrato/machote/{machote_id}/preview'",
+      "path": "/contrato/machote/{machote_id}/preview"
     },
     {
       "file": "routers/machotes.py",
       "handler": "generar_desde_machote_guardado",
       "method": "POST",
-      "path_expression": "'/contrato/machote/{machote_id}/generar'"
+      "path_expression": "'/contrato/machote/{machote_id}/generar'",
+      "path": "/contrato/machote/{machote_id}/generar"
     },
     {
       "file": "routers/machotes.py",
       "handler": "eliminar_machote",
       "method": "DELETE",
-      "path_expression": "'/contrato/machote/{machote_id}'"
+      "path_expression": "'/contrato/machote/{machote_id}'",
+      "path": "/contrato/machote/{machote_id}"
     },
     {
       "file": "routers/news.py",
       "handler": "get_noticias",
       "method": "GET",
-      "path_expression": "'/noticias'"
+      "path_expression": "'/noticias'",
+      "path": "/noticias"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "mi_organizacion",
       "method": "GET",
-      "path_expression": "'/org'"
+      "path_expression": "'/org'",
+      "path": "/org"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "listar_miembros",
       "method": "GET",
-      "path_expression": "'/org/miembros'"
+      "path_expression": "'/org/miembros'",
+      "path": "/org/miembros"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "correo_existe",
       "method": "GET",
-      "path_expression": "'/auth/correo-existe'"
+      "path_expression": "'/auth/correo-existe'",
+      "path": "/auth/correo-existe"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "invitar",
       "method": "POST",
-      "path_expression": "'/org/invitar'"
+      "path_expression": "'/org/invitar'",
+      "path": "/org/invitar"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "listar_invitaciones",
       "method": "GET",
-      "path_expression": "'/org/invitaciones'"
+      "path_expression": "'/org/invitaciones'",
+      "path": "/org/invitaciones"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "cancelar_invitacion",
       "method": "DELETE",
-      "path_expression": "'/org/invitacion/{inv_id}'"
+      "path_expression": "'/org/invitacion/{inv_id}'",
+      "path": "/org/invitacion/{inv_id}"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "ver_invitacion",
       "method": "GET",
-      "path_expression": "'/org/invitacion/{token}'"
+      "path_expression": "'/org/invitacion/{token}'",
+      "path": "/org/invitacion/{token}"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "aceptar_invitacion",
       "method": "POST",
-      "path_expression": "'/org/aceptar-invitacion'"
+      "path_expression": "'/org/aceptar-invitacion'",
+      "path": "/org/aceptar-invitacion"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "cambiar_rol",
       "method": "POST",
-      "path_expression": "'/org/miembro/rol'"
+      "path_expression": "'/org/miembro/rol'",
+      "path": "/org/miembro/rol"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "cambiar_permisos",
       "method": "POST",
-      "path_expression": "'/org/miembro/permisos'"
+      "path_expression": "'/org/miembro/permisos'",
+      "path": "/org/miembro/permisos"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "cambiar_activo",
       "method": "POST",
-      "path_expression": "'/org/miembro/activo'"
+      "path_expression": "'/org/miembro/activo'",
+      "path": "/org/miembro/activo"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "cambiar_nombre",
       "method": "POST",
-      "path_expression": "'/org/nombre'"
+      "path_expression": "'/org/nombre'",
+      "path": "/org/nombre"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "convertir_a_empresa",
       "method": "POST",
-      "path_expression": "'/admin/org/convertir'"
+      "path_expression": "'/admin/org/convertir'",
+      "path": "/admin/org/convertir"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "quitar_estatus_empresa",
       "method": "POST",
-      "path_expression": "'/admin/org/desconvertir'"
+      "path_expression": "'/admin/org/desconvertir'",
+      "path": "/admin/org/desconvertir"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "listar_organizaciones",
       "method": "GET",
-      "path_expression": "'/admin/org/lista'"
+      "path_expression": "'/admin/org/lista'",
+      "path": "/admin/org/lista"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "asignar_agente",
       "method": "POST",
-      "path_expression": "'/org/asignar'"
+      "path_expression": "'/org/asignar'",
+      "path": "/org/asignar"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "contactos_de_mis_tareas",
       "method": "POST",
-      "path_expression": "'/org/tareas/contactos-vinculados'"
+      "path_expression": "'/org/tareas/contactos-vinculados'",
+      "path": "/org/tareas/contactos-vinculados"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "borrar_tarea",
       "method": "DELETE",
-      "path_expression": "'/org/tareas/{tarea_id}'"
+      "path_expression": "'/org/tareas/{tarea_id}'",
+      "path": "/org/tareas/{tarea_id}"
     },
     {
       "file": "routers/organizaciones.py",
       "handler": "cambiar_etapa_contacto",
       "method": "PATCH",
-      "path_expression": "'/org/contactos/{contacto_id}/etapa'"
+      "path_expression": "'/org/contactos/{contacto_id}/etapa'",
+      "path": "/org/contactos/{contacto_id}/etapa"
     },
     {
       "file": "routers/pdf_downloads.py",
       "handler": "descargar_avm_pdf",
       "method": "GET",
-      "path_expression": "'/avm-pdf/{token}'"
+      "path_expression": "'/avm-pdf/{token}'",
+      "path": "/avm-pdf/{token}"
     },
     {
       "file": "routers/pdf_downloads.py",
       "handler": "descargar_isr_pdf",
       "method": "GET",
-      "path_expression": "'/isr-pdf/{token}'"
+      "path_expression": "'/isr-pdf/{token}'",
+      "path": "/isr-pdf/{token}"
     },
     {
       "file": "routers/pdf_downloads.py",
       "handler": "descargar_ficha_pdf",
       "method": "GET",
-      "path_expression": "'/ficha-pdf/{token}'"
+      "path_expression": "'/ficha-pdf/{token}'",
+      "path": "/ficha-pdf/{token}"
     },
     {
       "file": "routers/profile_status.py",
       "handler": "get_profile_status",
       "method": "GET",
-      "path_expression": "'/profile/status'"
+      "path_expression": "'/profile/status'",
+      "path": "/profile/status"
     },
     {
       "file": "routers/propiedades_actualizar.py",
       "handler": "actualizar_propiedad",
       "method": "PATCH",
-      "path_expression": "'/propiedades/{prop_id}'"
+      "path_expression": "'/propiedades/{prop_id}'",
+      "path": "/propiedades/{prop_id}"
     },
     {
       "file": "routers/public_config.py",
       "handler": "get_public_config",
       "method": "GET",
-      "path_expression": "'/config/public'"
+      "path_expression": "'/config/public'",
+      "path": "/config/public"
     },
     {
       "file": "routers/public_site_leads.py",
       "handler": "sitio_registrar_lead",
       "method": "POST",
-      "path_expression": "'/sitio/{slug}/lead'"
+      "path_expression": "'/sitio/{slug}/lead'",
+      "path": "/sitio/{slug}/lead"
     },
     {
       "file": "routers/revenuecat.py",
       "handler": "revenuecat_webhook",
       "method": "POST",
-      "path_expression": "'/subscription/revenuecat-webhook'"
+      "path_expression": "'/subscription/revenuecat-webhook'",
+      "path": "/subscription/revenuecat-webhook"
     },
     {
       "file": "routers/solicitud_arrendamiento.py",
       "handler": "analizar_solicitud_arrendamiento",
       "method": "POST",
-      "path_expression": "'/solicitud-arrendamiento/analizar'"
+      "path_expression": "'/solicitud-arrendamiento/analizar'",
+      "path": "/solicitud-arrendamiento/analizar"
     },
     {
       "file": "routers/soporte.py",
       "handler": "enviar_mensaje",
       "method": "POST",
-      "path_expression": "'/soporte/mensaje'"
+      "path_expression": "'/soporte/mensaje'",
+      "path": "/soporte/mensaje"
     },
     {
       "file": "routers/staging.py",
       "handler": "amueblar",
       "method": "POST",
-      "path_expression": "'/amueblar'"
+      "path_expression": "'/amueblar'",
+      "path": "/staging/amueblar"
     },
     {
       "file": "routers/stripe_webhook.py",
       "handler": "stripe_webhook",
       "method": "POST",
-      "path_expression": "'/subscription/webhook'"
+      "path_expression": "'/subscription/webhook'",
+      "path": "/subscription/webhook"
     },
     {
       "file": "routers/subscription_activate.py",
       "handler": "subscription_activate",
       "method": "POST",
-      "path_expression": "'/subscription/activate'"
+      "path_expression": "'/subscription/activate'",
+      "path": "/subscription/activate"
     },
     {
       "file": "routers/subscription_cancel.py",
       "handler": "subscription_cancel",
       "method": "POST",
-      "path_expression": "'/subscription/cancel'"
+      "path_expression": "'/subscription/cancel'",
+      "path": "/subscription/cancel"
     },
     {
       "file": "routers/subscription_checkout.py",
       "handler": "subscription_checkout",
       "method": "POST",
-      "path_expression": "'/subscription/checkout'"
+      "path_expression": "'/subscription/checkout'",
+      "path": "/subscription/checkout"
     },
     {
       "file": "routers/subscription_enterprise.py",
       "handler": "empresa_plan",
       "method": "GET",
-      "path_expression": "'/subscription/empresa/plan'"
+      "path_expression": "'/subscription/empresa/plan'",
+      "path": "/subscription/empresa/plan"
     },
     {
       "file": "routers/subscription_enterprise.py",
       "handler": "empresa_checkout",
       "method": "POST",
-      "path_expression": "'/subscription/empresa/checkout'"
+      "path_expression": "'/subscription/empresa/checkout'",
+      "path": "/subscription/empresa/checkout"
     },
     {
       "file": "routers/subscription_enterprise.py",
       "handler": "empresa_asientos",
       "method": "POST",
-      "path_expression": "'/subscription/empresa/asientos'"
+      "path_expression": "'/subscription/empresa/asientos'",
+      "path": "/subscription/empresa/asientos"
     },
     {
       "file": "routers/subscription_status.py",
       "handler": "subscription_status",
       "method": "GET",
-      "path_expression": "'/subscription/status'"
+      "path_expression": "'/subscription/status'",
+      "path": "/subscription/status"
     },
     {
       "file": "routers/system.py",
       "handler": "root",
       "method": "GET",
-      "path_expression": "'/'"
+      "path_expression": "'/'",
+      "path": "/"
     },
     {
       "file": "routers/system.py",
       "handler": "ping",
       "method": "GET",
-      "path_expression": "'/ping'"
+      "path_expression": "'/ping'",
+      "path": "/ping"
     },
     {
       "file": "routers/telemetry.py",
       "handler": "telemetria_sesion_modulo",
       "method": "POST",
-      "path_expression": "'/telemetria/sesion-modulo'"
+      "path_expression": "'/telemetria/sesion-modulo'",
+      "path": "/telemetria/sesion-modulo"
     },
     {
       "file": "routers/video.py",
       "handler": "generar",
       "method": "POST",
-      "path_expression": "'/generar'"
+      "path_expression": "'/generar'",
+      "path": "/video/generar"
     },
     {
       "file": "routers/video.py",
       "handler": "estado",
       "method": "GET",
-      "path_expression": "'/estado/{job_id}'"
+      "path_expression": "'/estado/{job_id}'",
+      "path": "/video/estado/{job_id}"
     },
     {
       "file": "routers/video.py",
       "handler": "por_propiedad",
       "method": "GET",
-      "path_expression": "'/propiedad/{propiedad_id}'"
+      "path_expression": "'/propiedad/{propiedad_id}'",
+      "path": "/video/propiedad/{propiedad_id}"
     },
     {
       "file": "routers/video.py",
       "handler": "mis_videos",
       "method": "GET",
-      "path_expression": "'/mis-videos'"
+      "path_expression": "'/mis-videos'",
+      "path": "/video/mis-videos"
     },
     {
       "file": "routers/video.py",
       "handler": "borrar",
       "method": "DELETE",
-      "path_expression": "'/{job_id}'"
+      "path_expression": "'/{job_id}'",
+      "path": "/video/{job_id}"
     },
     {
       "file": "routers/whatsapp_app_subscription.py",
       "handler": "wa2_app_webhook_status",
       "method": "GET",
-      "path_expression": "'/app-webhook'"
+      "path_expression": "'/app-webhook'",
+      "path": "/whatsapp2/app-webhook"
     },
     {
       "file": "routers/whatsapp_app_subscription.py",
       "handler": "wa2_app_webhook_fix",
       "method": "POST",
-      "path_expression": "'/app-webhook'"
+      "path_expression": "'/app-webhook'",
+      "path": "/whatsapp2/app-webhook"
     },
     {
       "file": "routers/whatsapp_app_subscription.py",
       "handler": "wa2_numero_app_suscrito",
       "method": "GET",
-      "path_expression": "'/numeros/{numero_id}/app-suscrito'"
+      "path_expression": "'/numeros/{numero_id}/app-suscrito'",
+      "path": "/whatsapp2/numeros/{numero_id}/app-suscrito"
     },
     {
       "file": "routers/whatsapp_appointments.py",
       "handler": "wa2_agendar",
       "method": "POST",
-      "path_expression": "'/agendar'"
+      "path_expression": "'/agendar'",
+      "path": "/whatsapp2/agendar"
     },
     {
       "file": "routers/whatsapp_automations_api.py",
       "handler": "wa2_automatizaciones_list",
       "method": "GET",
-      "path_expression": "'/automatizaciones'"
+      "path_expression": "'/automatizaciones'",
+      "path": "/whatsapp2/automatizaciones"
     },
     {
       "file": "routers/whatsapp_automations_api.py",
       "handler": "wa2_automatizacion_crear",
       "method": "POST",
-      "path_expression": "'/automatizaciones'"
+      "path_expression": "'/automatizaciones'",
+      "path": "/whatsapp2/automatizaciones"
     },
     {
       "file": "routers/whatsapp_automations_api.py",
       "handler": "wa2_automatizacion_patch",
       "method": "PATCH",
-      "path_expression": "'/automatizaciones/{auto_id}'"
+      "path_expression": "'/automatizaciones/{auto_id}'",
+      "path": "/whatsapp2/automatizaciones/{auto_id}"
     },
     {
       "file": "routers/whatsapp_automations_api.py",
       "handler": "wa2_automatizacion_delete",
       "method": "DELETE",
-      "path_expression": "'/automatizaciones/{auto_id}'"
+      "path_expression": "'/automatizaciones/{auto_id}'",
+      "path": "/whatsapp2/automatizaciones/{auto_id}"
     },
     {
       "file": "routers/whatsapp_campaigns_read.py",
       "handler": "wa2_etiquetas_list",
       "method": "GET",
-      "path_expression": "'/etiquetas'"
+      "path_expression": "'/etiquetas'",
+      "path": "/whatsapp2/etiquetas"
     },
     {
       "file": "routers/whatsapp_campaigns_read.py",
       "handler": "wa2_campana_audiencia",
       "method": "POST",
-      "path_expression": "'/campanas/audiencia'"
+      "path_expression": "'/campanas/audiencia'",
+      "path": "/whatsapp2/campanas/audiencia"
     },
     {
       "file": "routers/whatsapp_campaigns_read.py",
       "handler": "wa2_campanas_list",
       "method": "GET",
-      "path_expression": "'/campanas'"
+      "path_expression": "'/campanas'",
+      "path": "/whatsapp2/campanas"
     },
     {
       "file": "routers/whatsapp_campaigns_read.py",
       "handler": "wa2_campana_detalle",
       "method": "GET",
-      "path_expression": "'/campanas/{campana_id}'"
+      "path_expression": "'/campanas/{campana_id}'",
+      "path": "/whatsapp2/campanas/{campana_id}"
     },
     {
       "file": "routers/whatsapp_campaigns_send.py",
       "handler": "wa2_campana_crear",
       "method": "POST",
-      "path_expression": "'/campanas'"
+      "path_expression": "'/campanas'",
+      "path": "/whatsapp2/campanas"
     },
     {
       "file": "routers/whatsapp_chatgpt.py",
       "handler": "config",
       "method": "GET",
-      "path_expression": "'/config'"
+      "path_expression": "'/config'",
+      "path": "/whatsapp-chatgpt/config"
     },
     {
       "file": "routers/whatsapp_chatgpt.py",
       "handler": "numbers",
       "method": "GET",
-      "path_expression": "'/numbers'"
+      "path_expression": "'/numbers'",
+      "path": "/whatsapp-chatgpt/numbers"
     },
     {
       "file": "routers/whatsapp_chatgpt.py",
       "handler": "complete_signup",
       "method": "POST",
-      "path_expression": "'/complete-signup'"
+      "path_expression": "'/complete-signup'",
+      "path": "/whatsapp-chatgpt/complete-signup"
     },
     {
       "file": "routers/whatsapp_chatgpt.py",
       "handler": "send_test",
       "method": "POST",
-      "path_expression": "'/send-test'"
+      "path_expression": "'/send-test'",
+      "path": "/whatsapp-chatgpt/send-test"
     },
     {
       "file": "routers/whatsapp_connection.py",
       "handler": "wa2_connect",
       "method": "POST",
-      "path_expression": "'/connect'"
+      "path_expression": "'/connect'",
+      "path": "/connect"
     },
     {
       "file": "routers/whatsapp_connection.py",
       "handler": "wa2_numero_verificar",
       "method": "GET",
-      "path_expression": "'/numeros/{numero_id}/verificar'"
+      "path_expression": "'/numeros/{numero_id}/verificar'",
+      "path": "/numeros/{numero_id}/verificar"
     },
     {
       "file": "routers/whatsapp_connection.py",
       "handler": "wa2_numeros_list",
       "method": "GET",
-      "path_expression": "'/numeros'"
+      "path_expression": "'/numeros'",
+      "path": "/numeros"
     },
     {
       "file": "routers/whatsapp_connection.py",
       "handler": "wa2_numero_patch",
       "method": "PATCH",
-      "path_expression": "'/numeros/{numero_id}'"
+      "path_expression": "'/numeros/{numero_id}'",
+      "path": "/numeros/{numero_id}"
     },
     {
       "file": "routers/whatsapp_contact_notes.py",
       "handler": "wa2_agregar_nota",
       "method": "POST",
-      "path_expression": "'/contactos/{contacto_id}/notas'"
+      "path_expression": "'/contactos/{contacto_id}/notas'",
+      "path": "/whatsapp2/contactos/{contacto_id}/notas"
     },
     {
       "file": "routers/whatsapp_contact_settings.py",
       "handler": "wa2_contacto_patch",
       "method": "PATCH",
-      "path_expression": "'/contactos/{contacto_id}'"
+      "path_expression": "'/contactos/{contacto_id}'",
+      "path": "/contactos/{contacto_id}"
     },
     {
       "file": "routers/whatsapp_conversation_settings.py",
       "handler": "wa2_conversacion_patch",
       "method": "PATCH",
-      "path_expression": "'/conversaciones/{conversacion_id}'"
+      "path_expression": "'/conversaciones/{conversacion_id}'",
+      "path": "/conversaciones/{conversacion_id}"
     },
     {
       "file": "routers/whatsapp_delete.py",
       "handler": "wa2_numero_delete",
       "method": "DELETE",
-      "path_expression": "'/numeros/{numero_id}'"
+      "path_expression": "'/numeros/{numero_id}'",
+      "path": "/numeros/{numero_id}"
     },
     {
       "file": "routers/whatsapp_delete.py",
       "handler": "wa2_borrar_mensaje",
       "method": "DELETE",
-      "path_expression": "'/mensajes/{mensaje_id}'"
+      "path_expression": "'/mensajes/{mensaje_id}'",
+      "path": "/mensajes/{mensaje_id}"
     },
     {
       "file": "routers/whatsapp_delete.py",
       "handler": "wa2_borrar_conversacion",
       "method": "DELETE",
-      "path_expression": "'/conversaciones/{conversacion_id}'"
+      "path_expression": "'/conversaciones/{conversacion_id}'",
+      "path": "/conversaciones/{conversacion_id}"
     },
     {
       "file": "routers/whatsapp_inbox_read.py",
       "handler": "wa2_conversaciones_list",
       "method": "GET",
-      "path_expression": "'/conversaciones'"
+      "path_expression": "'/conversaciones'",
+      "path": "/conversaciones"
     },
     {
       "file": "routers/whatsapp_inbox_read.py",
       "handler": "wa2_mensajes_list",
       "method": "GET",
-      "path_expression": "'/mensajes'"
+      "path_expression": "'/mensajes'",
+      "path": "/mensajes"
     },
     {
       "file": "routers/whatsapp_inbox_read_state.py",
       "handler": "wa2_lectura",
       "method": "POST",
-      "path_expression": "'/conversaciones/{conversacion_id}/lectura'"
+      "path_expression": "'/conversaciones/{conversacion_id}/lectura'",
+      "path": "/whatsapp2/conversaciones/{conversacion_id}/lectura"
     },
     {
       "file": "routers/whatsapp_inbox_send.py",
       "handler": "wa2_enviar_manual",
       "method": "POST",
-      "path_expression": "'/mensajes'"
+      "path_expression": "'/mensajes'",
+      "path": "/whatsapp2/mensajes"
     },
     {
       "file": "routers/whatsapp_template_send.py",
       "handler": "wa2_enviar_plantilla",
       "method": "POST",
-      "path_expression": "'/mensajes/plantilla'"
+      "path_expression": "'/mensajes/plantilla'",
+      "path": "/whatsapp2/mensajes/plantilla"
     },
     {
       "file": "routers/whatsapp_templates.py",
       "handler": "wa2_plantillas_list",
       "method": "GET",
-      "path_expression": "'/plantillas'"
+      "path_expression": "'/plantillas'",
+      "path": "/whatsapp2/plantillas"
     },
     {
       "file": "routers/whatsapp_templates.py",
       "handler": "wa2_plantilla_crear",
       "method": "POST",
-      "path_expression": "'/plantillas'"
+      "path_expression": "'/plantillas'",
+      "path": "/whatsapp2/plantillas"
     },
     {
       "file": "routers/whatsapp_training_api.py",
       "handler": "wa2_training_get",
       "method": "GET",
-      "path_expression": "'/entrenamiento'"
+      "path_expression": "'/entrenamiento'",
+      "path": "/entrenamiento"
     },
     {
       "file": "routers/whatsapp_training_api.py",
       "handler": "wa2_training_put",
       "method": "PUT",
-      "path_expression": "'/entrenamiento'"
+      "path_expression": "'/entrenamiento'",
+      "path": "/entrenamiento"
     }
   ],
-  "changed_backend_or_existing_tests": [],
-  "warning": "Static inventory, not a certification of functional or visual parity. Router prefixes are not expanded."
+  "changed_backend_or_existing_tests": [
+    "main.py"
+  ],
+  "warning": "Static inventory, not a certification of functional or visual parity. Local APIRouter prefixes expanded; nested mounts and dynamic route registrations require runtime comparison."
 }

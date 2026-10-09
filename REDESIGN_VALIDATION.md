@@ -3,8 +3,8 @@
 ## Alcance conservado
 
 52 HTML inventariados, incluidos páginas públicas, callbacks, prototipos y plantilla.
-268 declaraciones de endpoints inventariadas (sin expandir prefijos de routers).
-Ningún ID de control original eliminado. Backend y tests originales sin cambios.
+268 declaraciones de endpoints inventariadas, con prefijos locales expandidos; falta comparar montajes dinámicos.
+Ningún ID de control original eliminado. Los handlers originales y tests existentes se conservan. main.py instala una protección de staging antes de importar servicios; solo se activa con BROQUER_ENV=staging.
 Esto es evidencia estática, no una certificación funcional completa.
 
 ## Navegador
@@ -57,3 +57,22 @@ interceptadas no certifica autenticación o guardado reales.
 
 La configuración concreta que falta para avanzar a servicios reales está descrita
 en `STAGING_SETUP.md`.
+
+## Aislamiento de staging añadido
+
+Compilación estática configurable para el proyecto Pages existente, con URLs de
+Railway staging y Supabase independiente, rechazo de main/producción/secret keys,
+y connect-src restringido. Backend con protección HTTPX/SMTP, Stripe solo test,
+recordatorios y buscador automático obligatoriamente apagados. Cuatro pruebas
+específicas de aislamiento pasaron, incluida la denegación de Meta, Resend, APNs,
+API productiva, Stripe sin credencial test y SMTP. No hicieron llamadas reales.
+
+Todos los 52 HTML cargan el mínimo de 16px para inputs; un guardia del navegador
+lo aplica también a controles dinámicos y reglas antiguas con !important. No se
+ha probado todavía la escala del WebView real de iOS.
+
+Preparados exportadores SQL de metadatos/buckets y seed transaccional. El esquema
+completo actual no está en el repo: falta la exportación de producción (solo
+definiciones) para generar y validar la migración exacta. No hay base de pruebas
+conectada y no se han certificado escrituras reales ni matriz completa de roles.
+Cloudflare mostró login; este avance no equivale a un despliegue publicado.

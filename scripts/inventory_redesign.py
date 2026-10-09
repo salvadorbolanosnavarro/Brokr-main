@@ -44,23 +44,40 @@ routes=[]
 for name in files:
     if not name.endswith('.py') or not (name.startswith('routers/') or name=='main.py'): continue
     tree=ast.parse((ROOT/name).read_text())
+    prefixes={}
+    for item in ast.walk(tree):
+        if isinstance(item,ast.Assign) and isinstance(item.value,ast.Call) and getattr(item.value.func,'id',None)=='APIRouter':
+            prefix=next((k.value.value for k in item.value.keywords if k.arg=='prefix' and isinstance(k.value,ast.Constant)), '')
+            for target in item.targets:
+                if isinstance(target,ast.Name): prefixes[target.id]=prefix
     for node in ast.walk(tree):
         if not isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef)): continue
         for d in node.decorator_list:
             if isinstance(d,ast.Call) and isinstance(d.func,ast.Attribute) and d.func.attr in ('get','post','put','patch','delete','websocket') and d.args:
-                routes.append({'file':name,'handler':node.name,'method':d.func.attr.upper(),'path_expression':ast.unparse(d.args[0])})
+                routes.append({'file':name,'handler':node.name,'method':d.func.attr.upper(),'path_expression':ast.unparse(d.args[0]),'path':prefixes.get(getattr(d.func.value,'id',''),'') + (d.args[0].value if isinstance(d.args[0],ast.Constant) else ast.unparse(d.args[0]))})
 changed=git('diff','--name-only',BASE,'--','core','routers','main.py','tests').splitlines()
 report={'baseline':BASE,'pages':pages,'routes':routes,'changed_backend_or_existing_tests':changed,
-    'warning':'Static inventory, not a certification of functional or visual parity. Router prefixes are not expanded.'}
+    'warning':'Static inventory, not a certification of functional or visual parity. Local APIRouter prefixes expanded; nested mounts and dynamic route registrations require runtime comparison.'}
 (ROOT/'redesign-inventory.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
 lines=['# Cobertura completa de Broquer','',
  'Las ocho referencias definen el lenguaje visual; todas las pantallas y flujos originales forman parte de la migración.', '',
- f'Inventario reproducible: `{BASE}`. {len(pages)} HTML rastreados y {len(routes)} declaraciones de endpoints (sin expandir prefijos).',
+ f'Inventario reproducible: `{BASE}`. {len(pages)} HTML rastreados y {len(routes)} declaraciones de endpoints (prefijos locales expandidos; falta comparar montajes dinámicos).',
  'La presencia del código no certifica su funcionamiento. Todos los flujos requieren validación con servicios de pruebas.', '',
- '| Pantalla | Cabecera compartida | Fuente HTML conservada | IDs de controles retirados |',
- '| --- | --- | --- | --- |']
+ '| Pantalla | Rediseño | Mock | Prueba real | Datos / vacío / error / carga | Roles | Móvil iPhone real | IDs retirados |',
+ '| --- | --- | --- | --- | --- | --- | --- | --- |']
+mock_results=[]
+for filename in ('report.json','focused-report.json'):
+    report_path=ROOT/'test-results/modules'/filename
+    if report_path.exists(): mock_results+=json.loads(report_path.read_text()).get('results',[])
 for p in pages:
-    lines.append(f"| `{p['path']}` | {'Sí' if p['shared_shell'] else 'No; revisar flujo propio'} | {'Sin cambios' if p['source_unchanged'] else 'Modificada'} | {', '.join(p['removed_control_ids']) or 'Ninguno'} |")
+    runs=[r for r in mock_results if r.get('page')==p['path']]
+    latest={r['width']:r for r in runs}
+    passed=len(latest)>=2 and all(not r.get('failure') and not r.get('overflow') and not r.get('errors') for r in latest.values())
+    redesign='Rediseñado; fidelidad pendiente' if p['shared_shell'] or p['path'] in {'login.html','registro.html','reset-password.html','unirse.html','firmar.html','verificar-firma.html','expediente.html'} else 'Pendiente de revisión visual'
+    lines.append(f"| `{p['path']}` | {redesign} | {'Probado con mock: superficie' if passed else 'Pendiente'} | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | {', '.join(p['removed_control_ids']) or 'Ninguno'} |")
+lines += ['', '## Cada endpoint', '', 'Estas filas conservan todos los handlers inventariados. El mock de la interfaz no demuestra que un endpoint funcione. Las integraciones externas se bloquearán en staging y se validarán por separado.', '', '| Método | Ruta declarada con prefijo local | Fuente / handler | Mock endpoint | Prueba real |', '| --- | --- | --- | --- | --- |']
+for route in routes:
+    lines.append(f"| {route['method']} | `{route['path']}` | `{route['file']}: {route['handler']}` | Pendiente | Pendiente |")
 lines+=['','## Criterios de cobertura','',
  '- CRM: altas, edición, filtros, etapas, importación/exportación, archivos y permisos.',
  '- Documentos: contratos, firma, verificación pública, expediente, cumplimiento y descargas.',

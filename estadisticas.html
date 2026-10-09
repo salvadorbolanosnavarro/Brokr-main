@@ -338,6 +338,8 @@ html, body { background: var(--canvas); }
 .es-scroll { padding-top: 24px; }
 
 </style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
 </head>
 <body data-app="estadisticas">
 
@@ -1942,7 +1944,9 @@ function _reporteHtml(D) {
         : 'La promoción está en marcha. Se mantiene el seguimiento a interesados y la generación de visitas.'));
 
   let html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/>'
-    + '<title>Reporte de desempeño</title><style>' + _reporteCss() + '</style></head><body><div class="doc">';
+    + '<title>Reporte de desempeño</title><style>' + _reporteCss() + '</style><link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+</head><body><div class="doc">';
 
   html += '<div class="hd">'
     + '<div class="kicker">Reporte de desempeño del inmueble' + (p.clave_interna ? ' · ' + esc(p.clave_interna) : '') + '</div>'

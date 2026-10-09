@@ -6,6 +6,7 @@
 
 @import url("sidebar-interactions.css");
 @import url("styles/app-layout.css");
+@import url("styles/mobile-inputs.css");
 @font-face{font-family:Manrope;src:url('fonts/manrope-400.ttf') format('truetype');font-weight:400;font-display:swap}
 @font-face{font-family:Manrope;src:url('fonts/manrope-500.ttf') format('truetype');font-weight:500;font-display:swap}
 @font-face{font-family:Manrope;src:url('fonts/manrope-600.ttf') format('truetype');font-weight:600;font-display:swap}

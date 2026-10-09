@@ -1,0 +1,8 @@
+/* iOS auto-zoom prevention, including forms outside the shared application shell. */
+html body input,
+html body textarea,
+html body select,
+html body [contenteditable="true"] {
+  font-size: max(16px, 1rem) !important;
+}
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
