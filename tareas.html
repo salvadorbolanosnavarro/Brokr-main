@@ -1037,7 +1037,7 @@ function tkAbrirEditar(id) {
 let TKE_ADJ = [], TKE_ADJ_CAMBIO = false;
 function tkPintarAdjuntos() {
   g('tke-adjuntos').innerHTML = TKE_ADJ.length
-    ? TKE_ADJ.map((a, i) => `<span class="tke-chip"><a href="${esc(a.url)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(a.nombre || 'Archivo')}</a><button onclick="tkQuitarAdjunto(${i})" title="Quitar">×</button></span>`).join('')
+    ? TKE_ADJ.map((a, i) => `<span class="tke-chip"><a ${typeof haAttrLiga === 'function' ? haAttrLiga(a.url) : `href="${esc(a.url)}"`} target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(a.nombre || 'Archivo')}</a><button onclick="tkQuitarAdjunto(${i})" title="Quitar">×</button></span>`).join('')
     : '<span class="bk-hint">Ninguno todavía.</span>';
 }
 function tkQuitarAdjunto(i) {

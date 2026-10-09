@@ -638,6 +638,11 @@ app.include_router(alertas_router)
 from routers.whatsapp_token_crypto import router as whatsapp_token_crypto_router
 app.include_router(whatsapp_token_crypto_router)
 
+# Adjuntos del historial: ligas temporales (el bucket adjuntos-historial
+# pasa a privado). Ver routers/adjuntos_ligas.py.
+from routers.adjuntos_ligas import router as adjuntos_ligas_router
+app.include_router(adjuntos_ligas_router)
+
 # Cierres y comisiones: modal de cierre, ingresos por cobrar, PLD y reporte
 # de operaciones cerradas (ver routers/cierres.py).
 from routers.cierres import router as cierres_router
