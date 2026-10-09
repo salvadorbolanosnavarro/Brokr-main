@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from core.config import settings
 from routers.whatsapp_access import _ids_visibles, _require_user
 from routers.whatsapp_data import sb_get, sb_patch, sb_post
+from routers.whatsapp_number_owner import preparar_cambio_de_dueno
 from routers.whatsapp_time import now_iso as _now
 from routers.whatsapp_training import TRAINING_DEFAULTS
 from routers.whatsapp_utils import in_filter as _in_filter, normaliza_mx as _normaliza_mx
@@ -117,6 +118,10 @@ async def wa2_connect(req: ConnectReq, request: Request):
                 datetime.now(timezone.utc).timestamp() + int(expires_in), timezone.utc).isoformat()
         except Exception:
             pass
+
+    # Si el número estaba en otra cuenta, acomodar su historial antes de
+    # guardarlo a nombre de esta (ver routers/whatsapp_number_owner.py).
+    await preparar_cambio_de_dueno(phone_number_id, user_id, _now())
 
     existing = await sb_get("wa2_numeros", {"phone_number_id": f"eq.{phone_number_id}", "select": "id", "limit": "1"})
     if existing:
