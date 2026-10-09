@@ -76,10 +76,12 @@ Organization owners/admins built their WhatsApp-visible user set from all member
 Remediation:
 - `d563d15a28c8f709b36601d184d3e0ed4fd9c388` — `_ids_visibles` now filters `organizacion_miembros.activo=eq.true`.
 
-### SEC-009 — MEDIUM — WhatsApp 2 access tokens are stored plaintext — OPEN
+### SEC-009 — MEDIUM — WhatsApp 2 access tokens are stored plaintext — REMEDIATION PREPARED
 The connection flow persists the Meta `business_token` as `wa2_numeros.access_token`. Database disclosure would therefore directly expose Meta bearer credentials.
 
 Pending because safe remediation requires a backward-compatible encryption migration, key lifecycle, dual-read transition for existing rows, and eventual plaintext cleanup. A one-sided code encryption change would strand existing connections.
+
+Remediation prepared: `core/whatsapp_secrets.py` encrypts `access_token` in `wa2_numeros` and `wac_numbers` with `WA_TOKEN_ENC_KEY` (prefix `enc:wa1:`), reads legacy plaintext unchanged, and writes plaintext when no key is configured. `routers/whatsapp_token_crypto.py` converts existing rows once via `WA_TOKENS_ACCION=cifrar|descifrar` (no-op without key, compare-and-set per row).
 
 ### SEC-010 — MEDIUM — Meta OAuth callback does not enforce server-issued `state` — OPEN
 `GET /facebook/callback` accepts `state` but does not validate it, and takes a request-provided `redirect_uri` into the token exchange. The connection flow therefore lacks a complete server-bound OAuth CSRF state lifecycle.
@@ -111,10 +113,12 @@ Wire-size limits do not always bound decompressed parser work for ZIP-based spre
 
 Fixed for image cleanup by adding pixel-count and batch/input limits in `fe10b1fc5c3cc000c3f86c48845f0689d3e3cefa`. Spreadsheet archive expansion remains pending parser-level uncompressed-size/member-count guards.
 
-### SEC-016 — LOW — wildcard CORS broadens browser-callable surface — OPEN
+### SEC-016 — LOW — wildcard CORS broadens browser-callable surface — REMEDIATION PREPARED
 The app uses wildcard origins/methods/headers. Bearer-header authentication and disabled credential sharing mean this is not classic cookie CSRF, but wildcard CORS unnecessarily broadens browser-origin access.
 
 Pending an authoritative production/staging frontend-origin inventory before narrowing it, to avoid breaking legitimate clients.
+
+Remediation prepared: `core/cors.py` keeps wildcard behavior in the default `CORS_MODO=observar` while logging unlisted origins; `CORS_MODO=estricto` restricts to the inventoried list plus `CORS_ORIGENES_EXTRA`.
 
 ### SEC-017 — LOW — some upstream error details are returned/logged — OPEN
 Several privileged integrations return or log truncated upstream response text. No directly interpolated secret was found, but schema/request metadata can be disclosed unnecessarily.
