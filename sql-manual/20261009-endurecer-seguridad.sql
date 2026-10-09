@@ -15,10 +15,12 @@
 --
 -- Antes de cambiar nada guarda una foto del estado actual en el esquema
 -- respaldo_seguridad_20261009 (no expuesto por la API). El script
--- REVERSA_20261009120000_endurecer_seguridad.sql usa esa foto para dejar
+-- 20261009-endurecer-seguridad-REVERSA.sql usa esa foto para dejar
 -- todo exactamente como estaba.
 --
 -- Todo corre en una sola transacción: si algo falla, no cambia nada.
+-- YA APLICADA a mano en producción. Vive en sql-manual/ para que la
+-- integración de Supabase con GitHub no la vuelva a correr sola.
 -- No toca storage.buckets.
 -- ══════════════════════════════════════════════════════════════════════════
 

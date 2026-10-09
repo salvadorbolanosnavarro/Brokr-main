@@ -1,4 +1,4 @@
--- Verificación de 20261009120000_endurecer_seguridad.sql (solo lectura).
+-- Verificación de 20261009-endurecer-seguridad.sql (solo lectura).
 -- Cada renglón trae lo esperado y lo real; la columna "ok" debe salir true en todos.
 with chequeos(hueco, chequeo, esperado, real) as (values
   ('1 admin_usuarios', 'anon puede SELECT',             false, has_table_privilege('anon',          'public.admin_usuarios', 'SELECT')),

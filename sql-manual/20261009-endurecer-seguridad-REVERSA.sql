@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════════════
--- REVERSA de 20261009120000_endurecer_seguridad.sql
+-- REVERSA de 20261009-endurecer-seguridad.sql
 -- ══════════════════════════════════════════════════════════════════════════
 -- Deja todo exactamente como estaba antes de la migración, usando la foto
 -- que la migración guardó en el esquema respaldo_seguridad_20261009:
@@ -9,8 +9,9 @@
 --   · el search_path original de las funciones.
 -- Al final borra la foto. Todo en una sola transacción.
 --
--- OJO: este archivo NO empieza con número a propósito, para que la CLI de
--- Supabase nunca lo aplique sola. Solo se corre a mano en el SQL Editor.
+-- OJO: vive en sql-manual/ (no en supabase/migrations) a propósito, para que
+-- la integración de Supabase con GitHub nunca lo aplique sola. Solo se corre
+-- a mano en el SQL Editor.
 -- ══════════════════════════════════════════════════════════════════════════
 
 begin;
