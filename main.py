@@ -1,3 +1,6 @@
+from core.staging_safety import install_staging_safety
+install_staging_safety()
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from limites import exigir_cupo, exigir_sesion

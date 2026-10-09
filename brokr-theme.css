@@ -1,85 +1,22 @@
-/* ════════════════════════════════════════════════════════════
-   BROQUER — Design System  ·  Edición "Canon"
-   REVISIÓN 2026-08-b — "Canon" (dirección oficial del rediseño):
-   azul manda, blanco respira, negro precisa. Estructura #081C4E,
-   acción #0A5DE0, tinta #0B0B0F. Vidrio esmerilado, hairlines 1px,
-   radios continuos 22-28, sombras de luz real, Inter con tracking
-   apretado. Acentos semánticos verde/naranja/rosa. La paleta de
-   datos es CATEGÓRICA y VIVA (azul, verde, naranja, rosa, violeta,
-   cian, amarillo): en gráficas y chats el color diferencia
-   conceptos — nunca ocho azules. Regla de oro intacta: solo VALORES.
+/* BROQUER — Design System · Edición "Canon"
+   October 2026: approved Manrope / white / sky / orange direction.
+   This is the sole token entry point; styles/app-layout.css contains shared
+   layout and components and consumes these tokens. Business logic is unchanged.
+*/
 
-   HISTÓRICO — REVISIÓN 2026-08 — "Blanca": mundo blanco a la Zillow con un solo
-   azul de acción #0D6BF0, tinta grafito #1B2733, Bricolage Grotesque
-   (display) + Figtree (interfaz), semánticos verde/ámbar/cantera y
-   paleta de datos contenida. Regla de oro intacta: solo VALORES.
-   (Histórico: Edición "Navarro")
-   Token-driven. Única fuente de verdad visual de la plataforma.
-
-   Lenguaje: blanco dominante (70%), azul marino #00143B como
-   ESTRUCTURA (nav, footer, cards oscuras, botón primario) y azul
-   royal #1240A0 como ACCIÓN (links, foco, estados activos,
-   acentos). Tipografía única de interfaz: Manrope. Instrument
-   Serif existe como --font-serif y es EXCLUSIVA de marketing/
-   landing: nunca en tablas, filtros, formularios, menús ni
-   módulos densos.
-
-   REGLA DE ORO DE ESTA HOJA: los nombres de variable NO cambian.
-   Solo se reasignan sus VALORES a la piel nueva. Todo módulo que
-   ya consume var(--…) se rediseña solo, sin tocar su markup.
-
-   REVISIÓN 2026-07-b — "Lienzo blanco":
-   El fondo de la app deja de ser azul pálido y pasa a BLANCO PURO.
-   · --paper #F4F7FD → #FFFFFF (body de index y de todos los módulos).
-   · --paper-2 #EDF2FB → #F1F5FC (inset/hover: ahora sí contrasta).
-   · --shell #F4F7FE → #F7F9FE y los inputs pasan a usarlo como
-     relleno: sobre blanco puro un campo blanco no se encuentra.
-   · Hairlines un punto más firmes (--line, --line-2, --line-3) para
-     que la card siga leyéndose como card sobre fondo blanco.
-   Ningún nombre de variable cambia: los módulos se actualizan solos.
-
-   REVISIÓN 2026-07 — "Navarro":
-   Piel derivada por muestreo directo de la referencia visual
-   aprobada. Cero cambios estructurales: solo se reasignan valores
-   de color. Geometría, tipografía, escala, motion y componentes
-   quedan idénticos a la edición Premium.
-
-   · Navy más profundo y más azul: #071A3D → #00143B.
-     Sidebar #04132F → #000D28. Navy medio #0E2E68 → #032873
-     (el navy de banda de la referencia).
-   · Azul de acción de brillante a royal profundo:
-     #2563D9 → #1240A0. Pressed #174EA6 → #0B2E78.
-     Lift #3978F6 → #3A6FD8. Canvas #EAF2FF → #E8F0FE.
-   · Canvas más frío: #F8FAFC → #F4F7FD. Inset → #EDF2FB.
-   · Tinta y grises al eje navy: --ink #00143B, --ink-2 #1B2C4F,
-     --mute #4A5875, --mute-2 #8592AB.
-   · Hairlines: --line #E6ECF6, --line-2 #D8E1EF.
-   · Sombras y overlay de modal retintados de rgba(7,26,61,…) a
-     rgba(0,20,59,…) para no ensuciar el navy nuevo.
-   · --sky-blue-on-dark #8FBAFF → #7FA8F0 (contraste 7.53:1 sobre
-     el navy nuevo).
-
-   Contraste verificado sobre esta paleta (todos ≥ WCAG AA):
-     ink/paper 16.8 · ink-2/paper 12.9 · mute/paper 6.7
-     azul/blanco 9.3 · blanco/navy 18.1 · blanco/navy-mid 13.5
-     on-dark/navy 7.5 · lift/navy 3.8 (no-texto)
-
-   HISTÓRICO (edición Premium, vigente salvo lo de arriba):
-   · Geometría: botón 8, input 10, card 16, card grande 22,
-     modal 24. Altura de control 48. Sidebar 252, topbar 72.
-   · Motion 120/180/280ms.
-   · Se ELIMINÓ la capa "Premium" duplicada del final del archivo
-     que peleaba con los componentes base. Un componente = una
-     definición.
-   · .bk-table th ya no lleva text-transform: uppercase
-     (mayúscula decorativa, prohibida por DESIGN.md).
-   · El alias legacy --sky apunta a var(--sky-blue): un solo azul.
-   ════════════════════════════════════════════════════════════ */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap');
 @import url("sidebar-interactions.css");
+@import url("styles/app-layout.css");
+@import url("styles/mobile-inputs.css");
+@font-face{font-family:Manrope;src:url('fonts/manrope-400.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:Manrope;src:url('fonts/manrope-500.ttf') format('truetype');font-weight:500;font-display:swap}
+@font-face{font-family:Manrope;src:url('fonts/manrope-600.ttf') format('truetype');font-weight:600;font-display:swap}
+@font-face{font-family:Manrope;src:url('fonts/manrope-700.ttf') format('truetype');font-weight:700;font-display:swap}
+@font-face{font-family:Manrope;src:url('fonts/manrope-800.ttf') format('truetype');font-weight:800;font-display:swap}
 
 :root {
+  --orange: #FF9257;
+  --orange-press: #EF8145;
+  --orange-ink: #191C1F;
   /* Broquer es claro siempre, sin importar la preferencia del sistema —
      no existe modo oscuro. Declarar "light" (en vez de dejarlo sin
      declarar, que cae al default "normal") evita que los controles
@@ -89,37 +26,37 @@
   color-scheme: light;
 
   /* ── Surfaces (blanco dominante) ──────────── */
-  --paper:   #FFFFFF;     /* fondo del body — BLANCO PURO (rev. 2026-07) */
-  --paper-2: #F4F6FB;     /* canvas / inset / hover / chips */
+  --paper: #FFFFFF;     /* fondo del body — BLANCO PURO (rev. 2026-07) */
+  --paper-2: #F5F6F7;     /* canvas / inset / hover / chips */
   --bone:    #FFFFFF;     /* superficie de card */
-  --shell:   #F5F7FC;     /* relleno de input / superficie media */
+  --shell: #FFFFFF;     /* relleno de input / superficie media */
 
   /* ── Ink (azul marino como texto, no negro) ─ */
-  --ink:     #0B0B0F;     /* texto principal — negro canon */
-  --ink-2:   #2A3142;
-  --ink-3:   #57607A;     /* secundario */
-  --mute:    #57607A;     /* gris-azul secundario legible */
-  --mute-2:  #8A93A9;
+  --ink: #191C1F;     /* texto principal — negro canon */
+  --ink-2: #191C1F;
+  --ink-3: #61666C;     /* secundario */
+  --mute: #61666C;     /* gris-azul secundario legible */
+  --mute-2: #7C858D;
   --mute-3:  #C6CCDA;
 
   /* ── Hairlines (bordes del sistema) ───────── */
-  --line:     #E7EBF4;    /* borde claro / disabled */
-  --line-2:   #DBE1EE;    /* borde / input */
-  --line-3:   #BEC7DA;
+  --line: #E4E6E8;    /* borde claro / disabled */
+  --line-2: #D5D9DD;    /* borde / input */
+  --line-3: #7C858D;
 
   /* ── Accents (AZUL de acción) ─────────────── */
-  --forest:   #0A5DE0;    /* alias histórico → azul de acción canon */
-  --forest-2: #084BB8;    /* azul pressed (hover) */
-  --forest-soft: rgba(10,93,224,0.10);
+  --forest: #165474;    /* alias histórico → azul de acción canon */
+  --forest-2: #12425C;    /* azul pressed (hover) */
+  --forest-soft: #E7F4FC;
 
   /* Marca Broquer */
-  --sky-navy:       #081C4E;  /* estructura canon: nav, footer, botón primario */
-  --sky-navy-mid:   #10307E;
-  --sky-navy-deep:  #050F2E;  /* sidebar, fondos navy profundos */
-  --sky-blue:       #0A5DE0;  /* acción canon */
-  --sky-blue-press: #084BB8;
-  --sky-blue-lift:  #6F9FF2;  /* azul brillante, solo estados activos */
-  --sky-canvas:     #E9F0FD;
+  --sky-navy: #191C1F;  /* estructura canon: nav, footer, botón primario */
+  --sky-navy-mid: #165474;
+  --sky-navy-deep: #191C1F;  /* sidebar, fondos navy profundos */
+  --sky-blue: #165474;  /* acción canon */
+  --sky-blue-press: #12425C;
+  --sky-blue-lift: #9FD8F5;  /* azul brillante, solo estados activos */
+  --sky-canvas: #E7F4FC;
 
   --warn:     #B34E0B;   /* naranja canon */
   --warn-soft:rgba(243,116,13,0.14);
@@ -133,7 +70,7 @@
   /* ── Geometry ─────────────────────────────── */
   --r-xs: 8px;     /* micro (check, tag) */
   --r-sm: 12px;    /* BOTÓN */
-  --r:    14px;    /* INPUT / contenedor base */
+  --r: 12px;    /* INPUT / contenedor base */
   --r-lg: 22px;    /* CARD */
   --r-xl: 26px;    /* CARD GRANDE */
   --r-modal: 28px; /* MODAL */
@@ -163,7 +100,7 @@
   --shadow-xl: 0 14px 32px rgba(8,28,78,.10), 0 42px 110px rgba(8,28,78,.16);
 
   /* ── Contrato de layout (anchos canónicos) ── */
-  --page-max: 1280px;   /* módulos de datos (tablas, cards, dashboards) */
+  --page-max: 1256px;   /* módulos de datos (tablas, cards, dashboards) */
   --form-max: 920px;    /* módulos de formulario / columna estrecha */
   --pad-x: 40px;        /* gutter lateral canónico */
   --sidebar-w: 252px;
@@ -197,18 +134,18 @@
   --z-toast:   320;
 
   /* ── Tipografía ─────────────────────────── */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-mono: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; /* alias histórico → NO es monoespaciada */
+  --font-sans: 'Manrope', Arial, sans-serif;
+  --font-display: 'Manrope', Arial, sans-serif;
+  --font-mono: 'Manrope', Arial, sans-serif; /* alias histórico → NO es monoespaciada */
   /* Serif editorial: EXCLUSIVA de landing/marketing. Prohibida en
      tablas, filtros, formularios, menús y módulos densos. */
-  --font-serif: 'Inter', system-ui, sans-serif; /* la serif salió del sistema: una sola familia, Inter */
+  --font-serif: 'Manrope', Arial, sans-serif; /* la serif salió del sistema: una sola familia, Inter */
 
   /* Escala tipográfica.
      Hero/landing usa --fs-hero. La app arranca en --fs-h1 (32-36). */
   --fs-hero: 64px;       /* landing H1 (clamp aplicado en .bk-hero__title) */
   --fs-display: 42px;    /* landing H2 / número protagonista */
-  --fs-h1: 36px;         /* app page title */
+  --fs-h1: 48px;         /* app page title */
   --fs-h2: 24px;         /* app section title */
   --fs-h3: 20px;
   --fs-h5: 17px;
@@ -225,7 +162,7 @@
 
   --lh-hero: 0.92;
   --lh-display: 46px;
-  --lh-h1: 42px;
+  --lh-h1: 1.15;
   --lh-h2: 30px;
   --lh-h3: 26px;
   --lh-body: 24px;
@@ -456,7 +393,7 @@ html {
 
 /* Azul de acción — CTA de conversión, no el default de la app */
 .bk-btn--forest { background: var(--forest); }
-.bk-btn--forest:hover { background: var(--forest-2); }
+.bk-btn--forest: #165474; }
 
 /* Secundario */
 .bk-btn--ghost { background: var(--bone); color: var(--ink); border-color: var(--line-2); font-weight: 600; }
@@ -674,7 +611,7 @@ html {
 }
 .bk-chip:hover { border-color: var(--line-3); background: var(--paper-2); }
 .bk-chip--forest { background: var(--forest); color: var(--bone); border-color: var(--forest); }
-.bk-chip--forest:hover { background: var(--forest-2); border-color: var(--forest-2); }
+.bk-chip--forest: #165474; border-color: var(--forest-2); }
 .bk-chip--warn   { background: var(--warn-soft);   color: var(--warn);   border-color: transparent; }
 .bk-chip--danger { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
 .bk-chip--success{ background: var(--success-soft);color: var(--success);border-color: transparent; }
