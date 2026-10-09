@@ -19,7 +19,7 @@ Rama: `work/redesign-preview-20261003`. No cambiar `main`, Railway producción n
 11. En **SQL Editor > New query**, pega `staging/02-seed.sql` y pulsa **Run**. Aborta toda la transacción si faltan tablas/columnas obligatorias o hay otros usuarios de Auth. No concede rol administrador ni modifica reglas de permisos.
 12. Revisa el resultado: dos clientes ficticios, una propiedad, una cita/tarea, un contrato borrador y una conversación ficticia con dos mensajes e IA apagada. Si hay error de esquema, no alterar la tabla para acomodar el seed: hay que corregir el seed contra el esquema real.
 13. En **Settings > API** (o **Connect > App Frameworks**, según la versión del panel), guarda la **Project URL**, la clave **publishable/anon** y el **Project reference**. La clave **service_role/secret** va únicamente en Railway, nunca en Cloudflare ni en este chat.
-14. Deja sin configurar SMTP propio, proveedores Meta y webhooks de producción en esta base. Las pruebas de recuperación no deben enviar correos reales.
+14. Deja sin configurar SMTP propio, proveedores Meta y webhooks de producción en esta base. Revisa **Database > Webhooks** y los trabajos de **Cron**: no copiar tareas activas ni secretos de Vault. Hay que auditar las funciones/triggers exportadas para impedir envíos desde la propia base antes de activarla. Las pruebas de recuperación no deben enviar correos reales.
 
 ## 2. Railway: usar el staging que ya existe
 
@@ -94,3 +94,5 @@ La rama incluye las funciones incorporadas a main hasta 1f5fc8d5: Buzón, alerta
 ajustes CRM, cierres, catálogo y mejoras de sitios/AVM. El inventario actualizado
 cubre 55 HTML y las 348 operaciones del contrato HTTP efectivo. No se ha modificado
 la rama main ni ejecutado sus migraciones en producción.
+
+Los envíos de Supabase Auth (registro, recuperación, OTP, reenvío e invitaciones) se bloquean también en el frontend compilado y HTTPX del backend de staging. El acceso con contraseña del usuario QA sigue disponible. Los triggers que llamen servicios externos desde PostgreSQL necesitan auditoría del esquema exportado; el guardia del backend no controla conexiones iniciadas por la propia base.

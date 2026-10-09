@@ -97,3 +97,5 @@ archivo inválido. No se considera aprobado el recorrido de esta versión.
 
 La protección de correo también bloquea IMAP: no conecta cuentas de correo
 reales. Las integraciones nuevas externas siguen bloqueadas por HTTPX en staging.
+
+Supabase Auth: envíos de registro/recuperación/OTP/invitación bloqueados en frontend compilado y HTTPX de staging; login con contraseña QA permitido. Pendiente auditar webhooks, cron y funciones de envío dentro de PostgreSQL con el esquema real.

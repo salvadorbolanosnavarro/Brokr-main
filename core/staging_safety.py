@@ -46,6 +46,8 @@ def install_staging_safety():
     def check(request):
         if request.url.scheme != 'https' or request.url.host not in allowed:
             raise httpx.RequestError('External integration disabled in Broquer staging',request=request)
+        if request.url.host == f'{ref}.supabase.co' and request.url.path in {'/auth/v1/signup','/auth/v1/recover','/auth/v1/resend','/auth/v1/otp','/auth/v1/magiclink','/auth/v1/invite'}:
+            raise httpx.RequestError('Auth email delivery disabled in Broquer staging',request=request)
         if request.url.host == 'api.stripe.com':
             # Prevent per-user credentials from bypassing the test key configured above.
             auth = request.headers.get('authorization','')

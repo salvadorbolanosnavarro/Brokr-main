@@ -53,6 +53,9 @@ def build(env=os.environ):
             text = source.read_text()
             for old,new in [('https://api.broquer.app',api),(PROD_DB,db),(PROD_KEY,key)]: text = text.replace(old,new)
             text = text.replace('api.broquer.app',urlsplit(api).hostname).replace('urtgysmtnvoqaljuhntz.supabase.co',urlsplit(db).hostname)
+            if p.suffix == '.html':
+                prefix = '../' * (len(p.parts)-1)
+                text = text.replace('<head>',f'<head>\n<script src="{prefix}staging-auth-guard.js"></script>',1)
             if p.suffix == '.html' and 'styles/mobile-inputs.css' not in text:
                 prefix = '../' * (len(p.parts)-1)
                 text = text.replace('</head>',f'<link rel="stylesheet" href="{prefix}styles/mobile-inputs.css">\n</head>')
@@ -61,6 +64,19 @@ def build(env=os.environ):
             target.write_text(text)
         else: shutil.copyfile(source,target)
         count += 1
+    (output / 'staging-auth-guard.js').write_text("""// Staging only. Password login stays available for manually created QA users.
+(() => {
+ const original = window.fetch;
+ const blocked = new Set(['/auth/v1/signup','/auth/v1/recover','/auth/v1/resend','/auth/v1/otp','/auth/v1/magiclink','/auth/v1/invite']);
+ window.fetch = function(input,options) {
+  const url = new URL(typeof input === 'string' ? input : input.url || String(input),location.href);
+  if (url.hostname.endsWith('.supabase.co') && blocked.has(url.pathname)) {
+   return Promise.resolve(new Response(JSON.stringify({error:'staging_delivery_disabled',msg:'Envíos de Auth desactivados en staging; usa el usuario QA creado en el panel.'}),{status:409,headers:{'Content-Type':'application/json'}}));
+  }
+  return original.call(this,input,options);
+ };
+})();
+""")
     # connect-src applies even to old inline code: no production DB/API writes.
     (output / '_headers').write_text(f'''/*
   X-Robots-Tag: noindex, nofollow
