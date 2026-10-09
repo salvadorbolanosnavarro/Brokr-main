@@ -14,6 +14,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from core.auth import get_user_id_from_token
+from core.avm_fuentes import fuentes_publicas, pagina_leida, sanear_resultado, urls_no_consultadas
 from core.cache import cache_get, cache_set
 from core.config import settings
 from core.database import rest_url, service_headers
@@ -79,6 +80,11 @@ BLOCKED_FETCH_DOMAINS = {
     "google.com", "google.com.mx", "facebook.com", "instagram.com", "tiktok.com",
     "youtube.com", "maps.google.com", "googleusercontent.com"
 }
+
+# Mensajes que ve la persona: sin nombres de herramientas ni proveedores (el
+# detalle técnico va a los logs de Railway con el prefijo [avm]).
+_MSG_NO_DISPONIBLE = "La opinión de valor no está disponible en este momento. Intenta más tarde."
+_MSG_REINTENTA = "No se pudo completar la opinión de valor. Intenta de nuevo en unos minutos."
 
 FIRECRAWL_API_KEY = legacy_main_settings.firecrawl_api_key
 FIRECRAWL_CONCURRENCY = legacy_main_settings.firecrawl_concurrency
@@ -595,10 +601,9 @@ async def _collect_search_candidates(req: AvmWebSearchRequest, colonias_vecinas:
         "firecrawl_search": bool(FIRECRAWL_API_KEY),
     }
     if not any(providers_configured.values()):
-        raise HTTPException(
-            status_code=500,
-            detail="Configura al menos una API de búsqueda: GOOGLE_CSE_API_KEY + GOOGLE_CSE_ID, SERPAPI_API_KEY, BRAVE_SEARCH_API_KEY o TAVILY_API_KEY.",
-        )
+        print("[avm] falta configurar una API de búsqueda: GOOGLE_CSE_API_KEY + GOOGLE_CSE_ID, "
+              "SERPAPI_API_KEY, BRAVE_SEARCH_API_KEY o TAVILY_API_KEY", flush=True)
+        raise HTTPException(status_code=500, detail=_MSG_NO_DISPONIBLE)
 
     results: List[Dict[str, Any]] = []
     seen = set()
@@ -1195,7 +1200,8 @@ async def _claude_extract_and_value(
     colonias_vecinas: List[str] = (),
 ) -> Dict[str, Any]:
     if not ANTHROPIC_API_KEY:
-        raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")
+        print("[avm] falta ANTHROPIC_API_KEY", flush=True)
+        raise HTTPException(status_code=500, detail=_MSG_NO_DISPONIBLE)
 
     es_terreno = req.tipo_inmueble == "terreno"
     superficie_sujeto = req.m2_terreno if es_terreno else (req.m2_construccion or req.m2_terreno)
@@ -1207,8 +1213,11 @@ async def _claude_extract_and_value(
             "url": evidence_item.get("url", ""),
             "portal": evidence_item.get("portal", ""),
             "snippet": evidence_item.get("snippet", ""),
-            "fetch_status": evidence_item.get("fetch_status", ""),
-            "texto_visible_limitado": evidence_item.get("page_text", "")[:MAX_TEXT_CHARS_PER_URL],
+            # Sin estados técnicos ni nombres de herramientas: la IA no debe
+            # poder repetirlos en el resultado (ver core/avm_fuentes.py).
+            "lectura": "pagina_completa" if pagina_leida(evidence_item.get("fetch_status", "")) else "solo_resumen_del_buscador",
+            "texto_visible_limitado": evidence_item.get("page_text", "")[:MAX_TEXT_CHARS_PER_URL]
+                .replace("DATO ESTRUCTURADO FIRECRAWL", "DATO ESTRUCTURADO DEL ANUNCIO"),
         })
 
     system_prompt = f"""Eres un analista valuador inmobiliario mexicano. Tu trabajo NO es inventar comparables: debes usar únicamente la evidencia web entregada por el servidor.
@@ -1225,12 +1234,13 @@ Reglas duras:
 7. Aplica factor negociación de -5% a precios de oferta en venta. En renta usa -3% si aplica.
 8. Penaliza comparables sospechosos: anuncio viejo, datos incompletos, precio/m² extremo, ubicación poco clara, submercado distinto.
 9. Esta salida es una estimación de valor, no avalúo certificado.
-10. Cada "texto_visible_limitado" puede traer, antes del texto de la página, una línea "DATO ESTRUCTURADO JSON-LD (alta confianza): ..." o "DATO ESTRUCTURADO FIRECRAWL (alta confianza): ..." — ambas son precio/superficie extraídos del propio código o render de la página (nunca inventados, no aparecen si la página no traía el dato), mucho más confiables que el texto suelto de abajo. Si alguna está presente, úsala como fuente principal de ese comparable en vez de intentar leerlo del texto plano.
+10. Cada "texto_visible_limitado" puede traer, antes del texto de la página, una línea "DATO ESTRUCTURADO JSON-LD (alta confianza): ..." o "DATO ESTRUCTURADO DEL ANUNCIO (alta confianza): ..." — ambas son precio/superficie extraídos del propio código o render de la página (nunca inventados, no aparecen si la página no traía el dato), mucho más confiables que el texto suelto de abajo. Si alguna está presente, úsala como fuente principal de ese comparable en vez de intentar leerlo del texto plano.
 11. Si una fuente trae "ADVERTENCIA AUTOMÁTICA: ... probablemente es un listado de resultados con varias propiedades...", esa página mezcla precios de varios anuncios distintos: NO le asignes un precio a una superficie a menos que el texto deje clarísimo que un precio específico corresponde a una superficie específica. Pero esa misma página de listado casi siempre trae también un indicador agregado del portal (ej. "precio promedio/medio de casas en venta en X colonia: $Y", "rango de precios", "N propiedades activas") — ESE dato SÍ lo puedes usar como comparable de baja confianza (descripción: "Indicador estadístico de mercado — no es un anuncio individual"), en vez de descartar la página entera y quedarte sin nada.
 12. Vuelve a sumar/promediar tú mismo los precio_m2 de los comparables que marques incluido_en_promedio antes de reportar valor_por_m2 — no arrastres un cálculo mental impreciso; verifica la aritmética.
 13. NUNCA dejes valor_estimado en 0 ni respondas que "no fue posible" generar una estimación — eso no le sirve de nada a un agente inmobiliario. Siempre entrega un número, usando en orden lo mejor disponible: (a) comparables individuales de la colonia; (b) comparables de zonas adyacentes/similares; (c) el indicador estadístico agregado del portal (regla 11) para la colonia o ciudad; (d) si de plano no hay NINGÚN precio en toda la evidencia (ni individual ni agregado), da tu mejor estimación razonada a partir de lo que sí sepas del tipo de inmueble y la zona, dejándolo explícito en advertencias. Cuanto más débil la evidencia, más ancho el rango (valor_minimo/valor_maximo) y más baja la nivel_confianza — pero siempre con un valor_estimado numérico. Reserva nivel_confianza='baja' + un rango amplio para estos casos; jamás una respuesta vacía.
 14. Si menos de 3 comparables individuales son útiles, aplica igualmente la regla 13 (rango conservador, nivel_confianza='baja') en vez de negarte a estimar.
 15. Tono de "advertencias" y "razon_confianza": son para un agente inmobiliario que se lo va a enseñar a su cliente, no una advertencia legal. Nada de MAYÚSCULAS tipo alarma ni acumular varios avisos de "esto no es un avalúo certificado" — eso ya va aparte en el campo "metodologia" del sistema, no lo repitas aquí. Explica en 1-2 oraciones, en tono profesional y directo, POR QUÉ la confianza es la que es (ej. "los portales consultados bloquearon el acceso directo a varios anuncios, así que el rango se apoya más en el indicador de mercado que en anuncios individuales") — sin sonar catastrófico. Baja confianza con un rango amplio es una estimación honesta, no un fracaso.
+16. Nunca menciones, en ningún campo, cómo se obtuvo la información: ni herramientas, ni proveedores, ni buscadores, ni que alguna página no se pudo leer, falló o estaba bloqueada. Si una fuente solo trae "solo_resumen_del_buscador", úsala con lo que muestra y ya. Habla del mercado, no del proceso.
 
 Responde ÚNICAMENTE JSON válido con esta estructura:
 {{
@@ -1295,7 +1305,8 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
         )
 
     if response.status_code != 200:
-        raise HTTPException(status_code=502, detail=f"Error de Claude: {response.text[:500]}")
+        print(f"[avm] error del modelo http_{response.status_code}: {response.text[:500]}", flush=True)
+        raise HTTPException(status_code=502, detail=_MSG_REINTENTA)
 
     response_json = response.json()
     _track_anthropic(
@@ -1312,7 +1323,8 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
     try:
         return _extract_json_from_text(raw)
     except Exception:
-        raise HTTPException(status_code=502, detail=f"Claude no devolvió JSON válido: {raw[:700]}")
+        print(f"[avm] el modelo no devolvió JSON válido: {raw[:700]}", flush=True)
+        raise HTTPException(status_code=502, detail=_MSG_REINTENTA)
 
 
 @router.post("/api/avm-websearch")
@@ -1334,7 +1346,7 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
     if not candidatos:
         raise HTTPException(
             status_code=404,
-            detail="No encontré URLs candidatas con las APIs de búsqueda configuradas. Prueba con otra colonia/zona o configura otra API de búsqueda.",
+            detail="No encontré anuncios comparables para esta zona. Prueba con otra colonia o una zona cercana.",
         )
 
     resumen_fc: Dict[str, Any] = {}
@@ -1360,17 +1372,10 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
     resultado["condicion_terreno"] = req.condicion_terreno
     resultado["timestamp"] = time.strftime("%Y-%m-%d %H:%M")
     resultado["metodologia"] = "Búsqueda web por API configurada, lectura limitada de URLs públicas, extracción mínima de datos visibles, deduplicación y clasificación por IA, cálculo comparativo con ajustes."
-    resultado["fuentes_consultadas"] = [{
-        "titulo": page.get("title", ""),
-        "url": page.get("url", ""),
-        "portal": page.get("portal", ""),
-        "estado_lectura": page.get("fetch_status", ""),
-        "lectura": estado_lectura_simple(page.get("fetch_status", "")),
-        "provider": page.get("provider", ""),
-    } for page in paginas]
-    resultado["firecrawl"] = resumen_fc
+    # Solo las páginas que sí se consultaron, sin estados ni proveedores. El
+    # resumen técnico (resumen_fc) se queda en los logs de Railway.
+    resultado["fuentes_consultadas"] = fuentes_publicas(paginas)
     resultado["queries_utilizadas"] = busqueda["queries"]
-    resultado["proveedores_busqueda_configurados"] = busqueda["providers_configured"]
     resultado["colonias_colindantes_verificadas"] = colonias_vecinas
 
     try:
@@ -1456,4 +1461,6 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
             )
             resultado["advertencias"] = (str(resultado.get("advertencias") or "") + " " + nota).strip()
 
-    return resultado
+    # Lo que ve la persona: sin ligas de páginas no consultadas ni menciones
+    # de herramientas, proveedores o bloqueos (core/avm_fuentes.py).
+    return sanear_resultado(resultado, urls_no_consultadas(paginas))

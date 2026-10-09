@@ -284,11 +284,13 @@
   const MODS = [
     // CRM — el inventario y la gente.
     { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',       group:'crm',         icon:'building' },
-    // Contactos: un solo módulo con dos vistas (Lista = contactos.html,
-    // Pipeline = clientes.html). Clientes queda oculto del menú pero sus
-    // ligas siguen vivas (y resaltan "Contactos", ver NAV_ALIAS).
+    // Contactos (lista, contactos.html) y Clientes (pipeline de venta en
+    // kanban, clientes.html) son dos entradas del menú. Clientes estuvo
+    // oculto y no había otra forma visible de llegar a su tablero.
     { key:'contactos',    href:'contactos.html',     label:'Contactos',          group:'crm',         icon:'users' },
-    { key:'clientes',     href:'clientes.html',      label:'Pipeline de contactos', group:'crm',      icon:'apreton', hidden:true },
+    // "requiere": si un admin apaga Contactos, Clientes (mismos datos) se
+    // apaga con él; Clientes no es un módulo apagable por separado.
+    { key:'clientes',     href:'clientes.html',      label:'Clientes',           group:'crm',         icon:'apreton', requiere:'contactos' },
     { key:'alertas',      href:'alertas.html',       label:'Alertas de búsqueda', group:'crm',         icon:'search', hidden:true },
     { key:'crm-ajustes',  href:'crm-ajustes.html',   label:'Ajustes de CRM',     group:'crm',         icon:'cog', hidden:true },
     { key:'tareas',       href:'tareas.html',        label:'Tareas',              group:'crm',         icon:'check' },
@@ -323,7 +325,7 @@
     'home':         'Dashboard principal — menú de módulos',
     'props':        'Tus Inmuebles — catálogo de propiedades',
     'contactos':    'Contactos (vista Lista) — todos tus contactos, sin importar su rol o etapa',
-    'clientes':     'Contactos (vista Pipeline) — tu pipeline de venta en kanban: prospectos potenciales por etapa',
+    'clientes':     'Clientes — tu pipeline de venta en kanban: prospectos potenciales por etapa',
     'buzon':        'Buzón — bandeja única de leads de todos los canales: asignar, nota interna, respuestas guardadas y tiempo de primera respuesta',
     'crm-ajustes':  'Ajustes de CRM — etapas del pipeline, tipos de contacto, fuentes de captación, etiquetas y categorías',
     'equipo':       'Equipo — miembros de la cuenta, roles y permisos',
@@ -1500,7 +1502,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
      ════════════════════════════════════════════════════════════════ */
   const activeKey = (document.body.getAttribute('data-app') || 'home').toLowerCase();
   // Pantallas que viven dentro de otro módulo del menú.
-  const NAV_ALIAS = { clientes: 'contactos', 'crm-ajustes': 'contactos', alertas: 'contactos' };
+  const NAV_ALIAS = { 'crm-ajustes': 'contactos', alertas: 'contactos' };
   const navKey = NAV_ALIAS[activeKey] || activeKey;
   const activeMod = MODS.find(m => m.key === activeKey) || MODS[0];
 
@@ -1605,7 +1607,8 @@ body[data-app="facebook-ads"]{--page-max:980px}
     const modulosOff = new Set((profile && profile.profile && profile.profile.modulos_desactivados) || []);
 
     // "Equipo" vive en el drawer de perfil, no en el sidebar.
-    const visible = m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && !modulosOff.has(m.key);
+    const apagado = m => modulosOff.has(m.key) || (m.requiere && modulosOff.has(m.requiere));
+    const visible = m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && !apagado(m);
     const porGrupo = k => MODS.filter(m => m.group === k && visible(m));
     // Todo lo que no sea "Más" va suelto en el rail, en el orden en que ya
     // están declarados los módulos (que es el orden por momento de la
@@ -1727,7 +1730,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         const nq = norm(input.value.trim());
         const acts = ACCIONES.filter(a => norm(a.n).includes(nq))
           .map(a => ({ n: a.n, href: a.href, grp: 'Acción', icon: 'plus' }));
-        const mods = MODS.filter(m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && !modulosOff.has(m.key) && norm(m.label).includes(nq))
+        const mods = MODS.filter(m => visible(m) && norm(m.label).includes(nq))
           .map(m => ({ n: m.label, href: m.href, grp: grupoLabel(m.group), icon: m.icon }));
         resultados = [...acts, ...mods];
         sel = 0;
