@@ -26,6 +26,7 @@ from typing import Dict, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
 NS = "http://www.uif.shcp.gob.mx/recepcion/inm"
+XSI = "http://www.w3.org/2001/XMLSchema-instance"
 XSD_PATH = Path(__file__).parent / "pld" / "inm.xsd"
 CATALOGOS_PATH = Path(__file__).parent / "pld" / "catalogos_inm.json"
 
@@ -502,7 +503,22 @@ def construir_xml(cfg: dict, periodo: str, operaciones: List[dict],
             problemas.append(f"{etiqueta}: falta " + "; ".join(dict.fromkeys(faltan)) + ".")
 
     xml = ET.tostring(raiz, encoding="unicode")
-    return '<?xml version="1.0" encoding="UTF-8"?>\n' + xml, problemas
+    return con_ubicacion_esquema('<?xml version="1.0" encoding="UTF-8"?>\n' + xml), problemas
+
+
+_RAIZ_SIN_ESQUEMA = f'<archivo xmlns="{NS}">'
+_RAIZ_OFICIAL = (f'<archivo xsi:schemaLocation="{NS} inm.xsd" '
+                 f'xmlns="{NS}" xmlns:xsi="{XSI}">')
+
+
+def con_ubicacion_esquema(xml: str) -> str:
+    """La raíz debe declarar xsi:schemaLocation como en el ejemplo oficial.
+
+    El validador del portal de la UIF busca el esquema con ese atributo; sin
+    él rechaza el archivo con «cvc-elt.1: Cannot find the declaration of
+    element 'archivo'», aunque el contenido esté bien. También sirve para
+    reparar archivos que ya se habían guardado sin él."""
+    return xml.replace(_RAIZ_SIN_ESQUEMA, _RAIZ_OFICIAL, 1)
 
 
 @lru_cache(maxsize=1)

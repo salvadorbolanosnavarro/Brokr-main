@@ -49,8 +49,8 @@ from pydantic import BaseModel
 from core.auth import require_user_id
 from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
-from core.storage import create_signed_object_url, delete_object, upload_object
-from core.pld_inm import TIPOS_BROQUER_INM, catalogos, construir_xml, validar_xsd
+from core.storage import create_signed_object_url, delete_object, download_object, upload_object
+from core.pld_inm import TIPOS_BROQUER_INM, catalogos, con_ubicacion_esquema, construir_xml, validar_xsd
 from core.pld_alertas import PASOS, alertas_pld
 
 router = APIRouter(prefix="/pld", tags=["cumplimiento"])
@@ -1024,6 +1024,21 @@ async def _guardar_xml(uid: str, aviso_id: str, periodo: str, referencia: str, x
     return ruta
 
 
+async def _reparar_raiz_xml(ruta: str) -> None:
+    """Los avisos guardados antes de declarar xsi:schemaLocation los rechaza
+    el portal de la UIF (cvc-elt.1). Se corrigen en el archivo al volver a
+    descargarlos; si algo falla se entrega el archivo tal como está."""
+    try:
+        actual = (await download_object(BUCKET, ruta, timeout=30)).decode("utf-8")
+        reparado = con_ubicacion_esquema(actual)
+        if reparado != actual:
+            await upload_object(BUCKET, ruta, reparado.encode("utf-8"),
+                                content_type="application/xml", timeout=30)
+            log.info("XML PLD reparado (schemaLocation): %s", ruta)
+    except Exception as exc:
+        log.warning("no se pudo reparar el XML PLD %s: %s", ruta, exc)
+
+
 @router.get("/avisos/{aviso_id}/xml")
 async def descargar_xml(request: Request, aviso_id: str):
     """Liga temporal para descargar el XML de un aviso ya generado."""
@@ -1034,6 +1049,8 @@ async def descargar_xml(request: Request, aviso_id: str):
     if aviso.get("formato") != "INM" and aviso.get("estatus") != "presentado":
         raise HTTPException(409, "Este aviso tiene el formato anterior y el SAT lo rechazaría. "
                                  "Tócale «Rehacer aviso» y vuelve a generarlo.")
+    if aviso.get("formato") == "INM":
+        await _reparar_raiz_xml(aviso["xml_ruta"])
     url = await create_signed_object_url(BUCKET, aviso["xml_ruta"], expires_in=300, timeout=15)
     if not aviso.get("descargado_at"):
         await _sb_patch("pld_avisos", {"id": f"eq.{aviso_id}"},
