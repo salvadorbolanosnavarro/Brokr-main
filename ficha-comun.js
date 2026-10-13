@@ -170,6 +170,7 @@ function bkRenderBitacora(entradas, titulos) {
       adjuntos: e.adjuntos,
       categorias: e.categorias,
       editadoEn: e.editado_en,
+      sup: e.sup,
     });
   });
   return html;
@@ -180,14 +181,16 @@ function bkRenderBitacora(entradas, titulos) {
 // automático de lo que pasó, no algo que tenga sentido "corregir".
 const BK_TIPOS_EDITABLES = ['nota', 'archivo'];
 
-function bkItemBitacora({ id, tipo, titulo, texto, hora, adjuntos, categorias, editadoEn }) {
+function bkItemBitacora({ id, tipo, titulo, texto, hora, adjuntos, categorias, editadoEn, sup }) {
   const adj = (typeof haRenderAdjuntos === 'function') ? haRenderAdjuntos(adjuntos) : '';
   const cats = (categorias && categorias.length)
     ? '<div class="tke-chips" style="margin-top:6px">' +
       categorias.map(n => '<span class="tke-chip" style="cursor:default">' + bkEsc(n) + '</span>').join('') +
       '</div>'
     : '';
+  // Un comentario urgente de supervisión solo lo corrige quien lo escribió.
   const editable = id && BK_TIPOS_EDITABLES.includes(tipo) &&
+    (!sup || sup.autor === _bkSup.yo) &&
     typeof bkEditarNota === 'function' && typeof bkEliminarNota === 'function';
   const acciones = editable
     ? `<div class="bk-bita__acciones">
@@ -196,14 +199,15 @@ function bkItemBitacora({ id, tipo, titulo, texto, hora, adjuntos, categorias, e
         <button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="bkEliminarNota('${bkEsc(String(id))}')">Eliminar</button>
       </div>`
     : '';
-  return `<article class="bk-bita__item">
-    <span class="bk-bita__ico bk-bita__ico--${bkEsc(tipo)}">${BK_BITA_ICONOS[tipo] || BK_BITA_ICONOS.nota}</span>
+  return `<article class="bk-bita__item${sup ? ' bk-bita__item--urgente' : ''}">
+    <span class="bk-bita__ico bk-bita__ico--${sup ? 'urgente' : bkEsc(tipo)}">${sup ? BK_ICO_URGENTE : (BK_BITA_ICONOS[tipo] || BK_BITA_ICONOS.nota)}</span>
     <div class="bk-bita__cuerpo">
       <header class="bk-bita__head">
-        <span class="bk-bita__tipo">${bkEsc(titulo)}</span>
+        <span class="bk-bita__tipo">${sup ? 'Urgente de supervisión' : bkEsc(titulo)}</span>
         <time class="bk-bita__hora">${bkEsc(hora)}</time>
       </header>
       ${texto ? `<p class="bk-bita__txt">${bkEsc(texto)}</p>` : ''}
+      ${sup ? bkSupEstado(id, sup) : ''}
       ${cats}
       ${acciones}
       ${adj}
@@ -454,3 +458,95 @@ document.addEventListener('keydown', (ev) => {
   ev.preventDefault();
   bkFichaNavIr(ev.key === 'ArrowLeft' ? -1 : 1);
 });
+
+/* ══════════════════════════════════════════════════════════════════
+   Urgente de supervisión — el dueño o un admin deja en la bitácora una
+   nota urgente para el agente del cliente (routers/supervision.py). Las
+   columnas de esa marca solo las escribe el backend; aquí se pinta la
+   marca, la opción en el editor de notas y el botón "Marcar como atendido".
+   ══════════════════════════════════════════════════════════════════ */
+const BK_ICO_URGENTE = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008M10.3 3.86L1.82 18a1.5 1.5 0 001.29 2.25h17.78A1.5 1.5 0 0022.18 18L13.7 3.86a1.5 1.5 0 00-2.6 0z"/></svg>';
+let _bkSup = { yo: null, esSup: false };
+let _bkSupListo = null;
+
+async function bkSupApi(ruta, opts) {
+  const sb = window.brokrSb;
+  const tok = sb && sb.ensureToken ? await sb.ensureToken() : null;
+  if (!tok) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+  const r = await fetch((window.API_BASE || 'https://api.broquer.app') + ruta, Object.assign({}, opts, {
+    headers: Object.assign({ Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, (opts || {}).headers),
+  }));
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || ('Error ' + r.status));
+  return j;
+}
+
+// Quién soy y si superviso (owner/admin de una empresa). Una vez por página.
+function bkSupPreparar() {
+  if (!_bkSupListo) {
+    _bkSupListo = (async () => {
+      try { _bkSup.yo = typeof _userId === 'function' ? await _userId() : null; } catch {}
+      try {
+        const org = await bkSupApi('/org');
+        _bkSup.esSup = org.es_empresa === true && org.es_admin === true;
+      } catch {}
+    })();
+  }
+  return _bkSupListo;
+}
+
+function bkSupEstado(id, sup) {
+  if (sup.atendidoEn) {
+    return `<p class="bk-sup-estado is-ok">Atendido · ${bkEsc(bkDiaEtiqueta(sup.atendidoEn))}, ${bkEsc(bkHora(sup.atendidoEn))}</p>`;
+  }
+  const puede = id && (sup.para === _bkSup.yo || _bkSup.esSup);
+  return `<p class="bk-sup-estado">Pendiente de atender
+    ${puede ? `<button type="button" class="bk-btn bk-btn--sm" onclick="bkSupAtender('${bkEsc(String(id))}', this)">Marcar como atendido</button>` : ''}</p>`;
+}
+
+async function bkSupAtender(id, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    await bkSupApi('/supervision/comentarios/' + encodeURIComponent(id) + '/atendido', { method: 'POST' });
+    if (typeof showToast === 'function') showToast('Marcado como atendido');
+    window.dispatchEvent(new Event('brokr-supervision-cambio'));
+    if (typeof cargarBitacora === 'function' && typeof detContacto !== 'undefined' && detContacto) cargarBitacora();
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    alert('No se pudo marcar como atendido.\n\n' + (e.message || e));
+  }
+}
+
+// La opción en el editor de notas. Solo la ve quien supervisa.
+function bkSupComposer() {
+  const comp = document.getElementById('f-composer');
+  if (!comp) return;
+  let fila = document.getElementById('f-nota-urgente-fila');
+  if (!fila) {
+    fila = document.createElement('label');
+    fila.id = 'f-nota-urgente-fila';
+    fila.className = 'bk-sup-check';
+    fila.innerHTML = '<input type="checkbox" id="f-nota-urgente"/>' +
+      '<span><strong>Urgente para el agente</strong> · le llega un aviso y queda pendiente hasta que lo atienda</span>';
+    comp.insertBefore(fila, comp.querySelector('.bk-composer__pie'));
+  }
+  document.getElementById('f-nota-urgente').checked = false;
+  fila.hidden = !_bkSup.esSup;
+  bkSupPreparar().then(() => { fila.hidden = !_bkSup.esSup; });
+}
+
+function bkSupMarcado() {
+  const el = document.getElementById('f-nota-urgente');
+  return !!(el && el.checked && _bkSup.esSup);
+}
+
+async function bkSupCrear(datos) {
+  const j = await bkSupApi('/supervision/comentarios', { method: 'POST', body: JSON.stringify(datos) });
+  window.dispatchEvent(new Event('brokr-supervision-cambio'));
+  return j.actividad;
+}
+
+// Lo que cada ficha pasa como `sup` al pintar su bitácora.
+function bkSupDeActividad(a) {
+  return a && a.urgente ? { para: a.para_usuario, autor: a.user_id, atendidoEn: a.atendido_en } : null;
+}

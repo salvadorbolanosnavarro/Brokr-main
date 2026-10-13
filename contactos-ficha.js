@@ -313,6 +313,7 @@ async function cargarBitacora() {
   const feed = document.getElementById('f-bitacora-feed');
   feed.innerHTML = '<div class="bk-cargando">Cargando la bitácora…</div>';
   const cid = detContacto.id;
+  await bkSupPreparar();
   let acts = [];
   try {
     acts = await restGet('actividades?select=*&contacto_id=eq.' + encodeURIComponent(cid) + '&order=created_at.desc&limit=200');
@@ -334,6 +335,7 @@ async function cargarBitacora() {
   const entradas = acts.map(a => ({
     id: a.id, tipo: a.tipo || 'nota', texto: a.texto || '', adjuntos: a.adjuntos, fecha: a.created_at,
     categorias: catsPorActividad[a.id], editado_en: a.editado_en,
+    sup: bkSupDeActividad(a),
   }));
 
   // Las operaciones históricas traen la fecha como texto libre: sólo entran
@@ -482,6 +484,7 @@ async function ctNuevaCategoriaNota() {
 
 function ctAbrirNota() {
   document.getElementById('f-composer').hidden = false;
+  bkSupComposer();
   document.getElementById('f-nota-texto').focus();
   CT_NOTA_CATS = [];
   ctPintarCategoriasNota();
@@ -501,10 +504,13 @@ async function ctGuardarNota() {
   const propAdjunta = document.getElementById('f-nota-prop-sel').value || null;
   btn.disabled = true;
   try {
-    const rows = await restPost('actividades', {
-      tipo: texto ? 'nota' : 'archivo', texto: texto, adjuntos: adjuntos, contacto_id: detContacto.id,
-      propiedad_id: propAdjunta, org_id: cOrgId,
-    });
+    const urgente = bkSupMarcado();
+    const rows = urgente
+      ? await bkSupCrear({ texto, adjuntos, contacto_id: detContacto.id, propiedad_id: propAdjunta })
+      : await restPost('actividades', {
+        tipo: texto ? 'nota' : 'archivo', texto: texto, adjuntos: adjuntos, contacto_id: detContacto.id,
+        propiedad_id: propAdjunta, org_id: cOrgId,
+      });
     const nueva = Array.isArray(rows) ? rows[0] : rows;
     if (nueva && nueva.id) {
       for (const catId of CT_NOTA_CATS) await catVincular('actividades_categorias', 'actividad_id', nueva.id, catId);
@@ -514,7 +520,7 @@ async function ctGuardarNota() {
     ctQuitarPropNota();
     document.getElementById('f-composer').hidden = true;
     await cargarBitacora();
-    showToast(texto ? 'Nota guardada' : 'Archivos guardados');
+    showToast(urgente ? 'Comentario urgente enviado al agente' : texto ? 'Nota guardada' : 'Archivos guardados');
   } catch (e) {
     alert('No se pudo guardar en la bitácora.\n\n' + (e.message || e));
   } finally {
