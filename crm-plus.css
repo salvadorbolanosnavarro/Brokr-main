@@ -77,3 +77,9 @@
 .crm-guardia { display: grid; grid-template-columns: 1.4fr 1fr 96px 96px 36px; gap: var(--sp-2); }
 @media (max-width: 560px) { .crm-guardia { grid-template-columns: 1fr 1fr 36px; } .crm-guardia input[type=time] { grid-column: span 1; } }
 .crm-panel code { font-family: var(--font-mono); font-size: var(--fs-xs); background: var(--paper-2); padding: 1px 5px; border-radius: var(--r-xs); }
+
+/* Ficha · anterior / siguiente (ficha-comun.js → bkFichaNav) */
+.bk-ficha__nav { display: inline-flex; align-items: center; gap: var(--sp-1); margin-left: auto; }
+.bk-ficha__nav[hidden] { display: none; }
+.bk-ficha__nav-pos { min-width: 4.5em; text-align: center; font-size: var(--fs-xs); font-weight: 600; color: var(--mute); font-variant-numeric: tabular-nums; }
+.bk-ficha__nav .bk-icon-btn:disabled { opacity: .35; cursor: default; }

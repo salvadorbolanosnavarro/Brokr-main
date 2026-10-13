@@ -45,8 +45,24 @@ function abrirDetalle(id) {
   });
 
   setDetTab('info');
+  bkFichaNav(c.id, clOrdenVisible, clIrA);
   document.getElementById('detail-ov').classList.add('is-open');
   document.body.classList.add('bk-sin-scroll');
+}
+
+// El orden del tablero: columna por columna, de arriba abajo, con los filtros.
+function clOrdenVisible() {
+  const filtrados = contactosFiltrados();
+  return ETAPAS.flatMap(e => filtrados
+    .filter(c => String(c.estatus || 'nuevo').toLowerCase() === e.clave)
+    .map(c => c.id));
+}
+
+// Saltar a otro cliente sin cerrar la ficha, en la misma pestaña.
+function clIrA(id) {
+  const tab = detTabActual;
+  abrirDetalle(id);
+  if (tab !== 'info') setDetTab(tab);
 }
 
 function cerrarDetalle() {
