@@ -116,19 +116,7 @@
 .sup-item__txt { font-size: var(--fs-xs); color: var(--ink-2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .sup-item__meta { font-size: var(--fs-caption); color: var(--mute); }
 
-/* ── Filtro de fecha: calendario para elegir periodo (filtro-fecha.js) ── */
-.bk-cal { position: fixed; z-index: var(--z-popover); width: 296px; padding: var(--sp-3); background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r-lg); box-shadow: var(--shadow-lg); }
-.bk-cal.is-hoja { left: 0; right: 0; bottom: 0; top: auto; width: auto; border-radius: var(--r-lg) var(--r-lg) 0 0; padding: var(--sp-4) 16px calc(var(--sp-4) + env(safe-area-inset-bottom)); }
-.bk-cal__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-2); }
-.bk-cal__mes { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); text-transform: capitalize; }
-.bk-cal__semana, .bk-cal__dias { display: grid; grid-template-columns: repeat(7, 1fr); }
-.bk-cal__semana span { text-align: center; font-size: var(--fs-caption); font-weight: 700; color: var(--mute); padding: 4px 0; }
-.bk-cal__dia { height: 36px; border: 0; background: none; font: inherit; font-size: var(--fs-xs); color: var(--ink); cursor: pointer; border-radius: var(--r-sm); font-variant-numeric: tabular-nums; }
-.bk-cal.is-hoja .bk-cal__dia { height: 44px; }
-.bk-cal__dia:hover { background: var(--paper-2); }
-.bk-cal__dia:focus-visible { outline: none; box-shadow: var(--focus); }
-.bk-cal__dia.is-hoy { font-weight: 700; color: var(--sky-blue); }
-.bk-cal__dia.is-entre { background: var(--sky-canvas); border-radius: 0; }
-.bk-cal__dia.is-ini, .bk-cal__dia.is-fin { background: var(--sky-blue); color: #fff; font-weight: 700; }
-.bk-cal__resumen { margin: var(--sp-2) 0; font-size: var(--fs-xs); color: var(--ink-2); min-height: 1.4em; }
-.bk-cal__pie { display: flex; justify-content: flex-end; gap: var(--sp-2); }
+/* ── Filtro de fecha: Desde / Hasta al elegir periodo (filtro-fecha.js) ── */
+.filtro-fecha-rango { display: inline-flex; align-items: center; gap: 6px; color: var(--mute); font-size: var(--fs-xs); }
+.filtro-fecha-rango[hidden] { display: none; }
+.filtro-fecha-rango .filtro-select { background-image: none; padding: 0 12px; cursor: text; }
