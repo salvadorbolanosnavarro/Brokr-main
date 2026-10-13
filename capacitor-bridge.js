@@ -126,6 +126,10 @@
               location.href = d.tarea_id
                 ? 'tareas.html?id=' + encodeURIComponent(d.tarea_id)
                 : 'tareas.html';
+            } else if (d.tipo === 'supervision') {
+              location.href = d.contacto_id
+                ? 'clientes.html?id=' + encodeURIComponent(d.contacto_id) + '&tab=bitacora'
+                : 'clientes.html';
             } else {
               // "prueba" (notificación de diagnóstico) o cualquier tipo
               // futuro que aún no tenga destino propio: al inicio, nunca

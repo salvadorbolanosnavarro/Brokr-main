@@ -889,6 +889,7 @@ html, body { background: var(--paper); }
 <script src="ficha-comun.js" defer></script>
 <script src="categorias.js" defer></script>
 <script src="clientes-ficha.js" defer></script>
+<script src="supervision.js" defer></script>
 <script src="tarea-nueva.js" defer></script>
 <script src="app-shell.js" defer></script>
 <script src="inmuebles-catalogo.js" defer></script>
@@ -1770,6 +1771,7 @@ function abrirWA(ev, tel) {
     await Promise.all([cargarRemoto(), cargarEtapas(), cCargarInteresFiltro()]);
     await cCargarPermiso();
     renderActual();
+    if (window.supCargar) supCargar();
     const params = new URLSearchParams(window.location.search);
     const openId = params.get('id') || params.get('contacto');
     if (openId && _contactosMem.some(c => String(c.id) === String(openId))) {

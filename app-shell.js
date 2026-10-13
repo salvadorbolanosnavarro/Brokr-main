@@ -1527,10 +1527,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
      Ayuda, Mi perfil, Admin) — no es trabajo del día a día, así que no
      necesita estar suelto como el resto, pero visualmente es igual:
      ícono + nombre debajo. */
+  const CON_CONTADOR = ['buzon', 'clientes'];
   function buildRailIcon(m, active) {
     const on = m.key === active;
     return `<a href="${m.href}" class="bk-sb-ico${on ? ' is-active' : ''}" aria-label="${m.label}">
-      ${svg(m.icon)}${m.key === 'buzon' ? '<i class="bk-badge" id="bk-rail-buzon-badge"></i>' : ''}<span class="bk-sb-ico__label">${m.label}</span>
+      ${svg(m.icon)}${CON_CONTADOR.includes(m.key) ? `<i class="bk-badge" id="bk-rail-${m.key}-badge"></i>` : ''}<span class="bk-sb-ico__label">${m.label}</span>
     </a>`;
   }
   function buildRailItem(grupo, items, grupoActivo) {
@@ -1844,7 +1845,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     function sheetItem(m) {
       const act = m.key === navKey ? ' is-active' : '';
       const badge = m.key === 'whatsapp' ? '<i class="bk-badge" id="bk-sheet-badge"></i>'
-        : (m.key === 'buzon' ? '<i class="bk-badge" id="bk-sheet-buzon-badge"></i>' : '');
+        : (CON_CONTADOR.includes(m.key) ? `<i class="bk-badge" id="bk-sheet-${m.key}-badge"></i>` : '');
       // "Mi sitio" en móvil/iOS no abre la pantalla de configuración: abre el sitio público.
       const attrs = m.key === 'mi-sitio'
         ? `href="javascript:void(0)" onclick="bkOpenMiSitio()"`
@@ -4579,7 +4580,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // ─── Mensajes de WhatsApp sin leer: globito + notificación ────
     // WhatsApp ya está abierto para todos: todo agente sondea sus no leídos.
     setupChatsBadge(profile);
-    setupBuzonBadge(profile);
+    setupContador(profile, 'buzon', '/buzon/contador', 'sin_atender', 'Buzón', 'Entró un lead nuevo.', 'buzon');
+    setupContador(profile, 'clientes', '/supervision/contador', 'pendientes', 'Supervisión',
+      'Tienes un comentario urgente de supervisión.', 'supervision');
 
     // ─── Cita nueva agendada por la IA de WhatsApp: aviso inmediato (web) ──
     setupCitasNotify(profile);
@@ -4697,27 +4700,28 @@ body[data-app="facebook-ads"]{--page-max:980px}
     window.addEventListener('brokr-chats-leidos', tick);
   }
 
-  /* Buzón: contador de leads "sin atender" en el menú + aviso web cuando
-     entra uno nuevo (en iOS el aviso real es el push de asignación). */
-  function setupBuzonBadge(profile) {
+  /* Contador en el menú + aviso web cuando sube (en iOS el aviso real es
+     el push). Buzón: leads sin atender. Clientes: comentarios urgentes de
+     supervisión que me toca atender (routers/supervision.py). */
+  function setupContador(profile, key, ruta, campo, titulo, cuerpo, evento) {
     if (!profile?.user?.id) return;
     let prev = null;
     async function tick() {
       let n = 0;
       try {
-        const r = await fetch(API_BASE + '/buzon/contador', { headers: { Authorization: 'Bearer ' + getToken() } });
-        if (r.ok) n = Number((await r.json()).sin_atender) || 0;
+        const r = await fetch(API_BASE + ruta, { headers: { Authorization: 'Bearer ' + getToken() } });
+        if (r.ok) n = Number((await r.json())[campo]) || 0;
       } catch (e) { return; }
-      ['bk-rail-buzon-badge', 'bk-sheet-buzon-badge'].forEach(id => {
+      [`bk-rail-${key}-badge`, `bk-sheet-${key}-badge`].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.textContent = n > 99 ? '99+' : String(n); el.classList.toggle('is-on', n > 0); }
       });
-      window.dispatchEvent(new CustomEvent('brokr-buzon-contador', { detail: n }));
-      if (prev !== null && n > prev && activeKey !== 'buzon' && !IS_IOS_NATIVE) {
+      window.dispatchEvent(new CustomEvent(`brokr-${evento}-contador`, { detail: n }));
+      if (prev !== null && n > prev && activeKey !== key && !IS_IOS_NATIVE) {
         try {
           if ('Notification' in window && Notification.permission === 'granted') {
-            const no = new Notification('Broquer · Buzón', { body: 'Entró un lead nuevo.', icon: 'icon-192.png', tag: 'broquer-buzon' });
-            no.onclick = () => { window.focus(); location.href = 'buzon.html'; };
+            const no = new Notification('Broquer · ' + titulo, { body: cuerpo, icon: 'icon-192.png', tag: 'broquer-' + key });
+            no.onclick = () => { window.focus(); location.href = key + '.html'; };
           }
         } catch (e) {}
       }
@@ -4725,7 +4729,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     }
     tick();
     setInterval(() => { if (!document.hidden) tick(); }, 45000);
-    window.addEventListener('brokr-buzon-cambio', tick);
+    window.addEventListener(`brokr-${evento}-cambio`, tick);
   }
 
   function _avisoWeb(nuevos) {

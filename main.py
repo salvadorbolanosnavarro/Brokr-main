@@ -643,6 +643,11 @@ app.include_router(whatsapp_token_crypto_router)
 from routers.adjuntos_ligas import router as adjuntos_ligas_router
 app.include_router(adjuntos_ligas_router)
 
+# Comentarios urgentes de supervisión: el admin deja una nota urgente al
+# agente de un cliente (ver routers/supervision.py).
+from routers.supervision import router as supervision_router
+app.include_router(supervision_router)
+
 # Cierres y comisiones: modal de cierre, ingresos por cobrar, PLD y reporte
 # de operaciones cerradas (ver routers/cierres.py).
 from routers.cierres import router as cierres_router
