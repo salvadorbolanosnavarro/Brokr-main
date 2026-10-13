@@ -389,3 +389,68 @@ async function bkPatchContacto(id, fields) {
     throw new Error(j.detail || ('Error ' + r2.status));
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   Anterior / siguiente — recorrer la lista sin cerrar la ficha
+   Al abrir la ficha desde el tablero o la lista se toma una foto del
+   orden que se ve en pantalla (con los filtros puestos). Las flechas
+   caminan sobre esa foto, así que cambiar de etapa al cliente actual no
+   lo mueve de lugar a media vuelta. Teclado: ← y →.
+   ══════════════════════════════════════════════════════════════════ */
+let _bkNav = null;   // { ids, i, abrir }
+
+const BK_ICO_ANT = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>';
+const BK_ICO_SIG = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>';
+
+// id: el que se acaba de abrir. ordenVisible(): ids en el orden de la
+// pantalla. abrir(id): abre otro sin cerrar la ficha.
+function bkFichaNav(id, ordenVisible, abrir) {
+  const ov = document.getElementById('detail-ov');
+  const bar = ov && ov.querySelector('.bk-ficha__bar');
+  if (!bar) return;
+  let nav = document.getElementById('bk-ficha-nav');
+  if (!nav) {
+    nav = document.createElement('div');
+    nav.id = 'bk-ficha-nav';
+    nav.className = 'bk-ficha__nav';
+    nav.innerHTML =
+      `<button type="button" class="bk-icon-btn bk-icon-btn--sm" onclick="bkFichaNavIr(-1)" title="Anterior (←)" aria-label="Anterior">${BK_ICO_ANT}</button>` +
+      '<span class="bk-ficha__nav-pos" aria-live="polite"></span>' +
+      `<button type="button" class="bk-icon-btn bk-icon-btn--sm" onclick="bkFichaNavIr(1)" title="Siguiente (→)" aria-label="Siguiente">${BK_ICO_SIG}</button>`;
+    bar.insertBefore(nav, bar.lastElementChild);
+  }
+  id = String(id);
+  const yaAbierta = ov.classList.contains('is-open');
+  if (!yaAbierta || !_bkNav || !_bkNav.ids.includes(id)) {
+    _bkNav = { ids: ordenVisible().map(String), abrir };
+  }
+  _bkNav.i = _bkNav.ids.indexOf(id);
+  const n = _bkNav.ids.length;
+  nav.hidden = _bkNav.i < 0 || n < 2;
+  if (nav.hidden) return;
+  const [ant, sig] = nav.querySelectorAll('button');
+  ant.disabled = _bkNav.i === 0;
+  sig.disabled = _bkNav.i === n - 1;
+  nav.querySelector('.bk-ficha__nav-pos').textContent = (_bkNav.i + 1) + ' de ' + n;
+}
+
+function bkFichaNavIr(paso) {
+  if (!_bkNav || _bkNav.i < 0) return;
+  const j = _bkNav.i + paso;
+  if (j < 0 || j >= _bkNav.ids.length) return;
+  bkCerrarMenu();
+  _bkNav.abrir(_bkNav.ids[j]);
+}
+
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+  if (ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey || bkHayMenuAbierto()) return;
+  const ov = document.getElementById('detail-ov');
+  if (!ov || !ov.classList.contains('is-open')) return;
+  const t = ev.target;
+  if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+  // Otro modal encima de la ficha (editar, confirmar) se queda con las flechas
+  if (document.querySelector('.overlay.open, .cdel-overlay.is-open')) return;
+  ev.preventDefault();
+  bkFichaNavIr(ev.key === 'ArrowLeft' ? -1 : 1);
+});

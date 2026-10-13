@@ -46,8 +46,16 @@ function abrirDetalle(id) {
   });
 
   setDetTab('info');
+  bkFichaNav(c.id, () => contactosFiltrados().map(x => x.id), ctIrA);
   document.getElementById('detail-ov').classList.add('is-open');
   document.body.classList.add('bk-sin-scroll');
+}
+
+// Saltar a otro contacto sin cerrar la ficha, en la misma pestaña.
+function ctIrA(id) {
+  const tab = detTabActual;
+  abrirDetalle(id);
+  if (tab !== 'info') setDetTab(tab);
 }
 
 function cerrarDetalle() {
