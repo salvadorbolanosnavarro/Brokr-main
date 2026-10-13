@@ -362,9 +362,9 @@ function bkBuscadorContactos(inputId, hiddenId, cajaId, vacioTexto) {
    Antes se mandaba el PATCH con "return=minimal": si el cliente era de un
    compañero, la base (RLS) no actualizaba nada, respondía 200 igual y la
    pantalla decía "Etapa: Descartado" aunque al recargar volvía a la de antes.
-   Ahora se pide la fila de vuelta; si no se actualizó ninguna y el cambio es
-   solo de etapa/probabilidad, lo hace el servidor (que revisa permisos del
-   equipo). Cualquier otro caso se reporta como error, nunca como éxito. */
+   Ahora se pide la fila de vuelta; si no se actualizó ninguna, lo hace el
+   servidor (que revisa permisos del equipo: asignado, admin o "ver contactos
+   del equipo"). Si tampoco puede, se reporta como error, nunca como éxito. */
 async function bkPatchContacto(id, fields) {
   const sb = window.brokrSb;
   const r = await sb.fetch('rest/v1/contactos?id=eq.' + encodeURIComponent(id), {
@@ -376,14 +376,20 @@ async function bkPatchContacto(id, fields) {
   const filas = await r.json().catch(() => []);
   if (Array.isArray(filas) && filas.length) return;
 
+  // El cliente es de otro (lo creó alguien más y me lo asignaron, o lo veo
+  // por el permiso del equipo): el servidor revisa permisos y guarda sin
+  // cambiar al creador. Solo etapa/probabilidad → /etapa; lo demás → general.
   const soloEtapa = Object.keys(fields).every(k => ['estatus', 'probabilidad', 'updated_at'].includes(k));
-  if (!soloEtapa) throw new Error('No tienes permiso para modificar este contacto.');
   const tok = await sb.ensureToken();
   const cuerpo = {};
-  if ('estatus' in fields) cuerpo.estatus = fields.estatus;
-  if ('probabilidad' in fields) cuerpo.probabilidad = fields.probabilidad;
+  if (soloEtapa) {
+    if ('estatus' in fields) cuerpo.estatus = fields.estatus;
+    if ('probabilidad' in fields) cuerpo.probabilidad = fields.probabilidad;
+  } else {
+    Object.assign(cuerpo, fields);
+  }
   const r2 = await fetch((window.API_BASE || 'https://api.broquer.app') + '/org/contactos/' +
-    encodeURIComponent(id) + '/etapa', {
+    encodeURIComponent(id) + (soloEtapa ? '/etapa' : ''), {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
     body: JSON.stringify(cuerpo),
@@ -392,6 +398,31 @@ async function bkPatchContacto(id, fields) {
     const j = await r2.json().catch(() => ({}));
     throw new Error(j.detail || ('Error ' + r2.status));
   }
+}
+
+/* Guardar el formulario "Nuevo / Editar cliente". Un cliente nuevo se
+   inserta con quien lo crea como dueño. Uno existente se ACTUALIZA sin
+   mandar user_id: antes se reenviaba la fila completa con user_id = quien
+   guardaba, así que la base lo rechazaba si el cliente era de otro (aunque
+   estuviera asignado a quien editaba) y, cuando un admin lo editaba, el
+   cliente pasaba a ser del admin sin que nadie lo notara. */
+async function bkGuardarContacto(contacto, existe) {
+  if (existe) {
+    const campos = Object.assign({}, contacto);
+    ['id', 'user_id', 'org_id', 'asignado_a', 'created_at'].forEach(k => delete campos[k]);
+    await bkPatchContacto(contacto.id, campos);
+    return;
+  }
+  const sb = window.brokrSb;
+  const uid = typeof _userId === 'function' ? await _userId() : null;
+  if (!uid) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+  const r = await sb.fetch('rest/v1/contactos?on_conflict=id', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(Object.assign({}, contacto, { user_id: uid })),
+  });
+  if (!r.ok) throw new Error('Supabase: ' + r.status + ' ' + await r.text().catch(() => ''));
+  return r.json();
 }
 
 /* ══════════════════════════════════════════════════════════════════
