@@ -522,7 +522,7 @@ html, body { background: var(--paper); }
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--mute);"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
       <input type="search" id="search-input" placeholder="Buscar por nombre, teléfono o correo…" oninput="busquedaDebounced()"/>
     </div>
-    <select class="filtro-select" id="c-filtro-fecha" onchange="renderPipeline()">
+    <select class="filtro-select" id="c-filtro-fecha" data-rango-fecha onchange="renderPipeline()">
       <option value="">Fecha: todas</option>
       <option value="hoy">Hoy</option>
       <option value="semana">Esta semana</option>
@@ -890,6 +890,7 @@ html, body { background: var(--paper); }
 <script src="categorias.js" defer></script>
 <script src="clientes-ficha.js" defer></script>
 <script src="supervision.js" defer></script>
+<script src="filtro-fecha.js" defer></script>
 <script src="tarea-nueva.js" defer></script>
 <script src="app-shell.js" defer></script>
 <script src="inmuebles-catalogo.js" defer></script>
@@ -1096,6 +1097,7 @@ function cFechaEnRango(iso, preset) {
   }
   if (preset === 'mes') return d.getFullYear() === ahora.getFullYear() && d.getMonth() === ahora.getMonth();
   if (preset === 'anio') return d.getFullYear() === ahora.getFullYear();
+  if (preset === 'rango') return bkRangoFecha.contiene('c-filtro-fecha', iso);
   return true;
 }
 
