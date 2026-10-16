@@ -181,6 +181,15 @@ function bkRenderBitacora(entradas, titulos) {
 // automático de lo que pasó, no algo que tenga sentido "corregir".
 const BK_TIPOS_EDITABLES = ['nota', 'archivo'];
 
+// En Broquer para Empresas solo el dueño o un administrador borra notas.
+// Cada página resuelve el permiso con /org: cPuedeEliminar (contactos y
+// clientes) o puedeEliminar (propiedades). Sin permiso resuelto, no se borra.
+function bkPuedeBorrar() {
+  if (typeof cPuedeEliminar !== 'undefined') return cPuedeEliminar === true;
+  if (typeof puedeEliminar !== 'undefined') return puedeEliminar === true;
+  return false;
+}
+
 function bkItemBitacora({ id, tipo, titulo, texto, hora, adjuntos, categorias, editadoEn, sup }) {
   const adj = (typeof haRenderAdjuntos === 'function') ? haRenderAdjuntos(adjuntos) : '';
   const cats = (categorias && categorias.length)
@@ -196,7 +205,7 @@ function bkItemBitacora({ id, tipo, titulo, texto, hora, adjuntos, categorias, e
     ? `<div class="bk-bita__acciones">
         ${editadoEn ? '<span class="bk-hint" title="Editada">(editada)</span>' : ''}
         <button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="bkEditarNota('${bkEsc(String(id))}')">Editar</button>
-        <button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="bkEliminarNota('${bkEsc(String(id))}')">Eliminar</button>
+        ${bkPuedeBorrar() ? `<button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="bkEliminarNota('${bkEsc(String(id))}')">Eliminar</button>` : ''}
       </div>`
     : '';
   return `<article class="bk-bita__item${sup ? ' bk-bita__item--urgente' : ''}">

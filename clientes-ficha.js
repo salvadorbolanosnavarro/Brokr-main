@@ -433,6 +433,7 @@ async function bkEditarNota(id) {
 }
 
 async function bkEliminarNota(id) {
+  if (!bkPuedeBorrar()) return;
   if (!confirm('¿Eliminar esta nota? No se puede deshacer.')) return;
   let fila;
   try {
