@@ -1602,7 +1602,8 @@ function abrirModal(id = null) {
     const sx = c.sexo || 'M';
     sexoActual = sx;
     document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === sx));
-    document.getElementById('btn-del').style.display = 'block';
+    // En Broquer para Empresas solo el dueño o un administrador borra.
+    document.getElementById('btn-del').style.display = cPuedeEliminar ? 'block' : 'none';
   } else {
     document.getElementById('modal-title').textContent = 'Nuevo contacto';
     ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-descripcion-privada','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
@@ -1988,7 +1989,7 @@ async function guardarContacto() {
 }
 
 async function confirmarEliminar() {
-  if (!editandoId) return;
+  if (!editandoId || !cPuedeEliminar) return;
   if (!confirm('¿Eliminar este contacto? Esta acción no se puede deshacer.')) return;
   try {
     await eliminarRemoto(editandoId);

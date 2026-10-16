@@ -1139,6 +1139,7 @@ const C_API = 'https://api.broquer.app';
 
 let cEsEmpresa = false;      // la cuenta es Broquer para Empresas
 let cEsAdminOrg = false;     // quien navega es owner/admin de la empresa
+let cPuedeEliminar = false;  // arranca en false: si la consulta falla, no se muestra "Eliminar"
 let cMiembros = [];          // [{user_id, nombre, email, activo}] del equipo
 let cOrgId = null;           // toda cuenta tiene una org, incluso las individuales
 let cCategorias = [];        // [{id, nombre}] catálogo de categorías de la cuenta
@@ -1157,6 +1158,7 @@ async function cCargarPermiso() {
     cEsEmpresa = org.es_empresa === true;
     cEsAdminOrg = org.es_admin === true;
     cOrgId = org.org_id || null;
+    cPuedeEliminar = !org.es_empresa || org.es_admin === true;
     if (cOrgId) cCategorias = await catCargar(cOrgId);
     // En empresas, cargamos el equipo para el selector y filtro de agente
     if (cEsEmpresa) {
@@ -1237,7 +1239,8 @@ async function abrirModal(id = null) {
     const sx = c.sexo || 'M';
     sexoActual = sx;
     document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === sx));
-    document.getElementById('btn-del').style.display = 'block';
+    // En Broquer para Empresas solo el dueño o un administrador borra.
+    document.getElementById('btn-del').style.display = cPuedeEliminar ? 'block' : 'none';
   } else {
     document.getElementById('modal-title').textContent = 'Nuevo cliente';
     ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-descripcion-privada','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
@@ -1363,7 +1366,7 @@ async function guardarContacto() {
 }
 
 async function confirmarEliminar() {
-  if (!editandoId) return;
+  if (!editandoId || !cPuedeEliminar) return;
   if (!confirm('¿Eliminar este cliente? Esta acción no se puede deshacer.')) return;
   try {
     await eliminarRemoto(editandoId);
