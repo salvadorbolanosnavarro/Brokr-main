@@ -175,10 +175,10 @@ function ctMenuProb(btn) {
 
 function ctMenuMas(btn) {
   if (!detContacto) return;
-  bkAbrirMenu(btn, [
-    { id: 'editar', etiqueta: 'Editar contacto' },
-    { id: 'eliminar', etiqueta: 'Eliminar contacto', peligro: true, separa: true },
-  ], (v) => {
+  const items = [{ id: 'editar', etiqueta: 'Editar contacto' }];
+  // En Broquer para Empresas solo el dueño o un administrador borra.
+  if (cPuedeEliminar) items.push({ id: 'eliminar', etiqueta: 'Eliminar contacto', peligro: true, separa: true });
+  bkAbrirMenu(btn, items, (v) => {
     if (v === 'editar') editarDesdeDetalle();
     if (v === 'eliminar') eliminarDesdeDetalle();
   });
@@ -436,6 +436,7 @@ async function bkEditarNota(id) {
 }
 
 async function bkEliminarNota(id) {
+  if (!bkPuedeBorrar()) return;
   if (!confirm('¿Eliminar esta nota? No se puede deshacer.')) return;
   let fila;
   try {
@@ -812,7 +813,7 @@ function editarDesdeDetalle() {
 }
 
 async function eliminarDesdeDetalle() {
-  if (!detContacto) return;
+  if (!detContacto || !cPuedeEliminar) return;
   const c = detContacto;
   if (!confirm(`¿Eliminar a ${c.nombre || 'este contacto'}?\n\nSe pierde su bitácora completa: notas, archivos y todo su historial. No se puede deshacer.`)) return;
   try {
