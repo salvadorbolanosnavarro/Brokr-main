@@ -146,3 +146,32 @@ no requieren API, claves secretas ni base de datos.
 No se ha publicado en Cloudflare ni se ha certificado iPhone/WebView real.
 Sigue pendiente la exportación del esquema, su migración exacta al Supabase
 limpio, la auditoría de automatizaciones de PostgreSQL y la prueba real completa.
+
+## Demo navegable sin Supabase
+
+Añadida compilación explícita `BROQUER_STAGING_MODE=demo`. Inyecta su transporte
+antes de la autenticación original y usa un host reservado `.invalid`; las
+operaciones locales se resuelven dentro del navegador. CSP permite conexiones
+solo al propio origen. El modo conectado conserva su configuración estricta.
+
+Incluye clientes/contactos, inmuebles, tareas, finanzas, alertas, contrato borrador
+y conversaciones ficticias. Los cambios admitidos quedan en almacenamiento local
+separado de las sesiones/cachés del entorno conectado. Franja de demo, selector
+de rol y estado, y restablecimiento de los datos ficticios. No existe identidad
+de Supabase ni acceso real: la sesión es explícitamente una simulación.
+
+18 vistas de nueve módulos a 390/1440px aprobadas sin fixtures de Playwright: se
+probó el artefacto compilado real, incluida creación y recarga de cliente/tarea/
+movimiento, alternancia de rol/estado, restablecimiento y cero solicitudes de red
+a API/Supabase. Envío externo devuelve 501, nunca éxito ficticio. Tres pruebas
+de compilación demo y las cuatro de aislamiento conectado aprobaron.
+
+La demo no implementa todos los endpoints: las operaciones externas o no
+soportadas fallan con un mensaje explícito. No valida RLS, autenticación,
+cobros, entregas, generación con IA ni persistencia real. No reemplaza las
+pruebas de aceptación del entorno conectado. Publicación en el proyecto
+Cloudflare existente requiere acceso autenticado al panel.
+
+El artefacto demo también completó el recorrido de las 54 páginas ejecutables,
+108 vistas sin errores JavaScript ni desbordamientos. Evidencia resumida en
+`docs/redesign/demo-qa-20261019.json`.

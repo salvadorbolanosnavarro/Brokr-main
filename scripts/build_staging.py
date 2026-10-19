@@ -15,6 +15,11 @@ BRANCH = 'work/redesign-preview-20261003'
 def config(env):
     if env.get('CF_PAGES_BRANCH', BRANCH) != BRANCH:
         raise ValueError('This build is exclusively for PR #180, never main.')
+    mode = env.get('BROQUER_STAGING_MODE', 'connected')
+    if mode == 'demo':
+        return 'https://broquer-demo.invalid/api', 'https://broquer-demo.invalid/supabase', 'DEMO_PUBLIC_NOT_A_KEY'
+    if mode != 'connected':
+        raise ValueError('BROQUER_STAGING_MODE must be connected or demo')
     api = env.get('BROQUER_STAGING_API_URL', '').rstrip('/')
     db = env.get('BROQUER_STAGING_SUPABASE_URL', '').rstrip('/')
     key = env.get('BROQUER_STAGING_SUPABASE_KEY', '').strip()
@@ -36,6 +41,7 @@ def config(env):
 
 def build(env=os.environ):
     api, db, key = config(env)
+    demo = env.get('BROQUER_STAGING_MODE') == 'demo'
     output = ROOT / 'dist'
     if output.exists(): shutil.rmtree(output)
     allowed = {'.html','.js','.css','.json','.svg','.png','.jpg','.jpeg','.webp','.gif','.ico','.woff','.woff2','.ttf','.otf','.mp4','.webm','.pdf'}
@@ -55,7 +61,8 @@ def build(env=os.environ):
             text = text.replace('api.broquer.app',urlsplit(api).hostname).replace('urtgysmtnvoqaljuhntz.supabase.co',urlsplit(db).hostname)
             if p.suffix == '.html':
                 prefix = '../' * (len(p.parts)-1)
-                text = text.replace('<head>',f'<head>\n<script src="{prefix}staging-auth-guard.js"></script>',1)
+                bootstrap = f'<script src="{prefix}demo-runtime.js" data-mode="demo"></script>\n' if demo else ''
+                text = text.replace('<head>',f'<head>\n{bootstrap}<script src="{prefix}staging-auth-guard.js"></script>',1)
             if p.suffix == '.html' and 'styles/mobile-inputs.css' not in text:
                 prefix = '../' * (len(p.parts)-1)
                 text = text.replace('</head>',f'<link rel="stylesheet" href="{prefix}styles/mobile-inputs.css">\n</head>')
@@ -78,10 +85,11 @@ def build(env=os.environ):
 })();
 """)
     # connect-src applies even to old inline code: no production DB/API writes.
+    connections = "'self'" if demo else f"'self' {api} {db} wss://{urlsplit(db).hostname}"
     (output / '_headers').write_text(f'''/*
   X-Robots-Tag: noindex, nofollow
   Referrer-Policy: strict-origin-when-cross-origin
-  Content-Security-Policy: connect-src 'self' {api} {db} wss://{urlsplit(db).hostname}; object-src 'none'; base-uri 'self'
+  Content-Security-Policy: connect-src {connections}; object-src 'none'; base-uri 'self'
 ''')
     print(f'Staging build: {count} public assets. No backend, SQL or secret files included.')
 

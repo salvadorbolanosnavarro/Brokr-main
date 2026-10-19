@@ -2,6 +2,34 @@
 
 Rama: `work/redesign-preview-20261003`. No cambiar `main`, Railway producción ni el proyecto Cloudflare de producción. No crear otro backend ni otro frontend.
 
+## Ver la demo ahora, sin esperar Supabase
+
+La demo usa los HTML y scripts del rediseño con datos ficticios guardados
+únicamente en el navegador. No usa Railway ni Supabase y no requiere claves.
+No demuestra persistencia del servidor, permisos reales ni integraciones.
+
+En el proyecto existente **broquer-staging** de Cloudflare:
+
+1. **Workers & Pages > broquer-staging > Settings > Builds & deployments**.
+2. En Git, Production branch de **este proyecto de pruebas**:
+   `work/redesign-preview-20261003`. No cambiar el proyecto productivo.
+3. Build command: `python3 scripts/build_staging.py`. Output: `dist`.
+4. **Settings > Variables and Secrets > Production** de **broquer-staging**:
+   agrega `BROQUER_STAGING_MODE` = `demo` y `SKIP_DEPENDENCY_INSTALL` = `1`.
+5. Guarda y en **Deployments** vuelve a desplegar el último commit de la rama.
+6. Conserva el dominio existente `staging.broquer.app` y abre `/index.html`.
+   Debe aparecer la franja **Demo · datos ficticios**. No pide contraseña.
+
+Puedes crear/editar registros ficticios, recargar, alternar agente/administrador,
+ver vacío/error/carga lenta y restablecer solo los datos de la demo. Las sesiones
+y cachés están separadas mediante un prefijo de los datos del staging conectado.
+Los envíos, servicios externos e IA no disponibles muestran un aviso; no se
+simula una entrega, cobro o resultado de IA exitoso. No introducir datos reales.
+
+Cuando la base limpia esté lista, cambiar únicamente en **broquer-staging**
+`BROQUER_STAGING_MODE` a `connected`, completar las variables siguientes y
+redesplegar. Los cambios de la demo no se migran a Supabase.
+
 ## 1. Supabase: conseguir el esquema correcto
 
 **Bloqueo actual:** el repositorio contiene migraciones parciales, no el esquema completo de la base actual. No se puede certificar una copia exacta a partir de esos archivos. No ejecutar `schema.sql` como si fuera toda Broquer. No restaurar un backup completo: incluiría datos reales.

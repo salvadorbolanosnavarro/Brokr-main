@@ -1,0 +1,152 @@
+{
+  "mode": "demo",
+  "artifact": "BROQUER_STAGING_MODE=demo python3 scripts/build_staging.py",
+  "local_transport_only": true,
+  "proof": {
+    "reports": [
+      {
+        "page": "index",
+        "width": 1440,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "clientes",
+        "width": 1440,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "propiedades",
+        "width": 1440,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "tareas",
+        "width": 1440,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "finanzas",
+        "width": 1440,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "buzon",
+        "width": 1440,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "alertas",
+        "width": 1440,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "crm-ajustes",
+        "width": 1440,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "bandeja",
+        "width": 1440,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "index",
+        "width": 390,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "clientes",
+        "width": 390,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "propiedades",
+        "width": 390,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "tareas",
+        "width": 390,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "finanzas",
+        "width": 390,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "buzon",
+        "width": 390,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "alertas",
+        "width": 390,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "crm-ajustes",
+        "width": 390,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      },
+      {
+        "page": "bandeja",
+        "width": 390,
+        "overflow": false,
+        "smallInputs": [],
+        "errors": []
+      }
+    ],
+    "checks": [
+      "client creation persists on reload",
+      "task creation persists on reload",
+      "finance movement persists on reload",
+      "role switching",
+      "error state switching",
+      "external send returns 501",
+      "reset clears demo edits",
+      "zero API/Supabase network requests"
+    ],
+    "limitations": "Local browser simulation only; not real backend, RLS or iOS WebView."
+  },
+  "all_surface_views": {
+    "count": 108,
+    "passed": 108
+  },
+  "source_sha256": "174f4b12221af25b166ead3cddc04994d7e8b700c66ac3464c5717813cf35bba",
+  "publication": "Not yet deployed; Cloudflare authentication required."
+}
