@@ -68,6 +68,8 @@ lines=['# Cobertura completa de Broquer','',
  'La presencia del código no certifica su funcionamiento. Todos los flujos requieren validación con servicios de pruebas.', '',
  '| Pantalla | Rediseño | Mock | Prueba real | Datos / vacío / error / carga | Roles | Móvil iPhone real | IDs retirados |',
  '| --- | --- | --- | --- | --- | --- | --- | --- |']
+crm_report=ROOT/'test-results/crm/report.json'
+crm_cases=json.loads(crm_report.read_text()).get('results',[]) if crm_report.exists() else []
 mock_results=[]
 for filename in ('report.json','focused-report.json'):
     report_path=ROOT/'test-results/modules'/filename
@@ -77,10 +79,18 @@ for p in pages:
     latest={r['width']:r for r in runs}
     passed=len(latest)>=2 and all(not r.get('failure') and not r.get('overflow') and not r.get('errors') for r in latest.values())
     redesign='Rediseñado; fidelidad pendiente' if p['shared_shell'] or p['path'] in {'login.html','registro.html','reset-password.html','unirse.html','firmar.html','verificar-firma.html','expediente.html'} else 'Pendiente de revisión visual'
-    lines.append(f"| `{p['path']}` | {redesign} | {'Probado con mock: superficie en versión previa' if passed else 'Pendiente'} | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | {', '.join(p['removed_control_ids']) or 'Ninguno'} |")
+    state_cases=[r for r in crm_cases if r['page']==p['path']]
+    states_passed=len(state_cases)==16 and all(r.get('passed') for r in state_cases)
+    states='Probado con mock: los cuatro estados' if states_passed else 'Pendiente de flujos completos'
+    roles='Agente/admin UI con mock; RLS pendiente' if states_passed else 'Pendiente de matriz completa'
+    lines.append(f"| `{p['path']}` | {redesign} | {'Probado con mock: superficie; ver fecha y límites en validación' if passed else 'Pendiente'} | Pendiente | {states} | {roles} | Pendiente | {', '.join(p['removed_control_ids']) or 'Ninguno'} |")
 lines += ['', '## Cada endpoint', '', 'Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON conserva además cada declaración con su handler. El mock de la interfaz no demuestra que un endpoint funcione. Las integraciones externas se bloquearán en staging y se validarán por separado.', '', '| Método | Ruta declarada con prefijo local | Fuente / handler | Mock endpoint | Prueba real |', '| --- | --- | --- | --- | --- |']
+ui_calls={(c['method'],c['path']) for case in crm_cases if case.get('passed') for c in case.get('calls',[])}
 for route in routes:
-    lines.append(f"| {route['method']} | `{route['path']}` | `{route['file']}: {route['handler']}` | Pendiente | Pendiente |")
+    route_pattern='^'+re.sub(r'\{[^}]+\}',r'[^/]+',route['path'])+'$'
+    ui_mock=any(method==route['method'] and re.match(route_pattern,path) for method,path in ui_calls)
+    mock_status='Probado con mock: consumo de interfaz; servidor pendiente' if ui_mock else 'Pendiente'
+    lines.append(f"| {route['method']} | `{route['path']}` | `{route['file']}: {route['handler']}` | {mock_status} | Pendiente |")
 lines+=['','## Criterios de cobertura','',
  '- CRM: altas, edición, filtros, etapas, importación/exportación, archivos y permisos.',
  '- Documentos: contratos, firma, verificación pública, expediente, cumplimiento y descargas.',

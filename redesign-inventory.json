@@ -2899,7 +2899,7 @@
     {
       "path": "estadisticas.html",
       "exists": true,
-      "app": null,
+      "app": "estadisticas",
       "shared_shell": true,
       "shared_theme": true,
       "source_unchanged": false,
@@ -4196,7 +4196,7 @@
     {
       "path": "isr.html",
       "exists": true,
-      "app": null,
+      "app": "isr",
       "shared_shell": true,
       "shared_theme": true,
       "source_unchanged": false,

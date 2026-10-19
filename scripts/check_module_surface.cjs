@@ -5,7 +5,7 @@ const assert=require('node:assert/strict');
 const inventory=JSON.parse(fs.readFileSync('redesign-inventory.json'));
 const base=process.env.BROQUER_TEST_URL || 'http://127.0.0.1:8080';
 (async()=>{
- const browser=await chromium.launch({args:['--no-sandbox']});
+ const browser=await chromium.launch({executablePath:process.env.BROQUER_CHROMIUM_EXECUTABLE || undefined,args:['--no-sandbox']});
  const results=[];
  try {
   const ctx=await browser.newContext({ignoreHTTPSErrors:true});
@@ -15,6 +15,9 @@ const base=process.env.BROQUER_TEST_URL || 'http://127.0.0.1:8080';
    if(u.pathname.includes('/rest/v1/usuarios'))data=[{nombre:'Alex',rol:'agente',modulos_desactivados:[]}];
    else if(u.pathname.endsWith('/subscription/status'))data={activa:true,active:true,plan:'max'};
    else if(u.pathname.endsWith('/org'))data={tiene_org:false};
+   else if(u.pathname.endsWith('/crm/catalogos'))data={es_admin:false,etapas:[],tipos:[],fuentes:[],etiquetas:[],categorias:[]};
+   else if(u.pathname.endsWith('/buzon'))data={leads:[],es_admin:false};
+   else if(u.pathname.endsWith('/alertas/requerimientos'))data={requerimientos:[]};
    else if(u.pathname.includes('/finanzas/resumen'))data={cuentas:[],ingresos:0,gastos:0,utilidad:0};
    else if(u.pathname.includes('/__stage/api/'))data={};
    await r.fulfill({contentType:'application/json',body:JSON.stringify(data)});
@@ -30,7 +33,8 @@ const base=process.env.BROQUER_TEST_URL || 'http://127.0.0.1:8080';
     if(await p.locator('#splash').count()) await p.locator('#splash').waitFor({state:'hidden',timeout:10000});
     await p.evaluate(()=>document.fonts.ready);
     if(item.path==='avm.html') await p.waitForFunction(()=>document.querySelector('#root')?.childElementCount>0,{},{timeout:12000});
-    const surface=await p.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,heading:document.querySelector('h1')?.textContent.trim(),controls:document.querySelectorAll('button,input,select,textarea').length}));
+    const surface=await p.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,heading:document.querySelector('h1')?.textContent.trim(),controls:document.querySelectorAll('button,input,select,textarea').length,smallInputs:[...document.querySelectorAll('input,textarea,select')].filter(e=>e.getClientRects().length && parseFloat(getComputedStyle(e).fontSize)<16).map(e=>e.id||e.name)}));
+    assert.equal(surface.smallInputs.length,0,'visible inputs are at least 16px');
     if(item.shared_shell){
     await p.locator('.bk-design-assistant').click();
     assert(await p.locator('#bk-shaark-popup').isVisible(),'Broq opens');

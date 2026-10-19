@@ -3,7 +3,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const assert=require('node:assert/strict');
 const base=process.env.BROQUER_TEST_URL||'http://127.0.0.1:8080';
 (async()=>{
- const browser=await chromium.launch({args:['--no-sandbox']});
+ const browser=await chromium.launch({executablePath:process.env.BROQUER_CHROMIUM_EXECUTABLE || undefined,args:['--no-sandbox']});
  try{
   const context=await browser.newContext({viewport:{width:390,height:900}});const requests=[];const production=[];
   context.on('request',r=>{if(/api\.broquer\.app|urtgysmtnvoqaljuhntz\.supabase\.co/.test(r.url()))production.push(r.url());});

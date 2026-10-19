@@ -7,61 +7,61 @@ La presencia del código no certifica su funcionamiento. Todos los flujos requie
 
 | Pantalla | Rediseño | Mock | Prueba real | Datos / vacío / error / carga | Roles | Móvil iPhone real | IDs retirados |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `404.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `404.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
 | `_TEMPLATE-modulo.html` | Rediseñado; fidelidad pendiente | Pendiente | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `admin.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `alertas.html` | Rediseñado; fidelidad pendiente | Pendiente | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `aviso-privacidad.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `avm.html` | Rediseñado; fidelidad pendiente | Pendiente | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `bandeja.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `blog.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `bolsa.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `buscador.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `buzon.html` | Rediseñado; fidelidad pendiente | Pendiente | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `clientes.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `contactos.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `contratos.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `correo.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `crm-ajustes.html` | Rediseñado; fidelidad pendiente | Pendiente | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `cumplimiento.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `empresas.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `equipo.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `estadisticas.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `expediente.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `facebook-ads.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `facebook-callback.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `ficha-manual.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `finanzas.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `firmar.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `firmas.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `guia-agente.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `image-cleaner.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `index.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `isr.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `landing.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `leads.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `legal.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `login.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `mi-sitio.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `preview-modo/index.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `preview-modo/preview-agenda.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `preview-modo/preview-campanas.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `preview-modo/preview-inicio.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `propiedades.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `registro.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `reset-password.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `robin.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `sitio.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `soporte.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `tareas.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `unirse.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `verificador.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `verificar-firma.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `video.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `videos/landing.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `whatsapp-callback.html` | Pendiente de revisión visual | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `whatsapp-chatgpt.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
-| `whatsapp.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie en versión previa | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `admin.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `alertas.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Probado con mock: los cuatro estados | Agente/admin UI con mock; RLS pendiente | Pendiente | Ninguno |
+| `aviso-privacidad.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `avm.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `bandeja.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `blog.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `bolsa.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `buscador.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `buzon.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Probado con mock: los cuatro estados | Agente/admin UI con mock; RLS pendiente | Pendiente | Ninguno |
+| `clientes.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `contactos.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `contratos.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `correo.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `crm-ajustes.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Probado con mock: los cuatro estados | Agente/admin UI con mock; RLS pendiente | Pendiente | Ninguno |
+| `cumplimiento.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `empresas.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `equipo.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `estadisticas.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `expediente.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `facebook-ads.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `facebook-callback.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `ficha-manual.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `finanzas.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `firmar.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `firmas.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `guia-agente.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `image-cleaner.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `index.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `isr.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `landing.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `leads.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `legal.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `login.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `mi-sitio.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `preview-modo/index.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `preview-modo/preview-agenda.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `preview-modo/preview-campanas.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `preview-modo/preview-inicio.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `propiedades.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `registro.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `reset-password.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `robin.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `sitio.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `soporte.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `tareas.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `unirse.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `verificador.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `verificar-firma.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `video.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `videos/landing.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `whatsapp-callback.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `whatsapp-chatgpt.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `whatsapp.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
 
 ## Cada endpoint
 
@@ -90,9 +90,9 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | POST | `/alertas/registrar-envio` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/alertas/requerimiento/{contacto_id}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | PUT | `/alertas/requerimiento/{contacto_id}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| GET | `/alertas/requerimientos` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| GET | `/alertas/requerimientos` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | DELETE | `/alertas/requerimientos/{rid}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| PATCH | `/alertas/requerimientos/{rid}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| PATCH | `/alertas/requerimientos/{rid}` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | POST | `/api/avm-claude` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/api/avm-websearch` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/api/buscador` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
@@ -115,18 +115,18 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | POST | `/bolsa/publicar` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/bolsa/retirar` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/bolsa/solicitud` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| GET | `/buzon` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| GET | `/buzon/contador` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| GET | `/buzon` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
+| GET | `/buzon/contador` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | POST | `/buzon/entrada/{token}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/buzon/estadisticas` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| POST | `/buzon/manual` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| POST | `/buzon/manual` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | GET | `/buzon/reglas` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | PUT | `/buzon/reglas` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| GET | `/buzon/respuestas` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| GET | `/buzon/respuestas` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | POST | `/buzon/respuestas` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | DELETE | `/buzon/respuestas/{rid}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | PATCH | `/buzon/respuestas/{rid}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| PATCH | `/buzon/{lead_id}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| PATCH | `/buzon/{lead_id}` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | POST | `/buzon/{lead_id}/asignar` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/buzon/{lead_id}/respondido` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/chat` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
@@ -143,7 +143,7 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | DELETE | `/config/eb-key` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/config/eb-key` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/config/eb-key` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| GET | `/config/public` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| GET | `/config/public` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | POST | `/contactos/eliminar-masivo` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/contactos/importar-archivo` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/contactos/importar-eb` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
@@ -163,7 +163,7 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | POST | `/correo/enviar` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/correo/estado` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/correo/mensaje/{uid_msg}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| GET | `/crm/catalogos` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| GET | `/crm/catalogos` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | DELETE | `/crm/categorias/{cat_id}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | PATCH | `/crm/categorias/{cat_id}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/crm/contactos/fusionar` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
@@ -171,7 +171,7 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | POST | `/crm/etapas` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/crm/etapas/orden` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | DELETE | `/crm/etapas/{etapa_id}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| PATCH | `/crm/etapas/{etapa_id}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| PATCH | `/crm/etapas/{etapa_id}` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | GET | `/crm/etiquetas` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/crm/etiquetas/eliminar` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/crm/etiquetas/renombrar` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
@@ -288,7 +288,7 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | POST | `/isr-pdf` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/isr-pdf/{token}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/noticias` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| GET | `/org` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| GET | `/org` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | POST | `/org/aceptar-invitacion` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/org/asignar` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | PATCH | `/org/contactos/{contacto_id}/etapa` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
@@ -299,7 +299,7 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | POST | `/org/miembro/activo` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/org/miembro/permisos` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/org/miembro/rol` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| GET | `/org/miembros` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| GET | `/org/miembros` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | POST | `/org/nombre` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/org/tareas/contactos-vinculados` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | DELETE | `/org/tareas/{tarea_id}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
@@ -367,7 +367,7 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | POST | `/subscription/empresa/checkout` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/subscription/empresa/plan` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/subscription/revenuecat-webhook` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| GET | `/subscription/status` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| GET | `/subscription/status` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | POST | `/subscription/webhook` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/telemetria/sesion-modulo` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/transcribir` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
@@ -403,7 +403,7 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | PUT | `/whatsapp2/entrenamiento` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/whatsapp2/estadisticas` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/whatsapp2/etiquetas` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| GET | `/whatsapp2/mensajes` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| GET | `/whatsapp2/mensajes` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | POST | `/whatsapp2/mensajes` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/whatsapp2/mensajes/plantilla` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | DELETE | `/whatsapp2/mensajes/{mensaje_id}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |

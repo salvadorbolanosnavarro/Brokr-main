@@ -1,0 +1,43 @@
+/* Shared application states and the new CRM modules in the approved palette. */
+.bk-state { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; min-height:220px; padding:32px 20px; text-align:center; color:var(--mute); }
+.bk-state__title { margin:0; color:var(--ink); font-size:18px; font-weight:700; line-height:1.4; }
+.bk-state__detail { margin:0; max-width:42ch; overflow-wrap:anywhere; line-height:1.6; }
+.bk-state__mark { width:44px; height:44px; display:grid; place-items:center; border-radius:14px; background:var(--sky-canvas); color:var(--ink); font-size:22px; }
+.bk-state--loading .bk-state__mark { width:28px; height:28px; border:3px solid var(--line); border-top-color:var(--orange); border-radius:50%; background:none; animation:bk-state-turn .8s linear infinite; }
+.bk-state--error .bk-state__mark { background:var(--warn-soft); }
+html body[data-app] .crm-scroll { max-width:var(--page-max); margin:0 auto; padding:8px 0 48px; }
+html body[data-app] .crm-tabs-wrap { margin-bottom:24px; }
+html body[data-app] .crm-tabs { overflow-x:auto; flex-wrap:nowrap; }
+html body[data-app] .crm-panel { background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:24px; min-width:0; }
+html body[data-app] .crm-fila { border:1px solid var(--line); border-radius:16px; padding:20px; background:var(--paper); gap:16px; }
+html body[data-app] .crm-nombre { min-width:0; overflow-wrap:anywhere; }
+html body[data-app] .crm-nombre small { display:block; margin-top:6px; line-height:1.5; }
+html body[data-app] .crm-acciones { flex-wrap:wrap; }
+html body[data-app] .bz { border:1px solid var(--line); border-radius:20px; overflow:hidden; grid-template-columns:minmax(0,380px) minmax(0,1fr); }
+html body[data-app] .bz-detalle[hidden] { display:none; }
+html body[data-app] .bz-top { background:var(--sky-canvas); padding:24px; }
+html body[data-app] .bz-filtros { grid-template-columns:repeat(2,minmax(0,1fr)); }
+html body[data-app] .bz-filtros select { min-width:0; width:100%; }
+html body[data-app] .bz-item { padding:20px; }
+html body[data-app] .bz-item.is-active { background:var(--sky-canvas); box-shadow:inset 3px 0 var(--orange); }
+html body[data-app] .bz-item__msg { display:block; }
+html body[data-app] .bz-sin-seleccion { display:grid; place-content:center; padding:32px; text-align:center; background:var(--sky-canvas); color:var(--mute); }
+html body[data-app] .bz-sin-seleccion h2 { color:var(--ink); font-size:24px; margin-bottom:12px; }
+html body[data-app] .bz.is-detalle .bz-sin-seleccion { display:none; }
+@keyframes bk-state-turn { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { .bk-state--loading .bk-state__mark { animation:none; } }
+@media(max-width:860px) {
+ html body[data-app] .bz { grid-template-columns:minmax(0,1fr); }
+ html body[data-app] .bz-sin-seleccion { display:none; }
+ html body[data-app] .bz-det-head,html body[data-app] .bz-det-cuerpo { padding:20px; }
+ html body[data-app] .crm-panel { padding:20px 16px; }
+ html body[data-app] .crm-fila { padding:16px; flex-wrap:wrap; }
+ html body[data-app] .crm-acciones { width:100%; }
+ html body[data-app] .crm-nuevo { flex-wrap:wrap; }
+}
+html body[data-app] .bz { max-width:var(--page-max); margin:0 auto 48px; width:100%; grid-template-columns:minmax(0,420px) minmax(0,1fr); }
+html body[data-app] button.bz-item { border-radius:0 !important; border-left:0 !important; box-shadow:none; }
+html body[data-app] button.bz-item.is-active { box-shadow:inset 3px 0 var(--orange); }
+@media(max-width:860px) { html body[data-app] .bz { grid-template-columns:minmax(0,1fr); } }
+
+html body[data-app] .bz-filtro { display:flex; flex-direction:column; gap:6px; min-width:0; font-size:13px; color:var(--ink-2); }

@@ -99,3 +99,50 @@ La protección de correo también bloquea IMAP: no conecta cuentas de correo
 reales. Las integraciones nuevas externas siguen bloqueadas por HTTPX en staging.
 
 Supabase Auth: envíos de registro/recuperación/OTP/invitación bloqueados en frontend compilado y HTTPX de staging; login con contraseña QA permitido. Pendiente auditar webhooks, cron y funciones de envío dentro de PostgreSQL con el esquema real.
+
+## Verificación del 19 de octubre de 2026
+
+Se recuperó un navegador Chromium 133 para pruebas locales; se supera el bloqueo
+anterior de instalación. Recorrido de las 54 páginas ejecutables a 390/1440px:
+108 vistas verificadas sin desbordamientos, errores JavaScript ni inputs visibles
+por debajo de 16px. La plantilla de desarrollo sigue inventariada como HTML 55.
+
+El primer recorrido detectó errores de sintaxis en Estadísticas e ISR: la
+inserción anterior del guardia de inputs también había entrado en plantillas HTML
+de impresión dentro de cadenas JavaScript. Se retiraron esas dos inserciones
+duplicadas, conservando el guardia en la cabecera real. Se revalidaron las dos
+páginas y Buzón en seis vistas. Además, los 48 scripts ejecutables incrustados
+en el HTML pasaron análisis de sintaxis. No se cambió la lógica de cálculo de ISR.
+
+Buzón, Alertas y Ajustes de CRM: 48 casos aprobados (3 módulos × 2 tamaños ×
+2 roles × datos/vacío/error/carga), con fixtures exclusivos de las pruebas.
+Se comprobaron errores escapados como texto, reintento, controles de edición
+para administrador y bloqueados para agente, apertura/retorno del detalle móvil,
+guardado de nota, sustitución de respuestas guardadas, alta manual de lead,
+pausa/reanudación de alerta y cambio de nombre de etapa. Los cambios persisten
+solo en la memoria del mock: no certifican guardado real, permisos del servidor
+ni aislamiento RLS. Los teléfonos, nombres, correos y mensajes son ficticios.
+
+Mejoras de producto: estados accesibles con reintento; se ignoran respuestas
+antiguas de filtros de Alertas/Buzón; panel inicial de conversaciones, filtros
+con etiquetas legibles y distribución móvil. Estados visuales alineados al
+lenguaje blanco/celeste/naranja. Backend y reglas de autorización conservados.
+
+Validaciones adicionales: 14 tests existentes de Buzón/Alertas/CRM aprobados,
+4 pruebas de aislamiento aprobadas y auditor de diseño con 0 violaciones en
+47 HTML. El gate de arquitectura sigue sin aprobar: además del vendor ReactDOM,
+existen archivos por encima de los límites de bytes anteriores (entre ellos
+app-shell, contratos, propiedades, WhatsApp, legal y admin). El escaneo local
+también alcanzó artefactos generados de dist. No se modificaron los límites ni
+los tests existentes para ocultar estos fallos. Las expectativas de Inter siguen
+pendientes de resolución frente a la tipografía Manrope del rediseño.
+
+Evidencia resumida versionada: `docs/redesign/qa-20261019.json`.
+Reproducir: ejecutar el gateway local y usar `scripts/check_module_surface.cjs`
+y `scripts/check_crm_states.cjs` con Playwright instalado; puede indicarse un
+binario existente mediante `BROQUER_CHROMIUM_EXECUTABLE`. Los tests de navegador
+no requieren API, claves secretas ni base de datos.
+
+No se ha publicado en Cloudflare ni se ha certificado iPhone/WebView real.
+Sigue pendiente la exportación del esquema, su migración exacta al Supabase
+limpio, la auditoría de automatizaciones de PostgreSQL y la prueba real completa.
