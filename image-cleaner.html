@@ -405,7 +405,7 @@ function renderGrid() {
       }
     } else if (res && res.error) {
       statusClass = 'err';
-      statusText = 'Error: ' + (res.error || '').substring(0, 50);
+      statusText = (res.error || '').substring(0, 80);
     }
     const rightSrc = cleanedSrc || origUrl;
     const rightLabel = cleanedSrc ? (res && res.used_gemini ? 'Broquer AI' : 'Editada') : 'Original';
@@ -622,7 +622,7 @@ function updateCard(i, res) {
       }
     }
   } else if (res.error) {
-    if (s) { s.className = 'card-status err'; s.title = res.error; s.textContent = 'Error: ' + (res.error || '').substring(0, 60); }
+    if (s) { s.className = 'card-status err'; s.title = res.error; s.textContent = (res.error || '').substring(0, 80); }
   }
 }
 

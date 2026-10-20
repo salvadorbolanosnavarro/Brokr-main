@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import io
+import logging
 from typing import List
 
 import httpx
@@ -43,6 +44,18 @@ except ImportError:
 
 
 router = APIRouter()
+log = logging.getLogger("broquer.image_cleaner")
+
+# Lo único que ve el usuario cuando falla la IA. El detalle real va al log;
+# el código al final (M-402 = pago/billing de Gemini, M-429 = cuota,
+# M-500 = otra falla) es la pista para nosotros.
+MSG_MANTENIMIENTO = "Módulo en mantenimiento. Por favor intenta más tarde."
+
+
+class GeminiNoDisponible(RuntimeError):
+    def __init__(self, codigo: str, detalle: str):
+        super().__init__(detalle)
+        self.codigo = codigo
 MAX_IMAGES = 8
 MAX_IMAGE_BYTES = 12 * 1024 * 1024
 MAX_TOTAL_BYTES = 40 * 1024 * 1024
@@ -123,7 +136,7 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
     """Edita la imagen con Gemini Flash imagen-generation."""
     gemini_api_key = settings.gemini_api_key
     if not gemini_api_key:
-        raise RuntimeError("GEMINI_API_KEY no configurada")
+        raise GeminiNoDisponible("M-500", "GEMINI_API_KEY no configurada")
 
     if PIL_AVAILABLE:
         pil = Image.open(io.BytesIO(img_bytes))
@@ -176,11 +189,10 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
                 if r.status_code == 404:
                     last_err = f"Modelo no encontrado: {model_name}"
                     break
+                if r.status_code == 402:
+                    raise GeminiNoDisponible("M-402", f"Gemini sin billing/saldo ({model_name}): {r.text[:200]}")
                 if r.status_code == 429:
-                    raise RuntimeError(
-                        "Cuota de Gemini agotada. Espera a que se reinicie tu límite gratuito "
-                        "(~24h) o activa billing en https://aistudio.google.com/apikey."
-                    )
+                    raise GeminiNoDisponible("M-429", f"Cuota de Gemini agotada ({model_name}): {r.text[:200]}")
                 if r.status_code == 200:
                     try:
                         data = r.json()
@@ -206,7 +218,7 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
                 last_err = f"Error {r.status_code} ({model_name}): {r.text[:200]}"
                 continue
 
-    raise RuntimeError(last_err)
+    raise GeminiNoDisponible("M-500", last_err)
 
 
 @router.post("/images/clean")
@@ -276,14 +288,22 @@ async def clean_images(
                 "used_gemini": False,
                 "error": None,
             }
-        except Exception as exc:
-            return {
-                "name": uf.filename,
-                "cleaned_b64": None,
-                "content_type": ct,
-                "used_gemini": False,
-                "error": str(exc),
-            }
+        except ValueError as exc:
+            # Validaciones propias (p. ej. demasiados píxeles): sí se muestran.
+            error = str(exc)
+        except GeminiNoDisponible as exc:
+            log.warning("image-cleaner %s: %s", exc.codigo, exc)
+            error = f"{MSG_MANTENIMIENTO} ({exc.codigo})"
+        except Exception:
+            log.exception("image-cleaner M-500")
+            error = f"{MSG_MANTENIMIENTO} (M-500)"
+        return {
+            "name": uf.filename,
+            "cleaned_b64": None,
+            "content_type": ct,
+            "used_gemini": False,
+            "error": error,
+        }
 
     results = await asyncio.gather(*[process_one(item) for item in prepared])
     try:
