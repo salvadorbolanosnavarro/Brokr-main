@@ -318,6 +318,25 @@ def _round_mxn(n: float, base: int = 1000) -> int:
         return 0
 
 
+# Solo se leen anuncios de portales inmobiliarios. Antes cualquier dominio
+# que no estuviera en BLOCKED_FETCH_DOMAINS pasaba, y las búsquedas
+# genéricas (sin site:) metían notas de periódico ("México autoriza la
+# venta de Movistar…" casaba con "venta" + "México" + "precio") que
+# ocupaban lugar de lectura y hasta gastaban crédito de Firecrawl.
+DOMINIOS_INMOBILIARIOS = set(PORTAL_HINTS) | PREMIUM_FETCH_DOMAINS | {
+    "casasyterrenos.com",
+    "mitula.mx",
+    "century21mexico.com",
+    "remax.com.mx",
+    "coldwellbanker.com.mx",
+}
+
+
+def es_dominio_inmobiliario(url: str) -> bool:
+    host = _host(url)
+    return any(host == d or host.endswith("." + d) for d in DOMINIOS_INMOBILIARIOS)
+
+
 def _host(url: str) -> str:
     try:
         from urllib.parse import urlparse
@@ -613,8 +632,7 @@ async def _collect_search_candidates(req: AvmWebSearchRequest, colonias_vecinas:
         canon = _canonical_url(url)
         if not url or canon in seen:
             return False
-        host = _host(url)
-        if any(bad in host for bad in BLOCKED_FETCH_DOMAINS):
+        if not es_dominio_inmobiliario(url):
             return False
         item["portal"] = _portal_name(url)
         item["query"] = query
