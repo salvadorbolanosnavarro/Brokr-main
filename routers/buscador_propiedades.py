@@ -135,8 +135,7 @@ async def _recolectar_candidatos(req: Dict[str, Any]) -> List[Dict[str, Any]]:
         canon = avm._canonical_url(url)
         if not url or canon in seen:
             return
-        host = avm._host(url)
-        if any(bad in host for bad in avm.BLOCKED_FETCH_DOMAINS):
+        if not avm.es_dominio_inmobiliario(url):
             return
         item["portal"] = avm._portal_name(url)
         seen.add(canon)
