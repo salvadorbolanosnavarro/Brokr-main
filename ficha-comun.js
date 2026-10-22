@@ -590,3 +590,16 @@ async function bkSupCrear(datos) {
 function bkSupDeActividad(a) {
   return a && a.urgente ? { para: a.para_usuario, autor: a.user_id, atendidoEn: a.atendido_en } : null;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   Conteo del encabezado (Clientes y Directorio)
+   Con filtros activos el badge #count-badge dice "12 de 340"; sin
+   filtros, solo el total.
+   ══════════════════════════════════════════════════════════════════ */
+function cPintarConteo(filtrados, total) {
+  const badge = document.getElementById('count-badge');
+  if (!badge) return;
+  badge.textContent = filtrados === total ? total : filtrados + ' de ' + total;
+  badge.title = filtrados === total ? total + ' en total' : filtrados + ' con los filtros actuales, de ' + total + ' en total';
+  badge.style.display = total ? '' : 'none';
+}
