@@ -306,6 +306,9 @@
     <select id="tk-filtro-asignado" onchange="renderTareas()" hidden>
       <option value="">Asignado: todos</option>
     </select>
+    <select id="tk-filtro-categoria" onchange="renderTareas()" hidden>
+      <option value="">Todas las categorías</option>
+    </select>
   </div>
   <div class="tk-tabs">
     <button class="tk-tab active" id="tk-tab-tareas" onclick="setTab('tareas')">Tareas</button>
@@ -521,6 +524,18 @@ async function tkCargarCategorias() {
       (TAREA_CATS[row.tarea_id] = TAREA_CATS[row.tarea_id] || []).push(String(row.categoria_id));
     });
   } catch { TAREA_CATS = {}; }
+  tkPintarFiltroCategorias();
+}
+
+// Solo aparece si la cuenta ya tiene categorías; conserva la selección al
+// repintar (p. ej. al crear una categoría nueva desde el modal de editar).
+function tkPintarFiltroCategorias() {
+  const sel = g('tk-filtro-categoria');
+  const actual = sel.value;
+  sel.hidden = !tkCategorias.length;
+  sel.innerHTML = '<option value="">Todas las categorías</option><option value="sin">Sin categoría</option>' +
+    tkCategorias.map(c => `<option value="${esc(String(c.id))}">${esc(c.nombre)}</option>`).join('');
+  sel.value = [...sel.options].some(o => o.value === actual) ? actual : '';
 }
 
 function showToast(msg) {
@@ -694,6 +709,7 @@ function tareasFiltradas() {
   const estado = g('tk-filtro-estado').value;
   const vinculo = g('tk-filtro-vinculo').value;
   const asignado = g('tk-filtro-asignado').hidden ? '' : g('tk-filtro-asignado').value;
+  const categoria = g('tk-filtro-categoria').hidden ? '' : g('tk-filtro-categoria').value;
   const hoy = new Date(); hoy.setHours(0,0,0,0);
 
   return tareas.filter(t => {
@@ -711,6 +727,9 @@ function tareasFiltradas() {
     if (vinculo === 'suelta' && (nC || nP)) return false;
     if (asignado === 'yo' && t.asignado_a !== _uid) return false;
     if (asignado && asignado !== 'yo' && t.asignado_a !== asignado) return false;
+    const cats = TAREA_CATS[t.id] || [];
+    if (categoria === 'sin' && cats.length) return false;
+    if (categoria && categoria !== 'sin' && !cats.includes(categoria)) return false;
     return true;
   });
 }
@@ -813,7 +832,7 @@ function renderTareas() {
   g('tk-count').textContent = pendientes ? '— ' + pendientes + ' pendientes' : '';
 
   if (!filtradas.length) {
-    const hayFiltro = g('tk-search').value || g('tk-filtro-estado').value !== 'pendientes' || g('tk-filtro-vinculo').value;
+    const hayFiltro = g('tk-search').value || g('tk-filtro-estado').value !== 'pendientes' || g('tk-filtro-vinculo').value || g('tk-filtro-categoria').value;
     lista.innerHTML = `<div class="tk-empty">
       <svg width="42" height="42" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       <h3>${hayFiltro ? 'Sin resultados' : 'Todo al día'}</h3>
@@ -1082,7 +1101,10 @@ async function tkeNuevaCategoria() {
   if (!uid || !tkOrgId) return;
   const cat = await catCrear(tkOrgId, uid, nombre);
   if (!cat) { alert('No se pudo crear la categoría.'); return; }
-  if (!tkCategorias.some(c => String(c.id) === String(cat.id))) tkCategorias.push(cat);
+  if (!tkCategorias.some(c => String(c.id) === String(cat.id))) {
+    tkCategorias.push(cat);
+    tkPintarFiltroCategorias();
+  }
   await tkAgregarCategoria(cat.id);
 }
 
@@ -1239,6 +1261,7 @@ function tknAbrir() {
       if (vinc.contactos.length) VINCULOS.contactos[id] = vinc.contactos.slice();
       if (vinc.propiedades.length) VINCULOS.propiedades[id] = vinc.propiedades.slice();
       if (vinc.categorias.length) TAREA_CATS[id] = vinc.categorias.slice();
+      tkPintarFiltroCategorias(); // por si se creó una categoría nueva en el formulario
       renderTareas();
       showToast(fallidos
         ? 'Tarea creada, pero ' + fallidos + ' vínculo(s) no se pudieron guardar'
