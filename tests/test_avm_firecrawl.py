@@ -222,5 +222,41 @@ class BusquedaPorPortalTests(unittest.TestCase):
         self.assertTrue(any("site:vivanuncios.com.mx" in q for _, q in llamadas))
 
 
+class SoloDominiosInmobiliariosTests(unittest.TestCase):
+    def test_acepta_portales_y_subdominios(self):
+        for url in ("https://www.inmuebles24.com/propiedades/x.html",
+                    "https://inmuebles.mercadolibre.com.mx/casas/x",
+                    "https://casa.mercadolibre.com.mx/MLM-1",
+                    "https://www.casasyterrenos.com/x"):
+            self.assertTrue(A.es_dominio_inmobiliario(url), url)
+
+    def test_rechaza_noticias_y_dominios_parecidos(self):
+        for url in ("https://elpais.com/economia/2026-10-06/mexico-autoriza-la-venta-de-movistar.html",
+                    "https://www.eluniversal.com.mx/x",
+                    "https://inmuebles24.com.evil.mx/x",
+                    "https://noinmuebles24.com/x",
+                    "https://blog-generico.mx/x"):
+            self.assertFalse(A.es_dominio_inmobiliario(url), url)
+
+    def test_busqueda_generica_no_mete_noticias(self):
+        async def buscar(client, query):
+            return [{"url": "https://elpais.com/economia/nota.html", "title": "t", "snippet": "s"},
+                    {"url": f"https://www.lamudi.com.mx/{abs(hash(query)) % 997}", "title": "t", "snippet": "s"}]
+
+        req = A.AvmWebSearchRequest(colonia="Centro", ciudad="Morelia", estado="Michoacán",
+                                    tipo_inmueble="casa", operacion="venta", m2_construccion=100)
+        vacio = mock.AsyncMock(return_value=[])
+        with mock.patch.object(A, "_search_google_cse", buscar), \
+             mock.patch.object(A, "_search_brave", vacio), \
+             mock.patch.object(A, "_search_tavily", vacio), \
+             mock.patch.object(A, "_search_serpapi", vacio), \
+             mock.patch.object(A, "legacy_main_settings",
+                               dataclasses.replace(A.legacy_main_settings, google_cse_api_key="k", google_cse_id="c")):
+            res = asyncio.run(A._collect_search_candidates(req))
+        urls = [r["url"] for r in res["results"]]
+        self.assertTrue(urls)
+        self.assertFalse(any("elpais.com" in u for u in urls))
+
+
 if __name__ == "__main__":
     unittest.main()
