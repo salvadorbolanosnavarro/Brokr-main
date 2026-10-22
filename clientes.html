@@ -1127,10 +1127,6 @@ function busquedaDebounced() {
 }
 
 function renderActual() {
-  const total = cargar().filter(c => c.es_potencial === true).length;
-  const badge = document.getElementById('count-badge');
-  badge.textContent = total;
-  badge.style.display = total ? '' : 'none';
   renderPipeline();
 }
 
@@ -1571,9 +1567,18 @@ function renderPropsPendientes() {
 }
 
 /* ── Pipeline (Kanban) ─────────────────────────────────────────── */
+// Con filtros activos el badge dice "12 de 340"; sin filtros, solo el total.
+function cPintarConteo(filtrados, total) {
+  const badge = document.getElementById('count-badge');
+  badge.textContent = filtrados === total ? total : filtrados + ' de ' + total;
+  badge.title = filtrados === total ? total + ' en total' : filtrados + ' con los filtros actuales, de ' + total + ' en total';
+  badge.style.display = total ? '' : 'none';
+}
+
 function renderPipeline() {
   const kb = document.getElementById('kanban');
   const filtrados = contactosFiltrados();
+  cPintarConteo(filtrados.length, cargar().filter(c => c.es_potencial === true).length);
 
   if (!filtrados.length) {
     kb.innerHTML = `<div class="empty" style="flex:1">
