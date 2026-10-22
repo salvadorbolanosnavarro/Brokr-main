@@ -2,7 +2,7 @@
 // tareas-calendario.js · Vista de calendario de Tareas (vive fuera de
 // tareas.html). Día / Semana / Mes, color por categoría, arrastrar una tarea
 // a otro día (u hora, en la vista de día) para cambiarle la fecha, y los
-// mismos filtros de la lista (búsqueda, estado, vínculo y asignado).
+// mismos filtros de la lista (búsqueda, estado, vínculo, asignado y categoría).
 // Usa los globales de tareas.html: tareas, tareasFiltradas, tkCategorias,
 // TAREA_CATS, tkAbrirEditar, tkNombreAgente, tkEsEmpresa, sbFetch, setTab.
 // ─────────────────────────────────────────────────────────────────────────
