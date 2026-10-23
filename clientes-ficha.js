@@ -156,36 +156,41 @@ function clMenuMas(btn) {
 
 async function setEtapa(v) {
   if (!detContacto) return;
-  const prev = String(detContacto.estatus || '').toLowerCase();
+  // Fijar el contacto ANTES del await: si mientras se guarda el usuario pasa
+  // al siguiente con las flechas, detContacto ya es otro y el cambio de etapa
+  // se anotaba en la bitácora del contacto equivocado.
+  const c = detContacto;
+  const prev = String(c.estatus || '').toLowerCase();
   if (prev === v) return;
-  detContacto.estatus = v;
-  clRenderEstado(detContacto);
+  c.estatus = v;
+  clRenderEstado(c);
   try {
-    await patchContacto(detContacto.id, { estatus: v || null });
+    await patchContacto(c.id, { estatus: v || null });
     renderActual();
     showToast(v ? 'Etapa: ' + etapaInfo(v).nombre : 'Etapa quitada');
-    clRegistrarCambioEtapa(detContacto.id, prev, v);
+    clRegistrarCambioEtapa(c.id, prev, v);
   } catch (e) {
-    detContacto.estatus = prev;
-    clRenderEstado(detContacto);
+    c.estatus = prev;
+    if (detContacto === c) clRenderEstado(c);
     showToast(e.message || 'No se pudo guardar la etapa');
   }
 }
 
 async function setProbabilidad(v) {
   if (!detContacto) return;
-  const prev = String(detContacto.probabilidad || '').toLowerCase();
+  const c = detContacto;
+  const prev = String(c.probabilidad || '').toLowerCase();
   if (prev === v) return;
-  detContacto.probabilidad = v;
-  clRenderEstado(detContacto);
+  c.probabilidad = v;
+  clRenderEstado(c);
   try {
-    await patchContacto(detContacto.id, { probabilidad: v || null });
+    await patchContacto(c.id, { probabilidad: v || null });
     renderActual();
     const info = clProbInfo(v);
     showToast(info ? 'Probabilidad: ' + info.l : 'Probabilidad quitada');
   } catch (e) {
-    detContacto.probabilidad = prev;
-    clRenderEstado(detContacto);
+    c.probabilidad = prev;
+    if (detContacto === c) clRenderEstado(c);
     showToast(e.message || 'No se pudo guardar la probabilidad');
   }
 }
@@ -753,10 +758,11 @@ function crearTareaVinculada() {
 
 async function vincularTareaExistente(tareaId) {
   if (!detContacto || !tareaId) return;
+  const cid = detContacto.id;
   const uid = await _userId();
   if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
   try {
-    await restPost('tareas_contactos', { user_id: uid, tarea_id: tareaId, contacto_id: detContacto.id });
+    await restPost('tareas_contactos', { user_id: uid, tarea_id: tareaId, contacto_id: cid });
     await cargarTareasVinculadas();
     showToast('Tarea vinculada');
   } catch (e) {
