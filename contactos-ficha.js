@@ -186,36 +186,41 @@ function ctMenuMas(btn) {
 
 async function setEtapa(v) {
   if (!detContacto) return;
-  const prev = String(detContacto.estatus || '').toLowerCase();
+  // Fijar el contacto ANTES del await: si mientras se guarda el usuario pasa
+  // al siguiente con las flechas, detContacto ya es otro y el cambio de etapa
+  // se anotaba en la bitácora del contacto equivocado.
+  const c = detContacto;
+  const prev = String(c.estatus || '').toLowerCase();
   if (prev === v) return;
-  detContacto.estatus = v;
-  ctRenderEstado(detContacto);
+  c.estatus = v;
+  ctRenderEstado(c);
   try {
-    await patchContacto(detContacto.id, { estatus: v || null });
+    await patchContacto(c.id, { estatus: v || null });
     renderActual();
     showToast(v ? 'Etapa: ' + etapaInfo(v).nombre : 'Etapa quitada');
-    ctRegistrarCambioEtapa(detContacto.id, prev, v);
+    ctRegistrarCambioEtapa(c.id, prev, v);
   } catch (e) {
-    detContacto.estatus = prev;
-    ctRenderEstado(detContacto);
+    c.estatus = prev;
+    if (detContacto === c) ctRenderEstado(c);
     showToast(e.message || 'No se pudo guardar la etapa');
   }
 }
 
 async function setProbabilidad(v) {
   if (!detContacto) return;
-  const prev = String(detContacto.probabilidad || '').toLowerCase();
+  const c = detContacto;
+  const prev = String(c.probabilidad || '').toLowerCase();
   if (prev === v) return;
-  detContacto.probabilidad = v;
-  ctRenderEstado(detContacto);
+  c.probabilidad = v;
+  ctRenderEstado(c);
   try {
-    await patchContacto(detContacto.id, { probabilidad: v || null });
+    await patchContacto(c.id, { probabilidad: v || null });
     renderActual();
     const info = ctProbInfo(v);
     showToast(info ? 'Probabilidad: ' + info.l : 'Probabilidad quitada');
   } catch (e) {
-    detContacto.probabilidad = prev;
-    ctRenderEstado(detContacto);
+    c.probabilidad = prev;
+    if (detContacto === c) ctRenderEstado(c);
     showToast(e.message || 'No se pudo guardar la probabilidad');
   }
 }
@@ -704,6 +709,7 @@ function renderTareas() {
 
 async function crearTareaVinculada() {
   if (!detContacto) return;
+  const cid = detContacto.id;
   const inp = document.getElementById('tarea-nueva-titulo');
   const titulo = (inp.value || '').trim();
   if (!titulo) { inp.focus(); return; }
@@ -713,7 +719,7 @@ async function crearTareaVinculada() {
   const hora = document.getElementById('tarea-nueva-hora').value || '12:00';
   try {
     const creada = await restPost('tareas', {
-      user_id: uid, org_id: cOrgId, titulo: titulo, contacto_id: detContacto.id,
+      user_id: uid, org_id: cOrgId, titulo: titulo, contacto_id: cid,
       // OJO: nunca mandar "fecha+'T'+hora" pelón — la columna es timestamptz y
       // Postgres lo toma como si YA fuera UTC. new Date(...) interpreta el
       // texto en la hora LOCAL del navegador; toISOString() da el instante
@@ -722,7 +728,7 @@ async function crearTareaVinculada() {
     });
     const nueva = Array.isArray(creada) ? creada[0] : creada;
     if (nueva && nueva.id) {
-      await restPost('tareas_contactos', { user_id: uid, tarea_id: nueva.id, contacto_id: detContacto.id }).catch(() => {});
+      await restPost('tareas_contactos', { user_id: uid, tarea_id: nueva.id, contacto_id: cid }).catch(() => {});
     }
     inp.value = '';
     document.getElementById('tarea-nueva-fecha').value = '';
@@ -737,10 +743,11 @@ async function crearTareaVinculada() {
 
 async function vincularTareaExistente(tareaId) {
   if (!detContacto || !tareaId) return;
+  const cid = detContacto.id;
   const uid = await _userId();
   if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
   try {
-    await restPost('tareas_contactos', { user_id: uid, tarea_id: tareaId, contacto_id: detContacto.id });
+    await restPost('tareas_contactos', { user_id: uid, tarea_id: tareaId, contacto_id: cid });
     await cargarTareasVinculadas();
     showToast('Tarea vinculada');
   } catch (e) {
