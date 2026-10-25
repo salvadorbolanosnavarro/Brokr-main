@@ -231,7 +231,7 @@
   function dinero(v, moneda) {
     if (v == null) return 'Precio a tratar';
     var n = Number(v);
-    var s = n.toLocaleString('es-MX', { maximumFractionDigits: 0 });
+    var s = n.toLocaleString(window.bkLocale ? bkLocale() : 'es-MX', { maximumFractionDigits: 0 });
     return '$' + s + ' ' + (moneda || 'MXN');
   }
   var C = window.bkCat;

@@ -220,8 +220,9 @@ def contexto_ia(pais: Optional[str]) -> str:
         f"\n\nPAÍS DEL USUARIO: trabaja en {cfg['nombre']}. Esto manda sobre todo lo anterior que hable "
         f"de México: usa {cfg['moneda']} como moneda por defecto, el español de {cfg['nombre']} y la ley, los "
         f"impuestos y las autoridades de {cfg['nombre']} ({cfg['autoridad_fiscal']}, {cfg['id_fiscal']}). No "
-        "apliques ISR mexicano, SAT, LFPIORPI, UMA, UDIS, INPC, Código de Comercio ni LFPDPPP. En su país no "
-        "están disponibles los módulos de Contratos, Cumplimiento ni ISR. Para impuestos por la venta de un "
+        "apliques ISR mexicano, SAT, LFPIORPI, UMA, UDIS, INPC, Código de Comercio ni LFPDPPP. Los contratos "
+        "de Broquer y el módulo de Cumplimiento ya están adaptados a su país; el de ISR no existe para él. "
+        "Para impuestos por la venta de un "
         f"inmueble usa calcular_isr: abre la calculadora de {cfg['impuesto_venta']} de {cfg['nombre']}. "
         "Si no estás seguro de una norma local, dilo y verifícala con web_search."
     )

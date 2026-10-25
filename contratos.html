@@ -1341,10 +1341,8 @@ function nuevoMachote(){
 
 // ══════════════════════════════════════════════════════════════
 // MI PROPIO MACHOTE
-// El usuario abre su contrato, selecciona con el mouse o el dedo los datos
-// que cambian, les pone nombre y crea el machote. Los offsets de cada marca
-// son sobre el texto plano del párrafo: el mismo sistema de coordenadas que
-// usa el backend sobre los runs del DOCX.
+// El usuario marca en su contrato los datos que cambian y crea el machote.
+// Offsets sobre el texto plano del párrafo (mismo sistema que el backend).
 // ══════════════════════════════════════════════════════════════
 const API_M = 'https://api.broquer.app';
 let machoteFile = null;
@@ -2517,9 +2515,8 @@ async function generarContrato(soloDatos){
     };
   }
 
-  // Mandar a firma reutiliza exactamente esta misma recolección y validación:
-  // así el PDF que se firma sale de los mismos datos que el Word que se
-  // descarga, sin una segunda ruta que se pueda desincronizar.
+  // Mandar a firma usa esta misma recolección: el PDF y el Word salen de los mismos datos.
+  if (window.bkContratoAjustar) bkContratoAjustar(datos); // moneda del país (contratos-paises.js)
   if (soloDatos) return datos;
 
   // Show loading
@@ -2938,7 +2935,7 @@ function renderPickerInmuebles(q) {
   if (!props.length) { lista.innerHTML='<div class="pick-empty">Sin inmuebles o sin coincidencias.</div>'; return; }
   lista.innerHTML = props.map(p => {
     const opCls = p.operacion==='venta'?'badge-venta':'badge-renta';
-    const precio = p.precio ? ' · $'+Number(p.precio).toLocaleString('es-MX') : '';
+    const precio = p.precio ? ' · $'+Number(p.precio).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') : '';
     return `<div class="prop-pick-item" onclick="seleccionarInmueble('${p.id}')">
       <div class="prop-pick-name"><span class="prop-pick-badge ${opCls}">${p.operacion||''}</span>${p.titulo||'Sin nombre'}</div>
       <div class="prop-pick-sub">${[p.colonia,p.ciudad].filter(Boolean).join(', ')}${precio}</div>
@@ -3100,6 +3097,7 @@ window.addEventListener('message', function(e) {
     <div class="pick-list" id="pick-prop-list"></div>
   </div>
 </div>
+<script src="contratos-paises.js" defer></script>
 <script src="app-shell.js" defer></script>
 </body>
 </html>

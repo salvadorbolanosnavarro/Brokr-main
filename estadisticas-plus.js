@@ -102,7 +102,7 @@
     try { d = await window.bkApi('/cierres/reporte?' + qs); }
     catch (e) { body.innerHTML = '<div class="es-loading">' + esc(e.message) + '</div>'; return; }
     var filas = d.filas || [], cols = d.columnas || [];
-    var m = function (n) { return n == null ? '—' : '$' + Math.round(n).toLocaleString('es-MX'); };
+    var m = function (n) { return n == null ? '—' : '$' + Math.round(n).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX'); };
     var sum = function (k) { return filas.reduce(function (a, f) { return a + (Number(f[k]) || 0); }, 0); };
     var dias = filas.filter(function (f) { return f.dias_publicada != null; });
     var pct = filas.filter(function (f) { return f.pct_precio != null; });

@@ -20,6 +20,7 @@ from zoneinfo import ZoneInfo
 import httpx
 
 from core.database import call_service_rpc, get_rows, patch_rows, post_rows
+from core.paises import datos_pais, pais_de_usuario
 
 log = logging.getLogger("broquer.buzon")
 
@@ -43,11 +44,13 @@ def ahora_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def tel10(v: Any) -> str:
+def tel10(v: Any, digitos: int = 10) -> str:
+    """Los últimos dígitos nacionales del teléfono (10 en México, Colombia y
+    Argentina; 9 en Perú y Chile), sin lada, para reconocer al mismo contacto."""
     d = re.sub(r"\D", "", str(v or ""))
-    if len(d) > 10:
-        d = d[-10:]
-    return d if len(d) == 10 else ""
+    if len(d) > digitos:
+        d = d[-digitos:]
+    return d if len(d) == digitos else ""
 
 
 def nuevo_id_contacto() -> str:
@@ -161,7 +164,7 @@ async def _fuente(org_id: str, nombre: str) -> Optional[dict]:
 
 async def contacto_para(org_id: str, user_id: str, nombre: str, telefono: str, email: str,
                         fuente: Optional[dict], canal: str) -> Optional[str]:
-    t, m = tel10(telefono), (email or "").strip().lower()
+    t, m = tel10(telefono, datos_pais(await pais_de_usuario(user_id))["digitos_tel"]), (email or "").strip().lower()
     if t or m:
         try:
             cid = await call_service_rpc("bk_buscar_contacto", {"p_org": org_id, "p_tel10": t or None, "p_email": m or None})

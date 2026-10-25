@@ -379,7 +379,7 @@ function esc(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
-function nf(n) { return Number(n || 0).toLocaleString('es-MX'); }
+function nf(n) { return Number(n || 0).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX'); }
 function getToken() { return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null; }
 
 async function sbFetch(path) {
@@ -721,7 +721,7 @@ function fmtMoneyShort(n, moneda) {
   return signo + '$' + s + (moneda ? ' ' + moneda : '');
 }
 function fmtMoney(n, moneda) {
-  return '$' + Number(Math.round(n || 0)).toLocaleString('es-MX') + (moneda ? ' ' + moneda : '');
+  return '$' + Number(Math.round(n || 0)).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') + (moneda ? ' ' + moneda : '');
 }
 function fmtMin(m) {
   if (m == null) return '—';

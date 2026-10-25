@@ -40,7 +40,7 @@
       idFiscal: 'NIT', idPersona: 'cédula de ciudadanía', autoridadFiscal: 'DIAN',
       region: 'Departamento', zona: 'Barrio', codigoPostal: 'Código postal',
       impuesto: { modulo: 'impuestos', etiqueta: 'Impuestos', nombre: 'Ganancia ocasional' },
-      sinModulos: ['isr', 'cumplimiento', 'contratos'],
+      sinModulos: ['isr'],
       plan: { max: 'US$49', moneda: 'USD' },
       ejemploBroq: 'Calcula la ganancia ocasional de una venta de $450.000.000',
       monedaAvm: 'COP',
@@ -54,7 +54,7 @@
       idFiscal: 'RUC', idPersona: 'DNI', autoridadFiscal: 'SUNAT',
       region: 'Departamento', zona: 'Distrito', codigoPostal: 'Código postal',
       impuesto: { modulo: 'impuestos', etiqueta: 'Impuestos', nombre: 'Renta de segunda categoría' },
-      sinModulos: ['isr', 'cumplimiento', 'contratos'],
+      sinModulos: ['isr'],
       plan: { max: 'US$49', moneda: 'USD' },
       ejemploBroq: 'Calcula el impuesto de una venta de S/ 650,000',
       monedaAvm: 'USD',
@@ -68,7 +68,7 @@
       idFiscal: 'CUIT', idPersona: 'DNI', autoridadFiscal: 'ARCA',
       region: 'Provincia', zona: 'Barrio', codigoPostal: 'Código postal',
       impuesto: { modulo: 'impuestos', etiqueta: 'Impuestos', nombre: 'Impuesto cedular' },
-      sinModulos: ['isr', 'cumplimiento', 'contratos'],
+      sinModulos: ['isr'],
       plan: { max: 'US$49', moneda: 'USD' },
       ejemploBroq: 'Calcula el impuesto cedular de una venta de US$ 180.000',
       monedaAvm: 'USD',
@@ -82,7 +82,7 @@
       idFiscal: 'RUT', idPersona: 'cédula de identidad', autoridadFiscal: 'SII',
       region: 'Región', zona: 'Comuna', codigoPostal: 'Código postal',
       impuesto: { modulo: 'impuestos', etiqueta: 'Impuestos', nombre: 'Mayor valor en bienes raíces' },
-      sinModulos: ['isr', 'cumplimiento', 'contratos'],
+      sinModulos: ['isr'],
       plan: { max: 'US$49', moneda: 'USD' },
       ejemploBroq: 'Calcula el impuesto de una venta de 6.500 UF',
       monedaAvm: 'UF',
@@ -132,6 +132,9 @@
   function bkNumero(n, dec) {
     return (Number(n) || 0).toLocaleString(bkPaisCfg().locale, { maximumFractionDigits: dec == null ? 0 : dec });
   }
+
+  // Formato de números del país (1.500.000 en Colombia, Argentina y Chile).
+  function bkLocale() { return bkPaisCfg().locale; }
 
   function bkModuloDisponible(key, c) {
     return bkPaisCfg(c).sinModulos.indexOf(key) === -1;
@@ -208,6 +211,7 @@
   window.bkPaisCfg = bkPaisCfg;
   window.bkDinero = bkDinero;
   window.bkNumero = bkNumero;
+  window.bkLocale = bkLocale;
   window.bkModuloDisponible = bkModuloDisponible;
   window.bkPaisSelector = bkPaisSelector;
 })();

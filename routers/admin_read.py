@@ -47,6 +47,13 @@ async def admin_list_users(request: Request):
     except httpx.HTTPStatusError:
         subs = []
 
+    # Aparte: si la migración de países no se ha corrido, la lista no se cae.
+    try:
+        pais_por_id = {r["id"]: r.get("pais") for r in await get_rows(
+            "usuarios", {"select": "id,pais", "limit": "10000"}, timeout=15)}
+    except httpx.HTTPStatusError:
+        pais_por_id = {}
+
     subs_by_user = {}
     for s in subs:
         uid = s.get("user_id")
@@ -71,6 +78,7 @@ async def admin_list_users(request: Request):
             "sub_updated_at": sub.get("updated_at") if sub else None,
             "sub_active": (sub.get("status") in ("active", "trialing")) if sub else False,
             "modulos_desactivados": u.get("modulos_desactivados") or [],
+            "pais": pais_por_id.get(uid) or "MX",
             "acceso_completo_hasta": u.get("acceso_completo_hasta"),
             "acceso_completo_activo": full_access_grant_active(u.get("acceso_completo_hasta")),
         })

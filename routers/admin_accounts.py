@@ -6,9 +6,10 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from core.database import patch_rows_no_response
+from core.database import get_rows, patch_rows_no_response
 from core.legacy_admin import require_legacy_admin
 from core.module_access import TOGGLEABLE_MODULES, normalize_disabled_modules
+from core.paises import PAISES
 
 
 router = APIRouter()
@@ -113,6 +114,49 @@ async def admin_set_modulos(req: AdminModulosReq, request: Request):
         raise HTTPException(status_code=500, detail=f"Error actualizando módulos: {exc.response.text}")
 
     return {"ok": True, "user_id": target_id, "modulos_desactivados": modulos}
+
+
+class AdminPaisReq(BaseModel):
+    user_id: str
+    pais: str
+
+
+@router.post("/admin/user/pais")
+async def admin_set_pais(req: AdminPaisReq, request: Request):
+    """Corrige el país de una cuenta. Si es dueña de una empresa, su equipo
+    cambia con ella: un equipo trabaja en un solo país."""
+    await require_legacy_admin(request)
+
+    target_id = (req.user_id or "").strip()
+    pais = (req.pais or "").strip().upper()
+    if not target_id:
+        raise HTTPException(status_code=400, detail="user_id requerido.")
+    if pais not in PAISES:
+        raise HTTPException(status_code=400, detail=f"País inválido: {req.pais}")
+
+    ids = [target_id]
+    try:
+        orgs = await get_rows("organizaciones", {"owner_id": f"eq.{target_id}", "tipo": "eq.empresa", "select": "id"})
+        if orgs:
+            miembros = await get_rows("organizacion_miembros", {
+                "org_id": f"in.({','.join(o['id'] for o in orgs)})", "select": "user_id"})
+            ids += [m["user_id"] for m in miembros if m.get("user_id") and m["user_id"] != target_id]
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=500, detail=f"Error leyendo el equipo: {exc.response.text}")
+
+    try:
+        await patch_rows_no_response(
+            "usuarios",
+            {"id": f"in.({','.join(ids)})"},
+            {"pais": pais},
+            prefer="return=minimal",
+            timeout=10,
+            accepted_statuses=(200, 204),
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=500, detail=f"Error actualizando el país: {exc.response.text}")
+
+    return {"ok": True, "user_id": target_id, "pais": pais, "cuentas": len(ids)}
 
 
 class AdminAccesoCompletoReq(BaseModel):

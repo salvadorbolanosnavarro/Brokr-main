@@ -90,7 +90,7 @@
       var suma = (num('ci-cinmo') || 0) + (num('ci-opcionador-com') || 0) + (num('ci-asesor-com') || 0);
       var av = g('ci-aviso');
       if (tot != null && suma > 0 && Math.abs(suma - tot) > 1) {
-        av.textContent = 'Ojo: las partes suman $' + Math.round(suma).toLocaleString('es-MX') + ' y la comisión total es $' + Math.round(tot).toLocaleString('es-MX') + '. Puedes guardar así.';
+        av.textContent = 'Ojo: las partes suman $' + Math.round(suma).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') + ' y la comisión total es $' + Math.round(tot).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') + '. Puedes guardar así.';
         av.style.color = 'var(--warn)';
       } else { av.textContent = ''; }
     }

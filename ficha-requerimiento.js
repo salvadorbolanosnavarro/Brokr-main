@@ -227,7 +227,7 @@
   function pintarInternet(resultados, ultima) {
     el('bp-resultados-titulo').textContent = 'Encontrado en internet' + (ultima ? ' · ' + fechaHora(ultima) : '');
     el('bp-resultados-feed').innerHTML = (resultados || []).length ? resultados.map(function (r) {
-      var precio = r.precio ? ' · $' + Number(r.precio).toLocaleString('es-MX') + (r.precio_confirmado ? '' : ' (sin confirmar)') : '';
+      var precio = r.precio ? ' · $' + Number(r.precio).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') + (r.precio_confirmado ? '' : ' (sin confirmar)') : '';
       return '<div class="bk-fila"><a class="bk-fila__cuerpo" href="' + esc(r.url) + '" target="_blank" rel="noopener noreferrer"><span class="bk-fila__t">' + esc(r.titulo || r.portal || 'Ver anuncio') + '</span>' +
         '<span class="bk-fila__d">' + esc(r.portal || '') + precio + '</span></a></div>';
     }).join('') : '<div class="bk-vacio"><p>Sin enlaces todavía. Presiona "Buscar ahora".</p></div>';

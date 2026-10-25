@@ -11,12 +11,13 @@ from core.redirects import checkout_redirect
 from core.stripe import (
     EMPRESA_ASIENTOS_BASE,
     EMPRESA_ASIENTOS_MAX,
-    EMPRESA_TARIFAS,
     STRIPE_SECRET_KEY,
     get_or_create_stripe_customer,
     precio_empresa,
     stripe_headers,
+    tarifas_empresa,
 )
+from core.paises import datos_pais, pais_de_usuario
 from routers.organizaciones import get_org_context
 
 
@@ -89,11 +90,13 @@ async def empresa_plan(request: Request):
     user_id = await get_user_id_from_token(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="Inicia sesión.")
+    moneda = datos_pais(await pais_de_usuario(user_id))["cobro_moneda"]
     ctx = await get_org_context(user_id)
     if not ctx:
         return {
             "tiene_org": False,
-            "tarifas": EMPRESA_TARIFAS,
+            "tarifas": tarifas_empresa(moneda),
+            "moneda": moneda.upper(),
             "asientos_base": EMPRESA_ASIENTOS_BASE,
             "asientos_max": EMPRESA_ASIENTOS_MAX,
         }
@@ -124,7 +127,8 @@ async def empresa_plan(request: Request):
         "asientos_base": EMPRESA_ASIENTOS_BASE,
         "asientos_max": EMPRESA_ASIENTOS_MAX,
         "ocupacion": ocup,
-        "tarifas": EMPRESA_TARIFAS,
+        "tarifas": tarifas_empresa(moneda),
+        "moneda": moneda.upper(),
     }
 
 
@@ -141,12 +145,14 @@ async def empresa_checkout(req: EmpresaCheckoutRequest, request: Request):
         raise HTTPException(status_code=400, detail="El periodo debe ser mensual o anual.")
 
     asientos = _valida_asientos(req.asientos)
-    price_base = precio_empresa(periodo, extra=False)
-    price_extra = precio_empresa(periodo, extra=True)
+    # Fuera de México se cobra en dólares (core/paises.py).
+    moneda = datos_pais(await pais_de_usuario(user_id))["cobro_moneda"]
+    price_base = precio_empresa(periodo, extra=False, moneda=moneda)
+    price_extra = precio_empresa(periodo, extra=True, moneda=moneda)
     if not price_base:
         raise HTTPException(
             status_code=500,
-            detail=f"Falta configurar el precio de empresas ({periodo}) en Stripe.",
+            detail=f"Falta configurar el precio de empresas ({periodo}, {moneda.upper()}) en Stripe.",
         )
     extras = asientos - EMPRESA_ASIENTOS_BASE
     if extras > 0 and not price_extra:
@@ -275,14 +281,18 @@ async def empresa_asientos(req: EmpresaAsientosRequest, request: Request):
     items = r_sub.json().get("items", {}).get("data", [])
 
     periodo = row.get("periodo") or "mensual"
-    price_base = precio_empresa(periodo, extra=False)
-    price_extra = precio_empresa(periodo, extra=True)
+    moneda = datos_pais(await pais_de_usuario(ctx["user_id"]))["cobro_moneda"]
+    price_base = precio_empresa(periodo, extra=False, moneda=moneda)
+    price_extra = precio_empresa(periodo, extra=True, moneda=moneda)
     if not any((it.get("price") or {}).get("id") == price_base for it in items):
-        for alt in ("mensual", "anual"):
-            if any((it.get("price") or {}).get("id") == precio_empresa(alt) for it in items):
+        # La suscripción puede ser de otro periodo o de la otra moneda.
+        for alt_moneda in (moneda, "usd" if moneda == "mxn" else "mxn"):
+            alt = next((a for a in ("mensual", "anual") if any(
+                (it.get("price") or {}).get("id") == precio_empresa(a, moneda=alt_moneda) for it in items)), None)
+            if alt:
                 periodo = alt
-                price_base = precio_empresa(alt, extra=False)
-                price_extra = precio_empresa(alt, extra=True)
+                price_base = precio_empresa(alt, extra=False, moneda=alt_moneda)
+                price_extra = precio_empresa(alt, extra=True, moneda=alt_moneda)
                 break
 
     item_extra = next(

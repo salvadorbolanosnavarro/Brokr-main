@@ -399,7 +399,7 @@
   function money(n, moneda) {
     const v = Number(n) || 0;
     if (!v) return '';
-    return '$' + v.toLocaleString('es-MX', { maximumFractionDigits: 0 }) +
+    return '$' + v.toLocaleString(window.bkLocale ? bkLocale() : 'es-MX', { maximumFractionDigits: 0 }) +
            (moneda && moneda !== 'MXN' ? ' ' + moneda : '');
   }
 

@@ -44,6 +44,10 @@ class LegacyMainSettings:
     stripe_price_empresa_anual: str
     stripe_price_empresa_extra_mensual: str
     stripe_price_empresa_extra_anual: str
+    stripe_price_empresa_mensual_usd: str
+    stripe_price_empresa_anual_usd: str
+    stripe_price_empresa_extra_mensual_usd: str
+    stripe_price_empresa_extra_anual_usd: str
     activate_secret: str
     revenuecat_webhook_auth: str
     demo_notif_email: str
@@ -116,6 +120,10 @@ class LegacyMainSettings:
             stripe_price_empresa_anual=os.getenv("STRIPE_PRICE_EMPRESA_ANUAL", ""),
             stripe_price_empresa_extra_mensual=os.getenv("STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL", ""),
             stripe_price_empresa_extra_anual=os.getenv("STRIPE_PRICE_EMPRESA_EXTRA_ANUAL", ""),
+            stripe_price_empresa_mensual_usd=os.getenv("STRIPE_PRICE_EMPRESA_MENSUAL_USD", ""),
+            stripe_price_empresa_anual_usd=os.getenv("STRIPE_PRICE_EMPRESA_ANUAL_USD", ""),
+            stripe_price_empresa_extra_mensual_usd=os.getenv("STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL_USD", ""),
+            stripe_price_empresa_extra_anual_usd=os.getenv("STRIPE_PRICE_EMPRESA_EXTRA_ANUAL_USD", ""),
             activate_secret=os.getenv("ACTIVATE_SECRET", ""),
             revenuecat_webhook_auth=os.getenv("REVENUECAT_WEBHOOK_AUTH", ""),
             demo_notif_email=os.getenv("DEMO_NOTIF_EMAIL", "hola@broquer.app"),

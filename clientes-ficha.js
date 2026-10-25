@@ -899,7 +899,7 @@ function bpRenderResultados(resultados, ultimaBusqueda) {
   feed.innerHTML = (resultados || []).length
     ? resultados.map(r => {
         const precioTxt = r.precio
-          ? ' · $' + Number(r.precio).toLocaleString('es-MX') + (r.precio_confirmado ? '' : ' (sin confirmar)')
+          ? ' · $' + Number(r.precio).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') + (r.precio_confirmado ? '' : ' (sin confirmar)')
           : '';
         return `<div class="bk-fila">
           <span class="bk-fila__ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg></span>

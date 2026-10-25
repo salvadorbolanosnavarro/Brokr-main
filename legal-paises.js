@@ -52,7 +52,7 @@
       tyc: [
         'Para los Usuarios cuya cuenta está registrada en ' + n + ', las referencias de estos Términos a la LFPDPPP, a la PROFECO, al INAI, al CFDI y a la legislación mexicana de protección al consumidor se entienden hechas, respectivamente, a ' + a.datos + ', a la autoridad de consumo de ' + n + ' y a ' + a.consumo + '.',
         'La Plataforma se presta desde México. La cláusula de legislación aplicable y jurisdicción se mantiene en lo que la ley de ' + n + ' lo permita; los derechos irrenunciables que esa ley otorga a los consumidores prevalecen sobre cualquier cláusula en contrario.',
-        'Los módulos de Contratos, Cumplimiento (PLD) y Cálculo de ISR responden a la ley mexicana y no están disponibles para cuentas de ' + n + '. Los cálculos de impuestos, las estimaciones de valor y demás resultados de la Plataforma son orientativos y no sustituyen la asesoría de un profesional habilitado en ' + n + '.',
+        'Los contratos modelo y el módulo de Cumplimiento (PLD) se adaptan a la ley de ' + n + ' y son una referencia que el Usuario debe revisar con un abogado local; el Cálculo de ISR es exclusivo de México. Los cálculos de impuestos, las estimaciones de valor y demás resultados de la Plataforma son orientativos y no sustituyen la asesoría de un profesional habilitado en ' + n + '.',
       ],
       contrato: [
         'Para Suscriptores de ' + n + ', los precios se expresan y cobran en dólares de los Estados Unidos de América (USD) y sustituyen a lo dicho sobre pesos mexicanos en la cláusula 2.4. El banco emisor de la tarjeta puede aplicar su propio tipo de cambio y comisiones.',
