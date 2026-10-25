@@ -110,6 +110,13 @@ def slug_campo(nombre: str, usados: Optional[set] = None) -> str:
     return s
 
 
+# Siglas que se escriben en mayúsculas en las etiquetas de los campos.
+_ACRONIMOS = {
+    "rfc", "curp", "ine", "cp", "c.p", "nss", "clabe", "iva", "isr", "id",
+    "nit", "cc", "ruc", "dni", "cuit", "cuil", "rut", "run", "uf", "uvt", "uit",
+}
+
+
 def humanizar(nombre: str) -> str:
     """'nombre_del_arrendatario' -> 'Nombre del arrendatario'."""
     s = re.sub(r"[_\-]+", " ", (nombre or "").strip())
@@ -862,7 +869,7 @@ def rellenar(content: bytes, valores: Dict[str, str],
 
     vals = {k: ("" if v is None else str(v)) for k, v in (valores or {}).items()
             if not str(k).startswith("__")}
-    vals = completar_letras(vals, campos or [])
+    vals = completar_letras(vals, campos or [], str((valores or {}).get("__pais") or "MX"))
 
     for s in snap:
         spans = []
@@ -882,9 +889,20 @@ def rellenar(content: bytes, valores: Dict[str, str],
     return out.getvalue()
 
 
-def completar_letras(vals: Dict[str, str], campos: List[dict]) -> Dict[str, str]:
+# Moneda en letras según el país de la cuenta (México: "PESOS ... M.N.").
+LETRAS_MONEDA = {
+    "MX": ("PESOS", "M.N."),
+    "CO": ("PESOS", "M/CTE"),
+    "PE": ("SOLES", ""),
+    "AR": ("DÓLARES ESTADOUNIDENSES", ""),
+    "CL": ("PESOS", ""),
+}
+
+
+def completar_letras(vals: Dict[str, str], campos: List[dict], pais: str = "MX") -> Dict[str, str]:
     """Si el usuario dejó vacío un campo 'con letra' y sí capturó el importe,
     lo escribimos por él."""
+    moneda, sufijo = LETRAS_MONEDA.get(pais, LETRAS_MONEDA["MX"])
     vals = dict(vals)
     for c in campos or []:
         base = c.get("auto_letras_de")
@@ -896,7 +914,7 @@ def completar_letras(vals: Dict[str, str], campos: List[dict]) -> Dict[str, str]
         origen = vals.get(base, "")
         if not str(origen).strip():
             continue
-        letras = numero_a_letras(origen)
+        letras = numero_a_letras(origen, moneda, sufijo)
         if letras:
             vals[cid] = letras
     return vals

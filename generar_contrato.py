@@ -1218,6 +1218,12 @@ if __name__ == '__main__':
     with open(datos_path) as f:
         datos = json.load(f)
 
+    # Colombia, Perú, Argentina y Chile tienen sus propios contratos.
+    if str(datos.get('pais') or 'MX').upper() != 'MX':
+        from contratos_paises import generar
+        generar(tipo, datos, output)
+        sys.exit(0)
+
     if tipo == 'arrendamiento':
         generar_arrendamiento(datos, output)
     elif tipo == 'promesa':

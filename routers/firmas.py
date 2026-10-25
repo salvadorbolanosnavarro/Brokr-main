@@ -850,7 +850,7 @@ async def desde_contrato(request: Request, body: DesdeContratoIn,
 
     tareas.add_task(
         _desde_contrato_bg,
-        job["id"], uid, tipo, body.datos or {}, etiqueta,
+        job["id"], uid, tipo, {**(body.datos or {}), "pais": await pais_de_usuario(uid)}, etiqueta,
         body.propiedad_id, bool(body.exige_ine),
         _ip(request), _ua(request),
     )

@@ -48,8 +48,7 @@ class PaisesEspejoTests(unittest.TestCase):
         )
         self.assertEqual(js["MX"]["sinModulos"], ["impuestos"])
         for codigo in ("CO", "PE", "AR", "CL"):
-            self.assertIn("isr", js[codigo]["sinModulos"])
-            self.assertIn("cumplimiento", js[codigo]["sinModulos"])
+            self.assertEqual(js[codigo]["sinModulos"], ["isr"])
 
 
 @unittest.skipUnless(NODE, "node no está instalado")
@@ -160,3 +159,57 @@ class CobroPorPaisTests(unittest.IsolatedAsyncioTestCase):
     async def test_ampi_solo_en_mexico(self):
         e = await self._checkout("PE", "ampi")
         self.assertEqual(e.status_code, 400)
+
+
+class ContratosPorPaisTests(unittest.TestCase):
+    DATOS = {
+        "fecha_contrato": "2026-11-01", "fecha_inicio": "2026-11-01", "fecha_fin": "2027-10-31",
+        "plazo_contrato": "12 meses", "destino_uso": "Casa habitación", "calle_inmueble": "Calle 1",
+        "municipio_inmueble": "Ciudad", "ciudad_firma": "Ciudad", "nombre_arrendador": "Ana",
+        "nombre_arrendatario": "Luis", "nombre_obligado_solidario": "María", "renta_mensual": "1000",
+        "deposito_garantia": "1000", "nombre_vendedor": "Ana", "nombre_comprador": "Luis",
+        "precio_total": "100000", "monto_arras": "10000", "monto_saldo": "90000",
+        "fecha_limite_escritura": "2027-01-15",
+    }
+    LEY = {"CO": "Ley 820 de 2003", "PE": "1666", "AR": "Código Civil y Comercial", "CL": "18.101"}
+
+    def _texto(self, tipo: str, pais: str) -> str:
+        import tempfile
+        import docx
+        import contratos_paises
+
+        with tempfile.NamedTemporaryFile(suffix=".docx") as f:
+            contratos_paises.generar(tipo, {**self.DATOS, "pais": pais}, f.name)
+            return "\n".join(p.text for p in docx.Document(f.name).paragraphs)
+
+    def test_arrendamiento_cita_la_ley_del_pais(self):
+        for pais, ley in self.LEY.items():
+            with self.subTest(pais=pais):
+                texto = self._texto("arrendamiento", pais)
+                self.assertIn(ley, texto)
+                self.assertNotIn("M.N.", texto)
+                self.assertNotIn("Código Civil Federal", texto)
+
+    def test_colombia_vivienda_no_pide_deposito(self):
+        self.assertIn("no se exigen depósitos en dinero", self._texto("arrendamiento", "CO"))
+
+    def test_argentina_es_boleto_y_locacion(self):
+        self.assertIn("BOLETO DE COMPRAVENTA", self._texto("promesa", "AR"))
+        self.assertIn("LOCADOR", self._texto("arrendamiento", "AR"))
+
+    def test_mexico_no_usa_este_generador(self):
+        import contratos_paises
+        with self.assertRaises(ValueError):
+            contratos_paises.generar("promesa", {**self.DATOS, "pais": "MX"}, "/dev/null")
+
+
+class CumplimientoPorPaisTests(unittest.TestCase):
+    def test_fuera_de_mexico_no_se_pide_curp(self):
+        from routers.cumplimiento import requisitos_pld
+
+        campos, docs = requisitos_pld("PE", "fisica")
+        self.assertNotIn("curp", campos)
+        self.assertNotIn("curp", [t for t, _ in docs])
+        campos_mx, docs_mx = requisitos_pld("MX", "fisica")
+        self.assertIn("curp", campos_mx)
+        self.assertIn("curp", [t for t, _ in docs_mx])
