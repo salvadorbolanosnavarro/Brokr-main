@@ -135,3 +135,28 @@ class CorePaisesTests(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CobroPorPaisTests(unittest.IsolatedAsyncioTestCase):
+    async def _checkout(self, pais: str, plan: str, precio_usd: str = ""):
+        from fastapi import HTTPException
+        from routers import subscription_checkout as sc
+
+        req = sc.CheckoutRequest(plan_id=plan, promo_code="ampi2026")
+        with patch.object(sc, "STRIPE_SECRET_KEY", "sk_test"), \
+             patch.object(sc, "STRIPE_PRICE_PRO", "price_mxn"), \
+             patch.object(sc, "STRIPE_PRICE_AMPI", "price_ampi"), \
+             patch.object(sc, "STRIPE_PRICE_PRO_USD", precio_usd), \
+             patch.object(sc, "get_user_id_from_token", new=AsyncMock(return_value="u1")), \
+             patch.object(sc, "pais_de_usuario", new=AsyncMock(return_value=pais)):
+            with self.assertRaises(HTTPException) as ctx:
+                await sc.subscription_checkout(req, request=None)
+        return ctx.exception
+
+    async def test_fuera_de_mexico_sin_precio_en_dolares_no_cobra_en_pesos(self):
+        e = await self._checkout("CO", "max")
+        self.assertEqual(e.status_code, 503)
+
+    async def test_ampi_solo_en_mexico(self):
+        e = await self._checkout("PE", "ampi")
+        self.assertEqual(e.status_code, 400)

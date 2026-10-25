@@ -5,11 +5,13 @@ from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import get_rows
+from core.paises import datos_pais, pais_de_usuario
 from core.redirects import checkout_redirect
 from core.stripe import (
     PROMO_CODE_AMPI,
     STRIPE_PRICE_AMPI,
     STRIPE_PRICE_PRO,
+    STRIPE_PRICE_PRO_USD,
     STRIPE_SECRET_KEY,
     get_or_create_stripe_customer,
     stripe_headers,
@@ -41,6 +43,16 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
     if req.plan_id not in plan_map:
         raise HTTPException(status_code=400, detail="Plan inválido.")
     price_id = plan_map[req.plan_id]
+    # Fuera de México Broquer Max se cobra en dólares con su propio precio de
+    # Stripe. Sin ese precio no se cobra en pesos a escondidas: el landing y
+    # el contrato de esos países dicen USD.
+    pais = await pais_de_usuario(user_id)
+    if req.plan_id == "max" and datos_pais(pais)["cobro_moneda"] == "usd":
+        price_id = STRIPE_PRICE_PRO_USD
+        if not price_id:
+            raise HTTPException(status_code=503, detail="El cobro en dólares todavía no está disponible. Escríbenos a soporte.")
+    if req.plan_id == "ampi" and pais != "MX":
+        raise HTTPException(status_code=400, detail="El plan AMPI solo está disponible en México.")
     if not price_id:
         raise HTTPException(status_code=500, detail=f"Precio Stripe no configurado para el plan '{req.plan_id}'.")
 
@@ -93,6 +105,7 @@ async def subscription_checkout(req: CheckoutRequest, request: Request):
         "cancel_url": cancel_url,
         "metadata[user_id]": user_id,
         "metadata[plan_id]": req.plan_id,
+        "metadata[pais]": pais,
         "allow_promotion_codes": "true",
         "locale": "es",
     }

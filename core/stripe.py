@@ -14,6 +14,8 @@ STRIPE_SECRET_KEY = settings.stripe_secret_key
 STRIPE_WEBHOOK_SECRET = legacy_main_settings.stripe_webhook_secret
 
 STRIPE_PRICE_PRO = legacy_main_settings.stripe_price_pro
+# Broquer Max en dólares para Colombia, Perú, Argentina y Chile (core/paises.py).
+STRIPE_PRICE_PRO_USD = legacy_main_settings.stripe_price_pro_usd
 STRIPE_PRICE_AMPI = legacy_main_settings.stripe_price_ampi
 STRIPE_PRICE_EMPRESA_MENSUAL = legacy_main_settings.stripe_price_empresa_mensual
 STRIPE_PRICE_EMPRESA_ANUAL = legacy_main_settings.stripe_price_empresa_anual

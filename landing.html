@@ -120,11 +120,14 @@ button { font-family: inherit; }
 }
 .ln-nav__links a:hover { color: var(--sky-blue); }
 .ln-nav__cta { display: flex; gap: 10px; align-items: center; margin-left: auto; }
-.ln-nav__pais select {
+.ln-nav__pais select, .ln-hero__pais select {
   height: 36px; padding: 0 var(--sp-3); border: 1px solid var(--line-2); border-radius: var(--r-pill);
   background: var(--paper); color: var(--ink); font-family: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
 }
-.ln-nav__pais select:focus-visible { outline: none; box-shadow: var(--focus); }
+.ln-nav__pais select:focus-visible, .ln-hero__pais select:focus-visible { outline: none; box-shadow: var(--focus); }
+/* En celular el menú ya va lleno: el país se elige arriba del hero. */
+.ln-hero__pais { display: none; margin: 0 auto var(--sp-4); }
+@media (max-width: 600px) { .ln-nav__pais { display: none; } .ln-hero__pais { display: block; } }
 [data-solo-mx].ln-oculto { display: none !important; }
 @media (max-width: 860px) { .ln-nav__links { display: none; } }
 @media (max-width: 460px) { .ln-nav__in { height: 64px; gap: 14px; } .ln-nav__logo img { height: 38px; } }
@@ -444,6 +447,7 @@ button { font-family: inherit; }
 <!-- ── HERO ────────────────────────────────────────────────── -->
 <header class="ln-hero">
   <div class="b2-wrap">
+    <div class="ln-hero__pais" id="ln-pais-hero"></div>
     <div class="ln-hero__eyebrow">Más operaciones. Con menos fricciones.</div>
     <h1>El primer <em>AI Real Estate Operating System</em></h1>
     <p class="ln-hero__sub">creado por agentes inmobiliarios para agentes inmobiliarios. CRM inmobiliario, <span data-solo-mx>contratos, </span>estimaciones de valor, cálculos de <span data-fuera-mx="impuestos">ISR</span>, Facebook Ads, edición de imágenes. <strong>Somos lo que no sabías que necesitabas.</strong></p>
@@ -838,8 +842,18 @@ button { font-family: inherit; }
       el.textContent = cfg.plan.max + ' al mes';
     });
   }
-  var cont = document.getElementById('ln-pais');
-  if (cont) cont.appendChild(bkPaisSelector({ onCambio: pintar }));
+  // Uno en el menú (escritorio) y otro arriba del hero (celular), sincronizados.
+  var selects = [];
+  ['ln-pais', 'ln-pais-hero'].forEach(function (id) {
+    var cont = document.getElementById(id);
+    if (!cont) return;
+    var sel = bkPaisSelector({ onCambio: function (c) {
+      selects.forEach(function (s) { s.value = c; });
+      pintar(c);
+    } });
+    selects.push(sel);
+    cont.appendChild(sel);
+  });
   pintar(bkPais());
 })();
 </script>

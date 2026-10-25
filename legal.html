@@ -567,14 +567,12 @@ function showTab(id, btn) {
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
 (function(){
-  const map = {'tyc':0,'contrato':1,'privacidad':2,'whatsapp':3};
-  const hash = location.hash.replace('#','');
-  if (map[hash] !== undefined) {
-    const btn = document.querySelectorAll('.tab-btn')[map[hash]];
-    if (btn) showTab(hash, btn);
-  }
+  const ids = ['tyc','contrato','privacidad','whatsapp'], i = ids.indexOf(location.hash.slice(1));
+  if (i >= 0) showTab(ids[i], document.querySelectorAll('.tab-btn')[i]);
 })();
 </script>
+<script src="paises.js"></script>
+<script src="legal-paises.js"></script>
 <script src="app-shell.js" defer></script>
 </body>
 </html>
