@@ -35,9 +35,15 @@ def create_router(get_context):
         # anterior): sin ligas no consultadas ni menciones internas.
         resultado = sanear_resultado(dict(resultado))
 
+        # Fuera de México el valor viene en COP, USD o UF (resultado["moneda"]).
+        moneda = str(resultado.get("moneda") or "MXN")
+
         def fmt_mx(n):
             try:
-                return "${:,.0f}".format(float(n))
+                if moneda == "UF":
+                    return "UF {:,.0f}".format(float(n))
+                txt = "${:,.0f}".format(float(n))
+                return txt if moneda == "MXN" else f"{txt} {moneda}"
             except Exception:
                 return str(n)
 

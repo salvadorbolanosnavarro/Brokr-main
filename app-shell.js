@@ -2356,7 +2356,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         operacion: operacion || 'venta',
         estatus: txt(ac.estatus) || 'activa',
         precio: num(ac.precio),
-        moneda: txt(ac.moneda) || 'MXN',
+        moneda: txt(ac.moneda) || (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN'),
         calle: txt(ac.calle),
         num_exterior: txt(ac.num_exterior),
         num_interior: txt(ac.num_interior),

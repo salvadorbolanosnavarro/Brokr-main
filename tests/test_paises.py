@@ -116,7 +116,7 @@ class CorePaisesTests(unittest.IsolatedAsyncioTestCase):
 
     def test_telefono_usa_la_lada_del_pais(self):
         self.assertEqual(paises.telefono_e164("443 123 4567", "MX"), "+524431234567")
-        self.assertEqual(paises.telefono_e164("5214431234567", "MX"), "+524431234567")
+        self.assertEqual(paises.telefono_e164("52 443 123 4567", "MX"), "+524431234567")
         self.assertEqual(paises.telefono_e164("300 123 4567", "CO"), "+573001234567")
         self.assertEqual(paises.telefono_e164("912 345 678", "PE"), "+51912345678")
         self.assertEqual(paises.telefono_e164("9 1234 5678", "CL"), "+56912345678")

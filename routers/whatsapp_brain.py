@@ -5,6 +5,8 @@ implementation does not change monkeypatch/runtime dependency semantics.
 """
 from __future__ import annotations
 
+from core.paises import contexto_whatsapp
+
 
 async def _recepcion2_responde_core(
     history: list,
@@ -113,7 +115,7 @@ async def _recepcion2_responde_core(
         "cotizar un crédito, cobrar, hacer un avalúo, apartar— NO digas que la vas a hacer ni que 'ahorita se "
         "la preparo'. Di que se lo comentas al asesor y pon 'accion' como pasar_a_humano. Prometer algo que "
         "nunca llega es peor que decir que no."
-    )
+    ) + contexto_whatsapp(agente.get("pais"))
 
     msgs = list(history)
     while msgs and msgs[0]["role"] != "user":

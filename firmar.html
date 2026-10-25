@@ -396,8 +396,8 @@
     </section>
 
     <div class="fm-pie">
-      Firma electrónica procesada por Broquer conforme a los artículos 89 a 114 del
-      Código de Comercio.<br/>
+      Firma electrónica procesada por Broquer conforme a <span id="fm-ley">los artículos 89 a 114 del
+      Código de Comercio</span>.<br/>
       Verifica cualquier documento en <a href="verificar-firma.html">broquer.app/verificar-firma</a>
     </div>
 
@@ -646,6 +646,7 @@
     }
 
     g('fm-legal').textContent = d.consentimiento || '';
+    if (d.ley) g('fm-ley').textContent = d.ley;
 
     // Dónde va a quedar su trazo. Firmar sin saberlo es firmar a ciegas.
     if (d.colocacion && d.colocacion.hay) {

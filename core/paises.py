@@ -33,6 +33,7 @@ PAISES: Dict[str, dict] = {
         "gl": "mx",
         "id_fiscal": "RFC",
         "autoridad_fiscal": "SAT",
+        "impuesto_venta": "ISR por enajenación",
         "portales": {
             "inmuebles24.com": "Inmuebles24",
             "lamudi.com.mx": "Lamudi",
@@ -41,6 +42,10 @@ PAISES: Dict[str, dict] = {
             "mercadolibre.com.mx": "Mercado Libre Inmuebles",
         },
         "cobro_moneda": "mxn",
+        # Moneda en la que el mercado publica y en la que el AVM da el valor.
+        "moneda_avm": "MXN",
+        # Ley que respalda la firma electrónica (consentimiento y constancia).
+        "ley_firma": "los artículos 89 a 114 del Código de Comercio",
     },
     "CO": {
         "nombre": "Colombia",
@@ -53,6 +58,7 @@ PAISES: Dict[str, dict] = {
         "gl": "co",
         "id_fiscal": "NIT",
         "autoridad_fiscal": "DIAN",
+        "impuesto_venta": "ganancia ocasional",
         "portales": {
             "fincaraiz.com.co": "Finca Raíz",
             "metrocuadrado.com": "Metrocuadrado",
@@ -61,6 +67,10 @@ PAISES: Dict[str, dict] = {
             "mercadolibre.com.co": "Mercado Libre Inmuebles",
         },
         "cobro_moneda": "usd",
+        # Moneda en la que el mercado publica y en la que el AVM da el valor.
+        "moneda_avm": "COP",
+        # Ley que respalda la firma electrónica (consentimiento y constancia).
+        "ley_firma": "la Ley 527 de 1999 y el Decreto 2364 de 2012",
     },
     "PE": {
         "nombre": "Perú",
@@ -73,6 +83,7 @@ PAISES: Dict[str, dict] = {
         "gl": "pe",
         "id_fiscal": "RUC",
         "autoridad_fiscal": "SUNAT",
+        "impuesto_venta": "impuesto a la renta de segunda categoría",
         "portales": {
             "urbania.pe": "Urbania",
             "adondevivir.com": "Adondevivir",
@@ -81,6 +92,10 @@ PAISES: Dict[str, dict] = {
             "mercadolibre.com.pe": "Mercado Libre Inmuebles",
         },
         "cobro_moneda": "usd",
+        # Moneda en la que el mercado publica y en la que el AVM da el valor.
+        "moneda_avm": "USD",
+        # Ley que respalda la firma electrónica (consentimiento y constancia).
+        "ley_firma": "la Ley N.º 27269, Ley de Firmas y Certificados Digitales, y su Reglamento",
     },
     "AR": {
         "nombre": "Argentina",
@@ -93,6 +108,7 @@ PAISES: Dict[str, dict] = {
         "gl": "ar",
         "id_fiscal": "CUIT",
         "autoridad_fiscal": "ARCA",
+        "impuesto_venta": "impuesto cedular",
         "portales": {
             "zonaprop.com.ar": "Zonaprop",
             "argenprop.com": "Argenprop",
@@ -101,6 +117,10 @@ PAISES: Dict[str, dict] = {
             "mercadolibre.com.ar": "Mercado Libre Inmuebles",
         },
         "cobro_moneda": "usd",
+        # Moneda en la que el mercado publica y en la que el AVM da el valor.
+        "moneda_avm": "USD",
+        # Ley que respalda la firma electrónica (consentimiento y constancia).
+        "ley_firma": "la Ley 25.506 de Firma Digital y los artículos 286 a 288 del Código Civil y Comercial de la Nación",
     },
     "CL": {
         "nombre": "Chile",
@@ -113,6 +133,7 @@ PAISES: Dict[str, dict] = {
         "gl": "cl",
         "id_fiscal": "RUT",
         "autoridad_fiscal": "SII",
+        "impuesto_venta": "impuesto al mayor valor en bienes raíces",
         "portales": {
             "portalinmobiliario.com": "Portal Inmobiliario",
             "toctoc.com": "TocToc",
@@ -121,6 +142,10 @@ PAISES: Dict[str, dict] = {
             "mercadolibre.cl": "Mercado Libre Inmuebles",
         },
         "cobro_moneda": "usd",
+        # Moneda en la que el mercado publica y en la que el AVM da el valor.
+        "moneda_avm": "UF",
+        # Ley que respalda la firma electrónica (consentimiento y constancia).
+        "ley_firma": "la Ley N.º 19.799 sobre Documentos Electrónicos, Firma Electrónica y Servicios de Certificación",
     },
 }
 
@@ -173,17 +198,44 @@ async def heredar_pais(user_id: str, de_user_id: str) -> None:
 def telefono_e164(numero: str, pais: Optional[str] = None) -> str:
     """Normaliza un teléfono a E.164 usando la lada del país de la cuenta.
 
-    Acepta números locales (solo los dígitos nacionales) o ya con lada. Para
-    México conserva la regla histórica de quitar el "1" de los celulares
-    viejos (521…).
+    Acepta números locales (solo los dígitos nacionales) o ya con lada.
     """
     d = re.sub(r"\D", "", numero or "")
     if not d:
         return ""
     cfg = datos_pais(pais)
-    lada = cfg["lada"]
-    if lada == "52" and d.startswith("521") and len(d) == 13:
-        return "+52" + d[3:]
     if len(d) == cfg["digitos_tel"]:
-        return "+" + lada + d
+        return "+" + cfg["lada"] + d
     return "+" + d
+
+
+def contexto_ia(pais: Optional[str]) -> str:
+    """Bloque que se agrega al prompt de Broq y de la IA de WhatsApp cuando
+    la cuenta no es de México (los prompts base están escritos para México)."""
+    c = normalizar_pais(pais)
+    if c == PAIS_DEFAULT:
+        return ""
+    cfg = PAISES[c]
+    return (
+        f"\n\nPAÍS DEL USUARIO: trabaja en {cfg['nombre']}. Esto manda sobre todo lo anterior que hable "
+        f"de México: usa {cfg['moneda']} como moneda por defecto, el español de {cfg['nombre']} y la ley, los "
+        f"impuestos y las autoridades de {cfg['nombre']} ({cfg['autoridad_fiscal']}, {cfg['id_fiscal']}). No "
+        "apliques ISR mexicano, SAT, LFPIORPI, UMA, UDIS, INPC, Código de Comercio ni LFPDPPP. En su país no "
+        "están disponibles los módulos de Contratos, Cumplimiento ni ISR. Para impuestos por la venta de un "
+        f"inmueble usa calcular_isr: abre la calculadora de {cfg['impuesto_venta']} de {cfg['nombre']}. "
+        "Si no estás seguro de una norma local, dilo y verifícala con web_search."
+    )
+
+
+def contexto_whatsapp(pais: Optional[str]) -> str:
+    """Lo mismo para la IA que atiende prospectos por WhatsApp."""
+    c = normalizar_pais(pais)
+    if c == PAIS_DEFAULT:
+        return ""
+    cfg = PAISES[c]
+    return (
+        f"\n\nPAÍS: el asesor trabaja en {cfg['nombre']}. Habla con el español de {cfg['nombre']}, no con "
+        f"el mexicano. Los precios y presupuestos son en {cfg['moneda']} salvo que el prospecto diga otra "
+        f"moneda; en registrar_inmueble usa \"moneda\":\"{cfg['moneda']}\" o la que te digan, y convierte "
+        "el presupuesto a un número entero en esa moneda."
+    )

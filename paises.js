@@ -29,6 +29,8 @@
       sinModulos: ['impuestos'],
       plan: { max: '$899', moneda: 'MXN' },
       ejemploBroq: 'Calcula el ISR de una venta de $2,400,000',
+      monedaAvm: 'MXN',
+      portales: ['Lamudi', 'Vivanuncios', 'Inmuebles24'],
     },
     CO: {
       codigo: 'CO', nombre: 'Colombia', locale: 'es-CO',
@@ -41,6 +43,8 @@
       sinModulos: ['isr', 'cumplimiento', 'contratos'],
       plan: { max: 'US$49', moneda: 'USD' },
       ejemploBroq: 'Calcula la ganancia ocasional de una venta de $450.000.000',
+      monedaAvm: 'COP',
+      portales: ['Finca Raíz', 'Metrocuadrado', 'Ciencuadras'],
     },
     PE: {
       codigo: 'PE', nombre: 'Perú', locale: 'es-PE',
@@ -53,6 +57,8 @@
       sinModulos: ['isr', 'cumplimiento', 'contratos'],
       plan: { max: 'US$49', moneda: 'USD' },
       ejemploBroq: 'Calcula el impuesto de una venta de S/ 650,000',
+      monedaAvm: 'USD',
+      portales: ['Urbania', 'Adondevivir', 'Properati'],
     },
     AR: {
       codigo: 'AR', nombre: 'Argentina', locale: 'es-AR',
@@ -65,6 +71,8 @@
       sinModulos: ['isr', 'cumplimiento', 'contratos'],
       plan: { max: 'US$49', moneda: 'USD' },
       ejemploBroq: 'Calcula el impuesto cedular de una venta de US$ 180.000',
+      monedaAvm: 'USD',
+      portales: ['Zonaprop', 'Argenprop', 'Properati'],
     },
     CL: {
       codigo: 'CL', nombre: 'Chile', locale: 'es-CL',
@@ -77,6 +85,8 @@
       sinModulos: ['isr', 'cumplimiento', 'contratos'],
       plan: { max: 'US$49', moneda: 'USD' },
       ejemploBroq: 'Calcula el impuesto de una venta de 6.500 UF',
+      monedaAvm: 'UF',
+      portales: ['Portal Inmobiliario', 'TocToc', 'Yapo'],
     },
   };
   var ORDEN = ['MX', 'CO', 'PE', 'AR', 'CL'];

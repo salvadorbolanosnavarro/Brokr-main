@@ -1,6 +1,7 @@
 """Canonical public agent profile lookup for WhatsApp 2.0."""
 from __future__ import annotations
 
+from core.paises import pais_de_usuario
 from routers.whatsapp_data import sb_get
 
 
@@ -14,4 +15,5 @@ async def _perfil_agente(user_id: str) -> dict:
             zona = (rows[0].get("zona_cobertura") or "").strip()
     except Exception:
         pass
-    return {"nombre": nombre or "tu asesor inmobiliario", "zona": zona}
+    return {"nombre": nombre or "tu asesor inmobiliario", "zona": zona,
+            "pais": await pais_de_usuario(user_id)}

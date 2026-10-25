@@ -19,6 +19,7 @@ from fastapi import APIRouter
 from core.cache import cache_get, cache_set
 from core.config import settings
 from core.easybroker import EB_API_KEY, construir_mapa_colonias, normalize as eb_normalize
+from core.paises import PAIS_DEFAULT, normalizar_pais
 
 
 router = APIRouter()
@@ -161,16 +162,19 @@ def _combinar_candidatos(locales: list[dict], nacionales: list[dict], *, max_can
     return candidatos
 
 
-async def _autocomplete(client: httpx.AsyncClient, texto: str, *, strictbounds: bool) -> list[dict]:
+async def _autocomplete(client: httpx.AsyncClient, texto: str, *, strictbounds: bool,
+                        pais: str = PAIS_DEFAULT) -> list[dict]:
     """Una llamada a Autocomplete. Nunca lanza — una falla aquí no debe tirar
     la búsqueda completa si la otra llamada sí funcionó."""
     params = {
         "input": texto,
         "language": "es",
-        "components": "country:mx",
-        "locationbias": _LOCATIONBIAS,
+        "components": f"country:{pais.lower()}",
         "key": GOOGLE_PLACES_KEY,
     }
+    if pais == PAIS_DEFAULT:
+        # El sesgo hacia Morelia solo tiene sentido en México.
+        params["locationbias"] = _LOCATIONBIAS
     if strictbounds:
         # A diferencia de "locationbias" (una preferencia suave que Google
         # puede ignorar si hay una coincidencia de texto más fuerte fuera de
@@ -189,11 +193,12 @@ async def _autocomplete(client: httpx.AsyncClient, texto: str, *, strictbounds: 
 
 
 @router.get("/api/colonias")
-async def buscar_colonias(texto: str):
+async def buscar_colonias(texto: str, pais: str = PAIS_DEFAULT):
     if len(texto) < 3:
         return {"colonias": []}
+    pais = normalizar_pais(pais)
 
-    cache_key = f"colonias_g7_{texto}".lower()
+    cache_key = (f"colonias_g7_{texto}" if pais == PAIS_DEFAULT else f"colonias_g7_{pais}_{texto}").lower()
     cached = cache_get(cache_key)
     if cached:
         return cached
@@ -206,12 +211,18 @@ async def buscar_colonias(texto: str):
     # "Altozano"), Autocomplete estricto a Morelia (garantiza lo local aunque
     # todavía no esté en el inventario) y Autocomplete nacional de respaldo
     # (para inmuebles en otras ciudades).
+    # Fuera de México no hay inventario de Morelia ni círculo local: solo el
+    # Autocomplete del país de la cuenta.
     async with httpx.AsyncClient(timeout=15) as client:
-        inventario, locales, nacionales = await asyncio.gather(
-            _colonias_de_inventario(texto),
-            _autocomplete(client, texto, strictbounds=True),
-            _autocomplete(client, texto, strictbounds=False),
-        )
+        if pais == PAIS_DEFAULT:
+            inventario, locales, nacionales = await asyncio.gather(
+                _colonias_de_inventario(texto),
+                _autocomplete(client, texto, strictbounds=True),
+                _autocomplete(client, texto, strictbounds=False),
+            )
+        else:
+            inventario, locales = [], []
+            nacionales = await _autocomplete(client, texto, strictbounds=False, pais=pais)
 
     candidatos = _combinar_candidatos(locales, nacionales)
 

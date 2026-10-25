@@ -1222,7 +1222,8 @@
       // NOM-151 es un sello adicional y opcional de un PSC, aparte de la
       // firma electrónica reforzada que ya es válida por sí sola. Solo
       // aplica sobre un documento ya completo y con su PDF final armado.
-      if (d.estado === 'completo' && d.firmado_ruta) {
+      // NOM-151 es una norma mexicana: fuera de México no se ofrece.
+      if (d.estado === 'completo' && d.firmado_ruta && (!window.bkPais || bkPais() === 'MX')) {
         if (d.nom151_folio) {
           b.push('<button class="bk-btn bk-btn--ghost" type="button" id="fr-a-nom151-ver">Ver constancia NOM-151</button>');
         } else {

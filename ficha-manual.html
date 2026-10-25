@@ -1225,10 +1225,10 @@ async function generarFicha(){
     const buildOperations = () => {
       const ops = [];
       if (d.op === 'Venta y renta') {
-        if (d.precio) ops.push({ type: 'sale', amount: rawNum(d.precio), currency: 'MXN' });
-        if (d.precioRenta) ops.push({ type: 'rental', amount: rawNum(d.precioRenta), currency: 'MXN' });
+        if (d.precio) ops.push({ type: 'sale', amount: rawNum(d.precio), currency: (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN') });
+        if (d.precioRenta) ops.push({ type: 'rental', amount: rawNum(d.precioRenta), currency: (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN') });
       } else if (d.precio) {
-        ops.push({ type: d.op === 'Renta' ? 'rental' : 'sale', amount: rawNum(d.precio), currency: 'MXN' });
+        ops.push({ type: d.op === 'Renta' ? 'rental' : 'sale', amount: rawNum(d.precio), currency: (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN') });
       }
       return ops;
     };
@@ -1485,7 +1485,7 @@ async function guardarComoInmueble() {
     operacion:         (d.op || '').toLowerCase().replace('venta y renta', 'venta') || null,
     estatus:           'activa',
     precio:            rawNum(d.precio),
-    moneda:            'MXN',
+    moneda:            (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN'),
     calle:             d.dir || null,
     colonia:           d.colonia || null,
     ciudad:            d.ciudad || '',

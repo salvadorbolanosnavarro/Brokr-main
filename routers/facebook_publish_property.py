@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Request
 from core.auth import get_user_id_from_token
 from core.facebook_connection_store import get_facebook_meta_row
 from core.facebook_graph import _fb_exigir_ok, _fb_request
+from core.paises import datos_pais, pais_de_usuario
 
 router = APIRouter()
 
@@ -29,6 +30,7 @@ async def facebook_publish_property(request: Request):
     recamaras = body.get("recamaras", "")
     fotos = body.get("fotos", [])
     descripcion = body.get("descripcion", "")
+    moneda = body.get("moneda") or datos_pais(await pais_de_usuario(user_id))["moneda"]
 
     row = await get_facebook_meta_row(user_id)
     meta = row.get("meta") or {}
@@ -57,7 +59,7 @@ async def facebook_publish_property(request: Request):
     if ubicacion:
         lines.append(f"📍 {ubicacion}")
     if precio_fmt:
-        lines.append(f"💰 {precio_fmt} MXN")
+        lines.append(f"💰 {precio_fmt} {moneda}")
     if specs_str:
         lines.append(specs_str)
     if descripcion:
