@@ -1354,7 +1354,7 @@ function propFmtMoney(input) {
 }
 function fmtPrecio(p, moneda='MXN') {
   if (!p) return '—';
-  return '$' + Number(p).toLocaleString('es-MX', { minimumFractionDigits: 0 });
+  return '$' + Number(p).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX', { minimumFractionDigits: 0 });
 }
 function esc(s) {
   return String(s == null ? '' : s)
@@ -1386,8 +1386,7 @@ async function getValidToken() {
 }
 
 async function sbFetch(path, method='GET', body=null) {
-  // Preferir helper centralizado (con auto-refresh + retry en 401).
-  // Fallback al método legacy solo si app-shell.js aún no se cargó.
+  // Helper central (auto-refresh y reintento en 401); el legacy solo sin app-shell.js.
   if (window.brokrSb && window.brokrSb.rest) {
     return await window.brokrSb.rest(path, { method, body });
   }

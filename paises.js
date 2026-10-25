@@ -133,6 +133,9 @@
     return (Number(n) || 0).toLocaleString(bkPaisCfg().locale, { maximumFractionDigits: dec == null ? 0 : dec });
   }
 
+  // Formato de números del país (1.500.000 en Colombia, Argentina y Chile).
+  function bkLocale() { return bkPaisCfg().locale; }
+
   function bkModuloDisponible(key, c) {
     return bkPaisCfg(c).sinModulos.indexOf(key) === -1;
   }
@@ -208,6 +211,7 @@
   window.bkPaisCfg = bkPaisCfg;
   window.bkDinero = bkDinero;
   window.bkNumero = bkNumero;
+  window.bkLocale = bkLocale;
   window.bkModuloDisponible = bkModuloDisponible;
   window.bkPaisSelector = bkPaisSelector;
 })();

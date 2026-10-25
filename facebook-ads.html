@@ -506,7 +506,7 @@ function goToProfile(){
 }
 function show(id){const el=document.getElementById(id); if(el) el.style.display='';}
 function hide(id){const el=document.getElementById(id); if(el) el.style.display='none';}
-function money(n){return '$'+Math.round(Number(n)||0).toLocaleString('es-MX');}
+function money(n){return '$'+Math.round(Number(n)||0).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX');}
 function escapeHtml(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 
 // ── Inicio: leer conexión del server (única fuente de verdad) ──
@@ -788,7 +788,7 @@ async function cargarInmuebles(){
 function propMoney(n, moneda){
   const v = Number(n)||0;
   if(!v) return '';
-  return '$' + v.toLocaleString('es-MX', { maximumFractionDigits: 0 }) + (moneda && moneda !== 'MXN' ? ' ' + moneda : '');
+  return '$' + v.toLocaleString(window.bkLocale ? bkLocale() : 'es-MX', { maximumFractionDigits: 0 }) + (moneda && moneda !== 'MXN' ? ' ' + moneda : '');
 }
 
 function propUbicacion(p){
@@ -861,8 +861,8 @@ function textoDeInmueble(p){
   const specs = [
     p.recamaras ? p.recamaras + ' recámaras' : '',
     p.banos ? p.banos + ' baños' : '',
-    p.m2_construccion ? Number(p.m2_construccion).toLocaleString('es-MX') + ' m² de construcción' : '',
-    p.m2_terreno ? Number(p.m2_terreno).toLocaleString('es-MX') + ' m² de terreno' : '',
+    p.m2_construccion ? Number(p.m2_construccion).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') + ' m² de construcción' : '',
+    p.m2_terreno ? Number(p.m2_terreno).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') + ' m² de terreno' : '',
     p.estacionamientos ? p.estacionamientos + ' estacionamientos' : '',
   ].filter(Boolean).join(' · ');
   const op = p.operacion === 'renta' ? 'en renta' : 'en venta';
@@ -1270,9 +1270,9 @@ async function loadCampaigns(silent){
           <button class="fa-toggle ${isActive?'is-active':''}" onclick="toggleCampaign('${escapeHtml(c.id)}','${isActive?'PAUSED':'ACTIVE'}',this)">${isActive?'Pausar':'Activar'}</button>
         </div>
         <div class="fa-stats">
-          <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.impressions||0).toLocaleString('es-MX')}</span><span class="fa-stat-lbl">Impresiones</span></div>
-          <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.reach||0).toLocaleString('es-MX')}</span><span class="fa-stat-lbl">Alcance</span></div>
-          <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.clicks||0).toLocaleString('es-MX')}</span><span class="fa-stat-lbl">Clics</span></div>
+          <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.impressions||0).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX')}</span><span class="fa-stat-lbl">Impresiones</span></div>
+          <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.reach||0).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX')}</span><span class="fa-stat-lbl">Alcance</span></div>
+          <div class="fa-stat"><span class="fa-stat-val">${parseInt(c.clicks||0).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX')}</span><span class="fa-stat-lbl">Clics</span></div>
           <div class="fa-stat"><span class="fa-stat-val">${ctr.toFixed(2)}%</span><span class="fa-stat-lbl">CTR</span></div>
           <div class="fa-stat"><span class="fa-stat-val">$${parseFloat(c.spend||0).toFixed(0)}</span><span class="fa-stat-lbl">Gastado</span></div>
         </div>

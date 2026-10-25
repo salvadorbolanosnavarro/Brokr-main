@@ -2935,7 +2935,7 @@ function renderPickerInmuebles(q) {
   if (!props.length) { lista.innerHTML='<div class="pick-empty">Sin inmuebles o sin coincidencias.</div>'; return; }
   lista.innerHTML = props.map(p => {
     const opCls = p.operacion==='venta'?'badge-venta':'badge-renta';
-    const precio = p.precio ? ' · $'+Number(p.precio).toLocaleString('es-MX') : '';
+    const precio = p.precio ? ' · $'+Number(p.precio).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') : '';
     return `<div class="prop-pick-item" onclick="seleccionarInmueble('${p.id}')">
       <div class="prop-pick-name"><span class="prop-pick-badge ${opCls}">${p.operacion||''}</span>${p.titulo||'Sin nombre'}</div>
       <div class="prop-pick-sub">${[p.colonia,p.ciudad].filter(Boolean).join(', ')}${precio}</div>

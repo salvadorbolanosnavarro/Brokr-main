@@ -15,7 +15,7 @@
     if (tipos.length) partes.push(tipos.map(function (t) { return C ? C.tipoLabel(t) : t; }).join(', '));
     var zonas = (r.zonas && r.zonas.length ? r.zonas : [r.colonia, r.ciudad]).filter(Boolean);
     if (zonas.length) partes.push(zonas.join(', '));
-    if (r.precio_min || r.precio_max) partes.push((r.precio_min ? '$' + Number(r.precio_min).toLocaleString('es-MX') : '') + '–' + (r.precio_max ? '$' + Number(r.precio_max).toLocaleString('es-MX') : '') + ' ' + (r.moneda || 'MXN'));
+    if (r.precio_min || r.precio_max) partes.push((r.precio_min ? '$' + Number(r.precio_min).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') : '') + '–' + (r.precio_max ? '$' + Number(r.precio_max).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') : '') + ' ' + (r.moneda || 'MXN'));
     if (r.recamaras_min) partes.push(r.recamaras_min + '+ rec');
     return partes.join(' · ');
   }
