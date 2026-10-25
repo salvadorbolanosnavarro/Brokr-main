@@ -1,5 +1,5 @@
 {
-  "count": 354,
+  "count": 355,
   "operations": [
     {
       "body": false,
@@ -93,6 +93,16 @@
       "method": "POST",
       "params": [],
       "path": "/admin/user/modulos",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/admin/user/pais",
       "responses": [
         "200",
         "422"

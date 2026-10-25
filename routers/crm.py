@@ -439,11 +439,12 @@ async def eliminar_categoria(cat_id: str, request: Request):
 # CONTACTOS: fusión de duplicados y acciones en lote
 # ══════════════════════════════════════════════════════════════════════════
 def tel10(v: Any) -> str:
-    """Teléfono MX normalizado a 10 dígitos (quita +52, 52, 1, 044, 045)."""
+    """Teléfono sin lada: los últimos 10 dígitos (México, Colombia, Argentina)
+    o los 9 de un número local de Perú o Chile."""
     d = re.sub(r"\D", "", str(v or ""))
     if len(d) > 10:
         d = d[-10:]
-    return d if len(d) == 10 else ""
+    return d if len(d) in (9, 10) else ""
 
 
 async def _contactos_de_org(ids: List[str], org_id: str, user_id: str) -> List[dict]:
