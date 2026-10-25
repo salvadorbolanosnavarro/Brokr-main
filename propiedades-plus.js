@@ -18,6 +18,13 @@
   var C = window.bkCat;
   if (!C) return;
   var esc = C.esc;
+  // Monedas del país de la cuenta (paises.js); la primera es la de siempre.
+  function monedas(actual) {
+    var l = window.bkPaisCfg ? bkPaisCfg().monedas.slice() : ['MXN', 'USD'];
+    if (actual && l.indexOf(actual) === -1) l.push(actual);
+    return l;
+  }
+  function moneda0() { return monedas()[0]; }
 
   // Columnas que agregan las migraciones de paridad. Si la base todavía no
   // las tiene, el guardado reintenta sin ellas para no bloquear al usuario.
@@ -74,7 +81,7 @@
         C.listaOptions(C.data.operaciones, tipo) + '</select></div>' +
       '<div class="pf-field px-op__precio"><label>Precio</label><input type="text" inputmode="numeric" data-k="precio" placeholder="$2,500,000" value="' + esc(precio) + '" oninput="propFmtMoney(this);pxOpCambio()"' + (idx === 0 ? ' required' : '') + '/></div>' +
       '<div class="pf-field"><label>Moneda</label><select data-k="moneda" onchange="pxOpCambio()">' +
-        C.listaOptions([{ key: 'MXN', label: 'MXN' }, { key: 'USD', label: 'USD' }], o.moneda || 'MXN') + '</select></div>' +
+        C.listaOptions(monedas(o.moneda).map(function (m) { return { key: m, label: m }; }), o.moneda || moneda0()) + '</select></div>' +
       '<div class="pf-field"><label>' + (tipo === 'renta_temporal' ? 'Periodo' : 'Unidad') + '</label>' +
         (tipo === 'renta_temporal'
           ? '<select data-k="periodo" onchange="pxOpCambio()">' + C.listaOptions(C.data.periodos, o.periodo || 'noche') + '</select>'
@@ -97,7 +104,7 @@
   }
   function pintarOps(ops) {
     var cont = g('px-ops'); if (!cont) return;
-    if (!ops || !ops.length) ops = [{ tipo: 'venta', moneda: 'MXN', unidad: 'total' }];
+    if (!ops || !ops.length) ops = [{ tipo: 'venta', moneda: moneda0(), unidad: 'total' }];
     cont.innerHTML = ops.map(opRowHtml).join('');
     sincronizarOps();
   }
@@ -108,7 +115,7 @@
     var o = ops[0];
     if (f.elements['operacion']) f.elements['operacion'].value = C.opLegacy(o.tipo) || '';
     if (f.elements['precio']) f.elements['precio'].value = o.precio != null ? String(o.precio) : '';
-    if (f.elements['moneda']) f.elements['moneda'].value = o.moneda || 'MXN';
+    if (f.elements['moneda']) f.elements['moneda'].value = o.moneda || moneda0();
     if (f.elements['operaciones_json']) f.elements['operaciones_json'].value = JSON.stringify(ops);
     if (typeof pfActualizarComision === 'function') pfActualizarComision(C.opLegacy(o.tipo) || '');
   }
@@ -127,7 +134,7 @@
     var ops = leerOps();
     var usadas = ops.map(function (o) { return o.tipo; });
     var sig = C.data.operaciones.filter(function (o) { return usadas.indexOf(o.key) === -1; })[0];
-    ops.push({ tipo: sig ? sig.key : 'venta', moneda: 'MXN', unidad: 'total' });
+    ops.push({ tipo: sig ? sig.key : 'venta', moneda: moneda0(), unidad: 'total' });
     pintarOps(ops);
   };
   window.pxOpQuitar = function (idx) {
@@ -266,7 +273,7 @@
     if (ops[0]) {
       data.operacion = C.opLegacy(ops[0].tipo);
       data.precio = ops[0].precio;
-      data.moneda = ops[0].moneda || 'MXN';
+      data.moneda = ops[0].moneda || moneda0();
     }
     delete data.operaciones_json;
     // Tipo: el select trae el subtipo; la columna vieja guarda la familia.

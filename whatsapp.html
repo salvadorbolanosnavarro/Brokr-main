@@ -583,6 +583,10 @@
             <option value="America/Chihuahua">Pacífico — Chihuahua, Mazatlán (UTC-6/-7)</option>
             <option value="America/Hermosillo">Pacífico — Sonora (UTC-7, sin horario de verano)</option>
             <option value="America/Tijuana">Noroeste — Baja California (UTC-7/-8)</option>
+            <option value="America/Bogota">Colombia (UTC-5)</option>
+            <option value="America/Lima">Perú (UTC-5)</option>
+            <option value="America/Argentina/Buenos_Aires">Argentina (UTC-3)</option>
+            <option value="America/Santiago">Chile (UTC-4/-3)</option>
           </select>
         </div>
       </div>
@@ -1711,7 +1715,7 @@ async function w2CargarEntrenamiento(){
     document.getElementById('w2-t-horario').checked = !!t.horario_activo;
     document.getElementById('w2-t-hi').value = t.hora_inicio || '08:00';
     document.getElementById('w2-t-hf').value = t.hora_fin || '21:00';
-    document.getElementById('w2-t-zona').value = t.zona_horaria || 'America/Mexico_City';
+    document.getElementById('w2-t-zona').value = t.zona_horaria || (window.bkPaisCfg ? bkPaisCfg().zonaHoraria : 'America/Mexico_City');
     document.getElementById('w2-t-fuera').value = t.fuera_horario_msg || '';
     document.getElementById('w2-t-max').value = t.max_mensajes_ia || 0;
     document.getElementById('w2-t-activo').checked = t.activo !== false;
@@ -1842,7 +1846,7 @@ async function w2GuardarEntrenamiento(){
     horario_activo: document.getElementById('w2-t-horario').checked,
     hora_inicio: document.getElementById('w2-t-hi').value || '08:00',
     hora_fin: document.getElementById('w2-t-hf').value || '21:00',
-    zona_horaria: document.getElementById('w2-t-zona').value || 'America/Mexico_City',
+    zona_horaria: document.getElementById('w2-t-zona').value || (window.bkPaisCfg ? bkPaisCfg().zonaHoraria : 'America/Mexico_City'),
     fuera_horario_msg: document.getElementById('w2-t-fuera').value.trim(),
     max_mensajes_ia: parseInt(document.getElementById('w2-t-max').value || '0', 10),
     activo: document.getElementById('w2-t-activo').checked,
@@ -1878,9 +1882,7 @@ function w2AbrirModalCita(){
   document.getElementById('w2-cita-notas').value = '';
   const modal = document.getElementById('w2-modal-cita');
   modal.hidden = false;
-  // requestAnimationFrame para que el navegador registre "hidden=false" antes
-  // de aplicar is-open; si se agregan las dos cosas en el mismo tick, la
-  // transición de opacity/visibility del sistema de diseño no se anima.
+  // rAF: registrar hidden=false antes de is-open para que la transición se anime.
   requestAnimationFrame(() => modal.classList.add('is-open'));
 }
 function w2CerrarModalCita(){
@@ -1979,10 +1981,7 @@ function w2ToggleAvanzado(on){
   w2AplicarAvanzado();
 }
 function w2AplicarAvanzado(){
-  // El switch está oculto por ahora: todo se comporta como capa estándar y la
-  // creación de plantillas se muestra siempre (sin ella no habría campañas).
-  // Para reactivar el modo avanzado: quitar el hidden del label w2-avanzado
-  // y regresar esta función a leer w2Avanzado().
+  // Switch oculto: todo va como capa estándar (reactivar: quitar hidden de w2-avanzado y leer w2Avanzado()).
   const on = true;
   const check = document.getElementById('w2-avanzado-check');
   if(check) check.checked = w2Avanzado();
@@ -2505,9 +2504,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   w2AplicarAvanzado();
   await w2CargarNumeros();
 
-  // Enlace directo desde una notificación push o la barra inferior de la app:
-  // whatsapp.html?c=<conversacion_id>#chats
-  // Enlace desde Contactos/Leads: whatsapp.html?tel=<digitos>
+  // Enlaces directos: ?c=<conversacion_id>#chats (push) y ?tel=<digitos> (Contactos)
   const _qs = new URLSearchParams(location.search);
   const idDeep = _qs.get('c');
   const telDeep = (_qs.get('tel') || '').replace(/\D/g, '');

@@ -38,6 +38,7 @@ class LegacyMainSettings:
     fb_qa_page_id: str
     stripe_webhook_secret: str
     stripe_price_pro: str
+    stripe_price_pro_usd: str
     stripe_price_ampi: str
     stripe_price_empresa_mensual: str
     stripe_price_empresa_anual: str
@@ -109,6 +110,7 @@ class LegacyMainSettings:
             fb_qa_page_id=os.getenv("FB_QA_PAGE_ID", "").strip(),
             stripe_webhook_secret=os.getenv("STRIPE_WEBHOOK_SECRET", ""),
             stripe_price_pro=os.getenv("STRIPE_PRICE_PRO", ""),
+            stripe_price_pro_usd=os.getenv("STRIPE_PRICE_PRO_USD", ""),
             stripe_price_ampi=os.getenv("STRIPE_PRICE_AMPI", ""),
             stripe_price_empresa_mensual=os.getenv("STRIPE_PRICE_EMPRESA_MENSUAL", ""),
             stripe_price_empresa_anual=os.getenv("STRIPE_PRICE_EMPRESA_ANUAL", ""),

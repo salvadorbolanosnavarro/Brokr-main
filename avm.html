@@ -518,7 +518,7 @@ input:focus, select:focus, textarea:focus {
       edificio:     { terreno: true,  construccion: true,  recamaras: false, banos: false, estac: true,  nivel: false, unidades: true,  edad: true  },
     };
 
-    const fmt = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
+    const fmt = (n) => window.bkDinero ? bkDinero(n) : "$" + Math.round(n || 0).toLocaleString("es-MX");
     const pf  = (v) => parseFloat(v) || 0;
 
     function rossHeidecke(edad, vidaUtil, conservacion) {
@@ -618,7 +618,7 @@ input:focus, select:focus, textarea:focus {
         timerRef.current = setTimeout(async () => {
           setBuscando(true);
           try {
-            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(txt)}&ciudad=${encodeURIComponent(ciudad || "")}`);
+            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(txt)}&ciudad=${encodeURIComponent(ciudad || "")}&pais=${window.bkPais ? bkPais() : 'MX'}`);
             const d = await r.json();
             setSugerencias(d.colonias || []);
             setAbierto(true);
@@ -696,7 +696,7 @@ input:focus, select:focus, textarea:focus {
         timerRef.current = setTimeout(async () => {
           setBuscando(true);
           try {
-            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(v)}`);
+            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(v)}&pais=${window.bkPais ? bkPais() : 'MX'}`);
             const d = await r.json();
             setSugerencias(d.colonias || []);
             setAbierto(true);
@@ -849,7 +849,7 @@ input:focus, select:focus, textarea:focus {
         } finally { setPdfLoading(false); }
       };
 
-      const fmtMXN = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
+      const fmtMXN = (n) => window.bkDinero ? bkDinero(n, bkPaisCfg().monedaAvm) : "$" + Math.round(n || 0).toLocaleString("es-MX");
       const confClass = (c) => c === "alta" ? "ia-conf alta" : c === "media" ? "ia-conf media" : "ia-conf baja";
       const dotColor = (imp) => imp === "positivo" ? "var(--success)" : imp === "negativo" ? "var(--danger)" : "var(--gray-400)";
 
@@ -965,7 +965,7 @@ input:focus, select:focus, textarea:focus {
               <source src="animacion-broquer.mp4" type="video/mp4" />
             </video>
             <div style={{ fontSize:15, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Buscando comparables</div>
-            <div className="ia-loading-sub">Consultando Lamudi, Vivanuncios, Inmuebles24</div>
+            <div className="ia-loading-sub">Consultando {window.bkPaisCfg ? bkPaisCfg().portales.join(", ") : "Lamudi, Vivanuncios, Inmuebles24"}</div>
             <div className="ia-loading-sub" style={{ marginTop: 4 }}>Esto puede tomar algunos minutos</div>
           </div>
         </div>
@@ -973,7 +973,7 @@ input:focus, select:focus, textarea:focus {
 
       // ── ESTADO: RESULTADO ──
       if (estado === "result" && resultado) {
-        const fmtMXN2 = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
+        const fmtMXN2 = (n) => window.bkDinero ? bkDinero(n, (resultado && resultado.moneda) || "MXN") : "$" + Math.round(n || 0).toLocaleString("es-MX");
         const comparables = resultado.comparables || [];
         const factores = resultado.factores_ajuste || [];
         const recs = resultado.recomendaciones || [];

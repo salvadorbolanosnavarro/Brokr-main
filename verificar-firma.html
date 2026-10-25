@@ -264,7 +264,7 @@
         Esta verificación acredita que el documento fue procesado por Broquer, quiénes
         manifestaron su consentimiento, en qué momento lo hicieron y que el archivo
         conserva la misma huella digital que tenía al firmarse. La firma electrónica se
-        recaba al amparo de los artículos 89 a 114 del Código de Comercio.
+        recaba al amparo de <span id="vf-ley">los artículos 89 a 114 del Código de Comercio</span>.
       </p>
       <p style="font-size:var(--fs-sm);color:var(--ink-2);line-height:var(--lh);margin:var(--sp-4) 0 0;">
         No constituye una certificación de identidad ni fe pública sobre las personas
@@ -365,6 +365,7 @@
       }
       DOC = d;
       pintar(d);
+      if (d.ley && g('vf-ley')) g('vf-ley').textContent = d.ley;
       try {
         history.replaceState(null, '', location.pathname + '?f=' + folio);
       } catch (e) { /* sin history no pasa nada */ }

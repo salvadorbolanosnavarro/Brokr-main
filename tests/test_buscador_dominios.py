@@ -8,7 +8,7 @@ import routers.buscador_propiedades as B
 
 class BuscadorSoloDominiosInmobiliariosTests(unittest.TestCase):
     def test_no_mete_noticias(self):
-        async def buscar(client, query):
+        async def buscar(client, query, pais="MX"):
             return [{"url": "https://elpais.com/economia/nota.html", "title": "t", "snippet": "s"},
                     {"url": "https://www.lamudi.com.mx/casa-1", "title": "t", "snippet": "s"}]
 

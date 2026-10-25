@@ -120,6 +120,15 @@ button { font-family: inherit; }
 }
 .ln-nav__links a:hover { color: var(--sky-blue); }
 .ln-nav__cta { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+.ln-nav__pais select, .ln-hero__pais select {
+  height: 36px; padding: 0 var(--sp-3); border: 1px solid var(--line-2); border-radius: var(--r-pill);
+  background: var(--paper); color: var(--ink); font-family: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
+}
+.ln-nav__pais select:focus-visible, .ln-hero__pais select:focus-visible { outline: none; box-shadow: var(--focus); }
+/* En celular el menú ya va lleno: el país se elige arriba del hero. */
+.ln-hero__pais { display: none; margin: 0 auto var(--sp-4); }
+@media (max-width: 600px) { .ln-nav__pais { display: none; } .ln-hero__pais { display: block; } }
+[data-solo-mx].ln-oculto { display: none !important; }
 @media (max-width: 860px) { .ln-nav__links { display: none; } }
 @media (max-width: 460px) { .ln-nav__in { height: 64px; gap: 14px; } .ln-nav__logo img { height: 38px; } }
 
@@ -427,6 +436,7 @@ button { font-family: inherit; }
       <a href="#precios">Precios</a>
     </div>
     <div class="ln-nav__cta">
+      <span class="ln-nav__pais" id="ln-pais"></span>
       <button class="b2-btn b2-btn--ghost b2-btn--sm" type="button" onclick="lnAbrirDemo()">Agendar demo</button>
       <a class="b2-btn b2-btn--ghost b2-btn--sm" href="login.html">Iniciar sesión</a>
       <a class="b2-btn b2-btn--blue b2-btn--sm" href="registro.html">Crear cuenta</a>
@@ -437,9 +447,10 @@ button { font-family: inherit; }
 <!-- ── HERO ────────────────────────────────────────────────── -->
 <header class="ln-hero">
   <div class="b2-wrap">
+    <div class="ln-hero__pais" id="ln-pais-hero"></div>
     <div class="ln-hero__eyebrow">Más operaciones. Con menos fricciones.</div>
     <h1>El primer <em>AI Real Estate Operating System</em></h1>
-    <p class="ln-hero__sub">creado por agentes inmobiliarios para agentes inmobiliarios. CRM inmobiliario, contratos, estimaciones de valor, cálculos de ISR, Facebook Ads, edición de imágenes. <strong>Somos lo que no sabías que necesitabas.</strong></p>
+    <p class="ln-hero__sub">creado por agentes inmobiliarios para agentes inmobiliarios. CRM inmobiliario, <span data-solo-mx>contratos, </span>estimaciones de valor, cálculos de <span data-fuera-mx="impuestos">ISR</span>, Facebook Ads, edición de imágenes. <strong>Somos lo que no sabías que necesitabas.</strong></p>
 
     <!-- La barra de Broq: la firma del rediseño. Escribe sola lo que sabe hacer. -->
     <a class="ln-broqbar" href="registro.html" aria-label="Crear cuenta y pedirle algo a Broq">
@@ -524,7 +535,7 @@ button { font-family: inherit; }
           <span class="b2-tag">Broquer Max</span>
         </div>
         <h3>Broq, tu asistente con IA</h3>
-        <p>Pídele lo que quieras, como un cálculo de ISR. Por voz o texto.</p>
+        <p>Pídele lo que quieras, como un cálculo de <span data-fuera-mx="impuestos">ISR</span>. Por voz o texto.</p>
       </article>
 
       <article class="ln-mod">
@@ -567,11 +578,11 @@ button { font-family: inherit; }
           </span>
           <span class="b2-tag">Broquer Max</span>
         </div>
-        <h3>Calculadora de ISR</h3>
+        <h3>Calculadora de <span data-fuera-mx="impuestos">ISR</span></h3>
         <p>Sorprende con un cálculo inmediato.</p>
       </article>
 
-      <article class="ln-mod">
+      <article class="ln-mod" data-solo-mx>
         <div class="ln-mod__top">
           <span class="ln-mod__ico">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
@@ -615,7 +626,7 @@ button { font-family: inherit; }
         <p>Simplificamos Facebook Ads.</p>
       </article>
 
-      <article class="ln-mod">
+      <article class="ln-mod" data-solo-mx>
         <div class="ln-mod__top">
           <span class="ln-mod__ico">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
@@ -674,7 +685,7 @@ button { font-family: inherit; }
     <div class="ln-about">
       <div class="ln-about__txt">
         <p>Somos el<strong> primer AI Real Estate Operating System (REOS) creado por agentes inmobiliarios para agentes inmobiliarios</strong>: literalmente un sistema operativo con inteligencia artificial que concentra en una sola plataforma todo lo que un agente inmobiliario profesional necesita para operar. Somos lo que requieres y mereces.</p>
-        <p>Como<strong> agentes inmobiliarios</strong> hemos asistido a citas de captación, hemos necesitado el ISR para ayer, nos han pedido firmar un contrato urgentemente. Broquer existe porque lo necesitábamos.</p>
+        <p>Como<strong> agentes inmobiliarios</strong> hemos asistido a citas de captación, hemos necesitado <span data-fuera-mx="el cálculo de impuestos">el ISR</span> para ayer, nos han pedido firmar un contrato urgentemente. Broquer existe porque lo necesitábamos.</p>
         <p>Por eso cada módulo resuelve un problema real, con el rigor de la práctica profesional y la velocidad que un verdadero tiburón necesita. <strong>Somos lo que no sabías que necesitabas.</strong></p>
       </div>
       <div class="ln-quote">
@@ -719,14 +730,14 @@ button { font-family: inherit; }
         <div class="ln-price__head">
           <div class="name">Broquer Max</div>
           <div class="sub">Personal</div>
-          <div class="ln-price__precio">$899 al mes</div>
+          <div class="ln-price__precio" data-pais-precio>$899 al mes</div>
         </div>
         <div class="ln-price__body">
           <ul class="ln-price__list">
             <li>Broq, tu superasistente con inteligencia artificial</li>
             <li>Estimaciones de valor</li>
-            <li>Supercalculadora de ISR</li>
-            <li>Contratos en minutos</li>
+            <li>Supercalculadora de <span data-fuera-mx="impuestos">ISR</span></li>
+            <li data-solo-mx>Contratos en minutos</li>
             <li>Fichas técnicas profesionales</li>
             <li>Editor de imágenes instantáneo. ¡Hasta 20 a la vez!</li>
             <li>Anuncios de Facebook</li>
@@ -806,6 +817,46 @@ button { font-family: inherit; }
   </div>
 </footer>
 
+<script src="paises.js"></script>
+<script>
+/* País: se elige arriba a la derecha y se recuerda para crear la cuenta.
+   La primera vez se adivina por la zona horaria del navegador. */
+(function () {
+  if (!window.bkPaisSelector) return;
+  if (!bkPaisElegido()) {
+    var zona = '';
+    try { zona = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (_) {}
+    BK_PAISES_ORDEN.forEach(function (c) {
+      if (zona && BK_PAISES[c].zonaHoraria.split('/')[1] === zona.split('/')[1]) bkPaisGuardar(c);
+    });
+  }
+  function pintar(c) {
+    var cfg = bkPaisCfg(c), mx = c === 'MX';
+    document.documentElement.lang = cfg.locale;
+    document.querySelectorAll('[data-solo-mx]').forEach(function (el) { el.classList.toggle('ln-oculto', !mx); });
+    document.querySelectorAll('[data-fuera-mx]').forEach(function (el) {
+      if (el.dataset.mx == null) el.dataset.mx = el.textContent;
+      el.textContent = mx ? el.dataset.mx : el.dataset.fueraMx;
+    });
+    document.querySelectorAll('[data-pais-precio]').forEach(function (el) {
+      el.textContent = cfg.plan.max + ' al mes';
+    });
+  }
+  // Uno en el menú (escritorio) y otro arriba del hero (celular), sincronizados.
+  var selects = [];
+  ['ln-pais', 'ln-pais-hero'].forEach(function (id) {
+    var cont = document.getElementById(id);
+    if (!cont) return;
+    var sel = bkPaisSelector({ onCambio: function (c) {
+      selects.forEach(function (s) { s.value = c; });
+      pintar(c);
+    } });
+    selects.push(sel);
+    cont.appendChild(sel);
+  });
+  pintar(bkPais());
+})();
+</script>
 <script>
 /* ── Blindaje de enlaces de autenticación ──
    Si un enlace de recuperación de contraseña (o cualquier token de Supabase)
@@ -860,10 +911,9 @@ button { font-family: inherit; }
   if (!nodo) return;
 
   var ejemplos = [
-    'Calcula el ISR de una venta de $2,400,000',
+    window.bkPaisCfg ? bkPaisCfg().ejemploBroq : 'Calcula el ISR de una venta de $2,400,000',
     'Hazme la ficha técnica de la casa en Altozano',
     '¿Qué leads no he contactado esta semana?',
-    'Genera el contrato de arrendamiento del depa',
     'Estima el valor de un terreno de 300 m²',
     'Amuebla las fotos de la casa de Santa María'
   ];
@@ -874,7 +924,7 @@ button { font-family: inherit; }
   var i = 0, j = 0, borrando = false;
 
   function paso() {
-    var frase = ejemplos[i];
+    var frase = i === 0 && window.bkPaisCfg ? bkPaisCfg().ejemploBroq : ejemplos[i];
     if (!borrando) {
       j++;
       nodo.textContent = frase.slice(0, j);

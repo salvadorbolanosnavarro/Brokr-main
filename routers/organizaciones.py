@@ -28,6 +28,7 @@ from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.paises import heredar_pais
 from core.permissions import ROLE_AGENT, VALID_ORG_ROLES, VALID_PERMISSIONS, default_permission
 
 router = APIRouter()
@@ -544,6 +545,11 @@ async def aceptar_invitacion(req: AceptarReq, request: Request):
     await _sb_patch("organizacion_invitaciones", {"id": f"eq.{inv['id']}"}, {
         "aceptada_el": datetime.now(timezone.utc).isoformat(),
     })
+
+    # El equipo trabaja en el país del dueño de la empresa.
+    dueno = await _sb_get("organizaciones", {"id": f"eq.{inv['org_id']}", "select": "owner_id", "limit": "1"})
+    if dueno and dueno[0].get("owner_id"):
+        await heredar_pais(user_id, dueno[0]["owner_id"])
 
     # ── Sus datos ──
     # Si el dueño de la empresa marcó "traer datos", el inventario y los

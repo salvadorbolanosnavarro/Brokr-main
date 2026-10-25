@@ -33,6 +33,7 @@ from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import get_rows, patch_rows, post_rows
+from core.paises import PAIS_DEFAULT, contexto_ia, pais_de_usuario
 
 router = APIRouter()
 
@@ -868,7 +869,7 @@ _STEP_LABELS = {
 
 
 # ── System prompt del agente ──────────────────────────────────────────────
-def _build_system(context: str, nombre: str = "") -> str:
+def _build_system(context: str, nombre: str = "", pais: str = PAIS_DEFAULT) -> str:
     base = """Eres Broq, el copiloto operativo con inteligencia artificial para agentes inmobiliarios de México (especializado en Morelia y Michoacán). Eres un ASISTENTE QUE EJECUTA, no un chatbot que sugiere.
 
 CÓMO ACTÚAS:
@@ -908,6 +909,7 @@ ESTILO:
 - Si el usuario habla por voz (va manejando o en una cita), responde con oraciones cortas y claras.
 - Nunca inventes cifras, leyes, artículos ni datos. Si no estás seguro, dilo y usa web_search para verificar.
 - Nada de markdown en las respuestas conversacionales: sin asteriscos, sin numerales, sin listas con guiones. Frases naturales."""
+    base += contexto_ia(pais)
     if nombre:
         base += f"\n\nEl usuario se llama {nombre}. Háblale por su nombre de pila cuando sea natural."
     if context:
@@ -931,7 +933,7 @@ async def agent(req: AgentRequest, request: Request):
     exigir_cupo(request, user_id)
     exigir_sesion(request, user_id)
 
-    system = _build_system(req.context, req.nombre)
+    system = _build_system(req.context, req.nombre, await pais_de_usuario(user_id))
     # Solo mensajes de usuario/asistente (sin system embebido)
     messages = [m for m in req.messages if m.get("role") in ("user", "assistant")]
 

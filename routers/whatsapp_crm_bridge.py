@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import logging
 
+from core.paises import pais_de_usuario
 from routers.organizaciones import get_org_context
 from routers.whatsapp_data import sb_get, sb_patch, sb_post
 from routers.whatsapp_time import hora_local
@@ -29,7 +30,8 @@ async def perfil_agente(user_id: str) -> dict:
             zona = (rows[0].get("zona_cobertura") or "").strip()
     except Exception:
         pass
-    return {"nombre": nombre or "tu asesor inmobiliario", "zona": zona}
+    return {"nombre": nombre or "tu asesor inmobiliario", "zona": zona,
+            "pais": await pais_de_usuario(user_id)}
 
 
 async def crear_contacto_crm(user_id: str, wa_id: str, nombre: str | None) -> str | None:

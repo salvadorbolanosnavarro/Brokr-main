@@ -20,9 +20,10 @@ async function sbPublic(path) {
   return r.json();
 }
 
-function money(n) {
+function money(n, moneda) {
   if (n == null) return null;
-  try { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n); }
+  if (moneda === 'UF') return 'UF ' + Number(n).toLocaleString('es-CL');
+  try { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: moneda || 'MXN', maximumFractionDigits: 0 }).format(n); }
   catch { return '$' + n; }
 }
 
@@ -39,9 +40,9 @@ function precioTexto(p) {
     return bkCat.precioTexto(ops[0]);
   }
   if (p.operacion === 'renta') {
-    return p.precio_renta != null ? money(p.precio_renta) + ' / mes' : 'Precio a consultar';
+    return p.precio_renta != null ? money(p.precio_renta, p.moneda) + ' / mes' : 'Precio a consultar';
   }
-  return p.precio != null ? money(p.precio) : 'Precio a consultar';
+  return p.precio != null ? money(p.precio, p.moneda) : 'Precio a consultar';
 }
 function precioNumerico(p) {
   const v = p.operacion === 'renta' ? p.precio_renta : p.precio;

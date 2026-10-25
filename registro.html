@@ -276,6 +276,11 @@ body {
         </div>
       </div>
 
+      <div class="reg-field" id="r-pais-campo">
+        <label for="r-pais">País donde trabajas</label>
+        <div class="reg-hint">Con esto ajustamos moneda, impuestos y documentos. No se puede cambiar después.</div>
+      </div>
+
       <div class="reg-field">
         <label for="r-telefono">Teléfono</label>
         <input class="reg-input" type="tel" id="r-telefono" placeholder="Ej. 443 123 4567" autocomplete="tel"/>
@@ -292,6 +297,19 @@ body {
   </main>
 </div>
 
+<script src="paises.js"></script>
+<script>
+(function(){
+  var campo = document.getElementById('r-pais-campo');
+  if (!campo || !window.bkPaisSelector) return;
+  function telEjemplo(c){ var t = document.getElementById('r-telefono'); if (t) t.placeholder = 'Ej. ' + bkPaisCfg(c).telEjemplo; }
+  var sel = bkPaisSelector({ className: 'reg-input', onCambio: telEjemplo });
+  sel.id = 'r-pais';
+  campo.insertBefore(sel, campo.querySelector('.reg-hint'));
+  bkPaisGuardar(sel.value);
+  telEjemplo(sel.value);
+})();
+</script>
 <script>
 const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
 const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
@@ -364,6 +382,15 @@ async function guardar(){
       return;
     }
   }
+
+  // País de la cuenta. Va aparte: si ya tenía uno, la base lo conserva.
+  try {
+    await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}`, {
+      method: 'PATCH',
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ pais: window.bkPais ? bkPais() : 'MX' })
+    });
+  } catch (_) {}
 
   showMsg('Perfil guardado.', 'ok');
 

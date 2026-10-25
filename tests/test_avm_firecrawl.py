@@ -187,7 +187,7 @@ class BusquedaPorPortalTests(unittest.TestCase):
         llamadas = []
 
         def proveedor(nombre, cuantos):
-            async def buscar(client, query):
+            async def buscar(client, query, pais="MX"):
                 llamadas.append((nombre, query))
                 m = A.re.search(r"site:([a-z0-9.]+)", query)
                 dom = m.group(1) if m else "blog-generico.mx"
@@ -239,7 +239,7 @@ class SoloDominiosInmobiliariosTests(unittest.TestCase):
             self.assertFalse(A.es_dominio_inmobiliario(url), url)
 
     def test_busqueda_generica_no_mete_noticias(self):
-        async def buscar(client, query):
+        async def buscar(client, query, pais="MX"):
             return [{"url": "https://elpais.com/economia/nota.html", "title": "t", "snippet": "s"},
                     {"url": f"https://www.lamudi.com.mx/{abs(hash(query)) % 997}", "title": "t", "snippet": "s"}]
 

@@ -354,6 +354,7 @@
       "body": false,
       "method": "GET",
       "params": [
+        "query:pais",
         "query:texto!"
       ],
       "path": "/api/colonias",
