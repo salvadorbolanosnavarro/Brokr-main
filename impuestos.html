@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>Broquer — Impuestos por venta</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  /* Calculadora de impuestos por venta de inmueble (Colombia, Perú,
+     Argentina y Chile). México usa isr.html. */
+  .imp-scroll { padding: var(--sp-6) var(--sp-7, 28px) var(--sp-8); max-width: 1180px; margin: 0 auto; }
+  @media (max-width: 720px) { .imp-scroll { padding: var(--sp-4) var(--sp-3) var(--sp-8); } }
+  .imp-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--sp-5); align-items: start; }
+  @media (max-width: 900px) { .imp-grid { grid-template-columns: minmax(0, 1fr); } }
+  .imp-dos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--sp-3); }
+  @media (max-width: 520px) { .imp-dos { grid-template-columns: minmax(0, 1fr); } }
+  .imp-check { display: flex; gap: var(--sp-3); align-items: flex-start; margin: var(--sp-3) 0; font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; }
+  .imp-check input { margin-top: 3px; }
+  .imp-hint { font-size: var(--fs-xs, var(--fs-sm)); color: var(--mute); margin-top: var(--sp-1); }
+  .imp-tabla { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+  .imp-tabla td { padding: var(--sp-2) 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .imp-tabla td:last-child { text-align: right; white-space: nowrap; padding-left: var(--sp-3); font-variant-numeric: tabular-nums; }
+  .imp-tabla tr.sub td { font-weight: 700; }
+  .imp-tabla tr.tot td { font-weight: 800; font-size: var(--fs-body); border-bottom: 0; color: var(--sky-navy); }
+  .imp-total { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 800; letter-spacing: -.02em; margin: var(--sp-2) 0 var(--sp-4); }
+  .imp-avisos { margin: var(--sp-4) 0 0; padding-left: var(--sp-5); font-size: var(--fs-sm); color: var(--ink-2); line-height: var(--lh); }
+  .imp-avisos li + li { margin-top: var(--sp-2); }
+  .imp-legal { margin-top: var(--sp-4); font-size: var(--fs-sm); color: var(--mute); line-height: var(--lh); }
+  .imp-acciones { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-5); }
+  .imp-oculto { display: none !important; }
+  @media print {
+    .imp-form, .imp-acciones, .bk-sidebar, .bk-topbar { display: none !important; }
+    .imp-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+</head>
+<body data-app="impuestos">
+
+<div class="imp-scroll">
+
+  <div class="imp-grid">
+
+    <form class="bk-card bk-card--pad bk-card--raise imp-form" id="imp-form" onsubmit="event.preventDefault()">
+      <span class="bk-eyebrow" id="imp-eyebrow">Datos de la venta</span>
+      <h2 style="font-size:var(--fs-h3);margin:var(--sp-2) 0 var(--sp-4);" id="imp-titulo">Impuesto por venta de inmueble</h2>
+
+      <div class="bk-field imp-oculto" data-solo="AR CL">
+        <label class="bk-label" for="imp-moneda">Moneda de la operación</label>
+        <select class="bk-select" id="imp-moneda"></select>
+      </div>
+
+      <div class="imp-dos">
+        <div class="bk-field">
+          <label class="bk-label" for="imp-venta">Precio de venta</label>
+          <input class="bk-input" id="imp-venta" type="text" inputmode="decimal" placeholder="0"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="imp-costo" id="imp-costo-l">Precio de compra</label>
+          <input class="bk-input" id="imp-costo" type="text" inputmode="decimal" placeholder="0"/>
+        </div>
+      </div>
+
+      <div class="bk-field">
+        <label class="bk-label" for="imp-mejoras">Mejoras y gastos comprobables</label>
+        <input class="bk-input" id="imp-mejoras" type="text" inputmode="decimal" placeholder="0"/>
+        <div class="imp-hint">Remodelaciones y ampliaciones con factura o boleta, y gastos de la compra que la ley permite sumar.</div>
+      </div>
+
+      <div class="imp-dos">
+        <div class="bk-field">
+          <label class="bk-label" for="imp-fcompra">Fecha de compra</label>
+          <input class="bk-input" id="imp-fcompra" type="date"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="imp-fventa">Fecha de venta</label>
+          <input class="bk-input" id="imp-fventa" type="date"/>
+        </div>
+      </div>
+
+      <label class="imp-check"><input type="checkbox" id="imp-casa"/> <span id="imp-casa-l">Es la casa habitación de quien vende</span></label>
+
+      <!-- Colombia -->
+      <label class="imp-check imp-oculto" data-solo="CO"><input type="checkbox" id="imp-reinvierte"/> <span>El dinero de la venta irá a una cuenta AFC/AVC o a pagar el crédito hipotecario del inmueble</span></label>
+      <div class="bk-field imp-oculto" data-solo="CO">
+        <label class="bk-label" for="imp-uvt">Valor de la UVT</label>
+        <input class="bk-input" id="imp-uvt" type="text" inputmode="decimal"/>
+      </div>
+
+      <!-- Perú -->
+      <div class="imp-dos imp-oculto" data-solo="PE">
+        <div class="bk-field">
+          <label class="bk-label" for="imp-icm">Índice de corrección monetaria</label>
+          <input class="bk-input" id="imp-icm" type="text" inputmode="decimal" value="1"/>
+          <div class="imp-hint">Lo publica el MEF cada mes según el año de compra.</div>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="imp-uit">Valor de la UIT</label>
+          <input class="bk-input" id="imp-uit" type="text" inputmode="decimal"/>
+        </div>
+      </div>
+
+      <!-- Chile -->
+      <div class="imp-dos imp-oculto" data-solo="CL">
+        <div class="bk-field">
+          <label class="bk-label" for="imp-uf">Valor de la UF hoy (en pesos)</label>
+          <input class="bk-input" id="imp-uf" type="text" inputmode="decimal" placeholder="Ej. 39.500"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="imp-ufusadas">UF del tope ya usadas en ventas anteriores</label>
+          <input class="bk-input" id="imp-ufusadas" type="text" inputmode="decimal" value="0"/>
+        </div>
+      </div>
+
+      <div class="imp-acciones">
+        <button type="button" class="bk-btn bk-btn--forest" id="imp-calc">Calcular</button>
+      </div>
+    </form>
+
+    <section class="bk-card bk-card--pad bk-card--raise" id="imp-res" aria-live="polite">
+      <span class="bk-eyebrow">Resultado estimado</span>
+      <div class="imp-total" id="imp-total">—</div>
+      <table class="imp-tabla"><tbody id="imp-lineas"></tbody></table>
+      <ul class="imp-avisos" id="imp-avisos"></ul>
+      <p class="imp-legal" id="imp-nota"></p>
+      <p class="imp-legal">Estimación orientativa para una persona que vende un inmueble que no forma parte de un negocio. No sustituye la asesoría de un contador o del notario/escribano; las tasas y valores pueden cambiar.</p>
+      <div class="imp-acciones">
+        <button type="button" class="bk-btn bk-btn--ghost" id="imp-copiar">Copiar resumen</button>
+        <button type="button" class="bk-btn bk-btn--ghost" onclick="window.print()">Imprimir o guardar PDF</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="paises.js" defer></script>
+<script src="impuestos-reglas.js" defer></script>
+<script src="app-shell.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var g = function (id) { return document.getElementById(id); };
+  var ultimo = null;
+
+  function num(id) {
+    var v = String(g(id).value || '').replace(/[^\d.,]/g, '');
+    // Acepta 1.234.567,89 y 1,234,567.89: el último separador con 1-2
+    // dígitos después es el decimal; los demás son de miles.
+    var m = v.match(/[.,](\d{1,2})$/);
+    var dec = m ? m[1] : '';
+    var ent = (m ? v.slice(0, -m[0].length) : v).replace(/[.,]/g, '');
+    return Number(ent + (dec ? '.' + dec : '')) || 0;
+  }
+
+  function moneda() {
+    var c = bkPais();
+    if (c === 'AR' || c === 'CL') return g('imp-moneda').value;
+    return bkPaisCfg().moneda;
+  }
+
+  function preparar() {
+    var c = bkPais(), cfg = bkPaisCfg();
+    if (c === 'MX') return; // app-shell.js lo manda a isr.html
+    var p = BK_IMPUESTOS.PARAMETROS[c] || {};
+    document.querySelectorAll('[data-solo]').forEach(function (el) {
+      el.classList.toggle('imp-oculto', el.dataset.solo.split(' ').indexOf(c) === -1);
+    });
+    g('imp-titulo').textContent = cfg.impuesto.nombre + ' · ' + cfg.nombre;
+    g('imp-costo-l').textContent = c === 'CL' ? 'Precio de compra reajustado por IPC'
+      : c === 'AR' ? 'Precio de compra actualizado' : c === 'CO' ? 'Costo fiscal (precio de compra)' : 'Precio de compra';
+    var monedas = c === 'CL' ? ['CLP', 'UF'] : c === 'AR' ? ['USD', 'ARS'] : [];
+    var sel = g('imp-moneda');
+    if (monedas.length && sel.dataset.pais !== c) {
+      sel.innerHTML = monedas.map(function (m) { return '<option value="' + m + '">' + m + '</option>'; }).join('');
+      sel.dataset.pais = c;
+    }
+    if (p.uvt && !g('imp-uvt').value) g('imp-uvt').value = p.uvt.toLocaleString(cfg.locale);
+    if (p.uit && !g('imp-uit').value) g('imp-uit').value = p.uit.toLocaleString(cfg.locale);
+    if (!g('imp-fventa').value) g('imp-fventa').value = new Date().toISOString().slice(0, 10);
+    // Lo que pidió Broq (mismo canal que isr.html: "llenar_isr").
+    try {
+      var d = JSON.parse(sessionStorage.getItem('shaark_isr') || 'null');
+      if (d) {
+        sessionStorage.removeItem('shaark_isr');
+        if (d.precio_venta) g('imp-venta').value = bkNumero(d.precio_venta);
+        if (d.precio_compra) g('imp-costo').value = bkNumero(d.precio_compra);
+        if (d.mejoras) g('imp-mejoras').value = bkNumero(d.mejoras);
+        if (d.anio_compra) g('imp-fcompra').value = d.anio_compra + '-' + String(d.mes_compra || 1).padStart(2, '0') + '-01';
+      }
+    } catch (_) {}
+  }
+
+  function fmt(v) {
+    if (v === null || v === undefined) return '—';
+    var neg = v < 0;
+    var s = bkDinero(Math.abs(v), moneda());
+    return neg ? '− ' + s : s;
+  }
+
+  function calcular() {
+    var c = bkPais();
+    var r = BK_IMPUESTOS.calcular(c, {
+      venta: num('imp-venta'), costo: num('imp-costo'), mejoras: num('imp-mejoras'),
+      fechaCompra: g('imp-fcompra').value, fechaVenta: g('imp-fventa').value,
+      casaHabitacion: g('imp-casa').checked, reinvierte: g('imp-reinvierte').checked,
+      uvt: num('imp-uvt'), uit: num('imp-uit'), icm: num('imp-icm'),
+      moneda: moneda(), valorUf: num('imp-uf'), ufUsadas: num('imp-ufusadas'),
+    });
+    ultimo = r;
+    g('imp-total').textContent = r.impuesto === null ? 'Depende de tu renta del año' : fmt(r.impuesto);
+    g('imp-lineas').innerHTML = '';
+    r.lineas.forEach(function (ln) {
+      var tr = document.createElement('tr');
+      if (ln.tipo) tr.className = ln.tipo;
+      var a = document.createElement('td'); a.textContent = ln.l;
+      var b = document.createElement('td'); b.textContent = fmt(ln.v);
+      tr.appendChild(a); tr.appendChild(b);
+      g('imp-lineas').appendChild(tr);
+    });
+    g('imp-avisos').innerHTML = '';
+    r.avisos.forEach(function (t) {
+      var li = document.createElement('li'); li.textContent = t; g('imp-avisos').appendChild(li);
+    });
+    g('imp-nota').textContent = r.nota || '';
+  }
+
+  g('imp-calc').addEventListener('click', calcular);
+  g('imp-copiar').addEventListener('click', function () {
+    if (!ultimo) return;
+    var txt = [bkPaisCfg().impuesto.nombre + ' — estimación Broquer']
+      .concat(ultimo.lineas.map(function (l) { return l.l + ': ' + fmt(l.v); }))
+      .concat(ultimo.avisos.map(function (a) { return '• ' + a; }))
+      .join('\n');
+    try { navigator.clipboard.writeText(txt); } catch (_) {}
+    if (window.toast) toast('Resumen copiado.', 'success');
+  });
+
+  preparar();
+  document.addEventListener('bk:pais', function () { preparar(); if (ultimo) calcular(); });
+});
+</script>
+</body>
+</html>

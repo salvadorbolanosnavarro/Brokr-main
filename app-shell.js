@@ -14,17 +14,13 @@
 (function () {
   if (window.__brokrShellLoaded) return;
   window.__brokrShellLoaded = true;
+  // País de la cuenta (paises.js): moneda, módulos y leyes que aplican.
+  const paisesListo = window.bkPaisSesion ? null : new Promise(r => {
+    const s = document.createElement('script');
+    s.src = 'paises.js'; s.onload = s.onerror = r; document.head.appendChild(s);
+  });
 
-  /* ── Sentry — monitoreo de errores en producción ──────────────────────
-     Captura automáticamente cualquier error JavaScript no manejado en todas
-     las páginas de Broquer y lo envía a tu panel de sentry.io.
-
-     PASO ÚNICO: reemplaza PEGAR_URL_AQUI con la URL que Sentry te da al
-     crear tu proyecto (la encuentras en Project Settings → Client Keys →
-     Loader Script; se ve así: https://js.sentry-cdn.com/TU_CLAVE.min.js).
-
-     No carga nada en localhost — solo en broquer.app.
-     ─────────────────────────────────────────────────────────────────── */
+  /* ── Sentry — errores de producción (no carga en localhost) ── */
   (function initSentry() {
     const h = window.location.hostname;
     if (h === 'localhost' || h === '127.0.0.1' || h === '') return;
@@ -308,6 +304,7 @@
     // Números.
     { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'numeros',     icon:'peso' },
     { key:'isr',          href:'isr.html',           label:'ISR',                 group:'numeros',     icon:'calculator' },
+    { key:'impuestos',    href:'impuestos.html',     label:'Impuestos',           group:'numeros',     icon:'calculator' },
     { key:'finanzas',     href:'finanzas.html',      label:'Finanzas',            group:'numeros',     icon:'wallet' },
     // Marketing — de la foto cruda al anuncio publicado.
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes',     group:'marketing',   icon:'image' },
@@ -340,6 +337,7 @@
     'avm':          'Estimación de valor AVM — avalúo de mercado automatizado',
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
+    'impuestos':    'Calculadora de impuestos por venta de inmuebles del país de la cuenta',
     'finanzas':     'Finanzas — ingresos, gastos, cuentas, rentabilidad por propiedad y reportes descargables',
     'image-cleaner':'Editor de imágenes — limpieza con IA',
     'video':        'Video — recorrido en video armado con las fotos de la ficha, para reels, stories y feed',
@@ -364,6 +362,7 @@
     'avm':           { title:'Estimación de valor',    sub:'Avalúo automático con comparables de tu zona.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
+    'impuestos':     { title:'Impuestos por venta',    sub:'Lo que paga quien vende un inmueble, con las reglas de tu país.' },
     'finanzas':      { title:'Finanzas',              sub:'Tus ingresos, gastos y cuentas. La rentabilidad real de cada operación.' },
     'image-cleaner': { title:'Editor de imágenes',     sub:'Limpia y mejora las fotos de tus propiedades con IA.' },
     'facebook-ads':  { title:'Facebook Ads',           sub:'Crea, activa y mide anuncios de Facebook e Instagram.' },
@@ -1503,6 +1502,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
     try {
       profile = await sbFetch(`usuarios?id=eq.${user.id}&select=nombre,telefono,rol,modulos_desactivados,acceso_completo_hasta`);
     } catch (e) {}
+    await paisesListo;
+    if (window.bkPaisSesion) bkPaisSesion(profile[0] = profile[0] || {}, (await sbFetch(`usuarios?id=eq.${user.id}&select=pais`).catch(() => []))[0],
+      c => fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}`, { method: 'PATCH', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + getToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ pais: c }) }));
     const fullName = profile[0]?.nombre || user.email?.split('@')[0] || 'Usuario';
     return { user, fullName, profile: profile[0] || {}, isAdmin: profile[0]?.rol === 'admin' };
   }
@@ -2114,7 +2116,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         if (m) location.href = m.href;
         break;
       }
-      case 'llenar_isr':         stash('isr', ac);          location.href = 'isr.html'; break;
+      case 'llenar_isr':         stash('isr', ac);          location.href = (window.bkPaisCfg ? bkPaisCfg().impuesto.modulo : 'isr') + '.html'; break;
       case 'llenar_avm':
       case 'opinion_valor_web':  stash('avm', ac);          location.href = 'avm.html'; break;
       case 'llenar_contrato':    stash('contrato', ac);     location.href = 'contratos.html'; break;
@@ -2427,6 +2429,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
      iframe oculto carga isr.html?asistente=1; el blob vuelve por
      postMessage y se entrega aquí (el iframe oculto no puede). */
   async function calcularISRDirecto(ac) {
+    if (window.bkPais && bkPais() !== 'MX') return handleAccion({ ...ac, tipo: 'llenar_isr' });
     const bubble = _addAssistantBubble('Calculando ISR y preparando tu PDF…');
     try {
       if (window._asistenteISRListener) {
@@ -4193,6 +4196,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
   // agregar un gate aquí sin confirmarlo primero con el dueño del producto.
   const BK_PREMIUM_ACTIONS = {
     'isr.html':            ['#calc-btn'],
+    'impuestos.html':      ['#imp-calc'],
     'avm.html':            ['#btn-analizar-ia'],
     'image-cleaner.html':  ['#btn-clean'],
     'contratos.html':      ['#gen-btn'],
@@ -4326,8 +4330,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // por URL directa.
     const modulosOffBoot = (profile.profile && profile.profile.modulos_desactivados) || [];
     if (activeKey !== 'home' && modulosOffBoot.includes(activeKey)) {
-      alert('Un administrador desactivó este módulo para tu cuenta.');
-      location.href = 'index.html';
+      const alt = window.bkPaisAlterno && bkPaisAlterno(activeKey);
+      if (!alt) alert('Un administrador desactivó este módulo para tu cuenta.');
+      location.href = alt || 'index.html';
       return;
     }
 
