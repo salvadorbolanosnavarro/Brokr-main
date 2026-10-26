@@ -306,7 +306,6 @@ body {
   var sel = bkPaisSelector({ className: 'reg-input', onCambio: telEjemplo });
   sel.id = 'r-pais';
   campo.insertBefore(sel, campo.querySelector('.reg-hint'));
-  bkPaisGuardar(sel.value);
   telEjemplo(sel.value);
 })();
 </script>
@@ -388,7 +387,11 @@ async function guardar(){
     await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}`, {
       method: 'PATCH',
       headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ pais: window.bkPais ? bkPais() : 'MX' })
+      body: JSON.stringify({ pais: (function () {
+        var s = document.getElementById('r-pais');
+        if (s && window.bkPaisGuardar) bkPaisGuardar(s.value);
+        return s ? s.value : 'MX';
+      })() })
     });
   } catch (_) {}
 
