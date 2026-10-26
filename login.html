@@ -182,7 +182,8 @@ document.getElementById('form-login').addEventListener('keydown',e=>{if(e.key===
   var sel=bkPaisSelector({className:'bk-input',onCambio:telEjemplo});
   sel.id='s-pais';
   campo.appendChild(sel);
-  bkPaisGuardar(sel.value);
+  // Se guarda al crear la cuenta (o al cambiarlo), no solo por abrir la página.
+  var f=campo.closest('form');if(f)f.addEventListener('submit',function(){bkPaisGuardar(sel.value);});
   telEjemplo(sel.value);
 })();
 </script>

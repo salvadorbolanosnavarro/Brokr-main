@@ -168,9 +168,13 @@
      que no aplican en el país se suman a los apagados de la cuenta. */
   function bkPaisSesion(perfil, guardado, fijar) {
     var c = valido(guardado && guardado.pais);
+    // Cuenta nueva que entró sin elegir país (p. ej. con Google desde la
+    // app): se le pregunta una vez. `guardado` existe solo si la columna
+    // pais existe; sin ella no se pregunta nada.
+    if (!c && guardado && !leerLocal()) preguntarPais(fijar);
     if (!c) {
       c = leerLocal() || 'MX';
-      try { fijar(c); } catch (_) {}
+      if (leerLocal()) { try { fijar(c); } catch (_) {} }
     }
     window.__BK_PAIS = c;
     perfil.pais = c;
@@ -178,6 +182,42 @@
     bkPaisAplicarEnlaces(document);
     try { document.dispatchEvent(new CustomEvent('bk:pais', { detail: c })); } catch (_) {}
     return c;
+  }
+
+  /* Ventana que pregunta el país a una cuenta que todavía no lo tiene. Al
+     elegir, se guarda en el perfil y se recarga para pintar ese país. */
+  function preguntarPais(fijar) {
+    var pintar = function () {
+      var ov = document.createElement('div');
+      ov.className = 'bk-overlay is-open';
+      ov.setAttribute('role', 'dialog');
+      ov.setAttribute('aria-modal', 'true');
+      ov.style.zIndex = '2147483000';
+      ov.innerHTML =
+        '<div class="bk-modal" style="max-width:420px">' +
+          '<div class="bk-modal__head"><div class="bk-modal__title">¿En qué país trabajas?</div></div>' +
+          '<div class="bk-modal__body">' +
+            '<p style="margin:0 0 var(--sp-4);color:var(--ink-2)">Con esto ajustamos moneda, impuestos, contratos y ' +
+            'documentos. Solo se pregunta una vez.</p>' +
+          '</div>' +
+          '<div class="bk-modal__foot"><button type="button" class="bk-btn bk-btn--forest">Continuar</button></div>' +
+        '</div>';
+      var sel = bkPaisSelector({ className: 'bk-select', valor: 'MX' });
+      sel.style.width = '100%';
+      ov.querySelector('.bk-modal__body').appendChild(sel);
+      ov.querySelector('button').addEventListener('click', function () {
+        var b = this;
+        b.disabled = true;
+        bkPaisGuardar(sel.value);
+        Promise.resolve()
+          .then(function () { return fijar(sel.value); })
+          .catch(function () {})
+          .then(function () { location.reload(); });
+      });
+      document.body.appendChild(ov);
+    };
+    if (document.body) pintar();
+    else document.addEventListener('DOMContentLoaded', pintar);
   }
 
   /* Enlaces fijos a módulos (tarjetas del inicio): se esconden los que no
