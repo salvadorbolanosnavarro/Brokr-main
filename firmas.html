@@ -362,6 +362,9 @@
       <span class="bk-badge fr-oculto" id="fr-max">Broquer Max</span>
     </div>
 
+    <!-- Alcance de la firma electrónica en el país de la cuenta (Perú y Argentina). -->
+    <div class="bk-alert bk-alert--info fr-oculto" id="fr-ley-pais" style="margin-bottom:var(--sp-6);"></div>
+
     <div class="bk-metric-grid" style="margin-bottom:var(--sp-6);">
       <div class="bk-metric">
         <div class="bk-metric__label">En espera de firma</div>
@@ -1907,6 +1910,29 @@
 })();
 </script>
 
+<script>
+/* La firma electrónica vale en los cinco países, pero en Perú y Argentina
+   tiene límites que el asesor debe conocer antes de mandar a firma. */
+(function () {
+  var AVISOS = {
+    PE: 'En Perú esta firma electrónica es válida para arrendamientos, exclusivas y cartas de intención, ' +
+        'pero no sustituye el Formulario Único de Arrendamiento (FUA) ni la escritura pública que exige el ' +
+        'desalojo notarial de la Ley 30933. Si quieres esa vía, firma el arrendamiento en FUA o ante notario.',
+    AR: 'En Argentina esta es una firma electrónica, no una firma digital certificada: si la otra parte la ' +
+        'desconoce, hay que probar que es suya (la constancia de Broquer sirve como prueba). Para boletos de ' +
+        'compraventa y operaciones de monto alto conviene firma digital o firma ológrafa.',
+  };
+  function pintar() {
+    var el = document.getElementById('fr-ley-pais');
+    var t = AVISOS[window.bkPais ? bkPais() : 'MX'];
+    if (!el) return;
+    el.textContent = t || '';
+    el.classList.toggle('fr-oculto', !t);
+  }
+  document.addEventListener('bk:pais', pintar);
+  if (window.__BK_PAIS) pintar();
+})();
+</script>
 <script src="app-shell.js" defer></script>
 </body>
 </html>
