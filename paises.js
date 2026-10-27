@@ -106,6 +106,11 @@
     return valido(window.__BK_PAIS) || leerLocal() || 'MX';
   }
   function bkPaisElegido() { return leerLocal(); }
+  function bkPaisDeRegistro() {
+    var raw = '';
+    try { raw = sessionStorage.getItem('sb_user') || localStorage.getItem('sb_user') || ''; } catch (_) {}
+    try { return valido(((JSON.parse(raw) || {}).user_metadata || {}).pais); } catch (_) { return ''; }
+  }
   function bkPaisGuardar(c) {
     c = valido(c);
     if (!c) return;
@@ -141,19 +146,28 @@
   }
 
   /* <select> de país listo para insertar. onCambio(codigo) se llama al
-     elegir; la elección también se guarda para el registro. */
+     elegir; la elección también se guarda para el registro. Con
+     `vacio: true` arranca en "Elige tu país" si no hay valor: así nadie
+     queda en México solo por no tocar la lista. */
   function bkPaisSelector(opts) {
     opts = opts || {};
     var sel = document.createElement('select');
     sel.className = opts.className || 'bk-pais-select';
     sel.setAttribute('aria-label', 'País');
+    if (opts.vacio) {
+      var p = document.createElement('option');
+      p.value = '';
+      p.textContent = 'Elige tu país';
+      p.disabled = true;
+      sel.appendChild(p);
+    }
     ORDEN.forEach(function (c) {
       var o = document.createElement('option');
       o.value = c;
       o.textContent = PAISES[c].nombre;
       sel.appendChild(o);
     });
-    sel.value = opts.valor || bkPais();
+    sel.value = opts.vacio ? valido(opts.valor) : (opts.valor || bkPais());
     sel.addEventListener('change', function () {
       bkPaisGuardar(sel.value);
       if (opts.onCambio) opts.onCambio(sel.value);
@@ -168,6 +182,10 @@
      que no aplican en el país se suman a los apagados de la cuenta. */
   function bkPaisSesion(perfil, guardado, fijar) {
     var c = valido(guardado && guardado.pais);
+    // El que eligió al crear la cuenta viaja en la cuenta de Supabase
+    // (user_metadata), así no se pierde si confirma el correo en otro
+    // navegador o en el celular.
+    if (!c && bkPaisDeRegistro()) bkPaisGuardar(bkPaisDeRegistro());
     // Cuenta nueva que entró sin elegir país (p. ej. con Google desde la
     // app): se le pregunta una vez. `guardado` existe solo si la columna
     // pais existe; sin ella no se pregunta nada.
@@ -202,11 +220,15 @@
           '</div>' +
           '<div class="bk-modal__foot"><button type="button" class="bk-btn bk-btn--forest">Continuar</button></div>' +
         '</div>';
-      var sel = bkPaisSelector({ className: 'bk-select', valor: 'MX' });
+      var sel = bkPaisSelector({ className: 'bk-select', vacio: true });
       sel.style.width = '100%';
       ov.querySelector('.bk-modal__body').appendChild(sel);
-      ov.querySelector('button').addEventListener('click', function () {
+      var btn = ov.querySelector('button');
+      btn.disabled = true;
+      sel.addEventListener('change', function () { btn.disabled = !sel.value; });
+      btn.addEventListener('click', function () {
         var b = this;
+        if (!sel.value) return;
         b.disabled = true;
         bkPaisGuardar(sel.value);
         Promise.resolve()
@@ -248,6 +270,7 @@
   window.bkPais = bkPais;
   window.bkPaisElegido = bkPaisElegido;
   window.bkPaisGuardar = bkPaisGuardar;
+  window.bkPaisDeRegistro = bkPaisDeRegistro;
   window.bkPaisCfg = bkPaisCfg;
   window.bkDinero = bkDinero;
   window.bkNumero = bkNumero;

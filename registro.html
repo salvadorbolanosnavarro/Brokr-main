@@ -302,8 +302,11 @@ body {
 (function(){
   var campo = document.getElementById('r-pais-campo');
   if (!campo || !window.bkPaisSelector) return;
-  function telEjemplo(c){ var t = document.getElementById('r-telefono'); if (t) t.placeholder = 'Ej. ' + bkPaisCfg(c).telEjemplo; }
-  var sel = bkPaisSelector({ className: 'reg-input', onCambio: telEjemplo });
+  function telEjemplo(c){ var t = document.getElementById('r-telefono'); if (t) t.placeholder = c ? 'Ej. ' + bkPaisCfg(c).telEjemplo : ''; }
+  // Sin México por defecto: el que eligió al crear la cuenta (aunque haya
+  // confirmado el correo en otro navegador) o, si no hay, que lo elija.
+  var sel = bkPaisSelector({ className: 'reg-input', vacio: true,
+    valor: bkPaisDeRegistro() || bkPaisElegido(), onCambio: telEjemplo });
   sel.id = 'r-pais';
   campo.insertBefore(sel, campo.querySelector('.reg-hint'));
   telEjemplo(sel.value);
@@ -326,6 +329,9 @@ async function guardar(){
   const nombreCompleto = apellidos ? nombre + ' ' + apellidos : nombre;
   if(!nombre){ showMsg('Ingresa tu nombre'); return; }
   if(!apellidos){ showMsg('Ingresa tus apellidos'); return; }
+  const paisSel = document.getElementById('r-pais');
+  const pais = paisSel ? paisSel.value : '';
+  if(paisSel && !pais){ showMsg('Elige el país donde trabajas'); return; }
 
   const token = sessionStorage.getItem('sb_token') || localStorage.getItem('sb_token');
   const userRaw = sessionStorage.getItem('sb_user') || localStorage.getItem('sb_user') || '{}';
@@ -388,9 +394,8 @@ async function guardar(){
       method: 'PATCH',
       headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
       body: JSON.stringify({ pais: (function () {
-        var s = document.getElementById('r-pais');
-        if (s && window.bkPaisGuardar) bkPaisGuardar(s.value);
-        return s ? s.value : 'MX';
+        if (window.bkPaisGuardar) bkPaisGuardar(pais);
+        return pais || 'MX';
       })() })
     });
   } catch (_) {}

@@ -48,11 +48,13 @@ async def admin_list_users(request: Request):
         subs = []
 
     # Aparte: si la migración de países no se ha corrido, la lista no se cae.
+    # Sin la migración todas son de México; con ella, una cuenta sin país
+    # se manda vacía para que el panel diga "Sin elegir" y no México.
     try:
         pais_por_id = {r["id"]: r.get("pais") for r in await get_rows(
             "usuarios", {"select": "id,pais", "limit": "10000"}, timeout=15)}
     except httpx.HTTPStatusError:
-        pais_por_id = {}
+        pais_por_id = None
 
     subs_by_user = {}
     for s in subs:
@@ -78,7 +80,7 @@ async def admin_list_users(request: Request):
             "sub_updated_at": sub.get("updated_at") if sub else None,
             "sub_active": (sub.get("status") in ("active", "trialing")) if sub else False,
             "modulos_desactivados": u.get("modulos_desactivados") or [],
-            "pais": pais_por_id.get(uid) or "MX",
+            "pais": "MX" if pais_por_id is None else pais_por_id.get(uid),
             "acceso_completo_hasta": u.get("acceso_completo_hasta"),
             "acceso_completo_activo": full_access_grant_active(u.get("acceso_completo_hasta")),
         })
