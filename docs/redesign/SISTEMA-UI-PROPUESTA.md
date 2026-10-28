@@ -1,6 +1,6 @@
-# Sistema visual propuesto para aprobación
+# Sistema visual aprobado
 
-Esta propuesta no cambia todavía las pantallas actuales.
+Aprobado por el usuario el 28 de octubre de 2026. La migración de módulos está en curso; ver `UNIFICACION-UI-AVANCE.md`.
 
 - Manrope. Escala: 12, 14, 16, 20, 24, 32 y 48 px. Título de módulo: 48/600 escritorio y 32/600 móvil; sección: 24/600; cuerpo: 16; etiqueta: 14; ayuda: 12.
 - Colores: tinta #191C1F, secundario #59636C, blanco #FFFFFF, superficie #F5F7F8, celeste #E8F4FA, borde #D5D9DD, acción naranja #FF9257 y destructivo #B42318.
@@ -13,6 +13,6 @@ Esta propuesta no cambia todavía las pantallas actuales.
 - Broq: una sola entrada en la cabecera; ventana blanca, cabecera clara y envío naranja. Conservar su lógica y retirar la entrada flotante duplicada al migrar.
 - Avisos, toast y estados vacíos compartidos; texto claro y acción opcional. Añadir otro usa el secundario compacto.
 
-Página de revisión: `ui-components.html`. Implementa el calendario en español con valor ISO, navegación por teclado, modales y paneles con Escape/devolución del foco, campos repetibles y conversación Broq explícitamente simulada. El CSS compartido está en `ui/tokens.css` y `ui/components.css`; no se carga en los módulos existentes. Auditor: `python scripts/audit_ui_kit.py`; alcance inicial: la muestra. Prueba de navegador: `scripts/check_ui_kit.cjs` a 1440/390 px. Tras aprobación, migrar módulos, retirar estilos contradictorios, añadir auditor estricto y entregar la medición completa. Esta propuesta por sí sola no acredita la implementación ni la publicación.
+Página de revisión: `ui-components.html`. Implementa el calendario en español con valor ISO, navegación por teclado, modales y paneles con Escape/devolución del foco, campos repetibles y conversación Broq explícitamente simulada. El CSS compartido está en `ui/tokens.css` y `ui/components.css`; los tokens ya se cargan desde el tema de los módulos; los componentes se migran por etapas. Auditor: `python scripts/audit_ui_kit.py`; alcance inicial: la muestra. Prueba de navegador: `scripts/check_ui_kit.cjs` a 1440/390 px. Tras aprobación, migrar módulos, retirar estilos contradictorios, añadir auditor estricto y entregar la medición completa. Esta propuesta por sí sola no acredita la implementación ni la publicación.
 
 Muestra publicada y verificada: https://broquer-staging.pages.dev/ui-components

@@ -42,7 +42,7 @@
 
 /* New btn */
 .btn-new-prop {
-  height: 44px; padding: 0 18px;
+  height: var(--ui-control); padding: 0 18px;
   background: var(--forest); color: var(--paper);
   border: none; border-radius: var(--r-pill);
   font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
@@ -54,7 +54,7 @@
 
 /* Botón importar EasyBroker — estilo outline secundario */
 .btn-import-eb {
-  height: 44px; padding: 0 16px;
+  height: var(--ui-control); padding: 0 16px;
   background: white; color: var(--ink);
   border: 1.5px solid var(--paper-2); border-radius: var(--r-pill);
   font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
@@ -67,7 +67,7 @@
 .btn-import-eb:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 600px) {
   .btn-import-eb { padding: 0 12px; font-size: var(--fs-xs); }
-  .btn-import-eb svg { width: 12px; height: 12px; }
+  .btn-import-eb svg { width: 12px; height: var(--ui-control); }
 }
 
 /* Modal de progreso de importación */
@@ -141,24 +141,24 @@
   border: 1px solid var(--line-2);
   border-radius: var(--r-pill);
   padding: 0 16px;
-  height: 44px;
+  height: var(--ui-control);
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .props-search-wrap:focus-within { border-color: var(--ink); box-shadow: var(--focus); }
 .props-search-wrap svg { flex-shrink: 0; color: var(--mute); }
 .props-search-wrap input {
   flex: 1; background: none; border: none; outline: none;
-  color: var(--ink); font-size: var(--fs-sm); font-family: inherit;
+  color: var(--ink); font-size: var(--ui-text-base); font-family: inherit;
   letter-spacing: -0.01em;
 }
 .props-search-wrap input::placeholder { color: var(--mute-2); }
 
 .props-toolbar select {
-  height: 44px; padding: 0 36px 0 14px;
+  height: var(--ui-control); padding: 0 36px 0 14px;
   background: var(--bone) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%236B6B66' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E") right 14px center/10px no-repeat;
   border: 1px solid var(--line-2);
   border-radius: var(--r-pill);
-  color: var(--ink); font-size: var(--fs-sm); font-weight: 500;
+  color: var(--ink); font-size: var(--fs-sm); font-weight: 600;
   appearance: none; cursor: pointer;
 }
 .props-toolbar select:hover { border-color: var(--line-3); }

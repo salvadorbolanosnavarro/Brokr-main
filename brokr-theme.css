@@ -4,6 +4,7 @@
    layout and components and consumes these tokens. Business logic is unchanged.
 */
 
+@import url("ui/tokens.css");
 @import url("sidebar-interactions.css");
 @import url("styles/app-layout.css");
 @import url("styles/mobile-inputs.css");
@@ -15,9 +16,9 @@
 @font-face{font-family:Manrope;src:url('fonts/manrope-800.ttf') format('truetype');font-weight:800;font-display:swap}
 
 :root {
-  --orange: #FF9257;
-  --orange-press: #EF8145;
-  --orange-ink: #191C1F;
+  --orange: var(--ui-action);
+  --orange-press: var(--ui-action-hover);
+  --orange-ink: var(--ui-ink);
   /* Broquer es claro siempre, sin importar la preferencia del sistema —
      no existe modo oscuro. Declarar "light" (en vez de dejarlo sin
      declarar, que cae al default "normal") evita que los controles
@@ -27,22 +28,22 @@
   color-scheme: light;
 
   /* ── Surfaces (blanco dominante) ──────────── */
-  --paper: #FFFFFF;     /* fondo del body — BLANCO PURO (rev. 2026-07) */
-  --paper-2: #F5F6F7;     /* canvas / inset / hover / chips */
-  --bone:    #FFFFFF;     /* superficie de card */
-  --shell: #FFFFFF;     /* relleno de input / superficie media */
+  --paper: var(--ui-paper);     /* fondo del body — BLANCO PURO (rev. 2026-07) */
+  --paper-2: var(--ui-surface);     /* canvas / inset / hover / chips */
+  --bone: var(--ui-paper);     /* superficie de card */
+  --shell: var(--ui-paper);     /* relleno de input / superficie media */
 
   /* ── Ink (azul marino como texto, no negro) ─ */
-  --ink: #191C1F;     /* texto principal — negro canon */
-  --ink-2: #191C1F;
-  --ink-3: #61666C;     /* secundario */
-  --mute: #61666C;     /* gris-azul secundario legible */
-  --mute-2: #7C858D;
+  --ink: var(--ui-ink);     /* texto principal — negro canon */
+  --ink-2: var(--ui-ink);
+  --ink-3: var(--ui-muted);     /* secundario */
+  --mute: var(--ui-muted);     /* gris-azul secundario legible */
+  --mute-2: var(--ui-muted);
   --mute-3:  #C6CCDA;
 
   /* ── Hairlines (bordes del sistema) ───────── */
-  --line: #E4E6E8;    /* borde claro / disabled */
-  --line-2: #D5D9DD;    /* borde / input */
+  --line: var(--ui-border);    /* borde claro / disabled */
+  --line-2: var(--ui-border);    /* borde / input */
   --line-3: #7C858D;
 
   /* ── Accents (AZUL de acción) ─────────────── */
@@ -61,8 +62,8 @@
 
   --warn:     #B34E0B;   /* naranja canon */
   --warn-soft:rgba(243,116,13,0.14);
-  --danger:   #D42A62;   /* rosa canon */
-  --danger-soft:rgba(212,42,98,0.12);
+  --danger: var(--ui-danger);   /* rosa canon */
+  --danger-soft: var(--ui-danger-soft);
   --success:  #0E9F6E;   /* verde canon */
   --success-soft:rgba(14,159,110,0.12);
   --info:     #0A5DE0;
@@ -70,12 +71,12 @@
 
   /* ── Geometry ─────────────────────────────── */
   --r-xs: 8px;     /* micro (check, tag) */
-  --r-sm: 12px;    /* BOTÓN */
-  --r: 12px;    /* INPUT / contenedor base */
-  --r-lg: 22px;    /* CARD */
-  --r-xl: 26px;    /* CARD GRANDE */
-  --r-modal: 28px; /* MODAL */
-  --r-pill: 999px;
+  --r-sm: var(--ui-radius);    /* BOTÓN */
+  --r: var(--ui-radius);    /* INPUT / contenedor base */
+  --r-lg: var(--ui-radius-card);    /* CARD */
+  --r-xl: var(--ui-radius-card);    /* CARD GRANDE */
+  --r-modal: var(--ui-radius-card); /* MODAL */
+  --r-pill: var(--ui-radius);
 
   /* ── Espaciado (escala base 4px) ────────── */
   --sp-1: 4px;
@@ -101,16 +102,16 @@
   --shadow-xl: 0 14px 32px rgba(8,28,78,.10), 0 42px 110px rgba(8,28,78,.16);
 
   /* ── Contrato de layout (anchos canónicos) ── */
-  --page-max: 1256px;   /* módulos de datos (tablas, cards, dashboards) */
+  --page-max: var(--ui-content);   /* módulos de datos (tablas, cards, dashboards) */
   --form-max: 920px;    /* módulos de formulario / columna estrecha */
-  --pad-x: 40px;        /* gutter lateral canónico */
+  --pad-x: var(--ui-space-8);        /* gutter lateral canónico */
   --sidebar-w: 252px;
   --topbar-h: 72px;
 
   /* ── Alturas de control ─────────────────── */
-  --h-sm:  40px;
+  --h-sm: var(--ui-control-small);
   --h:     48px;
-  --h-lg:  56px;
+  --h-lg: var(--ui-control);
   --touch-min: 44px;
 
   /* ── Anillo de foco ─────────────────────── */
@@ -144,22 +145,22 @@
 
   /* Escala tipográfica.
      Hero/landing usa --fs-hero. La app arranca en --fs-h1 (32-36). */
-  --fs-hero: 64px;       /* landing H1 (clamp aplicado en .bk-hero__title) */
-  --fs-display: 42px;    /* landing H2 / número protagonista */
-  --fs-h1: 48px;         /* app page title */
-  --fs-h2: 24px;         /* app section title */
-  --fs-h3: 20px;
-  --fs-h5: 17px;
-  --fs-body-lg: 18px;
-  --fs-body: 16px;
-  --fs-sm: 14px;
-  --fs-xs: 13px;
-  --fs-caption: 11px;    /* micro — tablas / UI ultra densa */
+  --fs-hero: var(--ui-text-title);       /* landing H1 (clamp aplicado en .bk-hero__title) */
+  --fs-display: var(--ui-text-title);    /* landing H2 / número protagonista */
+  --fs-h1: var(--ui-text-title);         /* app page title */
+  --fs-h2: var(--ui-text-section);         /* app section title */
+  --fs-h3: var(--ui-text-lg);
+  --fs-h5: var(--ui-text-base);
+  --fs-body-lg: var(--ui-text-lg);
+  --fs-body: var(--ui-text-base);
+  --fs-sm: var(--ui-text-sm);
+  --fs-xs: var(--ui-text-xs);
+  --fs-caption: var(--ui-text-xs);    /* micro — tablas / UI ultra densa */
 
   /* Labels */
-  --fs-label-1: 15px;
-  --fs-label-2: 13px;
-  --fs-label-3: 12px;
+  --fs-label-1: var(--ui-text-sm);
+  --fs-label-2: var(--ui-text-sm);
+  --fs-label-3: var(--ui-text-xs);
 
   --lh-hero: 0.92;
   --lh-display: 46px;
@@ -240,7 +241,7 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 @media (max-width: 1024px) { :root { --pad-x: 24px; } }
-@media (max-width: 720px)  { :root { --pad-x: 16px; } }
+@media (max-width: 720px)  { :root { --pad-x: var(--ui-gutter-mobile); --fs-h1: var(--ui-text-mobile); } }
 ::selection { background: var(--sky-blue); color: #FFFFFF !important; }
 
 h1,h2,h3,h4,h5 {
@@ -393,8 +394,8 @@ html {
 .bk-btn svg { flex-shrink: 0; }
 
 /* Azul de acción — CTA de conversión, no el default de la app */
-.bk-btn--forest { background: var(--forest); }
-.bk-btn--forest: #165474; }
+.bk-btn--forest { background: var(--ui-action); color: var(--ui-ink); }
+.bk-btn--forest:hover { background: var(--ui-action-hover); color: var(--ui-ink); }
 
 /* Secundario */
 .bk-btn--ghost { background: var(--bone); color: var(--ink); border-color: var(--line-2); font-weight: 600; }

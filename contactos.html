@@ -58,11 +58,11 @@ html, body { background: var(--paper); }
   background: var(--bone);
   border: 1px solid var(--line);
   border-radius: var(--r-pill);
-  padding: 0 16px; height: 42px;
+  padding: 0 16px; height: var(--ui-control);
   margin-bottom: 14px;
   max-width: 520px;
 }
-.head-search input { flex: 1; background: none; border: none; outline: none; font-size: var(--fs-sm); font-family: inherit; color: var(--ink); letter-spacing: -0.005em; }
+.head-search input { flex: 1; background: none; border: none; outline: none; font-size: var(--ui-text-base); font-family: inherit; color: var(--ink); letter-spacing: -0.005em; }
 .head-search input::placeholder { color: var(--mute-2); }
 
 .filters-row {
@@ -73,8 +73,8 @@ html, body { background: var(--paper); }
   background: var(--bone);
   border: 1px solid var(--line);
   border-radius: var(--r-pill);
-  height: 36px; padding: 0 32px 0 14px;
-  font-family: inherit; font-size: var(--fs-xs); font-weight: 500;
+  height: var(--ui-control); padding: 0 32px 0 14px;
+  font-family: inherit; font-size: var(--fs-xs); font-weight: 600;
   color: var(--ink-2);
   outline: none; cursor: pointer;
   -webkit-appearance: none; appearance: none;
@@ -565,7 +565,7 @@ html, body { background: var(--paper); }
   background: var(--forest); color: var(--paper);
   border: none;
   border-radius: var(--r-pill);
-  height: 38px; padding: 0 16px;
+  height: var(--ui-control); padding: 0 16px;
   font-family: inherit;
   font-size: var(--fs-sm); font-weight: 600;
   cursor: pointer;
@@ -579,7 +579,7 @@ html, body { background: var(--paper); }
   background: var(--bone); color: var(--ink);
   border: 1px solid var(--line);
   border-radius: var(--r-pill);
-  height: 38px; padding: 0 16px;
+  height: var(--ui-control); padding: 0 16px;
   font-family: inherit;
   font-size: var(--fs-sm); font-weight: 600;
   cursor: pointer;
@@ -588,7 +588,7 @@ html, body { background: var(--paper); }
   position: relative;
 }
 .import-btn:hover { border-color: var(--line-2); background: var(--paper-2); }
-@media (max-width: 720px) { .import-btn { padding: 0 12px; height: 34px; } }
+@media (max-width: 720px) { .import-btn { padding: 0 12px; height: var(--ui-control); } }
 
 
 /* Progress sheet */
