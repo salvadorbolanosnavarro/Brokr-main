@@ -14,7 +14,7 @@
     "avm.html": "ca94e79126dbd32570251dad981bebd9dbbc16010c00688d18cbe8aa258a24fa",
     "bandeja.html": "a713896e16de98c2fcc555346a284cc1a274c08c2f0eb045c900fa87aba33b08",
     "bk-api.js": "96dc8edbecfd95a34196d791ed1aed3b4742ca2ea7a50087a50a3e2c9c4ecc5a",
-    "blog.html": "942c3e2c833a0157fea7e84258f831f26f940538a1ab1d635d53f98ae80d6aff",
+    "blog.html": "1f0384b72025a1108751dc99cf12b106dbde41812b2996d2e82e1705a7073c44",
     "bolsa.html": "24238f0bccd76c62943d3665a5963945a090aec71e70e2b4052c6076117fdb70",
     "brokr-theme-v2.css": "c11af4186d1df8bccf29fc4c6d1997fb37eade0c3113b64b1eb71ddabc7bf672",
     "brokr-theme.css": "f727e9a1f9d1b6d85cbdb3adfd51e171ef3e14790990fd322838f4989968270b",
@@ -80,7 +80,7 @@
     "propiedades-lightbox.js": "a09cbe04a1ccca26d63d0b5086764fbd98eec36330e65522cc72b85ca34827bc",
     "propiedades-plus.css": "42fcf550394bcf2da296f0f8e6a4a9d73f989b9179ee303b6d18e60e336f1242",
     "propiedades-plus.js": "d06637b1ff3b6f05d919f8365b7e926292fd945d35924557d8987b3fa1cb446b",
-    "propiedades.html": "084dc7319baaccacb5e9513d805c2124003ac05cc1de3e17703aacc78b428d16",
+    "propiedades.html": "7a58831f623d6e1db4d26effc19a362a3a1845243acb697839991d374730c18e",
     "quotes.js": "d6633900c4906e4685dd4bf9139fd5ae9d53c912ea70019ccdf57c809161ec81",
     "registro.html": "2fd8d7893849d1a3ed7d94d09ea992c5bee4af428a375c2d1d95a74cec826553",
     "reset-password.html": "9d32e1ff00c95f67cd1ae579063bd764500112f8e6c20362886968e2f91e1228",
@@ -98,7 +98,7 @@
     "tareas-calendario.css": "05acff38aa8e0f61039e3d6f34d3a98abd8d7d4688b4a5774bfb8a95c248f0c1",
     "tareas-calendario.js": "ee516adcfefeacbcc25949584a44e560c8d569663dd9805c05441681ef669415",
     "tareas.html": "78946b0d4d71d31a51b3f4d436a97efe2eb63b0b185ebfbddddecbe23a60e31d",
-    "ui-components.html": "041b0c5f862cb7957034a71c88b7a80e3f530a2a2b42e6eb72466468e914d189",
+    "ui-components.html": "e65bd7d5917dcfa8a19994f61f0ad09acc4b832ccf29f45c75189049d38b6ee4",
     "unirse.html": "8eb018ae3095a96e5ed62f5e7295a87bf6051cee2d45c83a246870214fcacde9",
     "verificador.html": "ac16215117f6db027df01a779f66e36021c6ea165512006ba31cf3a3ae77eafa",
     "verificar-firma.html": "561882bd924ebf47699da0430b1b9ed61289dde90e68f1012ae4efd6313f7a8f",
@@ -107,7 +107,7 @@
     "whatsapp-chatgpt.html": "d78faf6ebb884d7fe7e4e9be023a2794b98c465370241b90af63418c342570e2",
     "whatsapp.html": "f4e4554eb1997d3e4096c66f1bfc396ecf565593b99ff9fdf755adfc469493d5",
     "ui/actions.css": "4f5b022cb03cbed74e3a0f784ed031d36607c39e10bee5e40c64c3f176f690a8",
-    "ui/actions.js": "e0792abb37437c83d16de6f8202ce9d2c972b8d1efc567d48e91b897de7b2322",
+    "ui/actions.js": "0a88ad862e68544a94b70d138e8b220bb86e75d6eaa99c3f7abfadbae96d3b5d",
     "ui/application.css": "72e037b9edbccce2c79be9e1536fd334ee14ee7344e06b029c00d9af2ed433ff",
     "ui/components.css": "1a9e0b1e92219e13e73f24ac2b2b0a84397d6afbcb69c109cadb54c114472b5a",
     "ui/components.js": "f097dda1a05558555c50781262508ff923a013cae13a78f1f181b28acc98e2c5",
@@ -5874,6 +5874,21 @@
         },
         {
           "method": "GET",
+          "path": "/api/crm/catalogos",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/api/crm/catalogos",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "path": "/api/crm/catalogos",
+          "status": 200
+        },
+        {
+          "method": "GET",
           "path": "/supabase/rest/v1/contactos",
           "status": 200
         },
@@ -5889,21 +5904,6 @@
         },
         {
           "method": "GET",
-          "path": "/supabase/rest/v1/pipeline_etapas",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "path": "/supabase/rest/v1/pipeline_etapas",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "path": "/supabase/rest/v1/pipeline_etapas",
-          "status": 200
-        },
-        {
-          "method": "GET",
           "path": "/supabase/rest/v1/contactos_propiedades",
           "status": 200
         },
@@ -5915,21 +5915,6 @@
         {
           "method": "GET",
           "path": "/supabase/rest/v1/contactos_propiedades",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "path": "/api/crm/catalogos",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "path": "/api/crm/catalogos",
-          "status": 200
-        },
-        {
-          "method": "GET",
-          "path": "/api/crm/catalogos",
           "status": 200
         },
         {
@@ -24074,81 +24059,6 @@
           "background": "rgba(0, 0, 0, 0)",
           "color": "rgb(25, 28, 31)",
           "weight": "600"
-        },
-        {
-          "id": "",
-          "class": "w2-tab is-active",
-          "text": "Chats",
-          "kind": "secondary",
-          "size": "normal",
-          "disabled": false,
-          "selected": null,
-          "height": 48,
-          "font": "14px",
-          "radius": "12px",
-          "background": "rgb(255, 255, 255)",
-          "color": "rgb(25, 28, 31)",
-          "weight": "600"
-        },
-        {
-          "id": "",
-          "class": "w2-tab",
-          "text": "Recepción IA",
-          "kind": "secondary",
-          "size": "normal",
-          "disabled": false,
-          "selected": null,
-          "height": 48,
-          "font": "14px",
-          "radius": "12px",
-          "background": "rgb(255, 255, 255)",
-          "color": "rgb(25, 28, 31)",
-          "weight": "600"
-        },
-        {
-          "id": "",
-          "class": "w2-tab",
-          "text": "Flujos",
-          "kind": "secondary",
-          "size": "normal",
-          "disabled": false,
-          "selected": null,
-          "height": 48,
-          "font": "14px",
-          "radius": "12px",
-          "background": "rgb(255, 255, 255)",
-          "color": "rgb(25, 28, 31)",
-          "weight": "600"
-        },
-        {
-          "id": "",
-          "class": "w2-tab",
-          "text": "Campañas",
-          "kind": "secondary",
-          "size": "normal",
-          "disabled": false,
-          "selected": null,
-          "height": 48,
-          "font": "14px",
-          "radius": "12px",
-          "background": "rgb(255, 255, 255)",
-          "color": "rgb(25, 28, 31)",
-          "weight": "600"
-        },
-        {
-          "id": "",
-          "class": "w2-tab",
-          "text": "Plantillas",
-          "kind": "secondary",
-          "size": "normal",
-          "disabled": false,
-          "selected": null,
-          "height": 48,
-          "font": "14px",
-          "radius": "12px",
-          "background": "rgb(255, 255, 255)",
-          "color": "rgb(25, 28, 31)",
-          "weight": "600"
         }
       ],
       "fontSizes": {
@@ -24386,81 +24296,6 @@
           "font": "14px",
           "radius": "12px",
           "background": "rgba(0, 0, 0, 0)",
-          "color": "rgb(25, 28, 31)",
-          "weight": "600"
-        },
-        {
-          "id": "",
-          "class": "w2-tab is-active",
-          "text": "Chats",
-          "kind": "secondary",
-          "size": "normal",
-          "disabled": false,
-          "selected": null,
-          "height": 48,
-          "font": "14px",
-          "radius": "12px",
-          "background": "rgb(255, 255, 255)",
-          "color": "rgb(25, 28, 31)",
-          "weight": "600"
-        },
-        {
-          "id": "",
-          "class": "w2-tab",
-          "text": "Recepción IA",
-          "kind": "secondary",
-          "size": "normal",
-          "disabled": false,
-          "selected": null,
-          "height": 48,
-          "font": "14px",
-          "radius": "12px",
-          "background": "rgb(255, 255, 255)",
-          "color": "rgb(25, 28, 31)",
-          "weight": "600"
-        },
-        {
-          "id": "",
-          "class": "w2-tab",
-          "text": "Flujos",
-          "kind": "secondary",
-          "size": "normal",
-          "disabled": false,
-          "selected": null,
-          "height": 48,
-          "font": "14px",
-          "radius": "12px",
-          "background": "rgb(255, 255, 255)",
-          "color": "rgb(25, 28, 31)",
-          "weight": "600"
-        },
-        {
-          "id": "",
-          "class": "w2-tab",
-          "text": "Campañas",
-          "kind": "secondary",
-          "size": "normal",
-          "disabled": false,
-          "selected": null,
-          "height": 48,
-          "font": "14px",
-          "radius": "12px",
-          "background": "rgb(255, 255, 255)",
-          "color": "rgb(25, 28, 31)",
-          "weight": "600"
-        },
-        {
-          "id": "",
-          "class": "w2-tab",
-          "text": "Plantillas",
-          "kind": "secondary",
-          "size": "normal",
-          "disabled": false,
-          "selected": null,
-          "height": 48,
-          "font": "14px",
-          "radius": "12px",
-          "background": "rgb(255, 255, 255)",
           "color": "rgb(25, 28, 31)",
           "weight": "600"
         }

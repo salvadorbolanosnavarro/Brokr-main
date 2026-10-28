@@ -11637,8 +11637,15 @@
     }
   ],
   "changed_backend_or_existing_tests": [
+    "core/design.py",
+    "core/pdf_design.py",
     "core/staging_safety.py",
-    "main.py"
+    "main.py",
+    "tests/test_design_contract.py",
+    "tests/test_frontend_canon_premium_crm.py",
+    "tests/test_frontend_sidebar_composition.py",
+    "tests/test_frontend_sidebar_interactions.py",
+    "tests/test_statistics_theme_compat.py"
   ],
   "warning": "Static inventory, not a certification of functional or visual parity. Endpoint table uses the effective HTTP golden contract from the current main baseline; runtime comparison remains pending."
 }

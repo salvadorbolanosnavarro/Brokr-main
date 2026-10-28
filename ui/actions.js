@@ -4,8 +4,8 @@
  'use strict';if(window.__broquerActions)return;window.__broquerActions=true;
  const structural=/\b(?:bz-item|bx-conv|wac-number|ln-poster|faq-q|mig-opt|doc-opt|tool-card|num-card|mv-poster|video-poster)\b/;
  const textStyle=/bk-design-assistant|bk-design-account|design-favorite|design-expand|bk-file-close|w2-numeros-link/;
- const tabStyle=/\b(?:bk-tab|ftab|tk-tab|crm-tab|tab-btn)\b/;
- const segmentStyle=/bk-seg__btn|toggle-btn|sexo-btn|sexo-opt|bx-filter|w2-chip|ms-tab|tipo-tab|period-btn/;
+ const tabStyle=/\b(?:bk-tab|ftab|tk-tab|crm-tab|tab-btn|w2-tab|fa-tab|avm-tab)\b/;
+ const segmentStyle=/bk-seg__btn|toggle-btn|sexo-btn|sexo-opt|bx-filter|w2-chip|ms-tab|tipo-tab|tipo-btn|vid-fmt|period-btn/;
  const visual=['background','background-color','background-image','color','border','border-color','border-radius','box-shadow','font-size','font-family','font-weight','height','min-height','padding','line-height'];
  function enhance(e){
   if(e.closest('.ui-date-dialog,.ui-date-field')||structural.test(e.className||''))return;
@@ -13,7 +13,7 @@
    const text=(e.textContent||'').trim(), classes=e.className||'', key=classes+' '+e.id;
    let kind='secondary';
    if(tabStyle.test(classes))kind='tab';
-   else if(segmentStyle.test(classes)||/^(Este mes|Mes pasado|Trimestre|Este año|Semana|Mes|Todo|Todas|Favoritas \d+)$/.test(text))kind='segment';
+   else if(segmentStyle.test(classes)||e.closest('.view-seg,.es-seg,.w2-seg,.modo-seg,.sexo-row,.bk-seg')||/^(Este mes|Mes pasado|Trimestre|Este año|Semana|Mes|Todo|Todas|Favoritas \d+)$/.test(text))kind='segment';
    else if(textStyle.test(key)||/^(Personalizar|Explorar todas las herramientas)/.test(text))kind='text';
    else if(/danger|delete|btn-del\b|borrar|eliminar/i.test(key)||/^(Eliminar|Borrar)/i.test(text))kind='danger';
    else if(/px-add|crmAgregarFila/.test(key+' '+(e.getAttribute('onclick')||'')))kind='secondary';
@@ -23,7 +23,7 @@
   }
   for(const prop of visual)if(e.style.getPropertyValue(prop))e.style.removeProperty(prop);
   if(['segment','tab'].includes(e.dataset.uiKind)){
-   const selected=e.matches('.active,.is-active,.is-on,.selected,.bk-chip--forest,[aria-selected=true]');
+   const selected=e.matches('.active,.is-active,.is-on,.is-sel,.is-selected,.selected,.bk-chip--forest,[aria-selected=true]');
    e.dataset.uiSelected=String(selected);e.setAttribute(e.getAttribute('role')==='tab'?'aria-selected':'aria-pressed',String(selected));
   }
  }

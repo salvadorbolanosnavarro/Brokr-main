@@ -44,7 +44,12 @@ def check_texto_ilegible(txt):
     """Impide usar tokens de muy bajo contraste como texto ordinario."""
     import re as _re
     bad = []
-    for m in _re.finditer(r'([^{}]+)\{([^{}]*)\}', txt):
+    # Inspect CSS, not long HTML/JS strings as if they were selectors. This
+    # also avoids quadratic scans through embedded assets without braces.
+    styles = _re.findall(r'<style[^>]*>(.*?)</style>', txt, _re.S)
+    inline = _re.findall(r'style=[\"\']([^\"\']+)[\"\']', txt)
+    css = '\n'.join(styles + ['inline{' + value + '}' for value in inline])
+    for m in _re.finditer(r'([^{}]+)\{([^{}]*)\}', css):
         sel = _re.sub(r'/\*.*?\*/', '', m.group(1), flags=_re.S).strip()
         if any(k in sel for k in ('placeholder',':disabled','svg','arrow','sep','.gap','ico','preview')):
             continue

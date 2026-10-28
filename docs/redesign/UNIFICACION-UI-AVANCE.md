@@ -1,6 +1,6 @@
 # Unificación UI — 28 de octubre de 2026
 
-El sistema aprobado se aplica sobre el main actual `ee9c5579` (PR #209), integrado **dentro de la rama del PR #180**. No se ha actualizado main ni producción. Incluye países, validación de Broquer Max, supervisión y la calculadora de Impuestos por venta; el rediseño conserva el código funcional actual. El inventario no detecta IDs de controles retirados respecto a ese main. El backend coincide con él salvo el guard de staging y su instalación (81 líneas).
+El sistema aprobado se aplica sobre el main actual `ee9c5579` (PR #209), integrado **dentro de la rama del PR #180**. No se ha actualizado main ni producción. Incluye países, validación de Broquer Max, supervisión y la calculadora de Impuestos por venta; el rediseño conserva el código funcional actual. El inventario no detecta IDs de controles retirados respecto a ese main. Se conservan sus handlers y rutas; el backend añade el guard de staging y adapta los lectores del tema PDF para resolver los tokens compartidos. Esta adaptación se prueba con importaciones locales, alias, precedencia y ciclos.
 
 ## Cambios
 
@@ -28,4 +28,4 @@ Repetir las pruebas de demo con `scripts/run_ui_quality.sh`, configurando `PLAYW
 
 La tabla completa está en [COBERTURA-UI-Y-ENDPOINTS.md](COBERTURA-UI-Y-ENDPOINTS.md). Enumera cada pantalla y las 355 operaciones HTTP del main integrado, sin atribuir cobertura funcional completa a una prueba de superficie. Los contratos no invocados, los escenarios completos de otros módulos, RLS, persistencia en Supabase, storage, pagos y servicios externos quedan pendientes de pruebas reales. La base aislada requiere el esquema actual sin datos reales; los pasos están en `STAGING_SETUP.md`.
 
-La emulación a 390 px no certifica WKWebView en un iPhone real. La suite histórica completa de backend/arquitectura no se presenta como aprobada por los resultados de UI. Nada se fusiona a main sin aprobación del usuario.
+La emulación a 390 px no certifica WKWebView en un iPhone real. Los contratos estáticos se actualizan al diseño aprobado: 40 pruebas Canon, nueve de interacción, 12 de diseño y cuatro del lector de tokens. La suite completa no se presenta como aprobada mientras el gate de arquitectura siga señalando el runtime ReactDOM vendorizado; no se modifican sus techos ni se oculta ese hallazgo. Nada se fusiona a main sin aprobación del usuario.

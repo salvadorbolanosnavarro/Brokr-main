@@ -1,4 +1,4 @@
-**Medición UI actual y cobertura de endpoints:** [reporte verificado](docs/redesign/COBERTURA-UI-Y-ENDPOINTS.md). La tabla siguiente es el inventario estático; no certifica ejecución real.
+**Reporte UI verificado:** [cobertura actual](docs/redesign/COBERTURA-UI-Y-ENDPOINTS.md). El inventario siguiente es estático.
 
 # Cobertura completa de Broquer
 
@@ -378,7 +378,7 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | POST | `/subscription/webhook` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/supervision/comentarios` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/supervision/comentarios/{actividad_id}/atendido` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
-| GET | `/supervision/contador` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| GET | `/supervision/contador` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | GET | `/supervision/pendientes` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/telemetria/sesion-modulo` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/transcribir` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |

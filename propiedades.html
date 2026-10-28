@@ -2321,7 +2321,7 @@ async function ebEjecutarImport() {
     sumEl.innerHTML =
       '<div><b>' + nuevas + '</b> propiedades nuevas importadas</div>' +
       '<div><b>' + actualizadas + '</b> actualizadas con datos más recientes</div>' +
-      '<div style="color:var(--line-2);margin-top:4px;font-size:var(--fs-xs)">Encontradas en tu EasyBroker: ' + data.total_easybroker + '</div>' +
+      '<div style="color:var(--mute);margin-top:4px;font-size:var(--fs-xs)">Encontradas en tu EasyBroker: ' + data.total_easybroker + '</div>' +
       (data.limite_alcanzado
         ? '<div style="color:var(--mute);margin-top:6px;font-size:var(--fs-xs)">Se alcanzó el máximo de ' + (data.limite || 1000) + ' propiedades por importación. Vuelve a importar para traer el resto.</div>'
         : '') +
@@ -2688,7 +2688,7 @@ else { window.addEventListener('brokr-shell-ready', () => { loadProps(); _preloa
       <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="procesarCsv(this.files[0])"/>
       <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
         <span class="csv-link" onclick="descargarPlantillaCsv()">Descargar plantilla CSV</span>
-        <span style="font-size:var(--fs-caption);color:var(--mute-2)">UTF-8 · separado por comas</span>
+        <span style="font-size:var(--fs-caption);color:var(--mute)">UTF-8 · separado por comas</span>
       </div>
       <div class="csv-report" id="csv-report" style="display:none"></div>
       <div class="pf-actions" style="position:static">
