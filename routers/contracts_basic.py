@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from core.auth import get_user_id_from_token
+from core.subscriptions import require_paid_feature_access
 from core.config import settings
 from core.paises import PAIS_DEFAULT, datos_pais, pais_de_usuario
 from core.telemetry import _track_groq
@@ -32,7 +32,7 @@ class ContratoRequest(BaseModel):
 @router.post("/contrato")
 async def generar_contrato(req: ContratoRequest, request: Request):
     """Generate a DOCX contract from form data, with AI-drafted special clauses."""
-    user_id = await get_user_id_from_token(request)
+    user_id = await require_paid_feature_access(request)
     pais = await pais_de_usuario(user_id)
 
     clausulas_redactadas = []

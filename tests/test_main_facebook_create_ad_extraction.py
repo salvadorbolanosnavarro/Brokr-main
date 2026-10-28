@@ -23,8 +23,7 @@ class FacebookCreateAdExtractionTests(unittest.TestCase):
 
     def test_server_side_account_page_and_idempotency_are_preserved(self):
         router = self.router
-        self.assertIn('user_id = await get_user_id_from_token(request)', router)
-        self.assertIn('detail="No autenticado"', router)
+        self.assertIn('user_id = await require_paid_feature_access(request)', router)
         self.assertIn('row = await get_facebook_meta_row(user_id)', router)
         self.assertIn('detail="Facebook no conectado"', router)
         self.assertIn('page_id = meta.get("page_id", "")', router)

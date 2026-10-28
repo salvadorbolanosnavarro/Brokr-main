@@ -6,7 +6,7 @@ import uuid as _uuid
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from core.auth import get_user_id_from_token
+from core.subscriptions import require_paid_feature_access
 from core.pdf_store import _pdf_store
 from limites import exigir_cupo, exigir_sesion
 
@@ -17,7 +17,7 @@ router = APIRouter()
 @router.post("/isr-pdf")
 async def generar_isr_pdf(p: dict, request: Request):
     """Recibe HTML del cálculo ISR y lo convierte a PDF con Playwright."""
-    _uid = await get_user_id_from_token(request)
+    _uid = await require_paid_feature_access(request)
     exigir_cupo(request, _uid)
     exigir_sesion(request, _uid)
     from playwright.async_api import async_playwright

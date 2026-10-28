@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request
 
+from core.subscriptions import require_paid_feature_access
 from routers.ficha_pdf_core import generar_ficha_pdf_core
 
 
@@ -12,11 +13,10 @@ def create_router(get_context):
     async def generar_ficha_pdf(p: dict, request: Request):
         """Generate PDF from property data dict using Playwright."""
         deps = get_context()
-        get_user_id_from_token = deps["get_user_id_from_token"]
         exigir_cupo = deps["exigir_cupo"]
         exigir_sesion = deps["exigir_sesion"]
 
-        _uid = await get_user_id_from_token(request)
+        _uid = await require_paid_feature_access(request)
         exigir_cupo(request, _uid)
         exigir_sesion(request, _uid)
 

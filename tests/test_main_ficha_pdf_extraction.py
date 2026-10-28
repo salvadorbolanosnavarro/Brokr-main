@@ -24,7 +24,7 @@ class FichaPdfExtractionTests(unittest.TestCase):
 
     def test_auth_and_session_contract_are_preserved(self):
         owner = self.router
-        self.assertIn('_uid = await get_user_id_from_token(request)', owner)
+        self.assertIn('_uid = await require_paid_feature_access(request)', owner)
         self.assertIn('exigir_cupo(request, _uid)', owner)
         self.assertIn('exigir_sesion(request, _uid)', owner)
         self.assertIn('"get_user_id_from_token": get_user_id_from_token', self.main)
