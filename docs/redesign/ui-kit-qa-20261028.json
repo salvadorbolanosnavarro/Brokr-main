@@ -198,5 +198,6 @@
   ],
   "scope": "Isolated approval page; existing modules are not migrated.",
   "task_regression": "Tareas with categorias.js delayed 1200ms: initial sample task visible, no missing helpers",
-  "publication": "Verify deployment after pushing PR branch"
+  "publication": "Verified in Cloud Browser: https://broquer-staging.pages.dev/ui-components",
+  "screenshot": "ui-kit-live-1793176797241.jpg"
 }

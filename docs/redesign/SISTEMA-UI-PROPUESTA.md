@@ -14,3 +14,5 @@ Esta propuesta no cambia todavía las pantallas actuales.
 - Avisos, toast y estados vacíos compartidos; texto claro y acción opcional. Añadir otro usa el secundario compacto.
 
 Página de revisión: `ui-components.html`. Implementa el calendario en español con valor ISO, navegación por teclado, modales y paneles con Escape/devolución del foco, campos repetibles y conversación Broq explícitamente simulada. El CSS compartido está en `ui/tokens.css` y `ui/components.css`; no se carga en los módulos existentes. Auditor: `python scripts/audit_ui_kit.py`; alcance inicial: la muestra. Prueba de navegador: `scripts/check_ui_kit.cjs` a 1440/390 px. Tras aprobación, migrar módulos, retirar estilos contradictorios, añadir auditor estricto y entregar la medición completa. Esta propuesta por sí sola no acredita la implementación ni la publicación.
+
+Muestra publicada y verificada: https://broquer-staging.pages.dev/ui-components
