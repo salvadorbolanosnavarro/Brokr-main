@@ -1312,7 +1312,12 @@ function abrirDesdeURL() {
 }
 
 /* ── Init: espera al shell (mismo patrón que propiedades) ────── */
+// The shell may become ready while deferred category scripts still download.
+const _tareasDomReady = document.readyState === 'loading'
+  ? new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }))
+  : Promise.resolve();
 async function _iniciarTareas() {
+  await _tareasDomReady;
   await userId();
   await tkCargarOrg();
   await Promise.all([cargarTodo(), tkCargarCategorias()]);

@@ -59,7 +59,7 @@ def build(env=os.environ):
             text = source.read_text()
             for old,new in [('https://api.broquer.app',api),(PROD_DB,db),(PROD_KEY,key)]: text = text.replace(old,new)
             text = text.replace('api.broquer.app',urlsplit(api).hostname).replace('urtgysmtnvoqaljuhntz.supabase.co',urlsplit(db).hostname)
-            if p.suffix == '.html':
+            if p.suffix == '.html' and p.name != 'ui-components.html':
                 prefix = '../' * (len(p.parts)-1)
                 bootstrap = f'<script src="{prefix}demo-runtime.js" data-mode="demo"></script>\n' if demo else ''
                 text = text.replace('<head>',f'<head>\n{bootstrap}<script src="{prefix}staging-auth-guard.js"></script>',1)
