@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from core.config import settings
+from core.subscriptions import has_paid_feature_access
 from routers.whatsapp_access import _ids_visibles, _require_user
 from routers.whatsapp_data import sb_get, sb_patch, sb_post
 from routers.whatsapp_number_owner import preparar_cambio_de_dueno
@@ -39,6 +40,8 @@ class ConnectReq(BaseModel):
 @router.post("/connect")
 async def wa2_connect(req: ConnectReq, request: Request):
     user_id = await _require_user(request)
+    if not await has_paid_feature_access(user_id):
+        raise HTTPException(status_code=402, detail="Conectar WhatsApp es parte de Broquer Max. Suscríbete para conectar tu número.")
     if not META_APP_ID or not META_APP_SECRET:
         raise HTTPException(status_code=500, detail="META_APP_ID o META_APP_SECRET no configurados")
     if not WA2_VERIFY_TOKEN:

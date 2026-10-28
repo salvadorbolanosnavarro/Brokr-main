@@ -13,7 +13,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from core.auth import get_user_id_from_token
+from core.subscriptions import require_paid_feature_access
 from core.avm_fuentes import fuentes_publicas, pagina_leida, sanear_resultado, urls_no_consultadas
 from core.cache import cache_get, cache_set
 from core.config import settings
@@ -1372,7 +1372,7 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
 
 @router.post("/api/avm-websearch")
 async def avm_websearch(req: AvmWebSearchRequest, request: Request):
-    user_id = await get_user_id_from_token(request)
+    user_id = await require_paid_feature_access(request)
     exigir_cupo(request, user_id)
     exigir_sesion(request, user_id)
     req.pais = await pais_de_usuario(user_id)

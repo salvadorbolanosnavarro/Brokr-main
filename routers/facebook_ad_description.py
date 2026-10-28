@@ -4,7 +4,7 @@ from __future__ import annotations
 import httpx
 from fastapi import APIRouter, HTTPException, Request
 
-from core.auth import get_user_id_from_token
+from core.subscriptions import require_paid_feature_access
 from core.config import settings
 from core.telemetry import _track_anthropic
 
@@ -15,9 +15,7 @@ ANTHROPIC_BASE = "https://api.anthropic.com/v1"
 @router.post("/facebook/ad-description")
 async def facebook_ad_description(request: Request):
     """Genera o mejora texto del anuncio con Claude. Máx 150 caracteres."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
+    user_id = await require_paid_feature_access(request)
     anthropic_api_key = settings.anthropic_api_key
     if not anthropic_api_key:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")

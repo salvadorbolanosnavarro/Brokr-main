@@ -8,7 +8,7 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from core.auth import get_user_id_from_token
+from core.subscriptions import require_paid_feature_access
 from core.facebook_connection_store import get_facebook_meta_row
 from core.facebook_graph import _fb_exigir_ok, _fb_friendly_error, _fb_paginate, _fb_request
 from core.facebook_persistence import reserve_facebook_creation, update_facebook_entity
@@ -44,9 +44,7 @@ class FbCreateAdRequest(BaseModel):
 @router.post("/facebook/create-ad")
 async def facebook_create_ad(req: FbCreateAdRequest, request: Request):
     """Create a carousel Click-to-Messenger campaign, preserving the legacy contract."""
-    user_id = await get_user_id_from_token(request)
-    if not user_id:
-        raise HTTPException(status_code=401, detail="No autenticado")
+    user_id = await require_paid_feature_access(request)
 
     row = await get_facebook_meta_row(user_id)
     if not row:

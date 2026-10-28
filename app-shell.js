@@ -4200,7 +4200,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     'avm.html':            ['#btn-analizar-ia'],
     'image-cleaner.html':  ['#btn-clean'],
     'contratos.html':      ['#gen-btn'],
-    'ficha-manual.html':   ['#ai-btn', '#pdf-btn'],
+    'ficha-manual.html':   ['#ai-btn', '#gen-ficha-btn', '#pdf-btn'],
     'facebook-ads.html':   ['#fa-ai-btn', '#fa-submit-btn'],
     'whatsapp.html':       ['#wa-connect-btn', '#tpl-submit-btn'],
   };
