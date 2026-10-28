@@ -1148,7 +1148,7 @@ function renderList(){
       '<div class="adm-row__av' + (off?' is-off':'') + '">' + escapeHtml(ini) + '</div>' +
       '<div class="adm-row__info">' +
         '<div class="adm-row__name">' + escapeHtml(u.nombre || '(Sin nombre)') + '</div>' +
-        '<div class="adm-row__email">' + escapeHtml(u.email || '—') + '</div>' +
+        '<div class="adm-row__email">' + escapeHtml(u.email || '—') + (window.bkAdmPaisNombre ? ' · ' + escapeHtml(bkAdmPaisNombre(u)) : '') + '</div>' +
       '</div>' +
       '<span class="adm-row__tag ' + tagCls + '">' + tagLbl + '</span>' +
     '</div>';
