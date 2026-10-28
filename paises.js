@@ -161,6 +161,102 @@
     return sel;
   }
 
+  /* País al que pertenece un teléfono por su lada, o '' si no se sabe.
+     Con "+" o "00" basta con la lada. Sin ellos, solo cuenta si el número
+     trae lada + número completo (ej. 51 912 345 678): un número local de
+     10 dígitos puede ser de México aunque empiece con 55 o 56. En Argentina
+     los celulares llevan un 9 después de la lada (54 9 11 …) y en México
+     algunos aún traen el 1 (52 1 443 …). */
+  function bkPaisPorTelefono(tel) {
+    var s = String(tel || '').trim();
+    var dig = s.replace(/\D/g, '');
+    var intl = /^(\+|00)/.test(s);
+    if (/^00/.test(s)) dig = dig.slice(2);
+    for (var i = 0; i < ORDEN.length; i++) {
+      var p = PAISES[ORDEN[i]];
+      if (dig.indexOf(p.lada) !== 0) continue;
+      var resto = dig.length - p.lada.length;
+      var extra = { AR: '9', MX: '1' }[p.codigo];
+      if (intl ? resto >= 6 : (resto === p.digitosTel ||
+          (extra && resto === p.digitosTel + 1 && dig.charAt(p.lada.length) === extra))) {
+        return p.codigo;
+      }
+    }
+    return '';
+  }
+
+  /* El teléfono sirve si tiene los dígitos del país (sin lada) o si trae
+     la lada de alguno de los países de Broquer. */
+  function bkTelefonoValido(tel, c) {
+    var dig = String(tel || '').replace(/\D/g, '');
+    return dig.length === bkPaisCfg(c).digitosTel || !!bkPaisPorTelefono(tel);
+  }
+
+  /* Si el teléfono es de otro país que el elegido, pregunta antes de seguir:
+     "Notamos que tu teléfono es de Perú pero seleccionaste México". Regresa
+     una promesa con el país con que se queda la cuenta, o null si la
+     persona cerró la ventana para corregir el teléfono. Sin conflicto
+     resuelve de inmediato con el país elegido. */
+  function bkPaisAvisoTelefono(tel, elegido) {
+    elegido = valido(elegido) || bkPais();
+    var delTel = bkPaisPorTelefono(tel);
+    if (!delTel || delTel === elegido) return Promise.resolve(elegido);
+    return new Promise(function (resolver) {
+      var ov = document.createElement('div');
+      ov.className = 'bk-overlay is-open';
+      ov.setAttribute('role', 'dialog');
+      ov.setAttribute('aria-modal', 'true');
+      ov.setAttribute('aria-labelledby', 'bk-pais-aviso-t');
+      ov.style.zIndex = '2147483000';
+      ov.innerHTML =
+        '<div class="bk-modal" style="max-width:440px">' +
+          '<div class="bk-modal__head"><div class="bk-modal__title" id="bk-pais-aviso-t">Revisa tu país</div></div>' +
+          '<div class="bk-modal__body">' +
+            '<p style="margin:0 0 var(--sp-4);color:var(--ink-2)">Notamos que tu teléfono es de <strong>' +
+              PAISES[delTel].nombre + '</strong> pero seleccionaste <strong>' + PAISES[elegido].nombre +
+              '</strong>. ¿Deseas continuar o cambiar de país?</p>' +
+            '<label for="bk-pais-aviso-sel" style="display:block;margin-bottom:var(--sp-2);font-weight:600">País donde trabajas</label>' +
+          '</div>' +
+          '<div class="bk-modal__foot" style="display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:flex-end">' +
+            '<button type="button" class="bk-btn bk-btn--ghost" data-r="seguir"></button>' +
+            '<button type="button" class="bk-btn bk-btn--forest" data-r="cambiar"></button>' +
+          '</div>' +
+        '</div>';
+      var sel = document.createElement('select');
+      sel.id = 'bk-pais-aviso-sel';
+      sel.className = 'bk-select';
+      sel.style.width = '100%';
+      ORDEN.forEach(function (c) {
+        var o = document.createElement('option');
+        o.value = c;
+        o.textContent = PAISES[c].nombre;
+        sel.appendChild(o);
+      });
+      sel.value = delTel;
+      ov.querySelector('.bk-modal__body').appendChild(sel);
+      var bSeguir = ov.querySelector('[data-r="seguir"]');
+      var bCambiar = ov.querySelector('[data-r="cambiar"]');
+      bSeguir.textContent = 'Continuar con ' + PAISES[elegido].nombre;
+      var rotular = function () {
+        bCambiar.textContent = sel.value === elegido ? 'Continuar con ' + PAISES[elegido].nombre : 'Cambiar a ' + PAISES[sel.value].nombre;
+      };
+      sel.addEventListener('change', rotular);
+      rotular();
+      var cerrar = function (c) {
+        document.removeEventListener('keydown', tecla);
+        ov.remove();
+        resolver(c);
+      };
+      var tecla = function (e) { if (e.key === 'Escape') cerrar(null); };
+      document.addEventListener('keydown', tecla);
+      ov.addEventListener('click', function (e) { if (e.target === ov) cerrar(null); });
+      bSeguir.addEventListener('click', function () { cerrar(elegido); });
+      bCambiar.addEventListener('click', function () { cerrar(sel.value); });
+      document.body.appendChild(ov);
+      bCambiar.focus();
+    });
+  }
+
   /* Lo llama app-shell.js al cargar el perfil. `guardado` es la fila
      {pais} de usuarios (o nada). Si la cuenta aún no tiene país (recién
      creada), se fija UNA vez con el que eligió en el landing; después la
@@ -254,4 +350,7 @@
   window.bkLocale = bkLocale;
   window.bkModuloDisponible = bkModuloDisponible;
   window.bkPaisSelector = bkPaisSelector;
+  window.bkPaisPorTelefono = bkPaisPorTelefono;
+  window.bkTelefonoValido = bkTelefonoValido;
+  window.bkPaisAvisoTelefono = bkPaisAvisoTelefono;
 })();

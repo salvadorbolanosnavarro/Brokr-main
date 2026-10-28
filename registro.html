@@ -327,6 +327,17 @@ async function guardar(){
   if(!nombre){ showMsg('Ingresa tu nombre'); return; }
   if(!apellidos){ showMsg('Ingresa tus apellidos'); return; }
 
+  // Teléfono con lada de otro país: se pregunta antes de guardar.
+  const selPais = document.getElementById('r-pais');
+  if(telefono && selPais && window.bkPaisAvisoTelefono){
+    const elegido = await bkPaisAvisoTelefono(telefono, selPais.value);
+    if(!elegido){ document.getElementById('r-telefono').focus(); return; }
+    if(elegido !== selPais.value){
+      selPais.value = elegido;
+      selPais.dispatchEvent(new Event('change'));
+    }
+  }
+
   const token = sessionStorage.getItem('sb_token') || localStorage.getItem('sb_token');
   const userRaw = sessionStorage.getItem('sb_user') || localStorage.getItem('sb_user') || '{}';
   let user = {};
