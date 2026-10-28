@@ -1,0 +1,36 @@
+{
+  "mode": "demo",
+  "scope": "Country routing and rendering; not legal accuracy",
+  "results": [
+    {
+      "country": "MX",
+      "passed": true,
+      "page": "isr.html",
+      "errors": []
+    },
+    {
+      "country": "CO",
+      "passed": true,
+      "page": "impuestos.html",
+      "errors": []
+    },
+    {
+      "country": "PE",
+      "passed": true,
+      "page": "impuestos.html",
+      "errors": []
+    },
+    {
+      "country": "AR",
+      "passed": true,
+      "page": "impuestos.html",
+      "errors": []
+    },
+    {
+      "country": "CL",
+      "passed": true,
+      "page": "impuestos.html",
+      "errors": []
+    }
+  ]
+}

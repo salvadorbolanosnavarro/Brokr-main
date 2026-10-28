@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Tareas · Broquer</title>
+<title>Agenda · Broquer</title>
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -31,15 +31,10 @@
   font-family: var(--font-mono); font-size: var(--fs-xs);
   color: var(--mute); margin-left: 10px; font-weight: 500;
 }
-.btn-new-tarea {
-  height: 44px; padding: 0 18px;
-  background: var(--forest); color: var(--paper);
-  border: none; border-radius: var(--r-pill);
-  font-size: var(--fs-xs); font-weight: 600; cursor: pointer;
+.btn-new-tarea { cursor: pointer;
   display: inline-flex; align-items: center; gap: 8px;
   transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
-.btn-new-tarea:hover { background: var(--ink-2); }
 .btn-new-tarea:active { transform: scale(.98); }
 
 /* Toolbar — mismas métricas que propiedades */
@@ -60,20 +55,13 @@
 .tk-search-wrap:focus-within { border-color: var(--ink); box-shadow: var(--focus); }
 .tk-search-wrap svg { flex-shrink: 0; color: var(--mute); }
 .tk-search-wrap input {
-  flex: 1; background: none; border: none; outline: none;
-  color: var(--ink); font-size: var(--fs-sm); font-family: inherit;
-  letter-spacing: -0.01em;
+  flex: 1; outline: none;
+  color: var(--ink);
 }
 .tk-search-wrap input::placeholder { color: var(--mute-2); }
 .tk-toolbar select {
-  height: 44px; padding: 0 36px 0 14px;
-  background: var(--bone) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%236B6B66' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E") right 14px center/10px no-repeat;
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-pill);
-  color: var(--ink); font-size: var(--fs-xs); font-weight: 500;
-  appearance: none; cursor: pointer; font-family: inherit;
+  color: var(--ink); cursor: pointer;
 }
-.tk-toolbar select:hover { border-color: var(--line-3); }
 
 /* Tabs Tareas / Actividad — patrón ftab */
 .tk-tabs {
@@ -83,19 +71,12 @@
 .tk-tabs::-webkit-scrollbar { display: none; }
 .tk-tab {
   flex-shrink: 0;
-  border: none; background: none;
-  padding: 12px 14px;
-  font-family: inherit;
-  font-size: var(--fs-xs); font-weight: 500;
-  color: var(--mute);
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
-  letter-spacing: -0.005em;
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.tk-tab.active { color: var(--ink); border-bottom-color: var(--forest); font-weight: 600; }
-.tk-tab:hover { color: var(--ink); }
+.tk-tab.active { border-bottom-color: var(--forest); }
 
 /* Contenido */
 .tk-body { padding: 20px var(--pad-x, 36px) 120px; max-width: var(--page-max, 1180px); }
@@ -106,44 +87,22 @@
   display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap;
 }
 .tk-composer input[type="text"] {
-  flex: 1; min-width: 200px; height: 44px; padding: 0 16px;
-  background: var(--bone);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-pill);
-  font-family: inherit; font-size: var(--fs-sm); color: var(--ink);
+  flex: 1; min-width: 200px; color: var(--ink);
   outline: none;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.tk-composer input[type="text"]:focus { border-color: var(--ink); box-shadow: var(--focus); }
 .tk-composer input[type="text"]::placeholder { color: var(--mute-2); }
-.tk-composer input[type="date"] {
-  height: 44px; padding: 0 12px; width: 148px;
-  background: var(--bone);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-pill);
-  font-family: inherit; font-size: var(--fs-xs); color: var(--ink-2);
+.tk-composer input[type="date"] { width: 148px; color: var(--ink-2);
   outline: none;
 }
-.tk-composer input[type="date"]:focus { border-color: var(--ink); }
-.tk-composer select {
-  height: 44px; padding: 0 34px 0 14px; max-width: 240px;
-  background: var(--bone) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%236B6B66' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E") right 14px center/10px no-repeat;
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-pill);
-  font-family: inherit; font-size: var(--fs-xs); color: var(--ink);
+.tk-composer select { max-width: 240px; color: var(--ink);
   outline: none; cursor: pointer;
-  appearance: none;
   text-overflow: ellipsis;
 }
 .tk-composer .go {
-  height: 44px; padding: 0 20px;
-  background: var(--ink); color: var(--paper);
-  border: none; border-radius: var(--r-pill);
-  font-family: inherit; font-size: var(--fs-xs); font-weight: 600;
   cursor: pointer; flex-shrink: 0;
   transition: background var(--dur) var(--ease);
 }
-.tk-composer .go:hover { background: var(--ink-2); }
 .tk-composer .go:disabled { opacity: .55; cursor: not-allowed; }
 
 /* Grupos por vencimiento — etiqueta de sección del sistema */
@@ -169,46 +128,31 @@
 }
 .tk-item:last-child { border-bottom: none; }
 .tk-check {
-  width: 24px; height: 24px; padding: 0; flex-shrink: 0;
-  border: 1.5px solid var(--line-2); border-radius: 50%;
-  background: var(--bone); color: transparent; cursor: pointer;
+  width: var(--ui-control-small); flex-shrink: 0; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.tk-check:hover { border-color: var(--success); }
-.tk-item.is-done .tk-check { background: var(--success); border-color: var(--success); color: #fff; }
 .tk-item.is-done .tk-title { text-decoration: line-through; color: var(--mute); }
 .tke-chips{ display:flex; flex-wrap:wrap; gap:var(--sp-2); }
 .tke-chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:var(--r-pill);
            background:var(--paper-2); font-size:var(--fs-xs); font-weight:600; }
-.tke-chip button{ background:none; border:0; cursor:pointer; color:var(--mute); font-size:var(--fs-sm); line-height:1; padding:0; }
-.tk-edit{ background:none; border:0; cursor:pointer; color:var(--mute); padding:4px; }
-.tk-edit:hover{ color:var(--ink); }
+.tke-chip button{ cursor:pointer; }
+.tk-edit{ cursor:pointer; }
 .tk-main { flex: 1; min-width: 0; }
 .tk-title { font-size: var(--fs-sm); font-weight: 500; color: var(--ink); letter-spacing: -0.005em; overflow-wrap: break-word; }
 .tk-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
 .tk-due { font-size: var(--fs-caption); color: var(--mute); }
 .tk-due.is-overdue { color: var(--danger); font-weight: 600; }
 .tk-link {
-  display: inline-flex; align-items: center; gap: 5px; font-family: inherit;
-  font-size: var(--fs-caption); font-weight: 500;
-  padding: 2px 9px;
-  border-radius: var(--r-pill);
-  background: var(--paper-2); color: var(--ink-2);
-  border: 1px solid var(--line);
+  display: inline-flex; align-items: center; gap: 5px;
   text-decoration: none;
   max-width: 240px;
   transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .tk-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tk-link:hover { border-color: var(--forest); color: var(--forest); }
-.tk-x {
-  border: none; background: none; padding: 5px 8px; flex-shrink: 0;
-  color: var(--mute); cursor: pointer; font-size: var(--fs-h5); line-height: 1;
-  border-radius: var(--r-sm);
+.tk-x { flex-shrink: 0; cursor: pointer;
   transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
 }
-.tk-x:hover { color: var(--danger); background: var(--danger-soft); }
 
 /* Feed de actividad */
 .tk-act {
@@ -274,6 +218,14 @@
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="tareas">
 
@@ -307,6 +259,9 @@
     </select>
     <select id="tk-filtro-asignado" onchange="renderTareas()" hidden>
       <option value="">Asignado: todos</option>
+    </select>
+    <select id="tk-filtro-categoria" onchange="renderTareas()" hidden>
+      <option value="">Todas las categorías</option>
     </select>
   </div>
   <div class="tk-tabs">
@@ -523,6 +478,18 @@ async function tkCargarCategorias() {
       (TAREA_CATS[row.tarea_id] = TAREA_CATS[row.tarea_id] || []).push(String(row.categoria_id));
     });
   } catch { TAREA_CATS = {}; }
+  tkPintarFiltroCategorias();
+}
+
+// Solo aparece si la cuenta ya tiene categorías; conserva la selección al
+// repintar (p. ej. al crear una categoría nueva desde el modal de editar).
+function tkPintarFiltroCategorias() {
+  const sel = g('tk-filtro-categoria');
+  const actual = sel.value;
+  sel.hidden = !tkCategorias.length;
+  sel.innerHTML = '<option value="">Todas las categorías</option><option value="sin">Sin categoría</option>' +
+    tkCategorias.map(c => `<option value="${esc(String(c.id))}">${esc(c.nombre)}</option>`).join('');
+  sel.value = [...sel.options].some(o => o.value === actual) ? actual : '';
 }
 
 function showToast(msg) {
@@ -696,6 +663,7 @@ function tareasFiltradas() {
   const estado = g('tk-filtro-estado').value;
   const vinculo = g('tk-filtro-vinculo').value;
   const asignado = g('tk-filtro-asignado').hidden ? '' : g('tk-filtro-asignado').value;
+  const categoria = g('tk-filtro-categoria').hidden ? '' : g('tk-filtro-categoria').value;
   const hoy = new Date(); hoy.setHours(0,0,0,0);
 
   return tareas.filter(t => {
@@ -713,6 +681,9 @@ function tareasFiltradas() {
     if (vinculo === 'suelta' && (nC || nP)) return false;
     if (asignado === 'yo' && t.asignado_a !== _uid) return false;
     if (asignado && asignado !== 'yo' && t.asignado_a !== asignado) return false;
+    const cats = TAREA_CATS[t.id] || [];
+    if (categoria === 'sin' && cats.length) return false;
+    if (categoria && categoria !== 'sin' && !cats.includes(categoria)) return false;
     return true;
   });
 }
@@ -815,7 +786,7 @@ function renderTareas() {
   g('tk-count').textContent = pendientes ? '— ' + pendientes + ' pendientes' : '';
 
   if (!filtradas.length) {
-    const hayFiltro = g('tk-search').value || g('tk-filtro-estado').value !== 'pendientes' || g('tk-filtro-vinculo').value;
+    const hayFiltro = g('tk-search').value || g('tk-filtro-estado').value !== 'pendientes' || g('tk-filtro-vinculo').value || g('tk-filtro-categoria').value;
     lista.innerHTML = `<div class="tk-empty">
       <svg width="42" height="42" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       <h3>${hayFiltro ? 'Sin resultados' : 'Todo al día'}</h3>
@@ -1039,7 +1010,7 @@ function tkAbrirEditar(id) {
 let TKE_ADJ = [], TKE_ADJ_CAMBIO = false;
 function tkPintarAdjuntos() {
   g('tke-adjuntos').innerHTML = TKE_ADJ.length
-    ? TKE_ADJ.map((a, i) => `<span class="tke-chip"><a href="${esc(a.url)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(a.nombre || 'Archivo')}</a><button onclick="tkQuitarAdjunto(${i})" title="Quitar">×</button></span>`).join('')
+    ? TKE_ADJ.map((a, i) => `<span class="tke-chip"><a ${typeof haAttrLiga === 'function' ? haAttrLiga(a.url) : `href="${esc(a.url)}"`} target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(a.nombre || 'Archivo')}</a><button onclick="tkQuitarAdjunto(${i})" title="Quitar">×</button></span>`).join('')
     : '<span class="bk-hint">Ninguno todavía.</span>';
 }
 function tkQuitarAdjunto(i) {
@@ -1084,7 +1055,10 @@ async function tkeNuevaCategoria() {
   if (!uid || !tkOrgId) return;
   const cat = await catCrear(tkOrgId, uid, nombre);
   if (!cat) { alert('No se pudo crear la categoría.'); return; }
-  if (!tkCategorias.some(c => String(c.id) === String(cat.id))) tkCategorias.push(cat);
+  if (!tkCategorias.some(c => String(c.id) === String(cat.id))) {
+    tkCategorias.push(cat);
+    tkPintarFiltroCategorias();
+  }
   await tkAgregarCategoria(cat.id);
 }
 
@@ -1241,6 +1215,7 @@ function tknAbrir() {
       if (vinc.contactos.length) VINCULOS.contactos[id] = vinc.contactos.slice();
       if (vinc.propiedades.length) VINCULOS.propiedades[id] = vinc.propiedades.slice();
       if (vinc.categorias.length) TAREA_CATS[id] = vinc.categorias.slice();
+      tkPintarFiltroCategorias(); // por si se creó una categoría nueva en el formulario
       renderTareas();
       showToast(fallidos
         ? 'Tarea creada, pero ' + fallidos + ' vínculo(s) no se pudieron guardar'

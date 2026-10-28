@@ -226,23 +226,132 @@ function haTomarAdjuntosListos(previewElId) {
 // HTML de la galería de adjuntos de una nota ya guardada, para el feed de
 // historial. Imágenes con miniatura clicable, videos reproducibles inline,
 // y cualquier otro archivo como liga de descarga con su nombre y peso.
+// Los archivos de adjuntos-historial se pintan con data-ha-url: el bloque de
+// "ligas temporales" de abajo les pone una liga firmada (el bucket es privado).
 function haRenderAdjuntos(adjuntos) {
   if (!Array.isArray(adjuntos) || !adjuntos.length) return '';
   return '<div class="ha-grid">' + adjuntos.map((a) => {
     const cat = a && (a.categoria || haCategoria(a.tipo));
     const url = (a && a.url) || '';
     if (!url) return '';
+    const privado = haEsLigaPrivada(url);
+    const ref = (attr) => privado
+      ? `data-ha-url="${haEsc(url)}" data-ha-attr="${attr}"`
+      : `${attr}="${haEsc(url)}"`;
     if (cat === 'imagen') {
-      return `<a class="ha-item ha-item--imagen" href="${haEsc(url)}" target="_blank" rel="noopener" title="${haEsc(a.nombre || '')}">
-        <img src="${haEsc(url)}" loading="lazy" decoding="async" alt="${haEsc(a.nombre || 'Imagen adjunta')}"/>
+      return `<a class="ha-item ha-item--imagen" ${ref('href')} target="_blank" rel="noopener" title="${haEsc(a.nombre || '')}">
+        <img ${ref('src')} loading="lazy" decoding="async" alt="${haEsc(a.nombre || 'Imagen adjunta')}"/>
       </a>`;
     }
     if (cat === 'video') {
-      return `<div class="ha-item ha-item--video"><video src="${haEsc(url)}" controls preload="metadata"></video></div>`;
+      return `<div class="ha-item ha-item--video"><video ${ref('src')} controls preload="metadata"></video></div>`;
     }
-    return `<a class="ha-item ha-item--archivo" href="${haEsc(url)}" target="_blank" rel="noopener" download="${haEsc(a.nombre || '')}">
+    return `<a class="ha-item ha-item--archivo" ${ref('href')} target="_blank" rel="noopener" download="${haEsc(a.nombre || '')}">
       ${HA_ICONOS.archivo}<span class="ha-item__nombre">${haEsc(a.nombre || 'Archivo')}</span>
       <span class="ha-item__peso">${haEsc(haFormatoTamano(a.tamano))}</span>
     </a>`;
   }).join('') + '</div>';
+}
+
+// ── Ligas temporales (bucket adjuntos-historial privado) ─────────────────
+// La liga pública guardada en actividades/tareas.adjuntos sirve de "nombre"
+// del archivo. Cualquier elemento con data-ha-url recibe, en cuanto aparece
+// en la página, una liga firmada que da el backend (/adjuntos/ligas) y que
+// dura una hora. El backend solo la da si el usuario puede ver esa nota o
+// tarea. Si el backend no contesta, se usa la liga original (sirve mientras
+// el bucket siga público).
+const HA_LIGA_RE = /\/storage\/v1\/object\/public\/adjuntos-historial\//;
+const _haLigas = new Map(); // url guardada → { liga, vence }
+let _haPorFirmar = new Set();
+let _haTimer = null;
+
+function haEsLigaPrivada(url) {
+  return typeof url === 'string' && HA_LIGA_RE.test(url);
+}
+
+// Atributos para pintar una liga a un adjunto fuera de haRenderAdjuntos
+// (por ejemplo, la lista de archivos de una tarea).
+function haAttrLiga(url, attr) {
+  attr = attr || 'href';
+  return haEsLigaPrivada(url)
+    ? `data-ha-url="${haEsc(url)}" data-ha-attr="${attr}"`
+    : `${attr}="${haEsc(url)}"`;
+}
+
+function _haAplicar(el, liga) {
+  const attr = el.getAttribute('data-ha-attr') || 'href';
+  el.setAttribute(attr, liga);
+  el.setAttribute('data-ha-estado', 'listo');
+}
+
+function _haLigaVigente(url) {
+  const c = _haLigas.get(url);
+  return c && c.vence > Date.now() ? c.liga : null;
+}
+
+async function _haPedirLigas(urls) {
+  const sb = window.brokrSb;
+  const tok = sb && sb.ensureToken ? await sb.ensureToken() : null;
+  if (!tok) throw new Error('sin sesión');
+  const base = window.API_BASE || 'https://api.broquer.app';
+  const r = await fetch(base + '/adjuntos/ligas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+    body: JSON.stringify({ urls: urls }),
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  const vence = Date.now() + Math.max(60, ((d && d.segundos) || 3600) - 300) * 1000;
+  Object.entries((d && d.ligas) || {}).forEach(([url, liga]) => {
+    if (liga) _haLigas.set(url, { liga: liga, vence: vence });
+  });
+}
+
+async function _haFirmarPendientes() {
+  _haTimer = null;
+  const urls = Array.from(_haPorFirmar).filter((u) => !_haLigaVigente(u));
+  _haPorFirmar = new Set();
+  for (let i = 0; i < urls.length; i += 50) {
+    try { await _haPedirLigas(urls.slice(i, i + 50)); } catch (e) { /* se usa la liga original */ }
+  }
+  document.querySelectorAll('[data-ha-url][data-ha-estado="pidiendo"]').forEach((el) => {
+    const url = el.getAttribute('data-ha-url');
+    _haAplicar(el, _haLigaVigente(url) || url);
+  });
+}
+
+function haFirmarLigas(raiz) {
+  const els = (raiz || document).querySelectorAll
+    ? (raiz || document).querySelectorAll('[data-ha-url]:not([data-ha-estado])') : [];
+  els.forEach((el) => {
+    const url = el.getAttribute('data-ha-url');
+    const liga = _haLigaVigente(url);
+    if (liga) { _haAplicar(el, liga); return; }
+    el.setAttribute('data-ha-estado', 'pidiendo');
+    _haPorFirmar.add(url);
+  });
+  if (_haPorFirmar.size && !_haTimer) _haTimer = setTimeout(_haFirmarPendientes, 30);
+}
+
+// Si alguien da clic antes de que llegue la liga, se abre en cuanto llegue.
+document.addEventListener('click', (ev) => {
+  const a = ev.target && ev.target.closest ? ev.target.closest('a[data-ha-url]') : null;
+  if (!a || a.getAttribute('data-ha-estado') === 'listo') return;
+  ev.preventDefault();
+  const url = a.getAttribute('data-ha-url');
+  const ventana = window.open('', '_blank');
+  _haPedirLigas([url]).catch(() => {}).then(() => {
+    const liga = _haLigaVigente(url) || url;
+    _haAplicar(a, liga);
+    if (ventana) ventana.location.href = liga; else window.location.href = liga;
+  });
+}, true);
+
+if (typeof MutationObserver === 'function') {
+  new MutationObserver(() => haFirmarLigas(document)).observe(document.documentElement, { childList: true, subtree: true });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => haFirmarLigas(document));
+} else {
+  haFirmarLigas(document);
 }

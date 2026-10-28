@@ -72,6 +72,7 @@ from core.storage import create_signed_object_url, delete_object, download_objec
 from core.subscriptions import has_paid_feature_access, require_paid_feature_access
 from core.firmas_utils import _email_ok, _fecha_larga, _folio, _le_toca, _limpio, _mail_layout, _mask_email, _mask_tel, _resumen_estado, _tel
 from core.firmas_policy import ROLES, TIPOS, TIPOS_CON_AGENTE
+from core.paises import datos_pais, pais_de_usuario
 
 router = APIRouter(prefix="/firmas", tags=["firmas"])
 log = logging.getLogger("broquer.firmas")
@@ -110,14 +111,6 @@ MAX_TRAZO_BYTES = 1 * 1024 * 1024
 
 MIMES_IMG = {"image/jpeg", "image/png", "image/webp", "image/heic"}
 
-# ── Vocabulario del módulo ────────────────────────────────────────────────
-
-# El rol no es cosmético: define quién es quién en la constancia y es lo
-# primero que revisa un abogado cuando lee el documento.
-
-# Los tipos donde el agente SÍ puede ser parte. En los demás no debe aparecer,
-# y el frontend lo refleja escondiendo el rol.
-
 # ── El texto del consentimiento ───────────────────────────────────────────
 # Esto es lo que sostiene todo lo demás. Si alguien impugna la firma, lo
 # primero que se lee es qué aceptó exactamente la persona. Se guarda copiado
@@ -140,6 +133,11 @@ CONSENTIMIENTO = (
     "número de teléfono o correo donde recibí el código de verificación es mío "
     "y está bajo mi control exclusivo."
 )
+
+
+def _consentimiento(pais: str) -> str:
+    """El mismo texto, citando la ley de firma electrónica del país."""
+    return CONSENTIMIENTO.replace(datos_pais("MX")["ley_firma"], datos_pais(pais)["ley_firma"])
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -791,6 +789,7 @@ async def _desde_contrato_bg(job_id: str, uid: str, tipo: str, datos: dict,
         por_nombre = {(c.get("nombre") or "").strip().lower(): c for c in contactos}
 
         creados = []
+        pais = await pais_de_usuario(uid)
         for parte in partes_del_contrato(tipo, datos or {}):
             c = por_nombre.get(parte["nombre"].strip().lower())
             nuevos = await _sb_post("firma_firmantes", {
@@ -799,7 +798,7 @@ async def _desde_contrato_bg(job_id: str, uid: str, tipo: str, datos: dict,
                 "contacto_id": c.get("id") if c else None,
                 "nombre": parte["nombre"][:160],
                 "email": (c.get("email") if c else None) or None,
-                "telefono": _tel(c.get("wa") or c.get("telefono") or "") if c else None,
+                "telefono": _tel(c.get("wa") or c.get("telefono") or "", pais) if c else None,
                 "rol": parte["rol"],
                 "obligatorio": True,
                 "estado": "pendiente",
@@ -851,7 +850,7 @@ async def desde_contrato(request: Request, body: DesdeContratoIn,
 
     tareas.add_task(
         _desde_contrato_bg,
-        job["id"], uid, tipo, body.datos or {}, etiqueta,
+        job["id"], uid, tipo, {**(body.datos or {}), "pais": await pais_de_usuario(uid)}, etiqueta,
         body.propiedad_id, bool(body.exige_ine),
         _ip(request), _ua(request),
     )
@@ -916,7 +915,7 @@ async def agregar_firmante(request: Request, documento_id: str, body: FirmanteIn
 
     nombre   = (body.nombre or "").strip()
     email    = (body.email or "").strip().lower()
-    telefono = _tel(body.telefono or "")
+    telefono = _tel(body.telefono or "", await pais_de_usuario(uid))
     if not nombre:
         raise HTTPException(400, "Falta el nombre del firmante.")
     if not email:
@@ -982,7 +981,7 @@ async def editar_firmante(request: Request, firmante_id: str, body: FirmanteIn):
             raise HTTPException(400, "Ese correo no se ve bien. Revísalo.")
         cambios["email"] = e or None
     if body.telefono is not None:
-        cambios["telefono"] = _tel(body.telefono) or None
+        cambios["telefono"] = _tel(body.telefono, await pais_de_usuario(uid)) or None
     if body.rol is not None and body.rol in ROLES:
         cambios["rol"] = body.rol
     if body.orden is not None:
@@ -1207,6 +1206,7 @@ async def publico_leer(request: Request, token: str):
     ve los datos de contacto de las otras partes, ni las notas internas del
     agente, ni nada del CRM."""
     doc, firmante, todos = await _por_token(token)
+    pais = await pais_de_usuario(doc["user_id"])
 
     if firmante.get("estado") == "pendiente":
         await _sb_patch("firma_firmantes", {"id": f"eq.{firmante['id']}"}, {"estado": "abierto"})
@@ -1245,7 +1245,8 @@ async def publico_leer(request: Request, token: str):
                     "firmado": f.get("estado") == "firmado",
                     "es_tu": f["id"] == firmante["id"]} for f in todos],
         "le_toca": _le_toca(firmante, todos),
-        "consentimiento": CONSENTIMIENTO,
+        "consentimiento": _consentimiento(pais),
+        "ley": datos_pais(pais)["ley_firma"],
         # Dónde va a quedar su firma. Firmar sin saber en qué parte del
         # documento va a aparecer el trazo es firmar a ciegas.
         "colocacion": await _donde_firma(doc["id"], firmante["id"]),
@@ -1488,7 +1489,7 @@ async def publico_firmar(request: Request, token: str, body: FirmarIn):
         "geo_lng": body.geo_lng,
         "geo_precision": body.geo_precision,
         "consentimiento_at": ahora,
-        "consentimiento_texto": CONSENTIMIENTO,
+        "consentimiento_texto": _consentimiento(await pais_de_usuario(doc["user_id"])),
         # El código ya cumplió: se invalida en el acto. Guardarlo un minuto más
         # de lo necesario solo agrega superficie de ataque.
         "otp_hash": None,
@@ -1695,7 +1696,7 @@ def _fila_dato(etiqueta: str, valor: str) -> str:
 
 def _constancia_html(doc: dict, firmantes: List[dict], eventos: List[dict],
                      trazos: Dict[str, str], agente: str,
-                     campos: Optional[List[dict]] = None) -> str:
+                     campos: Optional[List[dict]] = None, pais: str = "MX") -> str:
     tipo_label = TIPOS.get(doc.get("tipo") or "otro", "Documento")
     verificar = f"{APP_URL}/verificar-firma.html?f={doc.get('folio')}"
 
@@ -1751,7 +1752,7 @@ def _constancia_html(doc: dict, firmantes: List[dict], eventos: List[dict],
             f'<td>{html.escape((e.get("detalle") or e.get("tipo") or "")[:220])}</td>'
             f'<td class="ip">{html.escape(e.get("ip") or "—")}</td></tr>')
 
-    consent = firmantes[0].get("consentimiento_texto") if firmantes else CONSENTIMIENTO
+    consent = firmantes[0].get("consentimiento_texto") if firmantes else _consentimiento(pais)
 
     # Dónde quedó cada firma dentro del documento. Esto es lo que sostiene el
     # argumento: no se dice "el archivo es idéntico", se dice "esto se leyó,
@@ -1883,7 +1884,7 @@ def _constancia_html(doc: dict, firmantes: List[dict], eventos: List[dict],
   {colocacion}
 
   <h2>Lo que aceptó cada firmante</h2>
-  <div class="nota">{html.escape(consent or CONSENTIMIENTO)}</div>
+  <div class="nota">{html.escape(consent or _consentimiento(pais))}</div>
 
   <h2>Bitácora del proceso</h2>
   <table class="bitacora">
@@ -1900,7 +1901,7 @@ def _constancia_html(doc: dict, firmantes: List[dict], eventos: List[dict],
     momento lo introdujo correctamente. No constituye una certificación de identidad ni
     una fe pública sobre las personas firmantes, ni sustituye la intervención de fedatario
     público donde la ley la exija. La firma electrónica aquí recabada se produce al amparo
-    de los artículos 89 a 114 del Código de Comercio.
+    de {html.escape(datos_pais(pais)["ley_firma"])}.
   </div>
 
   <div class="pie">
@@ -2085,7 +2086,8 @@ async def _sellar(documento_id: str) -> None:
     # dónde quedó cada firma dentro del documento.
     campos = await _sb_get("firma_campos", {
         "documento_id": f"eq.{documento_id}", "select": "*", "order": "pagina.asc"})
-    html_constancia = _constancia_html(doc, firmantes, eventos, trazos, agente, campos)
+    html_constancia = _constancia_html(doc, firmantes, eventos, trazos, agente, campos,
+                                       await pais_de_usuario(doc["user_id"]))
 
     # Pie con folio y numeración: una hoja de la constancia que se separe del
     # resto tiene que poder identificarse sola. Es lo primero que se pierde
@@ -2590,6 +2592,7 @@ async def verificar(folio: str):
         # electrónica reforzada de Broquer. Su ausencia no invalida nada.
         "nom151": bool(doc.get("nom151_folio")),
         "nom151_folio": doc.get("nom151_folio"),
+        "ley": datos_pais(await pais_de_usuario(doc["user_id"]))["ley_firma"],
     }
 
 

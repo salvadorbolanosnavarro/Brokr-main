@@ -1,5 +1,5 @@
 {
-  "count": 348,
+  "count": 355,
   "operations": [
     {
       "body": false,
@@ -8,6 +8,16 @@
       "path": "/",
       "responses": [
         "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/adjuntos/ligas",
+      "responses": [
+        "200",
+        "422"
       ]
     },
     {
@@ -83,6 +93,16 @@
       "method": "POST",
       "params": [],
       "path": "/admin/user/modulos",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/admin/user/pais",
       "responses": [
         "200",
         "422"
@@ -344,6 +364,7 @@
       "body": false,
       "method": "GET",
       "params": [
+        "query:pais",
         "query:texto!"
       ],
       "path": "/api/colonias",
@@ -2401,6 +2422,18 @@
       "params": [
         "path:contacto_id!"
       ],
+      "path": "/org/contactos/{contacto_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "PATCH",
+      "params": [
+        "path:contacto_id!"
+      ],
       "path": "/org/contactos/{contacto_id}/etapa",
       "responses": [
         "200",
@@ -3247,6 +3280,46 @@
       "method": "POST",
       "params": [],
       "path": "/subscription/webhook",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/supervision/comentarios",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:actividad_id!"
+      ],
+      "path": "/supervision/comentarios/{actividad_id}/atendido",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/supervision/contador",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/supervision/pendientes",
       "responses": [
         "200"
       ]

@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Broquer — Completa tu perfil</title>
+<title>Completa tu perfil · Broquer</title>
 <meta name="theme-color" content="#FFFFFF"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); pantalla clara Canon -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
@@ -154,7 +154,6 @@ body {
 }
 .reg-legal input {
   width: 1.15rem;
-  height: 1.15rem;
   margin-top: 2px;
   flex: 0 0 auto;
   accent-color: var(--sky-blue);
@@ -171,21 +170,11 @@ body {
 }
 .reg-submit {
   width: 100%;
-  min-height: var(--h);
-  border: 0;
-  border-radius: var(--r-sm);
-  background: var(--sky-blue);
-  color: var(--paper);
-  font-family: inherit;
-  font-size: var(--fs-sm);
-  font-weight: 800;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
   transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.reg-submit:hover:not(:disabled) { background: var(--sky-blue-press); box-shadow: var(--shadow); }
 .reg-submit:active:not(:disabled) { transform: translateY(1px); }
-.reg-submit:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
+.reg-submit:disabled { opacity: .42; cursor: not-allowed; }
 .reg-msg {
   display: none;
   margin-bottom: var(--sp-4);
@@ -246,6 +235,14 @@ body {
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-design-public="registro">
 <div class="reg-wrap">
@@ -278,6 +275,11 @@ body {
         </div>
       </div>
 
+      <div class="reg-field" id="r-pais-campo">
+        <label for="r-pais">País donde trabajas</label>
+        <div class="reg-hint">Con esto ajustamos moneda, impuestos y documentos. No se puede cambiar después.</div>
+      </div>
+
       <div class="reg-field">
         <label for="r-telefono">Teléfono</label>
         <input class="reg-input" type="tel" id="r-telefono" placeholder="Ej. 443 123 4567" autocomplete="tel"/>
@@ -294,6 +296,18 @@ body {
   </main>
 </div>
 
+<script src="paises.js"></script>
+<script>
+(function(){
+  var campo = document.getElementById('r-pais-campo');
+  if (!campo || !window.bkPaisSelector) return;
+  function telEjemplo(c){ var t = document.getElementById('r-telefono'); if (t) t.placeholder = 'Ej. ' + bkPaisCfg(c).telEjemplo; }
+  var sel = bkPaisSelector({ className: 'reg-input', onCambio: telEjemplo });
+  sel.id = 'r-pais';
+  campo.insertBefore(sel, campo.querySelector('.reg-hint'));
+  telEjemplo(sel.value);
+})();
+</script>
 <script>
 const SB_URL = 'https://urtgysmtnvoqaljuhntz.supabase.co';
 const SB_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i';
@@ -311,6 +325,17 @@ async function guardar(){
   const nombreCompleto = apellidos ? nombre + ' ' + apellidos : nombre;
   if(!nombre){ showMsg('Ingresa tu nombre'); return; }
   if(!apellidos){ showMsg('Ingresa tus apellidos'); return; }
+
+  // Teléfono con lada de otro país: se pregunta antes de guardar.
+  const selPais = document.getElementById('r-pais');
+  if(telefono && selPais && window.bkPaisAvisoTelefono){
+    const elegido = await bkPaisAvisoTelefono(telefono, selPais.value);
+    if(!elegido){ document.getElementById('r-telefono').focus(); return; }
+    if(elegido !== selPais.value){
+      selPais.value = elegido;
+      selPais.dispatchEvent(new Event('change'));
+    }
+  }
 
   const token = sessionStorage.getItem('sb_token') || localStorage.getItem('sb_token');
   const userRaw = sessionStorage.getItem('sb_user') || localStorage.getItem('sb_user') || '{}';
@@ -366,6 +391,19 @@ async function guardar(){
       return;
     }
   }
+
+  // País de la cuenta. Va aparte: si ya tenía uno, la base lo conserva.
+  try {
+    await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}`, {
+      method: 'PATCH',
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ pais: (function () {
+        var s = document.getElementById('r-pais');
+        if (s && window.bkPaisGuardar) bkPaisGuardar(s.value);
+        return s ? s.value : 'MX';
+      })() })
+    });
+  } catch (_) {}
 
   showMsg('Perfil guardado.', 'ok');
 

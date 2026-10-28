@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Broquer — Tus datos</title>
+<title>Tus datos · Broquer</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
@@ -119,17 +119,10 @@
     gap: var(--sp-4);
     width: 100%;
     text-align: left;
-    padding: var(--sp-5);
-    border: 1px solid var(--line-2);
-    border-radius: var(--r);
-    background: var(--bone);
     margin-bottom: var(--sp-3);
     cursor: pointer;
-    font-family: var(--font-sans);
     transition: border-color var(--dur-fast) var(--ease);
   }
-  .ex-doc:hover { border-color: var(--forest); }
-  .ex-doc.is-ok { border-color: var(--success); background: var(--success-soft); }
   .ex-doc__ico {
     width: 36px; height: 36px; flex-shrink: 0;
     display: grid; place-items: center;
@@ -154,18 +147,9 @@
   .ex-opciones { display: flex; gap: var(--sp-3); }
   .ex-opcion {
     flex: 1;
-    padding: var(--sp-4);
-    border: 1px solid var(--line-2);
-    border-radius: var(--r);
-    background: var(--bone);
-    font-family: var(--font-sans);
-    font-size: var(--fs-sm);
-    font-weight: 700;
-    color: var(--ink-2);
     cursor: pointer;
     transition: all var(--dur-fast) var(--ease);
   }
-  .ex-opcion.is-sel { border-color: var(--forest); background: var(--forest-soft); color: var(--forest); }
 
   .ex-acciones { position: sticky; bottom: 0; padding: var(--sp-5) 0; background: var(--paper); }
 
@@ -190,6 +174,14 @@
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-design-public="expediente">
 
@@ -546,6 +538,7 @@
 
 <div class="bk-toast-stack" id="ex-toasts"></div>
 
+<script src="paises.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════
    Broquer · Expediente del cliente (página pública)
@@ -597,6 +590,8 @@
       var d = await r.json();
       if (!r.ok) { fallo('Esta liga ya no está disponible', (d && d.detail) || 'Pídele una nueva a tu asesor.'); return; }
       DATOS = d.expediente || {};
+      PAIS = d.pais || 'MX';
+      ajustarPais();
       REQUERIDOS = d.documentos_requeridos || [];
       SUBIDOS = d.documentos_subidos || [];
       if (d.ya_firmado) { mostrar('ex-carga', false); mostrar('ex-listo', true); return; }
@@ -708,12 +703,35 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  // País del asesor (lo manda el servidor): fuera de México no hay CURP y
+  // el RFC es el identificador tributario del país.
+  var PAIS = 'MX';
+  function ajustarPais() {
+    if (PAIS === 'MX' || !window.BK_PAISES || !BK_PAISES[PAIS]) return;
+    var cfg = BK_PAISES[PAIS];
+    var lbl = function (id, t) { var l = document.querySelector('label[for="' + id + '"]'); if (l) l.textContent = t; };
+    ['f-curp', 'm-rcurp', 'b-curp'].forEach(function (id) {
+      var el = g(id); var c = el && el.closest('.ex-campo'); if (c) c.style.display = 'none';
+    });
+    ['f-rfc', 'm-rrfc', 'b-rfc'].forEach(function (id) { lbl(id, cfg.idFiscal); if (g(id)) g(id).removeAttribute('maxlength'); });
+    lbl('m-rfc', cfg.idFiscal + ' de la empresa');
+    lbl('d-col', cfg.zona); lbl('d-mun', 'Ciudad o municipio'); lbl('d-edo', cfg.region); lbl('d-cp', cfg.codigoPostal);
+    var ine = document.querySelector('option[value="INE"]');
+    if (ine) ine.textContent = 'Documento de identidad (' + cfg.idPersona + ')';
+    var p = document.querySelector('.ex-porque p');
+    if (p) p.textContent = 'La ley de ' + cfg.nombre + ' obliga a los asesores inmobiliarios a identificar a las ' +
+      'personas con las que hacen una operación y a guardar esa información. No es un trámite de tu asesor: es un ' +
+      'requisito que se le exige a él.';
+  }
+
   function faltantesPaso1() {
     var moral = (DATOS.tipo_persona || 'fisica') !== 'fisica';
+    var idf = PAIS !== 'MX' && window.BK_PAISES && BK_PAISES[PAIS] ? BK_PAISES[PAIS].idFiscal : 'RFC';
     var req = moral
-      ? [['m-razon', 'la razón social'], ['m-rfc', 'el RFC de la empresa'], ['m-rnom', 'el nombre del representante']]
-      : [['f-nombre', 'tu nombre'], ['f-ap', 'tu apellido paterno'], ['f-curp', 'tu CURP'], ['f-rfc', 'tu RFC']];
-    req = req.concat([['d-calle', 'tu calle'], ['d-col', 'tu colonia'], ['d-cp', 'tu código postal']]);
+      ? [['m-razon', 'la razón social'], ['m-rfc', 'el ' + idf + ' de la empresa'], ['m-rnom', 'el nombre del representante']]
+      : [['f-nombre', 'tu nombre'], ['f-ap', 'tu apellido paterno']].concat(
+          PAIS === 'MX' ? [['f-curp', 'tu CURP']] : [], [['f-rfc', 'tu ' + idf]]);
+    req = req.concat([['d-calle', 'tu calle'], ['d-col', PAIS === 'MX' ? 'tu colonia' : 'tu barrio o zona'], ['d-cp', 'tu código postal']]);
     return req.filter(function (r) { return !val(r[0]); }).map(function (r) { return r[1]; });
   }
 

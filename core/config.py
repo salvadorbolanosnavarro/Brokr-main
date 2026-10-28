@@ -117,6 +117,16 @@ class Settings:
     cloudflare_zone_id: str = ""
     sitios_cname_destino: str = "sitios.broquer.app"
     sitios_worker_clave: str = ""
+    # Cifrado de los tokens de Meta de WhatsApp (wa2_numeros y wac_numbers).
+    # Vacía = los tokens se guardan como hoy, sin cifrar (nada se rompe).
+    wa_token_enc_key: str = ""
+    # "cifrar" / "descifrar": al arrancar, convierte los tokens ya guardados.
+    # Vacía = no hace nada. Se quita de Railway después de usarla.
+    wa_tokens_accion: str = ""
+    # CORS: "observar" (default, acepta todo y anota los orígenes que no están
+    # en la lista) o "estricto" (solo la lista). Ver core/cors.py.
+    cors_modo: str = "observar"
+    cors_origenes_extra: str = ""
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -205,6 +215,10 @@ class Settings:
             cloudflare_zone_id=os.getenv("CLOUDFLARE_ZONE_ID", "").strip(),
             sitios_cname_destino=os.getenv("SITIOS_CNAME_DESTINO", "sitios.broquer.app").strip(),
             sitios_worker_clave=os.getenv("SITIOS_WORKER_CLAVE", "").strip(),
+            wa_token_enc_key=os.getenv("WA_TOKEN_ENC_KEY", "").strip(),
+            wa_tokens_accion=os.getenv("WA_TOKENS_ACCION", "").strip().lower(),
+            cors_modo=os.getenv("CORS_MODO", "observar").strip().lower() or "observar",
+            cors_origenes_extra=os.getenv("CORS_ORIGENES_EXTRA", "").strip(),
             firmame_api_key=os.getenv("FIRMAME_API_KEY", "").strip(),
             firmame_base_url=os.getenv(
                 "FIRMAME_BASE_URL",

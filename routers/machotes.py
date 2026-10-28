@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse
 
 import machotes as _mach
 from core.auth import get_user_id_from_token
+from core.paises import pais_de_usuario
 from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
 from core.executors import _thread_pool
@@ -356,6 +357,7 @@ async def previsualizar_machote(machote_id: str, request: Request):
     machote = await _machote_o_404(machote_id, user_id, "id,campos,storage_path")
     contenido = await _descargar_plantilla(machote["storage_path"])
     datos = _aplicar_fijos(datos, machote.get("campos") or [])
+    datos["__pais"] = await pais_de_usuario(user_id)
     try:
         parrafos = await asyncio.get_event_loop().run_in_executor(
             _thread_pool,
@@ -384,6 +386,7 @@ async def generar_desde_machote_guardado(machote_id: str, request: Request):
     contenido = await _descargar_plantilla(machote["storage_path"])
     campos = machote.get("campos") or []
     datos = _aplicar_fijos(datos, campos)
+    datos["__pais"] = await pais_de_usuario(user_id)
 
     try:
         docx_bytes = await asyncio.get_event_loop().run_in_executor(

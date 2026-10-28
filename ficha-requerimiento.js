@@ -36,7 +36,7 @@
         campo('Estado', '<input class="bk-input" id="frq-estado" placeholder="Michoacán"/>') +
       '</div><div class="bk-field-row is-three">' +
         campo('Precio desde', num('frq-pmin', '$')) + campo('Precio hasta', num('frq-pmax', '$')) +
-        campo('Moneda', '<select class="bk-select" id="frq-moneda"><option>MXN</option><option>USD</option></select>') +
+        campo('Moneda', '<select class="bk-select" id="frq-moneda">' + (window.bkPaisCfg ? bkPaisCfg().monedas : ['MXN', 'USD']).map(function (m) { return '<option>' + m + '</option>'; }).join('') + '</select>') +
       '</div><div class="bk-field-row is-three">' +
         campo('Recámaras mín.', num('frq-rec')) + campo('Baños mín.', num('frq-ban')) + campo('Estacionamientos mín.', num('frq-est')) +
       '</div><div class="bk-field-row">' +
@@ -116,7 +116,7 @@
       marcar('frq-tipo', r.tipos && r.tipos.length ? r.tipos : (r.tipo_inmueble ? [r.tipo_inmueble] : []));
       marcar('frq-car', r.caracteristicas || []);
       put('frq-zonas', (r.zonas && r.zonas.length ? r.zonas : [r.colonia, r.ciudad].filter(Boolean)).join(', '));
-      put('frq-estado', r.estado); put('frq-moneda', r.moneda || 'MXN');
+      put('frq-estado', r.estado); put('frq-moneda', r.moneda || (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN'));
       put('frq-pmin', r.precio_min || ''); put('frq-pmax', r.precio_max || '');
       put('frq-rec', r.recamaras_min || ''); put('frq-ban', r.banos_min || ''); put('frq-est', r.estacionamientos_min || '');
       put('frq-m2c-min', r.m2_construccion_min || ''); put('frq-m2c-max', r.m2_construccion_max || '');
@@ -227,7 +227,7 @@
   function pintarInternet(resultados, ultima) {
     el('bp-resultados-titulo').textContent = 'Encontrado en internet' + (ultima ? ' · ' + fechaHora(ultima) : '');
     el('bp-resultados-feed').innerHTML = (resultados || []).length ? resultados.map(function (r) {
-      var precio = r.precio ? ' · $' + Number(r.precio).toLocaleString('es-MX') + (r.precio_confirmado ? '' : ' (sin confirmar)') : '';
+      var precio = r.precio ? ' · $' + Number(r.precio).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') + (r.precio_confirmado ? '' : ' (sin confirmar)') : '';
       return '<div class="bk-fila"><a class="bk-fila__cuerpo" href="' + esc(r.url) + '" target="_blank" rel="noopener noreferrer"><span class="bk-fila__t">' + esc(r.titulo || r.portal || 'Ver anuncio') + '</span>' +
         '<span class="bk-fila__d">' + esc(r.portal || '') + precio + '</span></a></div>';
     }).join('') : '<div class="bk-vacio"><p>Sin enlaces todavía. Presiona "Buscar ahora".</p></div>';

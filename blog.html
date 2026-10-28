@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Blog — Broquer</title>
+<title>Blog · Broquer</title>
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -27,15 +27,12 @@
 .bl-search__input:focus { border-color: var(--ink); }
 .bl-search__input::placeholder { color: var(--mute-2); }
 .bl-search__icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--mute-2); pointer-events: none; }
-.bl-search__clear { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--mute); display: none; padding: 4px; }
+.bl-search__clear { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; display: none; }
 .bl-search__clear.is-on { display: block; }
-.bl-search__clear:hover { color: var(--ink); }
 
 /* ── Tags filter ────────────────────────────── */
 .bl-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-.bl-tag { height: 28px; padding: 0 12px; border-radius: var(--r-pill); border: 1px solid var(--line-2); background: var(--bone); font-size:var(--fs-xs); font-weight: 500; color: var(--mute); cursor: pointer; transition: all var(--dur) var(--ease); white-space: nowrap; }
-.bl-tag:hover { border-color: var(--ink); color: var(--ink); }
-.bl-tag.is-active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.bl-tag { cursor: pointer; transition: all var(--dur) var(--ease); }
 
 /* ── Article list ───────────────────────────── */
 .bl-list { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
@@ -69,8 +66,7 @@
 .bl-list-view.is-off { display: none; }
 
 /* Back button */
-.bl-back { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r-pill); font-size:var(--fs-xs); font-weight: 500; color: var(--ink); cursor: pointer; margin-bottom: 24px; transition: background var(--dur) var(--ease); }
-.bl-back:hover { background: var(--paper-2); }
+.bl-back { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 24px; transition: background var(--dur) var(--ease); }
 
 /* Article header */
 .bl-art-head { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
@@ -134,6 +130,14 @@
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="blog">
 

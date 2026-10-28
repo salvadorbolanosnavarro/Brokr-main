@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Directorio · Broquer</title>
+<title>Contactos · Broquer</title>
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -62,7 +62,7 @@ html, body { background: var(--paper); }
   margin-bottom: 14px;
   max-width: 520px;
 }
-.head-search input { flex: 1; background: none; border: none; outline: none; font-size: var(--ui-text-base); font-family: inherit; color: var(--ink); letter-spacing: -0.005em; }
+.head-search input { flex: 1; outline: none; color: var(--ink); }
 .head-search input::placeholder { color: var(--mute-2); }
 
 .filters-row {
@@ -70,19 +70,11 @@ html, body { background: var(--paper); }
   margin-bottom: 14px; flex-wrap: wrap;
 }
 .filtro-select {
-  background: var(--bone);
-  border: 1px solid var(--line);
-  border-radius: var(--r-pill);
-  height: var(--ui-control); padding: 0 32px 0 14px;
-  font-family: inherit; font-size: var(--fs-xs); font-weight: 600;
   color: var(--ink-2);
   outline: none; cursor: pointer;
-  -webkit-appearance: none; appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B7685' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
 }
-.filtro-select:focus { border-color: var(--ink); }
 
 .tabs {
   display: flex; gap: 6px;
@@ -94,20 +86,12 @@ html, body { background: var(--paper); }
 .tabs::-webkit-scrollbar { display: none; }
 .ftab {
   flex-shrink: 0;
-  border: none; background: none;
-  padding: 12px 14px;
-  font-family: inherit;
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  color: var(--mute);
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
-  letter-spacing: -0.005em;
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.ftab.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
-.ftab:hover { color: var(--ink); }
+.ftab.active { border-bottom-color: var(--ink); }
 
 /* Chip de estatus (etapa del pipeline de Clientes) — mismo lenguaje que
    los badges de inmuebles. Un contacto de Directorio que ya es potencial
@@ -186,13 +170,8 @@ html, body { background: var(--paper); }
 .cbulk-bar.is-visible { transform: translateX(-50%) translateY(0); visibility: visible; }
 .cbulk-bar__sep { width: 1px; height: 18px; background: rgba(255,255,255,.2); }
 .cbulk-bar__btn {
-  display: flex; align-items: center; gap: 6px; border: none; cursor: pointer;
-  padding: 8px 15px; border-radius: var(--r-pill);
-  font-size: var(--fs-sm); font-weight: 600; font-family: var(--font);
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
 }
-.cbulk-bar__btn--danger { background: var(--danger); color: white; }
-.cbulk-bar__btn--ghost { background: transparent; color: rgba(255,255,255,.85); }
-.cbulk-bar__btn--ghost:hover { background: rgba(255,255,255,.1); color: white; }
 
 .cdel-overlay {
   position: fixed; inset: 0; background: rgba(20,28,48,.55); z-index: 9999;
@@ -208,12 +187,8 @@ html, body { background: var(--paper); }
 .cdel-title { font-size: var(--fs-h3); font-weight: 700; color: var(--ink); margin-bottom: 8px; }
 .cdel-msg { font-size: var(--fs-sm); color: var(--mute); line-height: 1.6; margin-bottom: 20px; }
 .cdel-actions { display: flex; gap: 10px; justify-content: center; }
-.cdel-btn {
-  height: 38px; padding: 0 20px; border: none; border-radius: var(--r-pill);
-  font-size: var(--fs-sm); font-weight: 600; font-family: var(--font); cursor: pointer;
+.cdel-btn { cursor: pointer;
 }
-.cdel-btn--cancel { background: var(--paper-2); color: var(--ink); }
-.cdel-btn--del { background: var(--danger); color: white; }
 .cdel-btn:disabled { opacity: .6; cursor: default; }
 
 .avatar {
@@ -381,16 +356,10 @@ html, body { background: var(--paper); }
   flex: 1;
 }
 .close-btn {
-  width: 32px; height: 32px;
-  border: none;
-  background: var(--bone);
-  border-radius: 50%;
+  width: var(--ui-control-small);
   cursor: pointer;
-  font-size: var(--fs-sm);
-  color: var(--ink-2);
   display: flex; align-items: center; justify-content: center;
 }
-.close-btn:hover { background: var(--paper-2); }
 .sheet-body { flex: 1; overflow-y: auto; padding: 22px 24px; }
 
 /* Form */
@@ -421,9 +390,6 @@ html, body { background: var(--paper); }
 }
 .potencial-check span { font-size: var(--fs-sm); color: var(--ink); line-height: 1.4; }
 
-.ct-pot.is-on { background: var(--warn-soft); border-color: transparent; color: var(--warn); }
-.ct-pot.is-on:hover { background: var(--warn-soft); border-color: transparent; }
-
 .pot-dot { color: var(--warn); font-size: 0.85em; }
 
 .sec-lbl::after { content: ''; flex: 1; height: 1px; background: var(--line); }
@@ -435,57 +401,30 @@ html, body { background: var(--paper); }
   letter-spacing: -0.005em;
 }
 .f input, .f select, .f textarea {
-  background: var(--bone);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  padding: 11px 13px;
-  font-family: inherit;
-  font-size: var(--fs-sm);
   color: var(--ink);
   outline: none;
   width: 100%;
   transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
-  -webkit-appearance: none;
 }
-.f input:focus, .f select:focus, .f textarea:focus { border-color: var(--ink); background: var(--paper); }
-.f textarea { resize: vertical; min-height: 78px; line-height: 1.5; }
+.f textarea { resize: vertical; }
 .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .frow.three { grid-template-columns: 1fr 1fr 1fr; }
 .col-2 { grid-column: 1 / 3; }
 
 .sexo-row { display: flex; gap: 6px; margin-top: 2px; }
 .sexo-opt {
-  flex: 1; padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  background: var(--bone);
-  color: var(--mute);
-  font-size: var(--fs-sm); font-weight: 500;
+  flex: 1;
   cursor: pointer;
-  font-family: inherit;
   transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
   text-align: center;
 }
-.sexo-opt.active { border-color: var(--ink); color: var(--ink); background: var(--paper); }
 
 .btn-primary, .btn-del {
-  height: 46px; padding: 0 20px;
-  border: none;
-  border-radius: var(--r);
-  font-family: inherit;
-  font-size: var(--fs-sm); font-weight: 600;
   cursor: pointer;
-  letter-spacing: -0.005em;
   transition: opacity var(--dur) var(--ease), background var(--dur) var(--ease);
 }
-.btn-primary { flex: 1; background: var(--forest); color: var(--paper); }
+.btn-primary { flex: 1; }
 .btn-primary:hover { opacity: .9; }
-.btn-del {
-  background: var(--paper);
-  color: var(--danger);
-  border: 1px solid var(--danger-soft);
-}
-.btn-del:hover { background: var(--danger-soft); }
 
 /* Buscador de propiedades para vincular — reemplaza el <select> gigante
    (hasta 500 propiedades en orden alfabético/fecha, sin filtro) por un
@@ -493,11 +432,6 @@ html, body { background: var(--paper); }
 .prop-buscador { position: relative; flex: 1; min-width: 160px; }
 .prop-buscador input {
   width: 100%;
-  background: var(--bone);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  padding: 9px 11px;
-  font-family: inherit; font-size: var(--fs-sm);
   color: var(--ink);
   outline: none;
 }
@@ -511,13 +445,10 @@ html, body { background: var(--paper); }
   box-shadow: var(--shadow-md);
 }
 .prop-sugerencia {
-  display: block; width: 100%; text-align: left;
-  padding: 9px 11px; border: none; background: none; cursor: pointer;
-  font-family: inherit;
+  display: block; width: 100%; text-align: left; cursor: pointer;
   border-bottom: 1px solid var(--line);
 }
 .prop-sugerencia:last-child { border-bottom: none; }
-.prop-sugerencia:hover, .prop-sugerencia.is-hl { background: var(--paper-2); }
 .prop-sugerencia__n { display: block; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
 .prop-sugerencia__d { display: block; font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
 .prop-sugerencia--vacio { color: var(--mute); cursor: default; }
@@ -546,49 +477,23 @@ html, body { background: var(--paper); }
 .bn-item.is-active { color: var(--ink); }
 
 /* Floating "new" button */
-.fab {
-  position: fixed; right: 20px; bottom: 90px;
-  z-index: 50;
-  width: 56px; height: 56px;
-  border-radius: 50%;
-  background: var(--forest); color: var(--paper);
-  border: none;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  box-shadow: var(--sh-2);
-  transition: transform var(--dur) var(--ease);
-}
+.fab { display:none; }
 .fab:hover { transform: scale(1.05); }
 @media (min-width: 880px) { .fab { display: none; } }
 
 .add-btn {
-  background: var(--forest); color: var(--paper);
-  border: none;
-  border-radius: var(--r-pill);
-  height: var(--ui-control); padding: 0 16px;
-  font-family: inherit;
-  font-size: var(--fs-sm); font-weight: 600;
   cursor: pointer;
   display: flex; align-items: center; gap: 6px;
-  letter-spacing: -0.005em;
 }
 .add-btn:hover { opacity: .9; }
-@media (max-width: 720px) { .add-btn { display: none; } }
+
 /* Import dropdown — built into the Importar button */
 .import-btn {
-  background: var(--bone); color: var(--ink);
-  border: 1px solid var(--line);
-  border-radius: var(--r-pill);
-  height: var(--ui-control); padding: 0 16px;
-  font-family: inherit;
-  font-size: var(--fs-sm); font-weight: 600;
   cursor: pointer;
   display: flex; align-items: center; gap: 6px;
-  letter-spacing: -0.005em;
   position: relative;
 }
-.import-btn:hover { border-color: var(--line-2); background: var(--paper-2); }
-@media (max-width: 720px) { .import-btn { padding: 0 12px; height: var(--ui-control); } }
+@media (max-width: 720px) { }
 
 
 /* Progress sheet */
@@ -652,6 +557,14 @@ html, body { background: var(--paper); }
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="contactos">
 
@@ -664,7 +577,7 @@ html, body { background: var(--paper); }
   <div class="page-head__row">
     <h1>Tu directorio.</h1>
     <span class="page-head__count" id="count-badge" style="display:none">0</span>
-    <div style="display:flex;gap:8px;align-items:center">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:100%">
       <button class="import-btn" id="btn-import-eb" onclick="abrirMigracion()">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
         Migrar de EasyBroker
@@ -680,7 +593,7 @@ html, body { background: var(--paper); }
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--mute);"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
       <input type="search" id="search-input" placeholder="Buscar por nombre, teléfono o correo…" oninput="busquedaDebounced()"/>
     </div>
-    <select class="filtro-select" id="c-filtro-fecha" onchange="renderActual()">
+    <select class="filtro-select" id="c-filtro-fecha" data-rango-fecha onchange="renderActual()">
       <option value="">Fecha: todas</option>
       <option value="hoy">Hoy</option>
       <option value="semana">Esta semana</option>
@@ -690,7 +603,7 @@ html, body { background: var(--paper); }
     <select class="filtro-select" id="c-filtro-fuente" onchange="renderActual()">
       <option value="">Fuente: todas</option>
     </select>
-    <div class="prop-buscador" style="max-width:220px">
+    <div class="prop-buscador">
       <input type="text" class="filtro-select" id="c-filtro-interes-buscar" placeholder="Propiedad de interés…" autocomplete="off" oninput="cBuscarInteresInput()" onkeydown="cBuscarInteresKeydown(event)" style="width:100%"/>
       <input type="hidden" id="c-filtro-interes-sel"/>
       <div class="prop-sugerencias" id="c-filtro-interes-sug" hidden></div>
@@ -746,7 +659,7 @@ html, body { background: var(--paper); }
 
 <!-- MIGRACION: selector -->
 <div class="overlay" id="mig-ov" onclick="if(event.target===this)cerrarMigracion()">
-  <div class="sheet">
+  <div class="sheet" data-ui-modal>
     <div class="handle"></div>
     <div class="sheet-header">
       <div class="sheet-title">Migrar de EasyBroker</div>
@@ -775,7 +688,7 @@ html, body { background: var(--paper); }
 
 <!-- ADD/EDIT MODAL -->
 <div class="overlay" id="import-ov" onclick="if(event.target===this&&document.getElementById('import-close').style.display!=='none')cerrarImport()">
-  <div class="sheet">
+  <div class="sheet" data-ui-modal>
     <div class="handle"></div>
     <div class="sheet-header">
       <div class="sheet-title" id="import-title">Importar de EasyBroker</div>
@@ -792,7 +705,7 @@ html, body { background: var(--paper); }
 </div>
 
 <div class="overlay" id="modal-ov" onclick="if(event.target===this)cerrarModal()">
-  <div class="sheet">
+  <div class="sheet" data-ui-modal>
     <div class="handle"></div>
     <div class="sheet-header">
       <div class="sheet-title" id="modal-title">Nuevo contacto</div>
@@ -877,12 +790,10 @@ html, body { background: var(--paper); }
       <div class="f"><label>Observaciones</label><textarea id="m-notas" rows="3" placeholder="Prefiere WhatsApp. Calificado. Responde rápido…"></textarea></div>
       <div class="f"><label>Descripción privada</label><textarea id="m-descripcion-privada" rows="3" placeholder="Se llena sola con lo que califica la IA de WhatsApp (score, presupuesto, etc.); también puedes editarla a mano."></textarea></div>
 
-      <div style="margin-top:24px;padding-top:18px;border-top:1px solid var(--line);display:flex;gap:10px">
+      </div><div class="ui-modal-foot">
         <button class="btn-del" id="btn-del" onclick="confirmarEliminar()" style="display:none">Eliminar</button>
         <button class="btn-primary" onclick="guardarContacto()">Guardar contacto</button>
       </div>
-      <div style="height:8px"></div>
-    </div>
   </div>
 </div>
 
@@ -1047,6 +958,7 @@ html, body { background: var(--paper); }
 <script src="ficha-comun.js" defer></script>
 <script src="categorias.js" defer></script>
 <script src="contactos-ficha.js" defer></script>
+<script src="filtro-fecha.js" defer></script>
 <script src="app-shell.js" defer></script>
 <script src="inmuebles-catalogo.js" defer></script>
 <script src="bk-api.js" defer></script>
@@ -1087,7 +999,8 @@ function esc(s) {
 /* ── Conexión a Supabase ─────────────────────────────────────────
    Usamos el helper window.brokrSb expuesto por app-shell.js.
    Ese helper renueva el token automáticamente si está por expirar. */
-const LS_CACHE = 'brokr_contactos_cache';   // solo cache offline, NO fuente de verdad
+// Copia por cuenta (sb_user.id): nunca mostrar la lista de otra cuenta del mismo navegador.
+const LS_CACHE = (() => { try { localStorage.removeItem('brokr_contactos_cache'); const u = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'); if (u && u.id) return 'brokr_contactos_cache:' + u.id; } catch (e) {} return 'brokr_contactos_cache:' + Math.random(); })();   // solo cache offline, NO fuente de verdad
 let _contactosMem = [];
 let _userIdCache = null;
 
@@ -1125,24 +1038,9 @@ async function cargarRemoto() {
 /* Versión sincrónica: devuelve la copia en memoria (para el render rápido) */
 function cargar() { return _contactosMem; }
 
-/* Inserta o actualiza un contacto en Supabase */
+/* Inserta o actualiza un contacto (ficha-comun.js: bkGuardarContacto) */
 async function upsertRemoto(contacto) {
-  const uid = await _userId();
-  if (!uid) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
-  const payload = Object.assign({}, contacto, { user_id: uid });
-  const r = await _sb().fetch('rest/v1/contactos?on_conflict=id', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Prefer: 'resolution=merge-duplicates,return=representation',
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!r.ok) {
-    const txt = await r.text().catch(()=> '');
-    throw new Error('Supabase: ' + r.status + ' ' + txt);
-  }
-  return r.json();
+  return bkGuardarContacto(contacto, _contactosMem.some(c => c.id === contacto.id));
 }
 
 /* Elimina un contacto del servidor */
@@ -1303,6 +1201,7 @@ function cFechaEnRango(iso, preset) {
   if (preset === 'anio') {
     return d.getFullYear() === ahora.getFullYear();
   }
+  if (preset === 'rango') return bkRangoFecha.contiene('c-filtro-fecha', iso);
   return true;
 }
 
@@ -1332,9 +1231,6 @@ function busquedaDebounced() {
 
 function renderActual() {
   const todos = cargar();
-  const badge = document.getElementById('count-badge');
-  badge.textContent = todos.length;
-  badge.style.display = todos.length ? '' : 'none';
   cPoblarFiltroFuente(todos);
   // Soltar de la selección lo que ya no existe (borrados, filtros)
   const vivos = new Set(todos.map(c => String(c.id)));
@@ -1533,6 +1429,7 @@ document.addEventListener('keydown', (e) => {
 /* ── Vista Lista ─────────────────────────────────────────────────── */
 function renderLista() {
   const filtrados = contactosFiltrados();
+  cPintarConteo(filtrados.length, cargar().length);
   const lista = document.getElementById('lista');
   const q = gv('search-input');
   if (!filtrados.length) {
@@ -1616,7 +1513,8 @@ function abrirModal(id = null) {
     const sx = c.sexo || 'M';
     sexoActual = sx;
     document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === sx));
-    document.getElementById('btn-del').style.display = 'block';
+    // En Broquer para Empresas solo el dueño o un administrador borra.
+    document.getElementById('btn-del').style.display = cPuedeEliminar ? 'block' : 'none';
   } else {
     document.getElementById('modal-title').textContent = 'Nuevo contacto';
     ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-descripcion-privada','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
@@ -2002,7 +1900,7 @@ async function guardarContacto() {
 }
 
 async function confirmarEliminar() {
-  if (!editandoId) return;
+  if (!editandoId || !cPuedeEliminar) return;
   if (!confirm('¿Eliminar este contacto? Esta acción no se puede deshacer.')) return;
   try {
     await eliminarRemoto(editandoId);

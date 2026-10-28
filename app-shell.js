@@ -14,17 +14,13 @@
 (function () {
   if (window.__brokrShellLoaded) return;
   window.__brokrShellLoaded = true;
+  // País de la cuenta (paises.js): moneda, módulos y leyes que aplican.
+  const paisesListo = window.bkPaisSesion ? null : new Promise(r => {
+    const s = document.createElement('script');
+    s.src = 'paises.js'; s.onload = s.onerror = r; document.head.appendChild(s);
+  });
 
-  /* ── Sentry — monitoreo de errores en producción ──────────────────────
-     Captura automáticamente cualquier error JavaScript no manejado en todas
-     las páginas de Broquer y lo envía a tu panel de sentry.io.
-
-     PASO ÚNICO: reemplaza PEGAR_URL_AQUI con la URL que Sentry te da al
-     crear tu proyecto (la encuentras en Project Settings → Client Keys →
-     Loader Script; se ve así: https://js.sentry-cdn.com/TU_CLAVE.min.js).
-
-     No carga nada en localhost — solo en broquer.app.
-     ─────────────────────────────────────────────────────────────────── */
+  /* ── Sentry — errores de producción (no carga en localhost) ── */
   (function initSentry() {
     const h = window.location.hostname;
     if (h !== 'broquer.app' && h !== 'www.broquer.app') return;
@@ -284,11 +280,13 @@
   const MODS = [
     // CRM — el inventario y la gente.
     { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',       group:'crm',         icon:'building' },
-    // Contactos: un solo módulo con dos vistas (Lista = contactos.html,
-    // Pipeline = clientes.html). Clientes queda oculto del menú pero sus
-    // ligas siguen vivas (y resaltan "Contactos", ver NAV_ALIAS).
+    // Contactos (lista, contactos.html) y Clientes (pipeline de venta en
+    // kanban, clientes.html) son dos entradas del menú. Clientes estuvo
+    // oculto y no había otra forma visible de llegar a su tablero.
     { key:'contactos',    href:'contactos.html',     label:'Contactos',          group:'crm',         icon:'users' },
-    { key:'clientes',     href:'clientes.html',      label:'Pipeline de contactos', group:'crm',      icon:'apreton', hidden:true },
+    // "requiere": si un admin apaga Contactos, Clientes (mismos datos) se
+    // apaga con él; Clientes no es un módulo apagable por separado.
+    { key:'clientes',     href:'clientes.html',      label:'Clientes',           group:'crm',         icon:'apreton', requiere:'contactos' },
     { key:'alertas',      href:'alertas.html',       label:'Alertas de búsqueda', group:'crm',         icon:'search', hidden:true },
     { key:'crm-ajustes',  href:'crm-ajustes.html',   label:'Ajustes de CRM',     group:'crm',         icon:'cog', hidden:true },
     { key:'tareas',       href:'tareas.html',        label:'Tareas',              group:'crm',         icon:'check' },
@@ -306,6 +304,7 @@
     // Números.
     { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'numeros',     icon:'peso' },
     { key:'isr',          href:'isr.html',           label:'ISR',                 group:'numeros',     icon:'calculator' },
+    { key:'impuestos',    href:'impuestos.html',     label:'Impuestos',           group:'numeros',     icon:'calculator' },
     { key:'finanzas',     href:'finanzas.html',      label:'Finanzas',            group:'numeros',     icon:'wallet' },
     // Marketing — de la foto cruda al anuncio publicado.
     { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes',     group:'marketing',   icon:'image' },
@@ -323,7 +322,7 @@
     'home':         'Dashboard principal — menú de módulos',
     'props':        'Tus Inmuebles — catálogo de propiedades',
     'contactos':    'Contactos (vista Lista) — todos tus contactos, sin importar su rol o etapa',
-    'clientes':     'Contactos (vista Pipeline) — tu pipeline de venta en kanban: prospectos potenciales por etapa',
+    'clientes':     'Clientes — tu pipeline de venta en kanban: prospectos potenciales por etapa',
     'buzon':        'Buzón — bandeja única de leads de todos los canales: asignar, nota interna, respuestas guardadas y tiempo de primera respuesta',
     'crm-ajustes':  'Ajustes de CRM — etapas del pipeline, tipos de contacto, fuentes de captación, etiquetas y categorías',
     'equipo':       'Equipo — miembros de la cuenta, roles y permisos',
@@ -338,6 +337,7 @@
     'avm':          'Estimación de valor AVM — avalúo de mercado automatizado',
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
+    'impuestos':    'Calculadora de impuestos por venta de inmuebles del país de la cuenta',
     'finanzas':     'Finanzas — ingresos, gastos, cuentas, rentabilidad por propiedad y reportes descargables',
     'image-cleaner':'Editor de imágenes — limpieza con IA',
     'video':        'Video — recorrido en video armado con las fotos de la ficha, para reels, stories y feed',
@@ -362,6 +362,7 @@
     'avm':           { title:'Estimación de valor',    sub:'Avalúo automático con comparables de tu zona.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
+    'impuestos':     { title:'Impuestos por venta',    sub:'Lo que paga quien vende un inmueble, con las reglas de tu país.' },
     'finanzas':      { title:'Tu dinero, en orden.', sub:'Ingresos, gastos y saldos de tus cuentas.' },
     'image-cleaner': { title:'Editor de imágenes',     sub:'Limpia y mejora las fotos de tus propiedades con IA.' },
     'facebook-ads':  { title:'Facebook Ads',           sub:'Crea, activa y mide anuncios de Facebook e Instagram.' },
@@ -376,7 +377,7 @@
     inbox:      '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859M2.25 13.5V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.5M2.25 13.5l2.4-7.2A2.25 2.25 0 016.79 4.5h10.42a2.25 2.25 0 012.14 1.8l2.4 7.2"/>',
     mail:       '<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>',
     home:       '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>',
-    nums123:    '<text x="12" y="16.5" text-anchor="middle" font-size="11.5" font-weight="800" fill="currentColor" stroke="none" font-family="inherit">123</text>',
+    nums123:    '<text x="12" y="16.5" text-anchor="middle" font-size="12" font-weight="800" fill="currentColor" stroke="none" font-family="inherit">123</text>',
     building:   '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/>',
     users:      '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>',
     document:   '<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>',
@@ -529,7 +530,7 @@
    electrónica", "Estimación de valor") — nunca empuja al ícono ni se
    sale de su columna. */
 .bk-sb-ico__label {
-  font-size: 8.5px; font-weight: 700; letter-spacing: 0.01em; line-height: 1.15;
+  font-size:var(--ui-text-xs); font-weight: 700; letter-spacing: 0.01em; line-height: 1.15;
   text-align: center; color: inherit; opacity: 0.75;
   max-width: 100%; overflow-wrap: anywhere;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
@@ -590,7 +591,7 @@
 .bk-flyout.is-open { display: flex; animation: bk-fly-in 0.16s var(--ease-out); }
 @keyframes bk-fly-in { from { opacity: 0; transform: translateX(-6px); } }
 .bk-flyout__title {
-  font-size: 12px; font-weight: 800; letter-spacing: 0.06em;
+  font-size:var(--ui-text-xs); font-weight: 800; letter-spacing: 0.06em;
   color: rgba(255,255,255,0.62);
   padding: 2px 10px 6px;
 }
@@ -623,21 +624,21 @@
 .bk-cmdk__in svg { color: var(--mute); flex: 0 0 auto; }
 .bk-cmdk__in input {
   flex: 1; border: none; outline: none; background: transparent;
-  font-size: 15px; font-family: inherit; color: var(--ink);
+  font-size:var(--ui-text-sm); font-family: inherit; color: var(--ink);
 }
 .bk-cmdk__esc {
-  font-size: 11px; font-weight: 600; color: var(--mute);
+  font-size:var(--ui-text-xs); font-weight: 600; color: var(--mute);
   border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px;
 }
 .bk-cmdk__list { max-height: 50vh; overflow-y: auto; padding: 8px; }
 .bk-cmdk__g {
-  font-size: 11px; font-weight: 700; color: var(--mute);
+  font-size:var(--ui-text-xs); font-weight: 700; color: var(--mute);
   padding: 10px 12px 4px; letter-spacing: 0.02em;
 }
 .bk-cmdk__item {
   display: flex; align-items: center; gap: 12px;
   padding: 9px 12px; border-radius: var(--r-sm);
-  font-size: 14px; font-weight: 500; cursor: pointer; color: var(--ink);
+  font-size:var(--ui-text-sm); font-weight: 500; cursor: pointer; color: var(--ink);
 }
 .bk-cmdk__item .ci {
   flex: 0 0 auto; width: 30px; height: 30px; border-radius: var(--r-xs);
@@ -645,16 +646,16 @@
   display: inline-flex; align-items: center; justify-content: center;
 }
 .bk-cmdk__item .ci svg { width: 15px; height: 15px; }
-.bk-cmdk__item .grp { margin-left: auto; font-size: 11.5px; color: var(--mute); font-weight: 600; }
-.bk-cmdk__item.is-sel, .bk-cmdk__item:hover { background: var(--paper-2); }
-.bk-cmdk__empty { padding: 26px; text-align: center; color: var(--mute); font-size: 14px; }
+.bk-cmdk__item .grp { margin-left: auto; font-size:var(--ui-text-xs); color: var(--mute); font-weight: 600; }
+.bk-cmdk__item:hover { background: var(--paper-2); }
+.bk-cmdk__empty { padding: 26px; text-align: center; color: var(--mute); font-size:var(--ui-text-sm); }
 
 .bk-sb-link {
   position: relative;
   display: flex !important; align-items: center; gap: 12px;
   height: 44px; padding: 0 12px;
   border-radius: var(--r);
-  font-size: 14px; color: #FFFFFF !important;
+  font-size:var(--ui-text-sm); color: #FFFFFF !important;
   cursor: pointer;
   transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
   font-weight: 700; letter-spacing: -0.01em;
@@ -711,7 +712,7 @@
 }
 .bk-back-home {
   display: inline-flex; align-items: center; gap: 6px;
-  font-size: 13px; font-weight: 600;
+  font-size:var(--ui-text-xs); font-weight: 600;
   color: var(--sky-blue); opacity: 0.85;
   text-decoration: none;
   transition: opacity var(--dur) var(--ease);
@@ -735,7 +736,7 @@
 .bk-mobile-head__avatar {
   width: 29px; height: 29px; border-radius: 50%;
   background: var(--ink); color: var(--paper);
-  font-weight: 600; font-size: 11px;
+  font-weight: 600; font-size:var(--ui-text-xs);
   display: flex; align-items: center; justify-content: center;
 }
 
@@ -757,7 +758,7 @@
   min-width: 0;
   text-align: center;
   font-family: var(--font-display);
-  font-size: 15px;
+  font-size:var(--ui-text-sm);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--sky-blue-press);
@@ -781,7 +782,7 @@
   color: var(--mute);
   font-family: var(--font-sans);
   font-weight: 500;
-  font-size: 12px;
+  font-size:var(--ui-text-xs);
   margin-left: 8px;
   /* El autor puede romper si el span entero no cabe en la línea */
   display: inline;
@@ -816,32 +817,24 @@
 .bk-topbar__search-expand-inner svg { color: var(--mute); flex-shrink: 0; }
 .bk-topbar__search-expand-inner input {
   flex: 1; background: none; border: none; outline: none;
-  font-size: 15px; letter-spacing: -0.005em;
+  font-size:var(--ui-text-sm); letter-spacing: -0.005em;
   font-family: inherit;
   color: var(--ink);
 }
 .bk-topbar__search-expand-inner input::placeholder { color: var(--mute-2); }
-.bk-topbar__search-close {
-  background: transparent; border: none; cursor: pointer;
-  color: var(--mute); padding: 6px;
+.bk-topbar__search-close { cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.bk-topbar__search-close:hover { color: var(--ink); }
 
 .bk-topbar__actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
 .bk-icon-btn {
-  width: var(--ui-control-small); height: var(--ui-control-small);
-  border-radius: 50%;
-  background: var(--bone);
-  border: 1px solid var(--line-2);
+  width: var(--ui-control-small);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  color: var(--ink-2);
   position: relative;
   transition: background var(--dur) var(--ease);
 }
-.bk-icon-btn:hover { background: var(--paper-2); }
 .bk-icon-btn .dot {
   position: absolute; top: 8px; right: 8px;
   width: 7px; height: 7px; border-radius: 50%;
@@ -873,7 +866,7 @@
 }
 .bk-ph__title {
   font-family: var(--font-display);
-  font-size: 30px;
+  font-size:var(--ui-text-mobile);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.05;
@@ -882,7 +875,7 @@
   margin: 0;
 }
 .bk-ph__sub {
-  font-size: 15px;
+  font-size:var(--ui-text-sm);
   color: var(--mute);
   margin: 6px 0 0;
   line-height: 1.5;
@@ -890,7 +883,7 @@
 }
 @media (max-width: 720px) {
   .bk-ph { padding: 16px var(--pad-x, 16px) 4px; }
-  .bk-ph__title { font-size: 24px; }
+  .bk-ph__title { font-size:var(--ui-text-section); }
 }
 
 /* Heros de solo-título reemplazados por el encabezado canónico */
@@ -922,7 +915,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   flex: 1;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   padding: 6px 4px;
-  font-size: 10px;
+  font-size:var(--ui-text-xs);
   color: var(--mute);
   text-decoration: none;
   font-weight: 600;
@@ -949,7 +942,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   min-width: 17px; height: 17px; padding: 0 4px;
   border-radius: 9px;
   background: var(--danger); color: #FFFFFF;
-  font-size: 10px; font-weight: 800; line-height: 17px; text-align: center;
+  font-size:var(--ui-text-xs); font-weight: 800; line-height: 17px; text-align: center;
   border: 2px solid rgba(255,255,255,0.9);
   display: none;
   font-variant-numeric: tabular-nums;
@@ -981,7 +974,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-sheet.is-open { transform: none; }
 .bk-sheet__grip { width: 38px; height: 4px; border-radius: 2px; background: var(--line-2); margin: 6px auto 12px; }
 .bk-sheet__eyebrow {
-  font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  font-size:var(--ui-text-xs); font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
   color: var(--mute); margin: 14px 4px 8px;
 }
 .bk-sheet__eyebrow:first-of-type { margin-top: 2px; }
@@ -991,7 +984,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   padding: 13px 12px; border-radius: 14px;
   background: var(--paper); border: 1px solid var(--line);
   color: var(--ink); text-decoration: none;
-  font-size: 13px; font-weight: 700; font-family: inherit; text-align: left;
+  font-size:var(--ui-text-xs); font-weight: 700; font-family: inherit; text-align: left;
   cursor: pointer; -webkit-tap-highlight-color: transparent;
   transition: background var(--dur) var(--ease);
 }
@@ -1044,7 +1037,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   overflow: hidden;
 }
-.bk-shk-avatar img { height: 62%; width: auto; object-fit: contain; }
+.bk-shk-mark { font:700 var(--ui-text-mobile)/1 var(--ui-font); color:var(--ui-ink); letter-spacing:-.06em; }
 .bk-shk-name { font-family: var(--font-display);  font-weight: 600; letter-spacing: -0.01em;  line-height: 1.25;  color: var(--ui-ink); font-size: var(--ui-text-base);}
 .bk-shk-status { display: flex; align-items: center; gap: 7px;   font-family: inherit; letter-spacing: 0; font-weight: 500; margin-top: 1px;  color: var(--ui-muted); font-size: var(--ui-text-xs);}
 /* Punto "en línea": núcleo verde con halo suave que respira */
@@ -1063,28 +1056,25 @@ body[data-app="verificador"] .top-header { display: none !important; }
   background: none; border: 1px solid var(--line-2);
   border-radius: var(--r-pill);
   padding: 5px 10px;
-  font-size: 11px; font-weight: 600; color: var(--mute);
+  font-size:var(--ui-text-xs); font-weight: 600; color: var(--mute);
   cursor: pointer; display: flex; align-items: center; gap: 4px;
   font-family: inherit; transition: color var(--dur), border-color var(--dur);
 }
 .bk-shk-wake:hover { color: var(--ink); }
 .bk-shk-wake.is-on { color: var(--forest); border-color: var(--forest); }
-.bk-shk-close {
-
-   border: none; cursor: pointer;
+.bk-shk-close { cursor: pointer;
 
   display: flex; align-items: center; justify-content: center;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
- width: var(--ui-control-small); height: var(--ui-control-small); border-radius: var(--ui-radius); background: var(--ui-surface); color: var(--ui-ink);}
-.bk-shk-close:hover {    background: var(--ui-sky); color: var(--ui-ink);}
+ width: var(--ui-control-small);}
 .bk-shk-msgs { flex: 1; overflow-y: auto; padding: 16px 16px; display: flex; flex-direction: column; gap: 10px; background: var(--paper); }
 .bk-shk-msgs::-webkit-scrollbar { width: 4px; } .bk-shk-msgs::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
 .bk-shk-bubble { max-width: 88%; padding: 11px 14px;   line-height: 1.55; letter-spacing: -0.005em; white-space: pre-wrap;  font-size: var(--ui-text-sm); border-radius: var(--ui-radius);}
 .bk-shk-bubble.bot { background: var(--paper-2); color: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 6px; align-self: flex-start; }
 .bk-shk-bubble.user {   border-bottom-right-radius: 6px; align-self: flex-end;   background: var(--ui-sky); color: var(--ui-ink); box-shadow: none;} /* AUDIT-EXEMPT-LINE */
-.bk-shk-bubble.toast { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 4px 10px; align-self: center; }
+.bk-shk-bubble.toast { background: transparent; border: none; color: var(--mute); font-size:var(--ui-text-xs); padding: 4px 10px; align-self: center; }
 /* Pasos del agente — "lo que está haciendo" en vivo */
-.bk-shk-bubble.step { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 3px 8px 3px 22px; align-self: flex-start; position: relative; opacity: 0.95; }
+.bk-shk-bubble.step { background: transparent; border: none; color: var(--mute); font-size:var(--ui-text-xs); padding: 3px 8px 3px 22px; align-self: flex-start; position: relative; opacity: 0.95; }
 .bk-shk-bubble.step::before { content: ""; position: absolute; left: 6px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border: 1.6px solid var(--ink-2); border-right-color: transparent; border-radius: 50%; animation: bkSpin 0.7s linear infinite; }
 .bk-shk-bubble.step.done { opacity: 0.6; }
 .bk-shk-bubble.step.done::before { content: ""; border: none; width: 10px; height: 10px; margin-top: -5px; animation: none; background: no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230C7A5E' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>"); }
@@ -1100,7 +1090,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-shk-chip {
   background: var(--paper); border: 1px solid var(--line-2);
   border-radius: var(--r-pill); padding: 7px 12px;
-  font-size: 12px; color: var(--ink-2); cursor: pointer; font-weight: 500;
+  font-size:var(--ui-text-xs); color: var(--ink-2); cursor: pointer; font-weight: 500;
   font-family: inherit;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
@@ -1154,14 +1144,11 @@ body[data-app="verificador"] .top-header { display: none !important; }
   flex-shrink: 0;
   position: relative;
  background: var(--ui-paper); background-image: none; padding: var(--ui-space-6); border-bottom: 1px solid var(--ui-border);}
-.bk-pd-close {
-
-   border: none; cursor: pointer;
+.bk-pd-close { cursor: pointer;
   display: flex; align-items: center; justify-content: center;
    flex-shrink: 0;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
- width: var(--ui-control-small); height: var(--ui-control-small); border-radius: var(--ui-radius); background: var(--ui-surface); color: var(--ui-ink);}
-.bk-pd-close:hover {    background: var(--ui-sky); color: var(--ui-ink);}
+ width: var(--ui-control-small);}
 .bk-pd-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
 .bk-pd-body::-webkit-scrollbar { width: 0; }
 .bk-pd-avatar-row {
@@ -1207,25 +1194,22 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-pd-field input:focus { border-color: var(--sky-blue); box-shadow: var(--focus); background: var(--bone); }
 .bk-pd-field input[readonly] { color: var(--mute); cursor: default; }
 .bk-pd-btn {
-  width: 100%; padding: 11px;
-    font-family: inherit;
-  cursor: pointer; border: none; transition: opacity .2s, transform .15s;
-  display: flex; align-items: center; justify-content: center; gap: 7px;
- min-height: var(--ui-control); border-radius: var(--ui-radius); font-size: var(--ui-text-sm); font-weight: 600;}
+  width: 100%;
+  cursor: pointer; transition: opacity .2s, transform .15s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;}
 .bk-pd-btn:hover { opacity: .9; }
 .bk-pd-btn:active { transform: scale(.98); }
-.bk-pd-btn-primary {    background: var(--ui-action); color: var(--ui-ink);}
-.bk-pd-btn-outline { background: var(--bone); border: 1px solid var(--line-2); color: var(--ink-2); margin-top: 8px; }
-.bk-pd-btn-danger  { background: var(--bone); border: 1px solid rgba(198,40,57,.3); color: var(--danger); margin-top: 8px; }
+.bk-pd-btn-outline { margin-top: 8px; }
+.bk-pd-btn-danger  { margin-top: 8px; }
 .bk-pd-status {
   display: flex; align-items: center; gap: 6px;
-  font-size: 12px; color: var(--mute); margin-top: 8px;
+  font-size:var(--ui-text-xs); color: var(--mute); margin-top: 8px;
 }
 .bk-pd-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mute-3); flex-shrink: 0; }
 .bk-pd-status .dot.ok { background: var(--success); }
 .bk-pd-status .dot.warn { background: var(--warn); }
 .bk-pd-toast {
-  padding: 9px 12px; border-radius: var(--r-sm); font-size: 12px; font-weight: 500;
+  padding: 9px 12px; border-radius: var(--r-sm); font-size:var(--ui-text-xs); font-weight: 500;
   margin-top: 8px; display: none;
 }
 .bk-pd-toast.ok   { background: var(--success-soft); color: var(--success); display: block; }
@@ -1241,7 +1225,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-pd-menu-trigger {
   width: 100%; display: flex; align-items: center; justify-content: space-between;
   padding: 10px; background: none; border: none; cursor: pointer;
-  font-family: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink);
+  font-family: inherit; font-size:var(--ui-text-sm); font-weight: 600; color: var(--ink);
   text-align: left; border-radius: var(--r);
   transition: background var(--dur) var(--ease);
 }
@@ -1283,54 +1267,14 @@ body[data-app="verificador"] .top-header { display: none !important; }
   background: var(--forest-soft); color: var(--forest);
 }
 .bk-pd-sub-badge.inactive { background: var(--bone); color: var(--mute); }
-.bk-pd-sub-info { font-size: 12px; color: var(--mute); margin: 8px 0 14px; line-height: 1.5; }
+.bk-pd-sub-info { font-size:var(--ui-text-xs); color: var(--mute); margin: 8px 0 14px; line-height: 1.5; }
 
-
-/* ── Módulos legacy: unificación visual Broquer sin cambiar lógica ── */
-body[data-app]{background:var(--paper)!important;color:var(--ink)!important;font-family:var(--font-sans)!important;letter-spacing:-.01em!important}
-body[data-app] main,body[data-app] .app-main,body[data-app] .screen,body[data-app] .container,body[data-app] .wrap{background:transparent!important}
-body[data-app] .card,body[data-app] .ui-card,body[data-app] .panel,body[data-app] .box,body[data-app] .module,body[data-app] .section,body[data-app] .pf-card,body[data-app] .res-card,body[data-app] .form-card,body[data-app] .calc-card,body[data-app] .result-card{background:var(--bone)!important;border:1px solid var(--line)!important;border-radius:var(--r-lg)!important;box-shadow:var(--shadow-xs)!important;color:var(--ink)!important}
-body[data-app] h1,body[data-app] h2,body[data-app] h3,body[data-app] .title,body[data-app] .card-title,body[data-app] .section-title{font-family:var(--font-display)!important;color:var(--ink)!important;letter-spacing:-.02em!important;font-weight:700!important}
-/* Excepción: dentro de superficies azules (tarjetas de acción, hero,
-   App Store) los títulos vuelven a blanco. Sin esto, la regla genérica
-   de arriba los pinta de tinta oscura sobre azul. */
-body[data-app] .ai-card h1,body[data-app] .ai-card h2,body[data-app] .ai-card h3,body[data-app] .ai-card .title,body[data-app] .appstore-card h1,body[data-app] .appstore-card h2,body[data-app] .appstore-card h3,body[data-app] .appstore-card .title,body[data-app] .appstore-card__title,body[data-app] .sky-hero h1,body[data-app] .sky-hero h2,body[data-app] .sky-hero h3,body[data-app] .sky-hero .title{color:var(--bone)!important}
-body[data-app] label,body[data-app] .label,body[data-app] .field-label,body[data-app] .sec-lbl{color:var(--mute)!important;font-size:11px!important;font-weight:700!important;letter-spacing:.01em!important}
-body[data-app] input,body[data-app] select,body[data-app] textarea{background:var(--bone)!important;border:1px solid var(--line-2)!important;border-radius:var(--r)!important;color:var(--ink)!important;box-shadow:none!important;min-height:44px}
-body[data-app] input:focus,body[data-app] select:focus,body[data-app] textarea:focus{border-color:var(--sky-blue)!important;box-shadow:var(--focus)!important;outline:none!important}
-body[data-app] button,body[data-app] .btn,body[data-app] .ui-btn,body[data-app] .btn-pdf,body[data-app] .isr-calc-btn{border-radius:var(--r-pill)!important;font-family:var(--font-sans)!important;font-weight:700!important;letter-spacing:-.005em!important}
-body[data-app] .btn-primary,body[data-app] .ui-btn.forest,body[data-app] .isr-calc-btn,body[data-app] .btn-pdf,body[data-app] #gen-btn,body[data-app] #pdf-btn{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important;box-shadow:0 1px 2px rgba(18,64,160,.18)!important}
-body[data-app] .btn-primary:hover,body[data-app] .ui-btn.forest:hover,body[data-app] .isr-calc-btn:hover,body[data-app] .btn-pdf:hover,body[data-app] #gen-btn:hover,body[data-app] #pdf-btn:hover{background:var(--sky-blue-press)!important;border-color:var(--sky-blue-press)!important}
-body[data-app] table{border-collapse:separate!important;border-spacing:0!important;background:var(--bone)!important;border:1px solid var(--line)!important;border-radius:var(--r)!important;overflow:hidden!important}
-body[data-app] th{background:var(--paper-2)!important;color:var(--mute)!important;font-size:11px!important;letter-spacing:.01em!important}
-body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
-/* ── Unificación del BOTÓN DE ACCIÓN PRIMARIA: azul en TODOS los módulos ──
-   El sistema tenía primarios en negro/gris/navy/azul según el módulo. Aquí se
-   fuerza el azul de acción en el botón principal de cada uno. Se dejan intactos
-   los secundarios/ghost/cancelar/eliminar y las superficies de MARCA externa
-   (verde de conectar WhatsApp, azul de conectar Facebook). Los futuros módulos
-   deben usar .btn-primary o .bk-btn--forest para heredar esto. */
-body[data-app] .btn-new-tarea,body[data-app] .tk-composer .go,body[data-app] .fa-btn-primary,body[data-app] .btn-new-prop,body[data-app] .eb-import-btn,body[data-app] .pf-save-btn,body[data-app] #ai-btn,body[data-app] #calc-btn,body[data-app] #btn-analizar-ia,body[data-app] #btn-clean,body[data-app] #fa-ai-btn,body[data-app] #fa-submit-btn,body[data-app] #tpl-submit-btn{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important;box-shadow:0 1px 2px rgba(18,64,160,.18)!important}
-body[data-app] .btn-new-tarea:hover,body[data-app] .tk-composer .go:hover,body[data-app] .fa-btn-primary:hover,body[data-app] .btn-new-prop:hover,body[data-app] .eb-import-btn:hover,body[data-app] .pf-save-btn:hover,body[data-app] #ai-btn:hover,body[data-app] #calc-btn:hover,body[data-app] #btn-analizar-ia:hover,body[data-app] #btn-clean:hover,body[data-app] #fa-ai-btn:hover,body[data-app] #fa-submit-btn:hover,body[data-app] #tpl-submit-btn:hover{background:var(--sky-blue-press)!important;border-color:var(--sky-blue-press)!important}
-/* ── Unificación de TAMAÑO/FORMA de botones de acción (misma altura 44px,
-   padding, tipo y radio píldora en todos los módulos). Se excluyen a propósito
-   tiles de selección (.tipo-btn), toggles/segmented, chips de filtro y botones
-   de icono, que tienen su propia geometría. */
-body[data-app] .btn,body[data-app] .btn-primary,body[data-app] .ui-btn,body[data-app] .fa-btn,body[data-app] .wa-btn,body[data-app] .doc-btn,body[data-app] .gen-btn,body[data-app] .add-btn,body[data-app] .import-btn,body[data-app] .btn-new-tarea,body[data-app] .tk-composer .go,body[data-app] .btn-new-prop,body[data-app] .eb-import-btn,body[data-app] .pf-save-btn,body[data-app] .isr-calc-btn,body[data-app] .btn-pdf{min-height:44px!important;padding:0 18px!important;font-size:var(--fs-sm)!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;line-height:1!important}
-/* ── Unificación del TÍTULO DE PÁGINA: mismo tamaño que el header canónico
-   (.bk-ph=30px) en los módulos que pintan su propio título ── */
-body[data-app] .props-head__title h1,body[data-app] .page-head h1,body[data-app] .tk-head__title h1,body[data-app] .ms-head h1,body[data-app] .guide-title,body[data-app] .bx-list__title h1,body[data-app] .es-hero__brand{font-size:30px!important;font-weight:700!important;letter-spacing:-.02em!important;line-height:1.1!important}
-/* ── Alineación título↔cuerpo: el header canónico respeta el ancho del módulo ── */
-body[data-app] .bk-ph{max-width:var(--page-max,1180px)!important}
-body[data-app="isr"],body[data-app="ficha-manual"],body[data-app="avm"],body[data-app="contratos"],body[data-app="mi-sitio"],body[data-app="image-cleaner"]{--page-max:var(--form-max,760px)}
-body[data-app="blog"]{--page-max:960px}
-body[data-app="facebook-ads"]{--page-max:980px}
 
 /* ── Visor/entrega inmediata de archivos generados ── */
 .bk-file-overlay{position:fixed;inset:0;z-index:2147483647;background:rgba(8,28,78,.46);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:18px}
 .bk-file-sheet{width:min(920px,100%);height:min(86vh,820px);background:var(--paper);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow-xl);display:flex;flex-direction:column;overflow:hidden}
 .bk-file-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);color:var(--ink);background:var(--paper)}
-.bk-file-head strong{display:block;font-size:15px}.bk-file-head span{display:block;font-size:12px;color:var(--mute);margin-top:2px}.bk-file-close{border:0!important;background:transparent!important;color:var(--ink)!important;font-size:28px!important;line-height:1!important;padding:4px 8px!important;box-shadow:none!important}.bk-file-frame{flex:1;width:100%;border:0;background:white}.bk-file-placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:var(--mute);background:var(--bone)}.bk-file-actions{display:flex;gap:10px;padding:12px;border-top:1px solid var(--line);background:var(--paper-2)}.bk-file-primary,.bk-file-secondary{flex:1;text-align:center;border-radius:var(--r-pill)!important;padding:12px 14px!important;font-weight:700!important;text-decoration:none!important;font-family:var(--font-sans)!important}.bk-file-primary{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important}.bk-file-secondary{background:#fff!important;color:var(--ink)!important;border:1px solid var(--line-2)!important}
+.bk-file-head strong{display:block;font-size:var(--ui-text-sm)}.bk-file-head span{display:block;font-size:var(--ui-text-xs);color:var(--mute);margin-top:2px}.bk-file-frame{flex:1;width:100%;border:0;background:white}.bk-file-placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:var(--mute);background:var(--bone)}.bk-file-actions{display:flex;gap:10px;padding:12px;border-top:1px solid var(--line);background:var(--paper-2)}.bk-file-primary,.bk-file-secondary{flex:1;text-align:center;border-radius:var(--r-pill)!important;padding:12px 14px!important;font-weight:700!important;text-decoration:none!important;font-family:var(--font-sans)!important}.bk-file-primary{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important}.bk-file-secondary{background:#fff!important;color:var(--ink)!important;border:1px solid var(--line-2)!important}
 @media(max-width:700px){.bk-file-overlay{padding:0;align-items:stretch}.bk-file-sheet{width:100%;height:100%;border-radius:0}.bk-file-actions{padding-bottom:calc(12px + env(safe-area-inset-bottom));}}
 
 `;
@@ -1376,11 +1320,21 @@ body[data-app="facebook-ads"]{--page-max:980px}
     const parts = name.trim().split(/\s+/);
     return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || 'U';
   }
+  // Copias locales de listas (Contactos/Clientes) de cualquier cuenta: se
+  // borran al salir para que otra cuenta del mismo navegador no las vea.
+  function limpiarCopiasLocales() {
+    try {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('brokr_contactos_cache') || k.startsWith('brokr_clientes_cache'))
+        .forEach(k => localStorage.removeItem(k));
+    } catch (_) {}
+  }
   function doLogout() {
     localStorage.removeItem('sb_token');
     localStorage.removeItem('sb_refresh');
     localStorage.removeItem('sb_user');
     localStorage.removeItem('sesion_activa');
+    limpiarCopiasLocales();
     sessionStorage.clear();
     location.href = 'login.html';
   }
@@ -1463,6 +1417,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
     try {
       profile = await sbFetch(`usuarios?id=eq.${user.id}&select=nombre,telefono,rol,modulos_desactivados,acceso_completo_hasta`);
     } catch (e) {}
+    await paisesListo;
+    if (window.bkPaisSesion) bkPaisSesion(profile[0] = profile[0] || {}, (await sbFetch(`usuarios?id=eq.${user.id}&select=pais`).catch(() => []))[0],
+      c => fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}`, { method: 'PATCH', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + getToken(), 'Content-Type': 'application/json' }, body: JSON.stringify({ pais: c }) }));
     const fullName = profile[0]?.nombre || user.email?.split('@')[0] || 'Usuario';
     return { user, fullName, profile: profile[0] || {}, isAdmin: profile[0]?.rol === 'admin' };
   }
@@ -1472,7 +1429,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
      ════════════════════════════════════════════════════════════════ */
   const activeKey = (document.body.getAttribute('data-app') || 'home').toLowerCase();
   // Pantallas que viven dentro de otro módulo del menú.
-  const NAV_ALIAS = { clientes: 'contactos', 'crm-ajustes': 'contactos', alertas: 'contactos' };
+  const NAV_ALIAS = { 'crm-ajustes': 'contactos', alertas: 'contactos' };
   const navKey = NAV_ALIAS[activeKey] || activeKey;
   const activeMod = MODS.find(m => m.key === activeKey) || MODS[0];
 
@@ -1487,10 +1444,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
      Ayuda, Mi perfil, Admin) — no es trabajo del día a día, así que no
      necesita estar suelto como el resto, pero visualmente es igual:
      ícono + nombre debajo. */
+  const CON_CONTADOR = ['buzon', 'clientes'];
   function buildRailIcon(m, active) {
     const on = m.key === active;
     return `<a href="${m.href}" class="bk-sb-ico${on ? ' is-active' : ''}" aria-label="${m.label}">
-      ${svg(m.icon)}${m.key === 'buzon' ? '<i class="bk-badge" id="bk-rail-buzon-badge"></i>' : ''}<span class="bk-sb-ico__label">${m.label}</span>
+      ${svg(m.icon)}${CON_CONTADOR.includes(m.key) ? `<i class="bk-badge" id="bk-rail-${m.key}-badge"></i>` : ''}<span class="bk-sb-ico__label">${m.label}</span>
     </a>`;
   }
   function buildRailItem(grupo, items, grupoActivo) {
@@ -1577,7 +1535,8 @@ body[data-app="facebook-ads"]{--page-max:980px}
     const modulosOff = new Set((profile && profile.profile && profile.profile.modulos_desactivados) || []);
 
     // "Equipo" vive en el drawer de perfil, no en el sidebar.
-    const visible = m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && !modulosOff.has(m.key);
+    const apagado = m => modulosOff.has(m.key) || (m.requiere && modulosOff.has(m.requiere));
+    const visible = m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && !apagado(m);
     const porGrupo = k => MODS.filter(m => m.group === k && visible(m));
     // Todo lo que no sea "Más" va suelto en el rail, en el orden en que ya
     // están declarados los módulos (que es el orden por momento de la
@@ -1627,7 +1586,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         <a href="index.html" ${activeKey === 'home' ? 'aria-current="page"' : ''}>Inicio</a>
         <a href="facebook-ads.html" ${modulosOff.has('facebook-ads') ? 'hidden' : ''} ${activeKey === 'facebook-ads' ? 'aria-current="page"' : ''}>Campañas</a>
         <a href="tareas.html" ${modulosOff.has('tareas') ? 'hidden' : ''} ${activeKey === 'tareas' ? 'aria-current="page"' : ''}>Agenda</a>
-        <details class="bk-tools-menu"><summary>Herramientas</summary><div class="bk-tools-menu__list">${MODS.filter(visible).map(m => `<a href="${m.href}">${svg(m.icon,18)}${m.label}${m.key === 'buzon' ? '<i class="bk-badge" id="bk-design-buzon-badge"></i>' : ''}</a>`).join('')}</div></details>
+        <details class="bk-tools-menu"><summary>Herramientas</summary><div class="bk-tools-menu__list">${MODS.filter(visible).map(m => `<a href="${m.href}">${svg(m.icon,18)}${m.label}${['buzon','clientes'].includes(m.key) ? `<i class="bk-badge" id="bk-design-${m.key}-badge"></i>` : ''}</a>`).join('')}</div></details>
       </nav>
       <div class="bk-design-utilities">
         <button class="bk-design-assistant" type="button" aria-label="Abrir Broq">${svg('mic',18)}<span>Broq</span></button>
@@ -1723,7 +1682,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         const nq = norm(input.value.trim());
         const acts = ACCIONES.filter(a => norm(a.n).includes(nq))
           .map(a => ({ n: a.n, href: a.href, grp: 'Acción', icon: 'plus' }));
-        const mods = MODS.filter(m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && !modulosOff.has(m.key) && norm(m.label).includes(nq))
+        const mods = MODS.filter(m => visible(m) && norm(m.label).includes(nq))
           .map(m => ({ n: m.label, href: m.href, grp: grupoLabel(m.group), icon: m.icon }));
         resultados = [...acts, ...mods];
         sel = 0;
@@ -1800,7 +1759,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       // Menú (hamburguesa): abre la hoja con CRM + herramientas + Mi perfil.
       `<button class="bk-bnav__item${crmActive ? ' is-active' : ''}" id="bk-bnav-crm" type="button" aria-label="Menú">${svg('homeList', 24)} <span>Menú</span></button>` +
       `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broq">
-         <img src="broq-icon.png" alt=""/> <span>Broq</span>
+         <span class="bk-shk-mark" aria-hidden="true">b.</span> <span>Broq</span>
        </button>` +
       // El acceso del pulgar entra directo a la pestaña de chats, no a la de
       // ajustes: el agente aprieta esto para leer, no para configurar.
@@ -1827,7 +1786,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     function sheetItem(m) {
       const act = m.key === navKey ? ' is-active' : '';
       const badge = m.key === 'whatsapp' ? '<i class="bk-badge" id="bk-sheet-badge"></i>'
-        : (m.key === 'buzon' ? '<i class="bk-badge" id="bk-sheet-buzon-badge"></i>' : '');
+        : (CON_CONTADOR.includes(m.key) ? `<i class="bk-badge" id="bk-sheet-${m.key}-badge"></i>` : '');
       // "Mi sitio" en móvil/iOS no abre la pantalla de configuración: abre el sitio público.
       const attrs = m.key === 'mi-sitio'
         ? `href="javascript:void(0)" onclick="bkOpenMiSitio()"`
@@ -1875,7 +1834,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     pop.setAttribute('aria-label', 'Broq — asistente');
     pop.innerHTML = `
       <div class="bk-shk-head">
-        <div class="bk-shk-avatar"><img src="broq-icon.png" alt=""/></div>
+        <div class="bk-shk-avatar"><span class="bk-shk-mark" aria-hidden="true">b.</span></div>
         <div style="flex:1;min-width:0">
           <div class="bk-shk-name">Broq</div>
           <div class="bk-shk-status">En línea</div>
@@ -2089,7 +2048,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         if (m) location.href = m.href;
         break;
       }
-      case 'llenar_isr':         stash('isr', ac);          location.href = 'isr.html'; break;
+      case 'llenar_isr':         stash('isr', ac);          location.href = (window.bkPaisCfg ? bkPaisCfg().impuesto.modulo : 'isr') + '.html'; break;
       case 'llenar_avm':
       case 'opinion_valor_web':  stash('avm', ac);          location.href = 'avm.html'; break;
       case 'llenar_contrato':    stash('contrato', ac);     location.href = 'contratos.html'; break;
@@ -2329,7 +2288,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
         operacion: operacion || 'venta',
         estatus: txt(ac.estatus) || 'activa',
         precio: num(ac.precio),
-        moneda: txt(ac.moneda) || 'MXN',
+        moneda: txt(ac.moneda) || (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN'),
         calle: txt(ac.calle),
         num_exterior: txt(ac.num_exterior),
         num_interior: txt(ac.num_interior),
@@ -2402,6 +2361,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
      iframe oculto carga isr.html?asistente=1; el blob vuelve por
      postMessage y se entrega aquí (el iframe oculto no puede). */
   async function calcularISRDirecto(ac) {
+    if (window.bkPais && bkPais() !== 'MX') return handleAccion({ ...ac, tipo: 'llenar_isr' });
     const bubble = _addAssistantBubble('Calculando ISR y preparando tu PDF…');
     try {
       if (window._asistenteISRListener) {
@@ -3047,11 +3007,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
               <span style="font-size:14px;font-weight:600;color:var(--ink);">Notificaciones</span>
             </div>
-            <button onclick="toggleNotifPanel(false)" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:18px;line-height:1;padding:2px 6px;">\u2715</button>
+            <button onclick="toggleNotifPanel(false)" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:16px;line-height:1;padding:2px 6px;">\u2715</button>
           </div>
           <div style="padding:32px 18px;text-align:center;">
             <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.25;margin:0 auto 12px;display:block;"><path d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
-            <p style="font-size:13px;color:var(--ink-3);margin:0;">Sin notificaciones por ahora</p>
+            <p style="font-size:12px;color:var(--ink-3);margin:0;">Sin notificaciones por ahora</p>
           </div>
         `;
         panel.style.cssText = "position:fixed;top:64px;right:16px;z-index:300;width:min(340px, calc(100vw - 32px));background:var(--paper);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 12px 40px rgba(22,22,22,.14),0 3px 8px rgba(22,22,22,.08);animation:bkNotifIn .18s var(--ease) both;";
@@ -3189,7 +3149,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
                     <input type="password" id="pd-pass-new2" placeholder="Repite la nueva contraseña" autocomplete="new-password"/>
                   </div>
                   <button class="bk-pd-btn bk-pd-btn-primary" id="pd-pass-btn" onclick="changePasswordFromProfile()">Actualizar contraseña</button>
-                  <div style="font-size:11px;color:var(--mute);margin-top:8px;line-height:1.4">Al actualizarla, cerraremos tu sesión en todos los demás dispositivos por seguridad. Esta sesión seguirá activa.</div>
+                  <div style="font-size:12px;color:var(--mute);margin-top:8px;line-height:1.4">Al actualizarla, cerraremos tu sesión en todos los demás dispositivos por seguridad. Esta sesión seguirá activa.</div>
                   <div class="bk-pd-toast" id="pd-toast-pass"></div>
                 </div>
               </div>
@@ -3218,7 +3178,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
                   <div class="bk-pd-field" style="margin-top:12px">
                     <label>API Key de EasyBroker</label>
                     <input type="text" id="pd-input-ebkey" placeholder="Pega tu API key aquí" autocomplete="off" autocorrect="off" spellcheck="false"/>
-                    <div style="font-size:11px;color:var(--mute);margin-top:5px;line-height:1.4">Encuéntrala en EasyBroker → Configuración → API.</div>
+                    <div style="font-size:12px;color:var(--mute);margin-top:5px;line-height:1.4">Encuéntrala en EasyBroker → Configuración → API.</div>
                   </div>
                   <button class="bk-pd-btn bk-pd-btn-primary" onclick="saveEbKey()">Conectar EasyBroker</button>
                   <button class="bk-pd-btn bk-pd-btn-outline" id="pd-eb-disconnect-btn" onclick="disconnectEbKey()" style="margin-top:8px;display:none">Desconectar EasyBroker</button>
@@ -3323,7 +3283,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
             <div class="bk-pd-menu-panel">
               <div class="bk-pd-menu-panel-inner">
                 <div class="bk-pd-card">
-                  <p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:12px">Esta acción elimina de forma permanente tu cuenta y todos tus datos (propiedades, contactos, contratos e integraciones). No se puede deshacer.</p>
+                  <p style="font-size:12px;color:var(--mute);line-height:1.5;margin-bottom:12px">Esta acción elimina de forma permanente tu cuenta y todos tus datos (propiedades, contactos, contratos e integraciones). No se puede deshacer.</p>
                   <div class="bk-pd-field">
                     <label>Para confirmar, escribe tu correo</label>
                     <input type="email" id="pd-del-input" placeholder="tu@correo.com" autocomplete="off" autocorrect="off" spellcheck="false" oninput="checkDeleteMatch()"/>
@@ -3351,7 +3311,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
             <div class="bk-pd-menu-panel">
               <div class="bk-pd-menu-panel-inner">
                 <div class="bk-pd-card">
-                  <p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:12px">Quién trabaja en tu cuenta, qué puede ver cada quien e invitaciones pendientes.</p>
+                  <p style="font-size:12px;color:var(--mute);line-height:1.5;margin-bottom:12px">Quién trabaja en tu cuenta, qué puede ver cada quien e invitaciones pendientes.</p>
                   <a href="equipo.html" style="text-decoration:none">
                     <button class="bk-pd-btn bk-pd-btn-outline" style="width:100%">Administrar equipo</button>
                   </a>
@@ -3372,7 +3332,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
             <div class="bk-pd-menu-panel">
               <div class="bk-pd-menu-panel-inner">
                 <div class="bk-pd-card">
-                  <p style="font-size:13px;color:var(--mute);margin-bottom:12px">Tienes acceso al panel de administrador.</p>
+                  <p style="font-size:12px;color:var(--mute);margin-bottom:12px">Tienes acceso al panel de administrador.</p>
                   <a href="admin.html" style="text-decoration:none">
                     <button class="bk-pd-btn bk-pd-btn-outline" style="width:100%">Ir al panel admin</button>
                   </a>
@@ -3778,6 +3738,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       localStorage.removeItem('sb_refresh');
       localStorage.removeItem('sb_user');
       localStorage.removeItem('sesion_activa');
+      limpiarCopiasLocales();
       sessionStorage.clear();
       setTimeout(() => { location.href = 'login.html'; }, 1800);
     } catch (e) {
@@ -3952,9 +3913,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
         modal.style.cssText = 'background:var(--bone);border:1px solid var(--line-2);border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(22,22,22,.18)';
         modal.innerHTML = `
           <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;letter-spacing:-.01em">Selecciona tu página</div>
-          <div style="font-size:13px;color:var(--mute);margin-bottom:18px;line-height:1.5">Tienes varias páginas de Facebook. Elige con cuál quieres usar Broquer.</div>
+          <div style="font-size:12px;color:var(--mute);margin-bottom:18px;line-height:1.5">Tienes varias páginas de Facebook. Elige con cuál quieres usar Broquer.</div>
           <div id="_fb-page-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"></div>
-          <button id="_fb-cancel-btn" style="width:100%;background:transparent;border:1px solid var(--line-2);border-radius:10px;padding:10px;font-size:13px;font-family:var(--font-sans);color:var(--mute);cursor:pointer">Cancelar</button>
+          <button id="_fb-cancel-btn" style="width:100%;background:transparent;border:1px solid var(--line-2);border-radius:10px;padding:10px;font-size:12px;font-family:var(--font-sans);color:var(--mute);cursor:pointer">Cancelar</button>
         `;
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
@@ -4128,22 +4089,22 @@ body[data-app="facebook-ads"]{--page-max:980px}
     if (document.getElementById('bk-max-modal')) return;
     const buyBtn = IS_IOS_NATIVE
       ? `<button id="bk-iap-buy" onclick="rcBuy()" disabled style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Cargando…</button>
-         <button id="bk-iap-restore" onclick="rcRestore()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:12px;background:transparent;color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px;font-family:inherit;">Restaurar compras</button>`
+         <button id="bk-iap-restore" onclick="rcRestore()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:12px;background:transparent;color:var(--ink);font-weight:600;font-size:12px;cursor:pointer;margin-top:10px;font-family:inherit;">Restaurar compras</button>`
       : `<button id="bk-gate-sub-btn" onclick="startSubscriptionCheckoutFromGate()" style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Suscribirme a Broquer Max</button>`;
     const legal = IS_IOS_NATIVE
-      ? `<div style="margin-top:14px;font-size:11px;color:var(--mute);line-height:1.5;">Broquer Max es una suscripción mensual: el pago se cobra a tu cuenta de Apple al confirmar y se renueva automáticamente cada mes, salvo que la canceles desde Ajustes de iOS al menos 24 h antes del fin del periodo. Al continuar aceptas los <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Términos de uso</a> y el <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Aviso de Privacidad</a>.</div>`
+      ? `<div style="margin-top:14px;font-size:12px;color:var(--mute);line-height:1.5;">Broquer Max es una suscripción mensual: el pago se cobra a tu cuenta de Apple al confirmar y se renueva automáticamente cada mes, salvo que la canceles desde Ajustes de iOS al menos 24 h antes del fin del periodo. Al continuar aceptas los <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Términos de uso</a> y el <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Aviso de Privacidad</a>.</div>`
       : '';
     const ov = document.createElement('div');
     ov.id = 'bk-max-modal';
     ov.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(8,28,78,.46);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:var(--font-sans);';
     ov.innerHTML = `
       <div style="width:100%;max-width:400px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(5,32,60,.30);text-align:center;position:relative;">
-        <button onclick="closeBroquerMaxModal()" aria-label="Cerrar" style="position:absolute;top:12px;right:14px;border:none;background:transparent;color:var(--mute);font-size:26px;line-height:1;cursor:pointer;padding:4px 8px;font-family:inherit;">&times;</button>
+        <button onclick="closeBroquerMaxModal()" aria-label="Cerrar" style="position:absolute;top:12px;right:14px;border:none;background:transparent;color:var(--mute);font-size:24px;line-height:1;cursor:pointer;padding:4px 8px;font-family:inherit;">&times;</button>
         <img src="isotipo-black.png" alt="Broquer" style="width:52px;height:52px;object-fit:contain;margin-bottom:14px;"/>
         <h2 style="font-family:var(--font-display);font-size:24px;line-height:1.1;margin:0 0 10px;color:var(--ink);letter-spacing:-.02em;">Broquer Max</h2>
         <p style="color:var(--mute);font-size:14px;line-height:1.55;margin:0 0 20px;">Para hacer uso de estos módulos exclusivos de Broquer por favor suscríbete a Broquer Max.</p>
         ${buyBtn}
-        <button onclick="closeBroquerMaxModal()" style="width:100%;height:40px;border:none;background:transparent;color:var(--mute);font-weight:600;font-size:13px;cursor:pointer;margin-top:8px;font-family:inherit;">Ahora no</button>
+        <button onclick="closeBroquerMaxModal()" style="width:100%;height:40px;border:none;background:transparent;color:var(--mute);font-weight:600;font-size:12px;cursor:pointer;margin-top:8px;font-family:inherit;">Ahora no</button>
         <div id="bk-gate-msg" style="margin-top:8px;font-size:12px;color:var(--danger);min-height:18px;"></div>
         ${legal}
       </div>`;
@@ -4167,10 +4128,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
   // agregar un gate aquí sin confirmarlo primero con el dueño del producto.
   const BK_PREMIUM_ACTIONS = {
     'isr.html':            ['#calc-btn'],
+    'impuestos.html':      ['#imp-calc'],
     'avm.html':            ['#btn-analizar-ia'],
     'image-cleaner.html':  ['#btn-clean'],
     'contratos.html':      ['#gen-btn'],
-    'ficha-manual.html':   ['#ai-btn', '#pdf-btn'],
+    'ficha-manual.html':   ['#ai-btn', '#gen-ficha-btn', '#pdf-btn'],
     'facebook-ads.html':   ['#fa-ai-btn', '#fa-submit-btn'],
     'whatsapp.html':       ['#wa-connect-btn', '#tpl-submit-btn'],
   };
@@ -4300,8 +4262,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // por URL directa.
     const modulosOffBoot = (profile.profile && profile.profile.modulos_desactivados) || [];
     if (activeKey !== 'home' && modulosOffBoot.includes(activeKey)) {
-      alert('Un administrador desactivó este módulo para tu cuenta.');
-      location.href = 'index.html';
+      const alt = window.bkPaisAlterno && bkPaisAlterno(activeKey);
+      if (!alt) alert('Un administrador desactivó este módulo para tu cuenta.');
+      location.href = alt || 'index.html';
       return;
     }
 
@@ -4554,7 +4517,9 @@ body[data-app="facebook-ads"]{--page-max:980px}
     // ─── Mensajes de WhatsApp sin leer: globito + notificación ────
     // WhatsApp ya está abierto para todos: todo agente sondea sus no leídos.
     setupChatsBadge(profile);
-    setupBuzonBadge(profile);
+    setupContador(profile, 'buzon', '/buzon/contador', 'sin_atender', 'Buzón', 'Entró un lead nuevo.', 'buzon');
+    setupContador(profile, 'clientes', '/supervision/contador', 'pendientes', 'Supervisión',
+      'Tienes un comentario urgente de supervisión.', 'supervision');
 
     // ─── Cita nueva agendada por la IA de WhatsApp: aviso inmediato (web) ──
     setupCitasNotify(profile);
@@ -4672,27 +4637,28 @@ body[data-app="facebook-ads"]{--page-max:980px}
     window.addEventListener('brokr-chats-leidos', tick);
   }
 
-  /* Buzón: contador de leads "sin atender" en el menú + aviso web cuando
-     entra uno nuevo (en iOS el aviso real es el push de asignación). */
-  function setupBuzonBadge(profile) {
+  /* Contador en el menú + aviso web cuando sube (en iOS el aviso real es
+     el push). Buzón: leads sin atender. Clientes: comentarios urgentes de
+     supervisión que me toca atender (routers/supervision.py). */
+  function setupContador(profile, key, ruta, campo, titulo, cuerpo, evento) {
     if (!profile?.user?.id) return;
     let prev = null;
     async function tick() {
       let n = 0;
       try {
-        const r = await fetch(API_BASE + '/buzon/contador', { headers: { Authorization: 'Bearer ' + getToken() } });
-        if (r.ok) n = Number((await r.json()).sin_atender) || 0;
+        const r = await fetch(API_BASE + ruta, { headers: { Authorization: 'Bearer ' + getToken() } });
+        if (r.ok) n = Number((await r.json())[campo]) || 0;
       } catch (e) { return; }
-      ['bk-rail-buzon-badge', 'bk-sheet-buzon-badge', 'bk-design-buzon-badge'].forEach(id => {
+      [`bk-rail-${key}-badge`, `bk-sheet-${key}-badge`, `bk-design-${key}-badge`].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.textContent = n > 99 ? '99+' : String(n); el.classList.toggle('is-on', n > 0); }
       });
-      window.dispatchEvent(new CustomEvent('brokr-buzon-contador', { detail: n }));
-      if (prev !== null && n > prev && activeKey !== 'buzon' && !IS_IOS_NATIVE) {
+      window.dispatchEvent(new CustomEvent(`brokr-${evento}-contador`, { detail: n }));
+      if (prev !== null && n > prev && activeKey !== key && !IS_IOS_NATIVE) {
         try {
           if ('Notification' in window && Notification.permission === 'granted') {
-            const no = new Notification('Broquer · Buzón', { body: 'Entró un lead nuevo.', icon: 'icon-192.png', tag: 'broquer-buzon' });
-            no.onclick = () => { window.focus(); location.href = 'buzon.html'; };
+            const no = new Notification('Broquer · ' + titulo, { body: cuerpo, icon: 'icon-192.png', tag: 'broquer-' + key });
+            no.onclick = () => { window.focus(); location.href = key + '.html'; };
           }
         } catch (e) {}
       }
@@ -4700,7 +4666,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     }
     tick();
     setInterval(() => { if (!document.hidden) tick(); }, 45000);
-    window.addEventListener('brokr-buzon-cambio', tick);
+    window.addEventListener(`brokr-${evento}-cambio`, tick);
   }
 
   function _avisoWeb(nuevos) {

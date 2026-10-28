@@ -45,7 +45,7 @@ function catalog(admin, empty) {
           if(mode==='error') return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({detail:'Servicio QA temporalmente no disponible <script>invalid</script>'})});
         }
         const empty=mode==='empty';
-        if (u.pathname.includes('/rest/v1/usuarios')) data=[{nombre:'Alex QA',rol:role,modulos_desactivados:[]}];
+        if (u.pathname.includes('/rest/v1/usuarios')) data=[{nombre:'Alex QA',pais:'MX',rol:role,modulos_desactivados:[]}];
         else if(path==='/subscription/status') data={activa:true,active:true,plan:'max'};
         else if(path==='/org') data={tiene_org:true,es_admin:role==='admin'};
         else if(path==='/org/miembros') data={miembros:[{user_id:userId,nombre:'Alex QA',activo:true},{user_id:'otro-qa',nombre:'Agente QA',activo:true}]};

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Broquer para Empresas — hablemos de tu equipo</title>
+<title>Empresas · Broquer</title>
 <meta name="description" content="Broquer Max para cada agente de tu equipo: mismo inventario, permisos que tú decides y tus contactos siempre tuyos. Escríbenos y armamos un plan a la medida."/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
@@ -22,23 +22,20 @@ body { color: var(--ink); font-family: var(--font-sans); letter-spacing: -0.01em
 @media (max-width: 720px) { .em-wrap { padding: 0 16px; } }
 
 /* ── Nav ─────────────────────────────────────────────────── */
-.em-nav { position: sticky; top: 0; z-index: var(--z-nav); background: var(--sky-navy); border-bottom: 1px solid rgba(255,255,255,.10); }
+.em-nav { position: sticky; top: 0; z-index: var(--z-nav); background: var(--ui-paper); border-bottom: 1px solid rgba(255,255,255,.10); }
 .em-nav__in { max-width: 1080px; margin: 0 auto; padding: 0 28px; height: 78px; display: flex; align-items: center; gap: 24px; }
 .em-nav__logo img { height: 52px; width: auto; display: block; }
 .em-nav__cta { display: flex; gap: 10px; align-items: center; margin-left: auto; }
-.em-btn-ghost {
-  color: var(--bone); text-decoration: none; font-size: var(--fs-sm); font-weight: 700;
-  padding: 9px 16px; border: 1px solid rgba(255,255,255,.35); border-radius: var(--r-pill);
+.em-btn-ghost { text-decoration: none;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.em-btn-ghost:hover { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.6); }
 @media (max-width: 720px) { .em-nav__in { padding: 0 16px; height: 68px; } .em-nav__logo img { height: 42px; } }
 
 /* ── Hero ────────────────────────────────────────────────── */
-.em-hero { background: var(--sky-navy); color: var(--bone); padding: var(--sp-16) 0 var(--sp-20); }
-.em-hero__eyebrow { font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em; color: var(--sky-blue-on-dark); margin-bottom: var(--sp-3); }
+.em-hero { background: var(--ui-paper); color: var(--ui-ink); padding: var(--sp-16) 0 var(--sp-20); }
+.em-hero__eyebrow { font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em; color: var(--ui-muted); margin-bottom: var(--sp-3); }
 .em-hero h1 { font-family: var(--font-display); font-size: var(--fs-display); font-weight: 700; letter-spacing: -0.035em; line-height: var(--lh-tight); margin: 0; max-width: 720px; }
-.em-hero p { font-size: var(--fs-body-lg); line-height: var(--lh); color: rgba(255,255,255,.78); max-width: 620px; margin: var(--sp-4) 0 0; }
+.em-hero p { font-size: var(--fs-body-lg); line-height: var(--lh); color: var(--ui-muted); max-width: 620px; margin: var(--sp-4) 0 0; }
 @media (max-width: 720px) { .em-hero { padding: var(--sp-10) 0 var(--sp-12); } .em-hero h1 { font-size: var(--fs-h1); } .em-hero p { font-size: var(--fs-body); } }
 
 /* ── Cuerpo ──────────────────────────────────────────────── */
@@ -66,17 +63,12 @@ body { color: var(--ink); font-family: var(--font-sans); letter-spacing: -0.01em
 
 /* ── Botones ─────────────────────────────────────────────── */
 .em-btn {
-  width: 100%; min-height: var(--h); margin-top: var(--sp-6);
+  width: 100%; margin-top: var(--sp-6);
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
-  border: 1px solid var(--sky-blue); background: var(--sky-blue); color: var(--bone);
-  border-radius: var(--r-pill); font-family: inherit; font-size: var(--fs-sm); font-weight: 700;
   cursor: pointer; text-decoration: none;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.em-btn:hover { background: var(--sky-blue-press); border-color: var(--sky-blue-press); }
 .em-btn:disabled { opacity: .55; cursor: not-allowed; }
-.em-btn--ghost { background: var(--paper); color: var(--ink); border-color: var(--line-2); }
-.em-btn--ghost:hover { background: var(--paper-2); border-color: var(--line-3); }
 .em-nota { font-size: var(--fs-xs); color: var(--mute); line-height: var(--lh); margin-top: var(--sp-3); text-align: center; }
 
 /* ── Avisos ──────────────────────────────────────────────── */
@@ -103,21 +95,29 @@ body { color: var(--ink); font-family: var(--font-sans); letter-spacing: -0.01em
 .em-kpi span { display: block; font-size: var(--fs-caption); color: var(--mute); margin-top: var(--sp-1); }
 
 /* ── Footer ──────────────────────────────────────────────── */
-.em-foot { background: var(--sky-navy); color: rgba(255,255,255,.7); padding: var(--sp-8) 0; font-size: var(--fs-xs); }
+.em-foot { background: var(--ui-paper); color: var(--ui-muted); padding: var(--sp-8) 0; font-size: var(--fs-xs); }
 .em-foot__in { max-width: 1080px; margin: 0 auto; padding: 0 28px; display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: center; }
 .em-foot a { color: rgba(255,255,255,.85); text-decoration: none; font-weight: 600; }
-.em-foot a:hover { color: var(--bone); }
+.em-foot a:hover { color: var(--ui-ink); }
 @media (max-width: 720px) { .em-foot__in { padding: 0 16px; } }
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body>
 
 <nav class="em-nav">
   <div class="em-nav__in">
     <a class="em-nav__logo" href="landing.html" aria-label="Broquer">
-      <img src="logotipo-white.png" alt="Broquer"/>
+      <img src="logotipo-black.png" alt="Broquer"/>
     </a>
     <div class="em-nav__cta">
       <a class="em-btn-ghost" href="landing.html#precios">Ver todos los planes</a>

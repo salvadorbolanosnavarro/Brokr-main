@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Broquer — Firma electrónica</title>
+<title>Firma electrónica · Broquer</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -127,12 +127,9 @@
   .fr-lista-vista.is-oculto { display: none; }
 
   .fr-volver {
-    display: inline-flex; align-items: center; gap: var(--sp-2);
-    font-size: var(--fs-sm); font-weight: 600; color: var(--mute);
-    background: none; border: 0; cursor: pointer; padding: 0;
+    display: inline-flex; align-items: center; gap: var(--sp-2); cursor: pointer;
     margin-bottom: var(--sp-5);
   }
-  .fr-volver:hover { color: var(--ink); }
 
   .fr-det__hd {
     display: flex; gap: var(--sp-5); align-items: flex-start;
@@ -262,15 +259,9 @@
     margin-bottom: var(--sp-4);
   }
   .fr-pluma {
-    display: inline-flex; align-items: center; gap: var(--sp-2);
-    font-size: var(--fs-label-3); font-weight: 700;
-    background: var(--paper); color: var(--ink-2);
-    border: 1px solid var(--line-3); border-radius: var(--r-pill);
-    padding: var(--sp-2) var(--sp-4); cursor: pointer;
+    display: inline-flex; align-items: center; gap: var(--sp-2); cursor: pointer;
     transition: all var(--dur) var(--ease);
   }
-  .fr-pluma:hover { border-color: var(--sky-blue); }
-  .fr-pluma.is-active { background: var(--sky-navy); color: #fff; border-color: var(--sky-navy); }
   .fr-pluma__pt { width: 8px; height: 8px; border-radius: 50%; background: var(--sky-blue); }
 
   .fr-hojas { display: flex; flex-direction: column; gap: var(--sp-5); }
@@ -341,6 +332,14 @@
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="firmas">
 
@@ -363,6 +362,9 @@
       <button class="bk-btn bk-btn--forest" type="button" id="fr-nuevo">Nuevo documento</button>
       <span class="bk-badge fr-oculto" id="fr-max">Broquer Max</span>
     </div>
+
+    <!-- Alcance de la firma electrónica en el país de la cuenta (Perú y Argentina). -->
+    <div class="bk-alert bk-alert--info fr-oculto" id="fr-ley-pais" style="margin-bottom:var(--sp-6);"></div>
 
     <div class="bk-metric-grid" style="margin-bottom:var(--sp-6);">
       <div class="bk-metric">
@@ -1224,7 +1226,8 @@
       // NOM-151 es un sello adicional y opcional de un PSC, aparte de la
       // firma electrónica reforzada que ya es válida por sí sola. Solo
       // aplica sobre un documento ya completo y con su PDF final armado.
-      if (d.estado === 'completo' && d.firmado_ruta) {
+      // NOM-151 es una norma mexicana: fuera de México no se ofrece.
+      if (d.estado === 'completo' && d.firmado_ruta && (!window.bkPais || bkPais() === 'MX')) {
         if (d.nom151_folio) {
           b.push('<button class="bk-btn bk-btn--ghost" type="button" id="fr-a-nom151-ver">Ver constancia NOM-151</button>');
         } else {
@@ -1908,6 +1911,29 @@
 })();
 </script>
 
+<script>
+/* La firma electrónica vale en los cinco países, pero en Perú y Argentina
+   tiene límites que el asesor debe conocer antes de mandar a firma. */
+(function () {
+  var AVISOS = {
+    PE: 'En Perú esta firma electrónica es válida para arrendamientos, exclusivas y cartas de intención, ' +
+        'pero no sustituye el Formulario Único de Arrendamiento (FUA) ni la escritura pública que exige el ' +
+        'desalojo notarial de la Ley 30933. Si quieres esa vía, firma el arrendamiento en FUA o ante notario.',
+    AR: 'En Argentina esta es una firma electrónica, no una firma digital certificada: si la otra parte la ' +
+        'desconoce, hay que probar que es suya (la constancia de Broquer sirve como prueba). Para boletos de ' +
+        'compraventa y operaciones de monto alto conviene firma digital o firma ológrafa.',
+  };
+  function pintar() {
+    var el = document.getElementById('fr-ley-pais');
+    var t = AVISOS[window.bkPais ? bkPais() : 'MX'];
+    if (!el) return;
+    el.textContent = t || '';
+    el.classList.toggle('fr-oculto', !t);
+  }
+  document.addEventListener('bk:pais', pintar);
+  if (window.__BK_PAIS) pintar();
+})();
+</script>
 <script src="app-shell.js" defer></script>
 </body>
 </html>

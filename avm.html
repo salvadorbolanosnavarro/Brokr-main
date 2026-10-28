@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-  <title>Broquer — AVM</title>
+  <title>Estimación de valor · Broquer</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -19,9 +19,8 @@
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { font-family: var(--font-sans); background: var(--paper); color: var(--ink); }
-    input, select, textarea { font-size: max(16px, 1em) !important; font-family: var(--font-sans); }
     input[type=number]::-webkit-inner-spin-button,
-    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number]::-webkit-outer-spin-button { margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
 
     .avm-header {
@@ -51,7 +50,7 @@
       background: none; border: none; border-bottom: 2px solid transparent;
       cursor: pointer; white-space: nowrap; text-align: center; transition: color 0.2s;
     }
-    .avm-tab.active { color: var(--bone); border-bottom-color: var(--bone); font-weight: 700; }
+    .avm-tab.active { color: var(--bone); border-bottom-color: var(--bone); font-weight: 600; }
 
     .avm-body { padding: 16px 16px 80px; }
 
@@ -68,17 +67,12 @@
     }
 
     .tipo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    .tipo-btn {
-      border-radius: var(--r); border: 1.5px solid var(--gray-200);
-      background: var(--paper-2); padding: 10px 4px;
-      font-size: var(--fs-caption); font-weight: 600; color: var(--mute);
-      font-family: var(--font-sans); cursor: pointer;
+    .tipo-btn { cursor: pointer;
       text-align: center; transition: all 0.15s;
       display: flex; flex-direction: column; align-items: center; gap: 4px;
     }
     .tipo-btn .tipo-icon { font-size: var(--fs-h3); }
     .tipo-btn:active { transform: scale(0.95); }
-    .tipo-btn.selected { border-color: var(--sky-blue); background: var(--forest-soft); color: var(--sky-blue-press); font-weight: 700; }
 
     .field-row { display: flex; gap: 10px; margin-bottom: 10px; }
     .field-row:last-child { margin-bottom: 0; }
@@ -89,28 +83,18 @@
       margin-bottom: 5px; display: block;
     }
     .field input, .field select {
-      width: 100%; padding: 9px 11px; font-size: var(--fs-sm) !important;
-      background: var(--paper-2); border: 1px solid var(--line);
-      border-radius: var(--r); color: var(--ink); outline: none; transition: border-color 0.2s;
+      width: 100%; color: var(--ink); outline: none; transition: border-color 0.2s;
     }
-    .field input:focus, .field select:focus { border-color: var(--sky-blue); background: white; }
     .field input::placeholder { color: var(--gray-400); }
 
     .btn-primary {
-      width: 100%; padding: 14px 20px; background: var(--sky-navy); color: white;
-      border: none; border-radius: var(--r-pill); font-size: var(--fs-sm); font-weight: 700;
-      font-family: var(--font-sans); cursor: pointer;
+      width: 100%; cursor: pointer;
       transition: opacity 0.2s, transform 0.15s;
       display: flex; align-items: center; justify-content: center; gap: 8px;
     }
     .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
-    .btn-primary.teal { background: var(--sky-blue); }
-    .btn-primary.outline { background: transparent; color: var(--mute); border: 1px solid var(--gray-200); }
-    .btn-sm {
-      padding: 7px 13px; border-radius: var(--r-sm); font-size: var(--fs-caption); font-weight: 600;
-      font-family: var(--font-sans); cursor: pointer; border: none;
+    .btn-sm { cursor: pointer;
     }
-    .btn-sm.danger { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger-soft); }
 
     .comp-auto-card {
       border-radius: var(--r); border: 1.5px solid var(--gray-200);
@@ -220,8 +204,7 @@
       font-size: var(--fs-sm); font-weight: 600; color: var(--sky-blue-press);
     }
     .colonia-selected button {
-      margin-left: auto; background: none; border: none;
-      color: var(--gray-400); font-size: var(--fs-body); cursor: pointer; padding: 0;
+      margin-left: auto; cursor: pointer;
     }
 
     /* ── IA WEB TAB ── */
@@ -252,9 +235,7 @@
     .factor-nombre { font-weight: 600; color: var(--ink); flex: 1; }
     .factor-desc { color: var(--mute); font-size: var(--fs-caption); margin-top: 2px; }
     .btn-pdf {
-      width: 100%; padding: 14px 20px; background: var(--sky-blue); color: white;
-      border: none; border-radius: var(--r-pill); font-size: var(--fs-sm); font-weight: 700;
-      font-family: var(--font-sans); cursor: pointer;
+      width: 100%; cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 8px;
       transition: opacity 0.2s, transform 0.15s;
     }
@@ -267,8 +248,7 @@
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
     .ia-pulse { animation: pulse 1.5s ease-in-out infinite; }
     .toggle-opt { display: flex; background: var(--paper-2); border-radius: var(--r-sm); padding: 3px; margin-bottom: 10px; }
-    .toggle-btn { flex: 1; padding: 7px 4px; font-size: var(--fs-caption); font-weight: 600; font-family: var(--font-sans); border: none; border-radius: var(--r-sm); cursor: pointer; color: var(--mute); background: transparent; transition: all 0.15s; }
-    .toggle-btn.active { background: white; color: var(--sky-blue-press); box-shadow: var(--shadow-xs); }
+    .toggle-btn { flex: 1; cursor: pointer; transition: all 0.15s; }
 
     /* ── OPINIÓN EDITABLE ── */
     .opinion-page { background: white; max-width: var(--page-max, 760px); margin: 0 auto 20px; padding: 28px; border-radius: var(--r-lg); border: 1px solid var(--line); box-shadow: var(--shadow-sm); }
@@ -315,10 +295,8 @@
     .opinion-firma { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 6px; }
     .opinion-firma-label { font-size: var(--fs-caption); color: var(--gray-400);  letter-spacing: 0.5px; margin-bottom: 4px; }
     .btn-print {
-      display: flex; align-items: center; gap: 8px; padding: 12px 20px;
-      background: var(--sky-navy); color: white; border: none; border-radius: var(--r-pill);
-      font-size: var(--fs-sm); font-weight: 700; font-family: var(--font-sans);
-      cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; transition: opacity 0.15s;
     }
     .btn-print:active { opacity: 0.85; }
     @media print {
@@ -365,7 +343,7 @@
 .avm-tab.active {
   color: var(--ink);
   border-bottom-color: var(--sky-blue);
-  font-weight: 700;
+  font-weight: 600;
 }
 .avm-body {
   padding: 24px 24px 80px;
@@ -389,9 +367,6 @@ html, body {
   letter-spacing: -0.005em !important;
 }
 * { font-family: inherit !important; }
-input, select, textarea, button {
-  font-family: var(--font-sans) !important;
-}
 /* Una sola tipografía en todo el sitio: DM Sans, nunca serif */
 [class*="ttl"], [class*="title"], h1, h2, h3,
 .cover-precio, .cover-desc-ttl, .gallery-header h2, .chars-header h2,
@@ -406,22 +381,11 @@ input, select, textarea, button {
   letter-spacing: 0.03em !important;
 }
 /* Buttons get the new pill treatment — siempre ink, el azul es solo acento */
-.gen-btn, .btn-primary, .ui-btn, .btn-new-prop, .btn-pdf, .btn-print {
-  background: var(--forest) !important;
-  border-radius: var(--r-pill) !important;
-  letter-spacing: -0.005em !important;
-  font-weight: 700 !important;
-}
 /* Inputs warmed */
 input, select, textarea {
-  background: var(--bone) !important;
-  border: 1px solid var(--paper-2) !important;
-  border-radius: var(--r) !important;
   color: var(--ink) !important;
 }
 input:focus, select:focus, textarea:focus {
-  border-color: var(--ink) !important;
-  background: var(--bone) !important;
   outline: none !important;
 }
 /* Cards */
@@ -476,7 +440,6 @@ input:focus, select:focus, textarea:focus {
   margin:0 auto !important;
   padding:var(--sp-6) var(--pad-x) var(--sp-20) !important;
 }
-.btn-primary { background:var(--sky-blue) !important; }
 @media (max-width:720px) {
   .avm-header { padding:var(--sp-4) var(--pad-x) var(--sp-2) !important; }
   .avm-title { font-size:var(--fs-h3) !important; }
@@ -486,6 +449,14 @@ input:focus, select:focus, textarea:focus {
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="avm">
 
@@ -520,7 +491,7 @@ input:focus, select:focus, textarea:focus {
       edificio:     { terreno: true,  construccion: true,  recamaras: false, banos: false, estac: true,  nivel: false, unidades: true,  edad: true  },
     };
 
-    const fmt = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
+    const fmt = (n) => window.bkDinero ? bkDinero(n) : "$" + Math.round(n || 0).toLocaleString("es-MX");
     const pf  = (v) => parseFloat(v) || 0;
 
     function rossHeidecke(edad, vidaUtil, conservacion) {
@@ -620,7 +591,7 @@ input:focus, select:focus, textarea:focus {
         timerRef.current = setTimeout(async () => {
           setBuscando(true);
           try {
-            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(txt)}&ciudad=${encodeURIComponent(ciudad || "")}`);
+            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(txt)}&ciudad=${encodeURIComponent(ciudad || "")}&pais=${window.bkPais ? bkPais() : 'MX'}`);
             const d = await r.json();
             setSugerencias(d.colonias || []);
             setAbierto(true);
@@ -698,7 +669,7 @@ input:focus, select:focus, textarea:focus {
         timerRef.current = setTimeout(async () => {
           setBuscando(true);
           try {
-            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(v)}`);
+            const r = await fetch(`${API}/api/colonias?texto=${encodeURIComponent(v)}&pais=${window.bkPais ? bkPais() : 'MX'}`);
             const d = await r.json();
             setSugerencias(d.colonias || []);
             setAbierto(true);
@@ -851,7 +822,7 @@ input:focus, select:focus, textarea:focus {
         } finally { setPdfLoading(false); }
       };
 
-      const fmtMXN = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
+      const fmtMXN = (n) => window.bkDinero ? bkDinero(n, bkPaisCfg().monedaAvm) : "$" + Math.round(n || 0).toLocaleString("es-MX");
       const confClass = (c) => c === "alta" ? "ia-conf alta" : c === "media" ? "ia-conf media" : "ia-conf baja";
       const dotColor = (imp) => imp === "positivo" ? "var(--success)" : imp === "negativo" ? "var(--danger)" : "var(--gray-400)";
 
@@ -967,7 +938,7 @@ input:focus, select:focus, textarea:focus {
               <source src="animacion-broquer.mp4" type="video/mp4" />
             </video>
             <div style={{ fontSize:15, fontWeight:700, color:"var(--ink)", marginBottom:6 }}>Buscando comparables</div>
-            <div className="ia-loading-sub">Consultando Lamudi, Vivanuncios, Inmuebles24</div>
+            <div className="ia-loading-sub">Consultando {window.bkPaisCfg ? bkPaisCfg().portales.join(", ") : "Lamudi, Vivanuncios, Inmuebles24"}</div>
             <div className="ia-loading-sub" style={{ marginTop: 4 }}>Esto puede tomar algunos minutos</div>
           </div>
         </div>
@@ -975,7 +946,7 @@ input:focus, select:focus, textarea:focus {
 
       // ── ESTADO: RESULTADO ──
       if (estado === "result" && resultado) {
-        const fmtMXN2 = (n) => "$" + Math.round(n || 0).toLocaleString("es-MX");
+        const fmtMXN2 = (n) => window.bkDinero ? bkDinero(n, (resultado && resultado.moneda) || "MXN") : "$" + Math.round(n || 0).toLocaleString("es-MX");
         const comparables = resultado.comparables || [];
         const factores = resultado.factores_ajuste || [];
         const recs = resultado.recomendaciones || [];
@@ -1068,25 +1039,22 @@ input:focus, select:focus, textarea:focus {
                 </div>
               )}
 
-              {(resultado.fuentes_consultadas || []).length > 0 && (() => {
-                const fc = resultado.firecrawl || {};
-                const fuentes = (resultado.fuentes_consultadas || []).filter(f => f.lectura !== "omitido");
-                const color = (l) => l === "bloqueado" ? "var(--danger)" : (l === "leído con Firecrawl" ? "var(--sky-blue-press)" : "var(--success)");
+              {(() => {
+                // Solo las páginas que sí se consultaron, como lista de enlaces.
+                // (El backend ya no manda las demás; el filtro es por si llega
+                // un resultado con el formato anterior.)
+                const fuentes = (resultado.fuentes_consultadas || []).filter(f =>
+                  f && f.url && (f.lectura === undefined || String(f.lectura).startsWith("leído")));
+                if (!fuentes.length) return null;
                 const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return u || ""; } };
                 return (
                   <div className="opinion-section">
                     <div className="opinion-section-title">Fuentes consultadas</div>
-                    <div style={{ fontSize: 12, color: "var(--ink)", marginBottom: 8, lineHeight: 1.5 }}>
-                      {fc.activo
-                        ? <span><strong>Firecrawl activo.</strong> {fc.leidas || 0} página(s) leída(s) con Firecrawl{fc.cache ? `, ${fc.cache} desde caché` : ""}{fc.intentos > (fc.leidas || 0) ? `, ${fc.intentos - (fc.leidas || 0)} intento(s) fallido(s)` : ""}{fc.motivo_no_uso ? ` (no se usó porque ${fc.motivo_no_uso})` : ""}.</span>
-                        : <span><strong>Firecrawl inactivo</strong>{fc.motivo_no_uso ? `: ${fc.motivo_no_uso}` : ""}. Los portales que bloquean a los robots no se pudieron leer.</span>}
-                    </div>
                     {fuentes.map((f, i) => (
-                      <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12, padding: "5px 0", borderTop: i ? "1px solid var(--gray-200)" : "none" }}>
-                        <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--ink)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
+                      <div key={i} style={{ fontSize: 12, padding: "5px 0", borderTop: i ? "1px solid var(--gray-200)" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--ink)" }}>
                           {f.portal || host(f.url)}{f.titulo ? ` · ${f.titulo}` : ""}
                         </a>
-                        <span style={{ color: color(f.lectura), fontWeight: 700, flexShrink: 0 }}>{f.lectura || "bloqueado"}</span>
                       </div>
                     ))}
                   </div>

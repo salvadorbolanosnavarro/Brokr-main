@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Broquer — Bolsa inmobiliaria</title>
+<title>Bolsa inmobiliaria · Broquer</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -62,6 +62,14 @@
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="bolsa">
 
@@ -233,7 +241,7 @@
   function dinero(v, moneda) {
     if (v == null) return 'Precio a tratar';
     var n = Number(v);
-    var s = n.toLocaleString('es-MX', { maximumFractionDigits: 0 });
+    var s = n.toLocaleString(window.bkLocale ? bkLocale() : 'es-MX', { maximumFractionDigits: 0 });
     return '$' + s + ' ' + (moneda || 'MXN');
   }
   var C = window.bkCat;

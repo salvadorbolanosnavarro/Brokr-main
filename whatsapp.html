@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Broquer — WhatsApp 2.0</title>
+<title>WhatsApp · Broquer</title>
 <!--
   Módulo oculto: no está en MODS de app-shell.js, así que no aparece en el
   menú lateral. Solo se abre escribiendo whatsapp2.html en la barra del
@@ -22,8 +22,7 @@
   .w2-topbar{ display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3);
               flex-wrap:wrap; margin-bottom:var(--sp-5); }
   .w2-select-filtro{ min-width:220px; }
-  .w2-numeros-link{ font-size:var(--fs-sm); font-weight:700; color:var(--forest); background:none;
-                     border:0; cursor:pointer; padding:0; }
+  .w2-numeros-link{ cursor:pointer; }
   .w2-numeros-panel{ display:flex; flex-direction:column; gap:var(--sp-2); margin-top:var(--sp-2); }
   .w2-numero-row{ display:flex; align-items:center; gap:14px; padding:16px;
                    border:1px solid var(--line); border-radius:var(--r); background:var(--bone); }
@@ -35,13 +34,12 @@
   .w2-numero-row__warn{ color:var(--danger); font-size:var(--fs-xs); font-weight:700; }
   .w2-app-webhook{ display:flex; align-items:center; gap:var(--sp-3); margin-top:var(--sp-3);
                     padding-top:var(--sp-3); border-top:1px solid var(--line); }
-  .w2-app-webhook-link{ color:var(--mute); font-weight:400; }
 
   /* ── Tabs internos ────────────────────────────────────────── */
   .w2-tabs{ display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-bottom:var(--sp-5); border-bottom:1px solid var(--line); }
-  .w2-tab{ padding:var(--sp-3) var(--sp-4); font-size:var(--fs-sm); font-weight:700; color:var(--mute);
-           border-bottom:2px solid transparent; cursor:pointer; background:none; border-left:0; border-right:0; border-top:0; }
-  .w2-tab.is-active{ color:var(--ink); border-bottom-color:var(--sky-blue); }
+  .w2-tab{
+           border-bottom:2px solid transparent; cursor:pointer; border-left:0; border-right:0; border-top:0; }
+  .w2-tab.is-active{ border-bottom-color:var(--sky-blue); }
   .w2-tabs .w2-avanzado{ margin-left:auto; display:flex; align-items:center; gap:var(--sp-2);
     font-size:var(--fs-xs); color:var(--mute); padding-bottom:var(--sp-2); }
 
@@ -50,8 +48,7 @@
   .w2-tag{ display:inline-flex; align-items:center; gap:4px; font-size:var(--fs-xs); color:var(--ink);
     background:var(--canvas); border:1px solid var(--line); border-radius:var(--r-pill, 999px);
     padding:1px var(--sp-2); }
-  .w2-tag button{ border:0; background:none; color:var(--mute); cursor:pointer; padding:0;
-    font-size:var(--fs-xs); line-height:1; }
+  .w2-tag button{ cursor:pointer; }
   .w2-tag-add{ border:1px dashed var(--line); background:none; border-radius:var(--r-pill, 999px);
     font-size:var(--fs-xs); color:var(--mute); padding:1px var(--sp-2); width:92px; }
   .w2-tag-add:focus{ outline:none; border-color:var(--sky-blue); color:var(--ink); }
@@ -70,9 +67,7 @@
   .w2-au-paso{ display:flex; align-items:center; gap:var(--sp-2); margin-bottom:var(--sp-2); }
   .w2-au-paso .bk-select{ max-width:240px; }
   .w2-au-paso input{ flex:1; }
-  .w2-au-quitar{ border:0; background:none; color:var(--mute); cursor:pointer;
-    font-size:var(--fs-md); line-height:1; padding:var(--sp-1); }
-  .w2-au-quitar:hover{ color:var(--ink); }
+  .w2-au-quitar{ cursor:pointer; }
 
   /* ── Chats: consola conversacional ────────────────────────── */
   .w2-app{ display:grid; grid-template-columns:360px 1fr; height:calc(100vh - 250px); min-height:620px;
@@ -83,15 +78,11 @@
   .w2-side{ display:flex; flex-direction:column; min-width:0; min-height:0; border-right:1px solid var(--line); background:var(--bone); }
   .w2-side__head{ padding:14px 16px 12px; display:flex; flex-direction:column; gap:10px; border-bottom:1px solid var(--line); }
   .w2-search{ position:relative; }
-  .w2-search input{ width:100%; height:var(--h-sm); padding:0 14px 0 40px; border:1px solid var(--line);
-                    border-radius:var(--r-pill); background:var(--shell); font-size:var(--fs-sm);
-                    font-family:inherit; color:var(--ink); }
-  .w2-search input:focus{ outline:none; border-color:var(--sky-blue); box-shadow:var(--focus); }
+  .w2-search input{ width:100%; color:var(--ink); }
+  .w2-search input:focus{ outline:none; }
   .w2-search svg{ position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--mute); }
   .w2-chips{ display:flex; gap:6px; flex-wrap:wrap; }
-  .w2-chip{ border:1px solid var(--line); background:var(--bone); color:var(--mute); font-size:var(--fs-xs);
-            font-weight:700; padding:5px 12px; border-radius:var(--r-pill); cursor:pointer; font-family:inherit; }
-  .w2-chip.is-on{ background:var(--sky-canvas); border-color:var(--sky-blue); color:var(--sky-blue); }
+  .w2-chip{ cursor:pointer; }
 
   .w2-list{ flex:1; overflow-y:auto; min-width:0; min-height:0; }
   .w2-conv{ display:flex; gap:12px; align-items:center; padding:12px 16px; cursor:pointer;
@@ -125,15 +116,14 @@
   .w2-thread{ display:flex; flex-direction:column; min-width:0; min-height:0; position:relative; background:var(--wa-canvas); }
   .w2-thread__head{ padding:10px 16px; background:var(--bone); border-bottom:1px solid var(--line);
                     display:flex; align-items:center; gap:12px; }
-  .w2-back{ display:none; background:none; border:0; color:var(--ink); cursor:pointer; padding:6px; }
+  .w2-back{ display:none; cursor:pointer; }
   .w2-thread__id{ min-width:0; flex:1; }
   .w2-thread__name{ font-weight:700; font-size:var(--fs-body); color:var(--ink);
                     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .w2-thread__sub{ font-size:var(--fs-xs); color:var(--mute); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .w2-thread__acts{ display:flex; align-items:center; gap:4px; flex:none; }
-  .w2-iconbtn{ width:40px; height:40px; border-radius:50%; border:0; background:none; color:var(--mute);
+  .w2-iconbtn{ width:var(--ui-control-small);
                cursor:pointer; display:flex; align-items:center; justify-content:center; }
-  .w2-iconbtn:hover{ background:var(--shell); color:var(--ink); }
   .w2-cal-badge{ font-size:var(--fs-caption); font-weight:700; color:var(--mute); background:var(--shell);
                  padding:3px 9px; border-radius:var(--r-pill); white-space:nowrap; }
 
@@ -146,9 +136,7 @@
            border:1px solid var(--line); color:var(--mute); font-size:var(--fs-xs); font-style:italic;
            padding:6px 14px; border-radius:var(--r-pill); margin:6px 0 12px; box-shadow:var(--shadow-xs); }
   .w2-loadmore{ align-self:center; color:var(--mute); font-size:var(--fs-xs); padding:6px 0 12px; }
-  .w2-loadmore--btn{ cursor:pointer; font-weight:700; color:var(--sky-blue); background:var(--bone);
-                      border:1px solid var(--line); border-radius:var(--r-pill); padding:6px 14px; }
-  .w2-loadmore--btn:hover{ background:var(--shell); }
+  .w2-loadmore--btn{ cursor:pointer; }
   .w2-row{ display:flex; margin-top:2px; }
   .w2-row--grupo{ margin-top:12px; }
   .w2-row--in{ justify-content:flex-start; }
@@ -181,10 +169,7 @@
   .w2-media__baja{ font-size:var(--fs-caption); text-decoration:underline; opacity:.85; }
   .w2-row--in .w2-media__baja{ color:var(--ink-3); }
   .w2-row--out .w2-media__baja{ color:var(--wa-out-ink); }
-  .w2-bubble__x{ background:none; border:0; cursor:pointer; padding:0; font:inherit;
-                 font-size:var(--fs-caption); opacity:.7; }
-  .w2-row--in .w2-bubble__x{ color:var(--ink-3); }
-  .w2-row--out .w2-bubble__x{ color:var(--wa-out-ink); }
+  .w2-bubble__x{ cursor:pointer; opacity:.7; }
   .w2-lightbox{ position:fixed; inset:0; background:rgba(0,20,59,.9); z-index:90;
                 display:flex; align-items:center; justify-content:center; padding:var(--sp-5);
                 cursor:zoom-out; }
@@ -202,19 +187,14 @@
                      color:var(--ink-3); background:var(--paper); border:1px dashed var(--line);
                      border-radius:var(--r-sm); padding:var(--sp-2) var(--sp-3); }
 
-  .w2-nuevos{ position:absolute; left:50%; transform:translateX(-50%); bottom:96px; background:var(--sky-blue);
-              color:#fff; border:0; border-radius:var(--r-pill); padding:8px 16px; font-size:var(--fs-xs);
-              font-weight:700; cursor:pointer; box-shadow:var(--shadow-sm); font-family:inherit; z-index:var(--z-fab); }
+  .w2-nuevos{ position:absolute; left:50%; transform:translateX(-50%); bottom:96px; cursor:pointer; z-index:var(--z-fab); }
 
   .w2-composer{ display:flex; gap:10px; align-items:flex-end; padding:12px 16px;
                 background:var(--bone); border-top:1px solid var(--line); }
-  .w2-composer textarea{ flex:1; resize:none; max-height:132px; min-height:44px; padding:11px 16px;
-                         border:1px solid var(--line); border-radius:var(--r-xl); background:var(--shell);
-                         font-family:inherit; font-size:var(--fs-body); line-height:var(--lh-body); color:var(--ink); }
-  .w2-composer textarea:focus{ outline:none; border-color:var(--sky-blue); box-shadow:var(--focus); }
-  .w2-send{ width:46px; height:46px; border-radius:50%; border:0; background:var(--sky-blue); color:#fff;
+  .w2-composer textarea{ flex:1; resize:none; max-height:132px; color:var(--ink); }
+  .w2-composer textarea:focus{ outline:none; }
+  .w2-send{ width:46px;
             cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none; }
-  .w2-send:hover{ background:var(--sky-blue-press); }
 
   .w2-empty-thread{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
                     gap:10px; color:var(--mute); font-size:var(--fs-sm); text-align:center; padding:40px; }
@@ -254,14 +234,9 @@
   /* ── IA por chat: control de tres estados ─────────────────── */
   .w2-seg{ display:inline-flex; background:var(--shell); border:1px solid var(--line);
            border-radius:var(--r-pill); padding:3px; gap:2px; flex:none; }
-  .w2-seg button{ border:0; background:none; cursor:pointer; font-family:inherit;
-                  font-size:var(--fs-xs); font-weight:700; color:var(--mute);
-                  padding:5px 12px; border-radius:var(--r-pill); white-space:nowrap; }
-  .w2-seg button.is-on{ background:var(--canvas); color:var(--ink); box-shadow:var(--shadow-xs); }
-  .w2-seg button[data-modo="on"].is-on{ background:var(--sky-blue); color:#fff; }
-  .w2-seg button[data-modo="off"].is-on{ background:var(--sky-navy); color:#fff; }
+  .w2-seg button{ cursor:pointer; }
   .w2-ia-estado{ font-size:var(--fs-caption); color:var(--mute); }
-  .w2-ia-estado.is-on{ color:var(--success); font-weight:700; }
+  .w2-ia-estado.is-on{ color:var(--success); font-weight:600; }
 
   /* ── Constructor de flujos por pasos ──────────────────────── */
   .w2-fp{ border:1px solid var(--line); border-radius:var(--r); background:var(--bone);
@@ -271,10 +246,7 @@
                font-size:var(--fs-xs); font-weight:700; display:flex; align-items:center;
                justify-content:center; flex:none; }
   .w2-fp__head select{ flex:1; min-width:0; }
-  .w2-fp__mini{ width:32px; height:32px; border:1px solid var(--line); border-radius:var(--r-sm);
-                background:var(--canvas); color:var(--mute); cursor:pointer; font-family:inherit;
-                font-size:var(--fs-sm); display:flex; align-items:center; justify-content:center; flex:none; }
-  .w2-fp__mini:hover{ color:var(--ink); border-color:var(--sky-blue); }
+  .w2-fp__mini{ width:var(--ui-control-small); cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none; }
   .w2-fp__cuerpo{ margin-top:var(--sp-2); display:flex; flex-direction:column; gap:var(--sp-2); }
   .w2-fp__op{ display:flex; align-items:center; gap:var(--sp-2); }
   .w2-fp__op input{ flex:1; min-width:0; }
@@ -283,6 +255,14 @@
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="whatsapp">
 
@@ -585,6 +565,10 @@
             <option value="America/Chihuahua">Pacífico — Chihuahua, Mazatlán (UTC-6/-7)</option>
             <option value="America/Hermosillo">Pacífico — Sonora (UTC-7, sin horario de verano)</option>
             <option value="America/Tijuana">Noroeste — Baja California (UTC-7/-8)</option>
+            <option value="America/Bogota">Colombia (UTC-5)</option>
+            <option value="America/Lima">Perú (UTC-5)</option>
+            <option value="America/Argentina/Buenos_Aires">Argentina (UTC-3)</option>
+            <option value="America/Santiago">Chile (UTC-4/-3)</option>
           </select>
         </div>
       </div>
@@ -1713,7 +1697,7 @@ async function w2CargarEntrenamiento(){
     document.getElementById('w2-t-horario').checked = !!t.horario_activo;
     document.getElementById('w2-t-hi').value = t.hora_inicio || '08:00';
     document.getElementById('w2-t-hf').value = t.hora_fin || '21:00';
-    document.getElementById('w2-t-zona').value = t.zona_horaria || 'America/Mexico_City';
+    document.getElementById('w2-t-zona').value = t.zona_horaria || (window.bkPaisCfg ? bkPaisCfg().zonaHoraria : 'America/Mexico_City');
     document.getElementById('w2-t-fuera').value = t.fuera_horario_msg || '';
     document.getElementById('w2-t-max').value = t.max_mensajes_ia || 0;
     document.getElementById('w2-t-activo').checked = t.activo !== false;
@@ -1844,7 +1828,7 @@ async function w2GuardarEntrenamiento(){
     horario_activo: document.getElementById('w2-t-horario').checked,
     hora_inicio: document.getElementById('w2-t-hi').value || '08:00',
     hora_fin: document.getElementById('w2-t-hf').value || '21:00',
-    zona_horaria: document.getElementById('w2-t-zona').value || 'America/Mexico_City',
+    zona_horaria: document.getElementById('w2-t-zona').value || (window.bkPaisCfg ? bkPaisCfg().zonaHoraria : 'America/Mexico_City'),
     fuera_horario_msg: document.getElementById('w2-t-fuera').value.trim(),
     max_mensajes_ia: parseInt(document.getElementById('w2-t-max').value || '0', 10),
     activo: document.getElementById('w2-t-activo').checked,
@@ -1880,9 +1864,7 @@ function w2AbrirModalCita(){
   document.getElementById('w2-cita-notas').value = '';
   const modal = document.getElementById('w2-modal-cita');
   modal.hidden = false;
-  // requestAnimationFrame para que el navegador registre "hidden=false" antes
-  // de aplicar is-open; si se agregan las dos cosas en el mismo tick, la
-  // transición de opacity/visibility del sistema de diseño no se anima.
+  // rAF: registrar hidden=false antes de is-open para que la transición se anime.
   requestAnimationFrame(() => modal.classList.add('is-open'));
 }
 function w2CerrarModalCita(){
@@ -1981,10 +1963,7 @@ function w2ToggleAvanzado(on){
   w2AplicarAvanzado();
 }
 function w2AplicarAvanzado(){
-  // El switch está oculto por ahora: todo se comporta como capa estándar y la
-  // creación de plantillas se muestra siempre (sin ella no habría campañas).
-  // Para reactivar el modo avanzado: quitar el hidden del label w2-avanzado
-  // y regresar esta función a leer w2Avanzado().
+  // Switch oculto: todo va como capa estándar (reactivar: quitar hidden de w2-avanzado y leer w2Avanzado()).
   const on = true;
   const check = document.getElementById('w2-avanzado-check');
   if(check) check.checked = w2Avanzado();
@@ -2507,9 +2486,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   w2AplicarAvanzado();
   await w2CargarNumeros();
 
-  // Enlace directo desde una notificación push o la barra inferior de la app:
-  // whatsapp.html?c=<conversacion_id>#chats
-  // Enlace desde Contactos/Leads: whatsapp.html?tel=<digitos>
+  // Enlaces directos: ?c=<conversacion_id>#chats (push) y ?tel=<digitos> (Contactos)
   const _qs = new URLSearchParams(location.search);
   const idDeep = _qs.get('c');
   const telDeep = (_qs.get('tel') || '').replace(/\D/g, '');

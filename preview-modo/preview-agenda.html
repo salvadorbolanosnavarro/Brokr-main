@@ -15,12 +15,10 @@
 
   .semana{ display:flex; gap:8px; overflow-x:auto; margin-bottom:20px; padding-bottom:4px; }
   .dia{
-    flex:0 0 auto; width:56px; text-align:center; padding:10px 0; border-radius: 14px;
-    border:1px solid var(--line); background: var(--white); cursor:pointer;
+    flex:0 0 auto; width:56px; text-align:center; cursor:pointer;
   }
-  .dia .n{ font-weight:800; font-size: 1.1rem; }
+  .dia .n{ font-weight:800; font-size: var(--ui-text-lg); }
   .dia .d{ font-size: var(--fs-meta); color: var(--muted-ink); }
-  .dia[aria-current="true"]{ background: var(--ink); border-color: var(--ink); }
   .dia[aria-current="true"] .n, .dia[aria-current="true"] .d{ color: var(--white); }
 
   .citas{ display:flex; flex-direction:column; gap:10px; }
@@ -31,6 +29,14 @@
 </style>
 <link rel="stylesheet" href="../styles/mobile-inputs.css">
 <script defer src="../mobile-inputs.js"></script>
+<link rel="stylesheet" href="../ui/tokens.css">
+<link rel="stylesheet" href="../ui/date-picker.css">
+<script defer src="../ui/date-picker.js"></script>
+<link rel="stylesheet" href="../ui/actions.css">
+<script defer src="../ui/actions.js"></script>
+<link rel="stylesheet" href="../ui/fields.css">
+<link rel="stylesheet" href="../ui/overlays.css">
+<script defer src="../ui/overlays.js"></script>
 </head>
 <body class="modo">
   <div class="modo-preview-banner">

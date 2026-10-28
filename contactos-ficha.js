@@ -46,8 +46,16 @@ function abrirDetalle(id) {
   });
 
   setDetTab('info');
+  bkFichaNav(c.id, () => contactosFiltrados().map(x => x.id), ctIrA);
   document.getElementById('detail-ov').classList.add('is-open');
   document.body.classList.add('bk-sin-scroll');
+}
+
+// Saltar a otro contacto sin cerrar la ficha, en la misma pestaña.
+function ctIrA(id) {
+  const tab = detTabActual;
+  abrirDetalle(id);
+  if (tab !== 'info') setDetTab(tab);
 }
 
 function cerrarDetalle() {
@@ -167,10 +175,10 @@ function ctMenuProb(btn) {
 
 function ctMenuMas(btn) {
   if (!detContacto) return;
-  bkAbrirMenu(btn, [
-    { id: 'editar', etiqueta: 'Editar contacto' },
-    { id: 'eliminar', etiqueta: 'Eliminar contacto', peligro: true, separa: true },
-  ], (v) => {
+  const items = [{ id: 'editar', etiqueta: 'Editar contacto' }];
+  // En Broquer para Empresas solo el dueño o un administrador borra.
+  if (cPuedeEliminar) items.push({ id: 'eliminar', etiqueta: 'Eliminar contacto', peligro: true, separa: true });
+  bkAbrirMenu(btn, items, (v) => {
     if (v === 'editar') editarDesdeDetalle();
     if (v === 'eliminar') eliminarDesdeDetalle();
   });
@@ -178,36 +186,41 @@ function ctMenuMas(btn) {
 
 async function setEtapa(v) {
   if (!detContacto) return;
-  const prev = String(detContacto.estatus || '').toLowerCase();
+  // Fijar el contacto ANTES del await: si mientras se guarda el usuario pasa
+  // al siguiente con las flechas, detContacto ya es otro y el cambio de etapa
+  // se anotaba en la bitácora del contacto equivocado.
+  const c = detContacto;
+  const prev = String(c.estatus || '').toLowerCase();
   if (prev === v) return;
-  detContacto.estatus = v;
-  ctRenderEstado(detContacto);
+  c.estatus = v;
+  ctRenderEstado(c);
   try {
-    await patchContacto(detContacto.id, { estatus: v || null });
+    await patchContacto(c.id, { estatus: v || null });
     renderActual();
     showToast(v ? 'Etapa: ' + etapaInfo(v).nombre : 'Etapa quitada');
-    ctRegistrarCambioEtapa(detContacto.id, prev, v);
+    ctRegistrarCambioEtapa(c.id, prev, v);
   } catch (e) {
-    detContacto.estatus = prev;
-    ctRenderEstado(detContacto);
+    c.estatus = prev;
+    if (detContacto === c) ctRenderEstado(c);
     showToast(e.message || 'No se pudo guardar la etapa');
   }
 }
 
 async function setProbabilidad(v) {
   if (!detContacto) return;
-  const prev = String(detContacto.probabilidad || '').toLowerCase();
+  const c = detContacto;
+  const prev = String(c.probabilidad || '').toLowerCase();
   if (prev === v) return;
-  detContacto.probabilidad = v;
-  ctRenderEstado(detContacto);
+  c.probabilidad = v;
+  ctRenderEstado(c);
   try {
-    await patchContacto(detContacto.id, { probabilidad: v || null });
+    await patchContacto(c.id, { probabilidad: v || null });
     renderActual();
     const info = ctProbInfo(v);
     showToast(info ? 'Probabilidad: ' + info.l : 'Probabilidad quitada');
   } catch (e) {
-    detContacto.probabilidad = prev;
-    ctRenderEstado(detContacto);
+    c.probabilidad = prev;
+    if (detContacto === c) ctRenderEstado(c);
     showToast(e.message || 'No se pudo guardar la probabilidad');
   }
 }
@@ -305,6 +318,7 @@ async function cargarBitacora() {
   const feed = document.getElementById('f-bitacora-feed');
   feed.innerHTML = '<div class="bk-cargando">Cargando la bitácora…</div>';
   const cid = detContacto.id;
+  await bkSupPreparar();
   let acts = [];
   try {
     acts = await restGet('actividades?select=*&contacto_id=eq.' + encodeURIComponent(cid) + '&order=created_at.desc&limit=200');
@@ -326,6 +340,7 @@ async function cargarBitacora() {
   const entradas = acts.map(a => ({
     id: a.id, tipo: a.tipo || 'nota', texto: a.texto || '', adjuntos: a.adjuntos, fecha: a.created_at,
     categorias: catsPorActividad[a.id], editado_en: a.editado_en,
+    sup: bkSupDeActividad(a),
   }));
 
   // Las operaciones históricas traen la fecha como texto libre: sólo entran
@@ -426,6 +441,7 @@ async function bkEditarNota(id) {
 }
 
 async function bkEliminarNota(id) {
+  if (!bkPuedeBorrar()) return;
   if (!confirm('¿Eliminar esta nota? No se puede deshacer.')) return;
   let fila;
   try {
@@ -474,6 +490,7 @@ async function ctNuevaCategoriaNota() {
 
 function ctAbrirNota() {
   document.getElementById('f-composer').hidden = false;
+  bkSupComposer();
   document.getElementById('f-nota-texto').focus();
   CT_NOTA_CATS = [];
   ctPintarCategoriasNota();
@@ -493,10 +510,13 @@ async function ctGuardarNota() {
   const propAdjunta = document.getElementById('f-nota-prop-sel').value || null;
   btn.disabled = true;
   try {
-    const rows = await restPost('actividades', {
-      tipo: texto ? 'nota' : 'archivo', texto: texto, adjuntos: adjuntos, contacto_id: detContacto.id,
-      propiedad_id: propAdjunta, org_id: cOrgId,
-    });
+    const urgente = bkSupMarcado();
+    const rows = urgente
+      ? await bkSupCrear({ texto, adjuntos, contacto_id: detContacto.id, propiedad_id: propAdjunta })
+      : await restPost('actividades', {
+        tipo: texto ? 'nota' : 'archivo', texto: texto, adjuntos: adjuntos, contacto_id: detContacto.id,
+        propiedad_id: propAdjunta, org_id: cOrgId,
+      });
     const nueva = Array.isArray(rows) ? rows[0] : rows;
     if (nueva && nueva.id) {
       for (const catId of CT_NOTA_CATS) await catVincular('actividades_categorias', 'actividad_id', nueva.id, catId);
@@ -506,7 +526,7 @@ async function ctGuardarNota() {
     ctQuitarPropNota();
     document.getElementById('f-composer').hidden = true;
     await cargarBitacora();
-    showToast(texto ? 'Nota guardada' : 'Archivos guardados');
+    showToast(urgente ? 'Comentario urgente enviado al agente' : texto ? 'Nota guardada' : 'Archivos guardados');
   } catch (e) {
     alert('No se pudo guardar en la bitácora.\n\n' + (e.message || e));
   } finally {
@@ -689,6 +709,7 @@ function renderTareas() {
 
 async function crearTareaVinculada() {
   if (!detContacto) return;
+  const cid = detContacto.id;
   const inp = document.getElementById('tarea-nueva-titulo');
   const titulo = (inp.value || '').trim();
   if (!titulo) { inp.focus(); return; }
@@ -698,7 +719,7 @@ async function crearTareaVinculada() {
   const hora = document.getElementById('tarea-nueva-hora').value || '12:00';
   try {
     const creada = await restPost('tareas', {
-      user_id: uid, org_id: cOrgId, titulo: titulo, contacto_id: detContacto.id,
+      user_id: uid, org_id: cOrgId, titulo: titulo, contacto_id: cid,
       // OJO: nunca mandar "fecha+'T'+hora" pelón — la columna es timestamptz y
       // Postgres lo toma como si YA fuera UTC. new Date(...) interpreta el
       // texto en la hora LOCAL del navegador; toISOString() da el instante
@@ -707,7 +728,7 @@ async function crearTareaVinculada() {
     });
     const nueva = Array.isArray(creada) ? creada[0] : creada;
     if (nueva && nueva.id) {
-      await restPost('tareas_contactos', { user_id: uid, tarea_id: nueva.id, contacto_id: detContacto.id }).catch(() => {});
+      await restPost('tareas_contactos', { user_id: uid, tarea_id: nueva.id, contacto_id: cid }).catch(() => {});
     }
     inp.value = '';
     document.getElementById('tarea-nueva-fecha').value = '';
@@ -722,10 +743,11 @@ async function crearTareaVinculada() {
 
 async function vincularTareaExistente(tareaId) {
   if (!detContacto || !tareaId) return;
+  const cid = detContacto.id;
   const uid = await _userId();
   if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
   try {
-    await restPost('tareas_contactos', { user_id: uid, tarea_id: tareaId, contacto_id: detContacto.id });
+    await restPost('tareas_contactos', { user_id: uid, tarea_id: tareaId, contacto_id: cid });
     await cargarTareasVinculadas();
     showToast('Tarea vinculada');
   } catch (e) {
@@ -798,7 +820,7 @@ function editarDesdeDetalle() {
 }
 
 async function eliminarDesdeDetalle() {
-  if (!detContacto) return;
+  if (!detContacto || !cPuedeEliminar) return;
   const c = detContacto;
   if (!confirm(`¿Eliminar a ${c.nombre || 'este contacto'}?\n\nSe pierde su bitácora completa: notas, archivos y todo su historial. No se puede deshacer.`)) return;
   try {

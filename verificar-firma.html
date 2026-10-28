@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Broquer — Verificar documento firmado</title>
+<title>Verificar firma · Broquer</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
@@ -43,7 +43,7 @@
     display: flex; gap: var(--sp-3); margin: var(--sp-8) 0 var(--sp-6);
   }
   .vf-buscador .bk-input {
-    text-align: center; letter-spacing: 0.14em; font-weight: 700;
+    text-align: center;
     text-transform: uppercase;
   }
   @media (max-width: 520px) {
@@ -136,6 +136,14 @@
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-design-public="verificar-firma">
 
@@ -266,7 +274,7 @@
         Esta verificación acredita que el documento fue procesado por Broquer, quiénes
         manifestaron su consentimiento, en qué momento lo hicieron y que el archivo
         conserva la misma huella digital que tenía al firmarse. La firma electrónica se
-        recaba al amparo de los artículos 89 a 114 del Código de Comercio.
+        recaba al amparo de <span id="vf-ley">los artículos 89 a 114 del Código de Comercio</span>.
       </p>
       <p style="font-size:var(--fs-sm);color:var(--ink-2);line-height:var(--lh);margin:var(--sp-4) 0 0;">
         No constituye una certificación de identidad ni fe pública sobre las personas
@@ -367,6 +375,7 @@
       }
       DOC = d;
       pintar(d);
+      if (d.ley && g('vf-ley')) g('vf-ley').textContent = d.ley;
       try {
         history.replaceState(null, '', location.pathname + '?f=' + folio);
       } catch (e) { /* sin history no pasa nada */ }

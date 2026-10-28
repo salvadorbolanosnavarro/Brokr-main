@@ -13,6 +13,8 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from core.paises import contexto_ia, pais_de_usuario
+
 
 class ClaudeChatRequest(BaseModel):
     messages: list
@@ -54,7 +56,7 @@ def create_router(get_context: Callable[[], dict[str, Any]]) -> APIRouter:
             if isinstance(msg, dict) and msg.get("role") != "system"
         ]
 
-        system = system_prompt
+        system = system_prompt + contexto_ia(await pais_de_usuario(uid))
         if req.context:
             system += f"\n\nCONTEXTO DE LA PANTALLA ACTUAL:\n{req.context}"
 

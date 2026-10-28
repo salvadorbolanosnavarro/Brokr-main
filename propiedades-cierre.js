@@ -23,7 +23,13 @@
   }
   function campo(lbl, ctrl) { return '<div class="pf-field"><label>' + lbl + '</label>' + ctrl + '</div>'; }
   function money(id, v) { return '<input type="number" min="0" step="any" inputmode="decimal" id="' + id + '" value="' + (v == null ? '' : v) + '"/>'; }
-  function moneda(id, v) { return '<select id="' + id + '"><option' + (v === 'USD' ? '' : ' selected') + '>MXN</option><option' + (v === 'USD' ? ' selected' : '') + '>USD</option></select>'; }
+  // Monedas del país de la cuenta (paises.js), con la que ya traía el registro.
+  function moneda(id, v) {
+    var l = window.bkPaisCfg ? bkPaisCfg().monedas.slice() : ['MXN', 'USD'];
+    if (v && l.indexOf(v) === -1) l.push(v);
+    v = v || l[0];
+    return '<select id="' + id + '">' + l.map(function (m) { return '<option' + (m === v ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select>';
+  }
   function fecha(id, v) { return '<input type="date" id="' + id + '" value="' + (v || '') + '"/>'; }
   function parte(rol, titulo, c) {
     var miembros = (typeof pMiembros !== 'undefined' && pMiembros) || [];
@@ -84,7 +90,7 @@
       var suma = (num('ci-cinmo') || 0) + (num('ci-opcionador-com') || 0) + (num('ci-asesor-com') || 0);
       var av = g('ci-aviso');
       if (tot != null && suma > 0 && Math.abs(suma - tot) > 1) {
-        av.textContent = 'Ojo: las partes suman $' + Math.round(suma).toLocaleString('es-MX') + ' y la comisión total es $' + Math.round(tot).toLocaleString('es-MX') + '. Puedes guardar así.';
+        av.textContent = 'Ojo: las partes suman $' + Math.round(suma).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') + ' y la comisión total es $' + Math.round(tot).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') + '. Puedes guardar así.';
         av.style.color = 'var(--warn)';
       } else { av.textContent = ''; }
     }
@@ -105,8 +111,8 @@
           propiedad_id: propiedadId, estatus: estatus,
           fecha_reserva: (g('ci-fres') || {}).value || null, monto_reserva: num('ci-mres'), moneda_reserva: g('ci-mondres').value,
           fecha_cierre: esCierre ? g('ci-fcie').value || null : null, precio_cierre: esCierre ? num('ci-precio') : null,
-          moneda_cierre: esCierre ? g('ci-moncie').value : 'MXN', comprador_contacto_id: comp.id,
-          comision_tipo: g('ci-ctipo').value, comision_valor: num('ci-cvalor'), moneda_comision: esCierre ? g('ci-moncie').value : 'MXN',
+          moneda_cierre: esCierre ? g('ci-moncie').value : (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN'), comprador_contacto_id: comp.id,
+          comision_tipo: g('ci-ctipo').value, comision_valor: num('ci-cvalor'), moneda_comision: esCierre ? g('ci-moncie').value : (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN'),
           comision_inmobiliaria: num('ci-cinmo'), notas: g('ci-notas').value,
         };
         ['opcionador', 'asesor'].forEach(function (rol) {

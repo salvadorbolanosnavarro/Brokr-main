@@ -1,14 +1,17 @@
+**Medición UI actual y cobertura de endpoints:** [reporte verificado](docs/redesign/COBERTURA-UI-Y-ENDPOINTS.md). La tabla siguiente es el inventario estático; no certifica ejecución real.
+
 # Cobertura completa de Broquer
 
 Las ocho referencias definen el lenguaje visual; todas las pantallas y flujos originales forman parte de la migración.
 
-Inventario reproducible: `1f5fc8d5a5a7650bd315bfead3515d708f828bae`. 55 HTML rastreados y 348 operaciones del contrato HTTP efectivo actual (se conserva también el inventario de declaraciones).
+Inventario reproducible: `ee9c557969168092644d4ed231a3b84211d83434`. 57 HTML rastreados y 355 operaciones del contrato HTTP efectivo actual (se conserva también el inventario de declaraciones).
 La presencia del código no certifica su funcionamiento. Todos los flujos requieren validación con servicios de pruebas.
 
 | Pantalla | Rediseño | Mock | Prueba real | Datos / vacío / error / carga | Roles | Móvil iPhone real | IDs retirados |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `404.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
 | `_TEMPLATE-modulo.html` | Rediseñado; fidelidad pendiente | Pendiente | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `_t.html` | Pendiente de revisión visual | Pendiente | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
 | `admin.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
 | `alertas.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Probado con mock: los cuatro estados | Agente/admin UI con mock; RLS pendiente | Pendiente | Ninguno |
 | `aviso-privacidad.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
@@ -36,6 +39,7 @@ La presencia del código no certifica su funcionamiento. Todos los flujos requie
 | `firmas.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
 | `guia-agente.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
 | `image-cleaner.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
+| `impuestos.html` | Rediseñado; fidelidad pendiente | Pendiente | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
 | `index.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
 | `isr.html` | Rediseñado; fidelidad pendiente | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
 | `landing.html` | Pendiente de revisión visual | Probado con mock: superficie; ver fecha y límites en validación | Pendiente | Pendiente de flujos completos | Pendiente de matriz completa | Pendiente | Ninguno |
@@ -70,6 +74,7 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | Método | Ruta declarada con prefijo local | Fuente / handler | Mock endpoint | Prueba real |
 | --- | --- | --- | --- | --- |
 | GET | `/` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| POST | `/adjuntos/ligas` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/admin/me` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/admin/org/convertir` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/admin/org/desconvertir` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
@@ -78,6 +83,7 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | POST | `/admin/user/activo` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/admin/user/eliminar` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/admin/user/modulos` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| POST | `/admin/user/pais` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/admin/user/rol` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/admin/user/{user_id}/uso` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/admin/users` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
@@ -291,6 +297,7 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | GET | `/org` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | POST | `/org/aceptar-invitacion` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/org/asignar` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| PATCH | `/org/contactos/{contacto_id}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | PATCH | `/org/contactos/{contacto_id}/etapa` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | DELETE | `/org/invitacion/{inv_id}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/org/invitacion/{token}` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
@@ -369,6 +376,10 @@ Estas filas enumeran cada operación del contrato HTTP efectivo de main. El JSON
 | POST | `/subscription/revenuecat-webhook` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | GET | `/subscription/status` | `Contrato HTTP efectivo actual: registro de main` | Probado con mock: consumo de interfaz; servidor pendiente | Pendiente |
 | POST | `/subscription/webhook` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| POST | `/supervision/comentarios` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| POST | `/supervision/comentarios/{actividad_id}/atendido` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| GET | `/supervision/contador` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
+| GET | `/supervision/pendientes` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/telemetria/sesion-modulo` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | POST | `/transcribir` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |
 | DELETE | `/usuario/eliminar-cuenta` | `Contrato HTTP efectivo actual: registro de main` | Pendiente | Pendiente |

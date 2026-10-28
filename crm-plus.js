@@ -36,7 +36,7 @@
   function montarVistas() {
     var row = document.querySelector('.page-head__row');
     if (!row || g('crm-vistas')) return;
-    var h1 = row.querySelector('h1'); if (h1) h1.textContent = 'Contactos';
+    var h1 = row.querySelector('h1'); if (h1) h1.textContent = VISTA === 'lista' ? 'Contactos' : 'Clientes';
     var qs = location.search || '';
     var div = document.createElement('div');
     div.className = 'crm-vistas'; div.id = 'crm-vistas';
@@ -117,9 +117,9 @@
     var cont = email.closest('.f');
     var html = '<div id="crm-extra-form">' +
       '<div class="f"><label>Otros teléfonos</label><div class="crm-multi" id="crm-tels"></div>' +
-        '<button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="crmAgregarFila(\'tel\')">+ Agregar teléfono</button></div>' +
+        '<button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="crmAgregarFila(\'tel\')">+ Agregar teléfono</button></div>' +
       '<div class="f"><label>Otros correos</label><div class="crm-multi" id="crm-mails"></div>' +
-        '<button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="crmAgregarFila(\'mail\')">+ Agregar correo</button></div>' +
+        '<button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="crmAgregarFila(\'mail\')">+ Agregar correo</button></div>' +
       '<div class="f"><label>Puesto</label><input id="crm-puesto" type="text" placeholder="Ej. Director de compras"/></div>' +
       '<details class="crm-sec"><summary>Redes sociales</summary><div class="frow">' +
         REDES.map(function (r) { return '<div class="f"><label>' + r[1] + '</label><input id="crm-red-' + r[0] + '" type="text" placeholder="usuario o liga"/></div>'; }).join('') +

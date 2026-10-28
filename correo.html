@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Broquer — Correo</title>
+<title>Correo · Broquer</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <meta name="theme-color" content="#081C4E"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -33,9 +33,7 @@
   .co-ava{ width:40px; height:40px; }
   .co-cuenta__mail{ font-size:var(--fs-sm); font-weight:700; color:var(--ink);
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .co-desconectar{ border:0; background:none; padding:0; font:600 var(--fs-caption)/1 var(--font-sans);
-    color:var(--mute); cursor:pointer; text-align:left; }
-  .co-desconectar:hover{ color:var(--danger); }
+  .co-desconectar{ cursor:pointer; text-align:left; }
 
   .co-lista,.co-msg{ background:var(--paper); border:1px solid var(--line-2); border-radius:var(--r-lg);
     overflow:hidden; box-shadow:var(--shadow-xs); }
@@ -67,9 +65,7 @@
   .co-vacio span{ font-size:var(--fs-sm); color:var(--mute); }
 
   .co-lectura-bar{ display:flex; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-5); }
-  .co-volver{ display:inline-flex; align-items:center; gap:var(--sp-2); border:0; background:none;
-    padding:0; cursor:pointer; font-size:var(--fs-sm); font-weight:700; color:var(--sky-blue); font-family:var(--font-sans); }
-  .co-volver:hover{ color:var(--sky-blue-press); }
+  .co-volver{ display:inline-flex; align-items:center; gap:var(--sp-2); cursor:pointer; }
   .co-lectura-bar .bk-btn{ margin-left:auto; }
   .co-msg__head{ padding:var(--sp-6) var(--sp-7) var(--sp-5); border-bottom:1px solid var(--line); }
   @media (max-width:720px){ .co-msg__head{ padding:var(--sp-5) var(--sp-4) var(--sp-4); } }
@@ -83,10 +79,18 @@
   @media (max-width:720px){ .co-msg__body{ padding:var(--sp-4) var(--sp-4) var(--sp-6); } }
   .co-cuerpo{ font-size:var(--fs-body); line-height:var(--lh); color:var(--ink); white-space:pre-wrap; word-break:break-word; max-width:720px; }
   .co-cuerpo-html{ width:100%; min-height:60vh; border:0; background:var(--paper); }
-  #co-modal textarea.bk-input{ min-height:200px; resize:vertical; line-height:var(--lh); }
+  #co-modal textarea.bk-input{ resize:vertical; }
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="correo">
 <div class="co-scroll">

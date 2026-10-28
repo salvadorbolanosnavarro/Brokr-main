@@ -14,11 +14,20 @@ STRIPE_SECRET_KEY = settings.stripe_secret_key
 STRIPE_WEBHOOK_SECRET = legacy_main_settings.stripe_webhook_secret
 
 STRIPE_PRICE_PRO = legacy_main_settings.stripe_price_pro
+# Broquer Max en dólares para Colombia, Perú, Argentina y Chile (core/paises.py).
+STRIPE_PRICE_PRO_USD = legacy_main_settings.stripe_price_pro_usd
 STRIPE_PRICE_AMPI = legacy_main_settings.stripe_price_ampi
 STRIPE_PRICE_EMPRESA_MENSUAL = legacy_main_settings.stripe_price_empresa_mensual
 STRIPE_PRICE_EMPRESA_ANUAL = legacy_main_settings.stripe_price_empresa_anual
 STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL = legacy_main_settings.stripe_price_empresa_extra_mensual
 STRIPE_PRICE_EMPRESA_EXTRA_ANUAL = legacy_main_settings.stripe_price_empresa_extra_anual
+# Broquer para Empresas en dólares (Colombia, Perú, Argentina y Chile).
+STRIPE_PRICES_EMPRESA_USD = {
+    ("mensual", False): legacy_main_settings.stripe_price_empresa_mensual_usd,
+    ("anual", False): legacy_main_settings.stripe_price_empresa_anual_usd,
+    ("mensual", True): legacy_main_settings.stripe_price_empresa_extra_mensual_usd,
+    ("anual", True): legacy_main_settings.stripe_price_empresa_extra_anual_usd,
+}
 
 EMPRESA_ASIENTOS_BASE = 5
 EMPRESA_ASIENTOS_MAX = 500
@@ -26,6 +35,15 @@ EMPRESA_TARIFAS = {
     "mensual": {"base": 3499, "extra": 599, "etiqueta": "al mes"},
     "anual": {"base": 38489, "extra": 6589, "etiqueta": "al año"},
 }
+# Mismo esquema en USD (≈ tipo de cambio de 18.5; el anual son 11 meses).
+EMPRESA_TARIFAS_USD = {
+    "mensual": {"base": 189, "extra": 33, "etiqueta": "al mes"},
+    "anual": {"base": 2079, "extra": 363, "etiqueta": "al año"},
+}
+
+
+def tarifas_empresa(moneda: str = "mxn") -> dict:
+    return EMPRESA_TARIFAS_USD if moneda == "usd" else EMPRESA_TARIFAS
 
 PROMO_CODE_AMPI = "ampi2026"
 
@@ -37,8 +55,10 @@ def stripe_headers() -> dict:
     }
 
 
-def precio_empresa(periodo: str, extra: bool = False) -> str:
+def precio_empresa(periodo: str, extra: bool = False, moneda: str = "mxn") -> str:
     """Return the configured Stripe price id for an enterprise period."""
+    if moneda == "usd":
+        return STRIPE_PRICES_EMPRESA_USD[("anual" if periodo == "anual" else "mensual", extra)]
     if periodo == "anual":
         return STRIPE_PRICE_EMPRESA_EXTRA_ANUAL if extra else STRIPE_PRICE_EMPRESA_ANUAL
     return STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL if extra else STRIPE_PRICE_EMPRESA_MENSUAL

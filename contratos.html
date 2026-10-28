@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Broquer — Contratos</title>
+<title>Contratos · Broquer</title>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -24,15 +24,13 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
 
 /* Type selector — menú desplegable + botón de nuevo machote */
 .doc-picker{position:relative;display:flex;gap:8px;align-items:stretch;margin-bottom:20px}
-.doc-picker-btn{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--line);border-radius:var(--r-pill);background:var(--bone);cursor:pointer;text-align:left;transition:all .15s}
-.doc-picker-btn:hover{border-color:var(--sky-blue)}
-.doc-picker-btn.open{border-color:var(--sky-navy)}
+.doc-picker-btn{flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;text-align:left;transition:all .15s}
 .doc-picker-txt{flex:1;min-width:0}
 .doc-picker-lbl{font-size:var(--fs-sm);font-weight:700;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .doc-picker-sub{font-size:var(--fs-caption);color:var(--mute);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .doc-picker-chev{color:var(--mute);flex-shrink:0;transition:transform .18s var(--ease)}
 .doc-picker-btn.open .doc-picker-chev{transform:rotate(180deg)}
-.doc-new-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 16px;border:1.5px solid var(--sky-navy);border-radius:var(--r-pill);background:var(--sky-navy);color:var(--bone);font-size:var(--fs-sm);font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s}
+.doc-new-btn{display:inline-flex;align-items:center;gap:7px;cursor:pointer;transition:all .15s}
 .doc-new-btn:hover{filter:brightness(1.08)}
 
 .doc-menu{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:40;background:var(--bone);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:6px;max-height:60vh;overflow-y:auto}
@@ -44,11 +42,9 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
 .doc-menu-info{flex:1;min-width:0}
 .doc-menu-ttl{font-size:var(--fs-sm);font-weight:600;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .doc-menu-sub{font-size:var(--fs-caption);color:var(--mute);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.doc-menu-del{width:26px;height:26px;border:none;background:transparent;border-radius:var(--r-sm);cursor:pointer;color:var(--mute);flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.doc-menu-item:hover .doc-menu-del{background:var(--paper-2);color:var(--danger)}
-.doc-menu-del:hover{background:var(--danger)!important;color:var(--bone)!important}
+.doc-menu-del{width:var(--ui-control-small);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .doc-menu-empty{padding:12px 10px;font-size:var(--fs-caption);color:var(--mute);line-height:1.5}
-@media(max-width:600px){.doc-new-btn span{display:none}.doc-new-btn{padding:11px 13px}}
+@media(max-width:600px){.doc-new-btn span{display:none}}
 
 /* Cards */
 .card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r);padding:22px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
@@ -60,21 +56,18 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
 .frow.three{grid-template-columns:1fr 1fr 1fr}
 .f{display:flex;flex-direction:column;gap:4px}
 .f label{font-size:var(--fs-label-3);font-weight:600;letter-spacing:.05em;color:var(--mute)}
-.f input,.f select{background:var(--bone);border:1px solid var(--line-2);border-radius:var(--r);height:var(--h);padding:0 var(--sp-4);font-family:inherit;font-size:var(--fs-sm);color:var(--ink);outline:none;width:100%;transition:border .15s}
-.f textarea{background:var(--bone);border:1px solid var(--line-2);border-radius:var(--r);padding:var(--sp-3) var(--sp-4);min-height:96px;font-family:inherit;font-size:var(--fs-sm);color:var(--ink);outline:none;width:100%;transition:border .15s;resize:vertical;line-height:var(--lh)}
-.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--forest);box-shadow:var(--focus);background:var(--bone)}
+.f input,.f select{color:var(--ink);outline:none;width:100%;transition:border .15s}
+.f textarea{color:var(--ink);outline:none;width:100%;transition:border .15s;resize:vertical}
 .f input::placeholder{color:var(--mute)}
 .f-note{font-size:var(--fs-sm);color:var(--ink-2);line-height:1.6;margin-top:var(--sp-2);max-width:68ch}
 
 /* Money input */
 .money-wrap{position:relative}
 .money-prefix{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:var(--fs-sm);color:var(--ink-2);font-weight:500;pointer-events:none}
-.money-wrap input{padding-left:22px}
 
 /* Generate button */
-.gen-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:var(--forest);color:var(--paper);border:none;border-radius:var(--r-pill);font-family:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;transition:background .15s;margin-top:4px}
-.gen-btn:hover{background:var(--forest-2)}
-.gen-btn:disabled{background:var(--line);color:var(--mute);cursor:not-allowed}
+.gen-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;cursor:pointer;transition:background .15s;margin-top:4px}
+.gen-btn:disabled{cursor:not-allowed}
 .gen-btn svg{flex-shrink:0}
 
 /* Loading */
@@ -109,24 +102,17 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
   display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;
 }
 .clausula-item textarea{
-  flex:1;border:1px solid var(--paper-2);border-radius:var(--r-sm);padding:8px 10px;
-  font-size:var(--fs-xs);font-family:inherit;resize:vertical;min-height:60px;
-  line-height:1.5;
+  flex:1;resize:vertical;
 }
-.clausula-item textarea:focus{outline:none;border-color:var(--forest);}
+.clausula-item textarea:focus{outline:none;}
 .clausula-del{
-  width:28px;height:28px;border:none;background:var(--paper-2);color:var(--danger);
-  border-radius:var(--r-sm);cursor:pointer;font-size:var(--fs-h5);flex-shrink:0;
+  width:var(--ui-control-small);cursor:pointer;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;margin-top:2px;
 }
-.clausula-del:hover{background:var(--danger);}
-.btn-add-clausula{
-  background:none;border:1.5px dashed var(--forest);color:var(--forest);
-  border-radius:var(--r-sm);padding:7px 14px;font-size:var(--fs-xs);cursor:pointer;
-  display:flex;align-items:center;gap:6px;font-weight:600;
+.btn-add-clausula{cursor:pointer;
+  display:flex;align-items:center;gap:6px;
   transition:background .15s;
 }
-.btn-add-clausula:hover{background:var(--bone);}
 .clausulas-preview{
   margin-top:14px;display:none;
 }
@@ -155,19 +141,14 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
   display:flex;gap:6px;margin-top:4px;
 }
 .sexo-btn{
-  flex:1;padding:8px 10px;border:1.5px solid var(--bdr);border-radius:var(--r-sm);
-  background:none;color:var(--mute);font-size:var(--fs-xs);font-weight:600;
-  cursor:pointer;font-family:inherit;transition:all .15s;
-}
-.sexo-btn.active{
-  border-color:var(--sky-blue);background:rgba(0,98,227,.12);color:var(--sky-blue-press);
+  flex:1;
+  cursor:pointer;transition:all .15s;
 }
 .err-note{ display:none; }
 
 
 /* ── CONTACT / PROPERTY PICKERS ── */
-.pick-btn{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:5px 10px;border:1.5px solid var(--sky-blue);border-radius:var(--r-sm);background:var(--forest-soft);color:var(--sky-blue-press);font-family:var(--font-sans);font-size:var(--fs-caption);font-weight:700;cursor:pointer;transition:all .12s;letter-spacing:.04em}
-.pick-btn:hover{background:var(--sky-blue);color:var(--bone)}
+.pick-btn{display:inline-flex;align-items:center;gap:5px;margin-top:5px;cursor:pointer;transition:all .12s}
 .pick-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:flex-end;justify-content:center}
 .pick-overlay.open{display:flex}
 .pick-sheet{background:var(--bone);border-radius:var(--r-lg) var(--r-lg) 0 0;width:100%;max-width:780px;height:92vh;max-height:92vh;min-height:560px;display:flex;flex-direction:column;animation:pickUp .22s ease;box-shadow:var(--shadow-lg)}
@@ -175,10 +156,9 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
 .pick-handle{width:36px;height:4px;background:var(--line);border-radius:var(--r-xs);margin:10px auto;flex-shrink:0}
 .pick-head{display:flex;align-items:center;gap:10px;padding:0 18px 12px;border-bottom:1px solid var(--line);flex-shrink:0}
 .pick-head-title{font-size:var(--fs-h5);font-weight:700;color:var(--ink-2);flex:1}
-.pick-close{width:30px;height:30px;border:none;background:var(--paper-2);border-radius:var(--r-sm);cursor:pointer;font-size:var(--fs-sm);color:var(--mute)}
+.pick-close{width:var(--ui-control-small);cursor:pointer}
 .pick-search{padding:12px 18px;flex-shrink:0}
-.pick-search input{width:100%;background:var(--paper-2);border:1.5px solid var(--line);border-radius:var(--r-sm);padding:8px 12px;font-family:var(--font-sans);font-size:var(--fs-sm);outline:none;transition:border .15s}
-.pick-search input:focus{border-color:var(--sky-blue)}
+.pick-search input{width:100%;outline:none;transition:border .15s}
 .pick-list{flex:1;overflow-y:auto;padding:0 0 20px}
 .pick-item{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .1s}
 .pick-item:hover{background:var(--forest-soft)}
@@ -204,7 +184,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
 .mach-drop-sub{font-size:var(--fs-caption);color:var(--mute);margin-top:3px}
 .mach-file-chip{display:none;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:var(--bone);border:1px solid var(--line);border-radius:var(--r2);font-size:var(--fs-sm);color:var(--ink-2)}
 .mach-file-chip.show{display:flex}
-.mach-file-chip button{margin-left:auto;background:none;border:none;color:var(--danger);cursor:pointer;font-size:var(--fs-sm);font-weight:700}
+.mach-file-chip button{margin-left:auto;cursor:pointer}
 
 .mach-hint{font-size:var(--fs-sm);color:var(--ink-2);line-height:1.6;margin-top:var(--sp-3);max-width:68ch}
 .mach-hint b{color:var(--ink-3);font-weight:600}
@@ -221,7 +201,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
 
 .mach-form-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .mach-form-head-ttl{font-size:var(--fs-h5);font-weight:700;color:var(--ink-2);flex:1;min-width:0}
-.mach-form-back{background:none;border:none;color:var(--mute);cursor:pointer;font-size:var(--fs-sm);text-decoration:underline;flex-shrink:0}
+.mach-form-back{cursor:pointer;text-decoration:underline;flex-shrink:0}
 #mach-campos-form .frow{grid-template-columns:1fr 1fr}
 @media(max-width:600px){#mach-campos-form .frow{grid-template-columns:1fr}}
 
@@ -239,12 +219,8 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
 .mach-bar-txt{flex:1;min-width:180px;font-size:var(--fs-xs);color:var(--ink-3);line-height:1.45}
 .mach-bar-txt b{color:var(--ink-2);font-weight:700}
 .mach-bar-btns{display:flex;gap:8px;flex-shrink:0}
-.mini-btn{display:inline-flex;align-items:center;gap:7px;padding:0 16px;height:var(--h);border-radius:var(--r-pill);border:none;font-family:inherit;font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:background .15s}
-.mini-btn-pri{background:var(--forest);color:var(--paper)}
-.mini-btn-pri:hover{background:var(--forest-2)}
-.mini-btn-sec{background:var(--sky-navy);color:var(--paper)}
-.mini-btn-sec:hover{background:var(--sky-navy-mid)}
-.mini-btn:disabled{background:var(--line);color:var(--mute);cursor:not-allowed}
+.mini-btn{display:inline-flex;align-items:center;gap:7px;cursor:pointer;transition:background .15s}
+.mini-btn:disabled{cursor:not-allowed}
 @media(max-width:600px){.mach-bar-btns{width:100%}.mini-btn{flex:1;justify-content:center}}
 
 /* ── El contrato en pantalla ── */
@@ -266,16 +242,11 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
 @media(max-width:600px){.mach-pop{position:fixed;left:12px;right:12px;bottom:12px;top:auto;width:auto}}
 .mach-pop-sel{padding:8px 10px;border-radius:var(--r-sm);background:var(--paper-2);font-size:var(--fs-xs);color:var(--ink-2);font-weight:600;margin-bottom:12px;max-height:64px;overflow:auto;line-height:1.5}
 .mach-pop-lbl{font-size:var(--fs-label-3);font-weight:600;letter-spacing:.05em;color:var(--mute);display:block;margin-bottom:5px}
-.mach-pop input,.mach-pop select{background:var(--bone);border:1px solid var(--line-2);border-radius:var(--r);height:var(--h);padding:0 var(--sp-3);font-family:inherit;font-size:var(--fs-sm);color:var(--ink);outline:none;width:100%;margin-bottom:10px}
-.mach-pop input:focus,.mach-pop select:focus{border-color:var(--forest);box-shadow:var(--focus)}
+.mach-pop input,.mach-pop select{color:var(--ink);outline:none;width:100%;margin-bottom:10px}
 .mach-pop-chk{display:flex;align-items:flex-start;gap:8px;font-size:var(--fs-xs);color:var(--ink-3);line-height:1.45;margin-bottom:12px;cursor:pointer}
-.mach-pop-chk input{width:16px;height:16px;margin:2px 0 0;accent-color:var(--sky-blue);flex-shrink:0}
+.mach-pop-chk input{width:16px;margin:2px 0 0;accent-color:var(--sky-blue);flex-shrink:0}
 .mach-pop-acc{display:flex;gap:8px}
-.mach-pop-acc button{flex:1;height:var(--h);border-radius:var(--r-pill);border:none;font-family:inherit;font-size:var(--fs-sm);font-weight:600;cursor:pointer}
-.mach-pop-ok{background:var(--forest);color:var(--paper)}
-.mach-pop-ok:hover{background:var(--forest-2)}
-.mach-pop-no{background:var(--paper-2);color:var(--ink-3)}
-.mach-pop-del{background:var(--danger-soft);color:var(--danger)}
+.mach-pop-acc button{flex:1;cursor:pointer}
 .mach-pop-err{font-size:var(--fs-xs);color:var(--danger);margin-bottom:10px;display:none}
 .mach-pop-err.show{display:block}
 
@@ -285,8 +256,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
 .mach-pills{display:flex;flex-wrap:wrap;gap:8px}
 .mach-pill{display:inline-flex;align-items:center;gap:7px;padding:6px 8px 6px 12px;border-radius:var(--r-pill);background:var(--paper-2);border:1px solid var(--line);font-size:var(--fs-xs);color:var(--ink-2);font-weight:600}
 .mach-pill-n{color:var(--mute);font-weight:600}
-.mach-pill button{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border:none;border-radius:var(--r-pill);background:none;color:var(--mute);cursor:pointer}
-.mach-pill button:hover{background:var(--danger);color:var(--paper)}
+.mach-pill button{display:inline-flex;width:var(--ui-control-small);align-items:center;justify-content:center;cursor:pointer}
 .mach-vacio{padding:22px 16px;text-align:center;font-size:var(--fs-xs);color:var(--mute);line-height:1.6}
 
 /* ── Grupos y filas de ajuste ── */
@@ -302,17 +272,16 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
 .mach-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:var(--r-pill);background:var(--paper-2);font-size:var(--fs-caption);color:var(--ink-3);max-width:100%}
 .mach-tag-lit{font-weight:600;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px}
 .mach-fijo-lbl{display:inline-flex;align-items:center;gap:7px;margin-left:auto;font-size:var(--fs-xs);color:var(--ink-3);cursor:pointer;user-select:none}
-.mach-fijo-lbl input{width:16px;height:16px;accent-color:var(--sky-blue);cursor:pointer}
+.mach-fijo-lbl input{width:16px;accent-color:var(--sky-blue);cursor:pointer}
 .mach-def{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
-.mach-lnk{background:none;border:none;padding:0;color:var(--sky-blue);cursor:pointer;font-family:inherit;font-size:var(--fs-caption);font-weight:600;text-decoration:underline}
+.mach-lnk{cursor:pointer;text-decoration:underline}
 
 /* ── Acciones ── */
 .mach-actions{display:flex;gap:10px;margin-top:18px}
 @media(max-width:600px){.mach-actions{flex-direction:column}}
 .mach-actions .gen-btn{margin-top:0}
-.sec-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:var(--sky-navy);color:var(--paper);border:none;border-radius:var(--r-pill);font-family:inherit;font-size:var(--fs-body);font-weight:600;cursor:pointer;transition:background .15s}
-.sec-btn:hover{background:var(--sky-navy-mid)}
-.sec-btn:disabled{background:var(--line);color:var(--mute);cursor:not-allowed}
+.sec-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;cursor:pointer;transition:background .15s}
+.sec-btn:disabled{cursor:not-allowed}
 .sec-btn svg{flex-shrink:0}
 
 /* ── Vista previa ── */
@@ -324,6 +293,14 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
 
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="contratos">
 
@@ -1343,10 +1320,8 @@ function nuevoMachote(){
 
 // ══════════════════════════════════════════════════════════════
 // MI PROPIO MACHOTE
-// El usuario abre su contrato, selecciona con el mouse o el dedo los datos
-// que cambian, les pone nombre y crea el machote. Los offsets de cada marca
-// son sobre el texto plano del párrafo: el mismo sistema de coordenadas que
-// usa el backend sobre los runs del DOCX.
+// El usuario marca en su contrato los datos que cambian y crea el machote.
+// Offsets sobre el texto plano del párrafo (mismo sistema que el backend).
 // ══════════════════════════════════════════════════════════════
 const API_M = 'https://api.broquer.app';
 let machoteFile = null;
@@ -2519,9 +2494,8 @@ async function generarContrato(soloDatos){
     };
   }
 
-  // Mandar a firma reutiliza exactamente esta misma recolección y validación:
-  // así el PDF que se firma sale de los mismos datos que el Word que se
-  // descarga, sin una segunda ruta que se pueda desincronizar.
+  // Mandar a firma usa esta misma recolección: el PDF y el Word salen de los mismos datos.
+  if (window.bkContratoAjustar) bkContratoAjustar(datos); // moneda del país (contratos-paises.js)
   if (soloDatos) return datos;
 
   // Show loading
@@ -2940,7 +2914,7 @@ function renderPickerInmuebles(q) {
   if (!props.length) { lista.innerHTML='<div class="pick-empty">Sin inmuebles o sin coincidencias.</div>'; return; }
   lista.innerHTML = props.map(p => {
     const opCls = p.operacion==='venta'?'badge-venta':'badge-renta';
-    const precio = p.precio ? ' · $'+Number(p.precio).toLocaleString('es-MX') : '';
+    const precio = p.precio ? ' · $'+Number(p.precio).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') : '';
     return `<div class="prop-pick-item" onclick="seleccionarInmueble('${p.id}')">
       <div class="prop-pick-name"><span class="prop-pick-badge ${opCls}">${p.operacion||''}</span>${p.titulo||'Sin nombre'}</div>
       <div class="prop-pick-sub">${[p.colonia,p.ciudad].filter(Boolean).join(', ')}${precio}</div>
@@ -3102,6 +3076,7 @@ window.addEventListener('message', function(e) {
     <div class="pick-list" id="pick-prop-list"></div>
   </div>
 </div>
+<script src="contratos-paises.js" defer></script>
 <script src="app-shell.js" defer></script>
 </body>
 </html>

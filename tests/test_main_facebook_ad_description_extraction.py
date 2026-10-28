@@ -24,8 +24,7 @@ class FacebookAdDescriptionExtractionTests(unittest.TestCase):
     def test_router_preserves_auth_prompt_and_anthropic_contract(self):
         router = self.router
         self.assertIn('@router.post("/facebook/ad-description")', router)
-        self.assertIn('user_id = await get_user_id_from_token(request)', router)
-        self.assertIn('raise HTTPException(status_code=401, detail="No autenticado")', router)
+        self.assertIn('user_id = await require_paid_feature_access(request)', router)
         self.assertIn('settings.anthropic_api_key', router)
         self.assertIn('raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY no configurada")', router)
         self.assertIn('titulo = (body.get("titulo") or "").strip()', router)

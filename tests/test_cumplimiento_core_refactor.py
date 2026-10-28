@@ -14,7 +14,7 @@ class CumplimientoCoreRegressionTests(unittest.TestCase):
         self.assertIn("from core.auth import require_user_id", source)
         self.assertIn("from core.config import settings", source)
         self.assertIn("from core.database import delete_rows, get_rows, patch_rows, post_rows", source)
-        self.assertIn("from core.storage import create_signed_object_url, delete_object, upload_object", source)
+        self.assertIn("from core.storage import create_signed_object_url, delete_object, download_object, upload_object", source)
         self.assertNotIn("os.getenv", source)
         self.assertNotIn("SUPABASE_SERVICE_KEY =", source)
         self.assertNotIn("async def get_user_id_from_token", source)
@@ -31,7 +31,7 @@ class CumplimientoCoreRegressionTests(unittest.TestCase):
         self.assertIn("def umbral_pesos(", source)
         self.assertIn("async def evaluar_operacion(", source)
         self.assertIn("def fecha_limite(", source)
-        self.assertIn("from core.pld_inm import TIPOS_BROQUER_INM, catalogos, construir_xml, validar_xsd", source)
+        self.assertIn("from core.pld_inm import TIPOS_BROQUER_INM, catalogos, con_ubicacion_esquema, construir_xml, validar_xsd", source)
         self.assertIn("errores_xsd = validar_xsd(xml)", source)
         compile(source, "routers/cumplimiento.py", "exec")
 

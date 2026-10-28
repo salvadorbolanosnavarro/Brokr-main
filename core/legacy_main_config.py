@@ -38,11 +38,16 @@ class LegacyMainSettings:
     fb_qa_page_id: str
     stripe_webhook_secret: str
     stripe_price_pro: str
+    stripe_price_pro_usd: str
     stripe_price_ampi: str
     stripe_price_empresa_mensual: str
     stripe_price_empresa_anual: str
     stripe_price_empresa_extra_mensual: str
     stripe_price_empresa_extra_anual: str
+    stripe_price_empresa_mensual_usd: str
+    stripe_price_empresa_anual_usd: str
+    stripe_price_empresa_extra_mensual_usd: str
+    stripe_price_empresa_extra_anual_usd: str
     activate_secret: str
     revenuecat_webhook_auth: str
     demo_notif_email: str
@@ -109,11 +114,16 @@ class LegacyMainSettings:
             fb_qa_page_id=os.getenv("FB_QA_PAGE_ID", "").strip(),
             stripe_webhook_secret=os.getenv("STRIPE_WEBHOOK_SECRET", ""),
             stripe_price_pro=os.getenv("STRIPE_PRICE_PRO", ""),
+            stripe_price_pro_usd=os.getenv("STRIPE_PRICE_PRO_USD", ""),
             stripe_price_ampi=os.getenv("STRIPE_PRICE_AMPI", ""),
             stripe_price_empresa_mensual=os.getenv("STRIPE_PRICE_EMPRESA_MENSUAL", ""),
             stripe_price_empresa_anual=os.getenv("STRIPE_PRICE_EMPRESA_ANUAL", ""),
             stripe_price_empresa_extra_mensual=os.getenv("STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL", ""),
             stripe_price_empresa_extra_anual=os.getenv("STRIPE_PRICE_EMPRESA_EXTRA_ANUAL", ""),
+            stripe_price_empresa_mensual_usd=os.getenv("STRIPE_PRICE_EMPRESA_MENSUAL_USD", ""),
+            stripe_price_empresa_anual_usd=os.getenv("STRIPE_PRICE_EMPRESA_ANUAL_USD", ""),
+            stripe_price_empresa_extra_mensual_usd=os.getenv("STRIPE_PRICE_EMPRESA_EXTRA_MENSUAL_USD", ""),
+            stripe_price_empresa_extra_anual_usd=os.getenv("STRIPE_PRICE_EMPRESA_EXTRA_ANUAL_USD", ""),
             activate_secret=os.getenv("ACTIVATE_SECRET", ""),
             revenuecat_webhook_auth=os.getenv("REVENUECAT_WEBHOOK_AUTH", ""),
             demo_notif_email=os.getenv("DEMO_NOTIF_EMAIL", "hola@broquer.app"),

@@ -1,6 +1,6 @@
 # Sistema visual aprobado
 
-Aprobado por el usuario el 28 de octubre de 2026. La migración de módulos está en curso; ver `UNIFICACION-UI-AVANCE.md`.
+Aprobado por el usuario el 28 de octubre de 2026. El contrato compartido se aplica sobre main ee9c5579; ver `UNIFICACION-UI-AVANCE.md`.
 
 - Manrope. Escala: 12, 14, 16, 20, 24, 32 y 48 px. Título de módulo: 48/600 escritorio y 32/600 móvil; sección: 24/600; cuerpo: 16; etiqueta: 14; ayuda: 12.
 - Colores: tinta #191C1F, secundario #59636C, blanco #FFFFFF, superficie #F5F7F8, celeste #E8F4FA, borde #D5D9DD, acción naranja #FF9257 y destructivo #B42318.

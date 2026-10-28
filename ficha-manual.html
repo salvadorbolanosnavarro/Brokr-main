@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Broquer — Ficha Manual</title>
+<title>Ficha técnica · Broquer</title>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
@@ -51,27 +51,15 @@
   color: var(--mute);
   letter-spacing: .05em;
 }
-.f input, .f select{
-  height: var(--h); padding: 0 var(--sp-4);
-  background: var(--bone); border: 1px solid var(--line-2);
-  border-radius: var(--r); font-size: var(--fs-sm);
-  font-family: inherit; color: var(--ink); width: 100%; outline: none;
+.f input, .f select{ color: var(--ink); width: 100%; outline: none;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.f textarea{
-  padding: var(--sp-3) var(--sp-4); min-height: 96px;
-  background: var(--bone); border: 1px solid var(--line-2);
-  border-radius: var(--r); font-size: var(--fs-sm);
-  font-family: inherit; color: var(--ink); width: 100%; outline: none;
-  resize: vertical; line-height: var(--lh);
+.f textarea{ color: var(--ink); width: 100%; outline: none;
+  resize: vertical;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-}
-.f input:focus, .f select:focus, .f textarea:focus{
-  border-color: var(--forest);
-  box-shadow: var(--focus);
 }
 .f input::placeholder, .f textarea::placeholder{ color: var(--mute-2); }
-.f textarea{ resize: vertical; min-height: 90px; }
+.f textarea{ resize: vertical; }
 
 #precio-renta-row{ display: none; }
 
@@ -130,17 +118,11 @@
 .photo-del{
   position: absolute;
   top: 5px; right: 5px;
-  background: rgba(22,22,22,.65);
-  color: var(--bone);
-  border: none;
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  font-size: var(--fs-sm);
+  width: var(--ui-control-small);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
 }
 #drag-hint{
   display: none;
@@ -156,19 +138,10 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 9px 16px;
-  background: var(--forest);
-  color: var(--bone);
-  border: none;
-  border-radius: var(--r-pill);
-  font-size: var(--fs-label-3);
-  font-weight: 500;
-  font-family: var(--font-sans);
   cursor: pointer;
   margin-top: 10px;
   transition: background var(--dur) var(--ease);
 }
-.ai-btn:hover{ background: var(--forest-2); }
 .ai-hint{
   font-size: var(--fs-caption);
   color: var(--mute);
@@ -186,41 +159,16 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 44px;
-  padding: 0 20px;
-  background: var(--forest);
-  color: var(--bone);
-  border: 1px solid transparent;
-  border-radius: var(--r-pill);
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  font-family: var(--font-sans);
-  letter-spacing: -0.005em;
   cursor: pointer;
-  white-space: nowrap;
   transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
-.ui-btn:hover{ background: var(--forest-2); }
 .ui-btn:active{ transform: scale(.98); }
-.ui-btn.forest{ background: var(--forest); }
-.ui-btn.forest:hover{ background: var(--forest-2); }
-.ui-btn.outline{
-  background: transparent;
-  color: var(--ink);
-  border-color: var(--line-2);
-}
-.ui-btn.outline:hover{ background: var(--paper-2); }
 
 /* CTA principal — hermano del gen-btn de Contratos */
 .actions .ui-btn{
   width: 100%;
-  height: auto;
-  padding: 14px;
-  font-size: var(--fs-body);
-  font-weight: 600;
   gap: 9px;
 }
-.actions .ui-btn:hover{ background: var(--ink-3); }
 
 #print-bar{
   display: none;
@@ -636,6 +584,14 @@
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="ficha-manual">
 
@@ -796,7 +752,7 @@
       <span><strong>Guardar en Tus inmuebles</strong> <span style="color:var(--mute)">— quedará disponible en tu inventario.</span></span>
     </label>
     <div class="actions">
-      <button class="ui-btn" onclick="generarFicha()">
+      <button class="ui-btn" id="gen-ficha-btn" onclick="generarFicha()">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
         </svg>
@@ -1227,10 +1183,10 @@ async function generarFicha(){
     const buildOperations = () => {
       const ops = [];
       if (d.op === 'Venta y renta') {
-        if (d.precio) ops.push({ type: 'sale', amount: rawNum(d.precio), currency: 'MXN' });
-        if (d.precioRenta) ops.push({ type: 'rental', amount: rawNum(d.precioRenta), currency: 'MXN' });
+        if (d.precio) ops.push({ type: 'sale', amount: rawNum(d.precio), currency: (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN') });
+        if (d.precioRenta) ops.push({ type: 'rental', amount: rawNum(d.precioRenta), currency: (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN') });
       } else if (d.precio) {
-        ops.push({ type: d.op === 'Renta' ? 'rental' : 'sale', amount: rawNum(d.precio), currency: 'MXN' });
+        ops.push({ type: d.op === 'Renta' ? 'rental' : 'sale', amount: rawNum(d.precio), currency: (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN') });
       }
       return ops;
     };
@@ -1487,7 +1443,7 @@ async function guardarComoInmueble() {
     operacion:         (d.op || '').toLowerCase().replace('venta y renta', 'venta') || null,
     estatus:           'activa',
     precio:            rawNum(d.precio),
-    moneda:            'MXN',
+    moneda:            (window.bkPaisCfg ? bkPaisCfg().moneda : 'MXN'),
     calle:             d.dir || null,
     colonia:           d.colonia || null,
     ciudad:            d.ciudad || '',

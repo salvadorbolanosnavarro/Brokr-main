@@ -49,9 +49,10 @@ from pydantic import BaseModel
 from core.auth import require_user_id
 from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
-from core.storage import create_signed_object_url, delete_object, upload_object
-from core.pld_inm import TIPOS_BROQUER_INM, catalogos, construir_xml, validar_xsd
+from core.storage import create_signed_object_url, delete_object, download_object, upload_object
+from core.pld_inm import TIPOS_BROQUER_INM, catalogos, con_ubicacion_esquema, construir_xml, validar_xsd
 from core.pld_alertas import PASOS, alertas_pld
+from core.paises import PAIS_DEFAULT, datos_pais, pais_de_usuario
 
 router = APIRouter(prefix="/pld", tags=["cumplimiento"])
 log = logging.getLogger("broquer.pld")
@@ -104,6 +105,53 @@ DOCS_REQUERIDOS = {
         ("ine",                   "Identificación del fiduciario"),
     ],
 }
+
+# Fuera de México no existe la CURP, el RFC es el identificador tributario
+# del país (NIT, RUC, CUIT o RUT) y no hay aviso en XML al SAT: el reporte de
+# operaciones sospechosas se presenta en el portal de la autoridad del país.
+DOCS_FUERA_MX = {
+    "fisica": [
+        ("ine",                   "Documento de identidad"),
+        ("rfc",                   "Constancia de inscripción tributaria"),
+        ("comprobante_domicilio", "Comprobante de domicilio"),
+    ],
+    "moral": [
+        ("acta_constitutiva",     "Acta o escritura de constitución"),
+        ("rfc",                   "Constancia de inscripción tributaria"),
+        ("comprobante_domicilio", "Comprobante de domicilio"),
+        ("poder",                 "Poder del representante"),
+        ("ine",                   "Identificación del representante"),
+    ],
+    "fideicomiso": [
+        ("acta_constitutiva",     "Contrato de fideicomiso"),
+        ("rfc",                   "Constancia de inscripción tributaria"),
+        ("comprobante_domicilio", "Comprobante de domicilio"),
+        ("ine",                   "Identificación del fiduciario"),
+    ],
+}
+
+# Autoridad y portal donde se reportan las operaciones sospechosas.
+AUTORIDAD_PLD = {
+    "CO": "la UIAF, por medio del sistema SIREL",
+    "PE": "la UIF-Perú, por medio de su sistema de reporte en línea",
+    "AR": "la UIF, por medio del Sistema de Reporte de Operaciones (SRO)",
+    "CL": "la UAF, por medio de su portal de entidades reportantes",
+}
+
+# Monto de alerta interna por defecto (≈ US$10.000 en la moneda usual del
+# mercado). No es un umbral legal: cada agencia lo ajusta en Ajustes con su
+# oficial de cumplimiento.
+ALERTA_PLD_DEFECTO = {"CO": 40_000_000, "PE": 37_000, "AR": 10_000, "CL": 9_500_000}
+
+
+def requisitos_pld(pais: str, tipo: str):
+    """(campos, documentos) que exige el expediente en el país de la cuenta."""
+    if pais == PAIS_DEFAULT:
+        return (CAMPOS_REQUERIDOS.get(tipo, CAMPOS_REQUERIDOS["fisica"]),
+                DOCS_REQUERIDOS.get(tipo, DOCS_REQUERIDOS["fisica"]))
+    campos = [c for c in CAMPOS_REQUERIDOS.get(tipo, CAMPOS_REQUERIDOS["fisica"]) if c not in ("curp", "rep_curp")]
+    return campos, DOCS_FUERA_MX.get(tipo, DOCS_FUERA_MX["fisica"])
+
 
 # Campos mínimos del expediente por tipo de persona.
 CAMPOS_REQUERIDOS = {
@@ -217,8 +265,15 @@ async def _config(user_id: str) -> dict:
     filas = await _sb_get("pld_config", {"user_id": f"eq.{user_id}", "limit": "1"})
     if filas:
         return filas[0]
+    pais = await pais_de_usuario(user_id)
+    inicial = {"user_id": user_id}
+    if pais != PAIS_DEFAULT:
+        # Sin UMA: el "umbral en UMA" es directamente el monto de alerta.
+        alerta = ALERTA_PLD_DEFECTO.get(pais, 10_000)
+        inicial.update({"valor_uma": 1, "umbral_aviso_uma": alerta, "umbral_identifica_uma": alerta,
+                        "alertas_activas": False})
     try:
-        nuevas = await _sb_post("pld_config", {"user_id": user_id})
+        nuevas = await _sb_post("pld_config", inicial)
         if nuevas:
             return nuevas[0]
     except Exception:
@@ -301,10 +356,9 @@ async def guardar_config(request: Request, body: ConfigIn):
 # COMPLETITUD DEL EXPEDIENTE
 # ══════════════════════════════════════════════════════════════════════════
 
-def _falta(exp: dict, docs: List[dict]) -> Dict[str, Any]:
+def _falta(exp: dict, docs: List[dict], pais: str = PAIS_DEFAULT) -> Dict[str, Any]:
     tipo = (exp.get("tipo_persona") or "fisica").lower()
-    campos = CAMPOS_REQUERIDOS.get(tipo, CAMPOS_REQUERIDOS["fisica"])
-    requeridos = DOCS_REQUERIDOS.get(tipo, DOCS_REQUERIDOS["fisica"])
+    campos, requeridos = requisitos_pld(pais, tipo)
 
     campos_falt = [c for c in campos if not (exp.get(c) or "")]
 
@@ -314,7 +368,7 @@ def _falta(exp: dict, docs: List[dict]) -> Dict[str, Any]:
     # El dueño real solo se pide cuando no es la misma persona que firma.
     bc_falt = []
     if not exp.get("bc_es_el_mismo", True):
-        for c in ("bc_nombre", "bc_apellido_paterno", "bc_curp"):
+        for c in ("bc_nombre", "bc_apellido_paterno") + (("bc_curp",) if pais == PAIS_DEFAULT else ()):
             if not (exp.get(c) or ""):
                 bc_falt.append(c)
     if not exp.get("bc_declarado_at"):
@@ -346,7 +400,7 @@ async def _recalcular(user_id: str, expediente_id: str) -> Dict[str, Any]:
     exp = exps[0]
     docs = await _sb_get("pld_documentos",
                          {"expediente_id": f"eq.{expediente_id}", "select": "tipo"})
-    r = _falta(exp, docs)
+    r = _falta(exp, docs, await pais_de_usuario(user_id))
     estatus = "completo" if r["completo"] else "incompleto"
     if exp.get("observaciones"):
         estatus = "observaciones"
@@ -478,6 +532,9 @@ async def guardar_operacion(request: Request, body: OperacionIn):
         raise HTTPException(404, "No encontré ese expediente.")
 
     datos = body.dict()
+    pais = await pais_de_usuario(uid)
+    if pais != PAIS_DEFAULT and (datos.get("moneda") or "MXN") == "MXN":
+        datos["moneda"] = datos_pais(pais)["moneda"]
     ev = await evaluar_operacion(uid, datos, cfg)
 
     ahora = datetime.now(timezone.utc).isoformat()
@@ -585,6 +642,7 @@ async def publico_leer(token: str):
     docs = await _sb_get("pld_documentos",
                          {"expediente_id": f"eq.{exp['id']}", "select": "tipo,nombre_archivo,created_at"})
     tipo = (exp.get("tipo_persona") or "fisica").lower()
+    pais = await pais_de_usuario(exp.get("user_id"))
     visibles = (
         "tipo_persona", "nombre", "apellido_paterno", "apellido_materno",
         "fecha_nacimiento", "genero", "pais_nacimiento", "nacionalidad",
@@ -602,8 +660,8 @@ async def publico_leer(token: str):
     )
     return {
         "expediente": {k: exp.get(k) for k in visibles},
-        "documentos_requeridos": [{"tipo": t, "nombre": n}
-                                  for t, n in DOCS_REQUERIDOS.get(tipo, DOCS_REQUERIDOS["fisica"])],
+        "documentos_requeridos": [{"tipo": t, "nombre": n} for t, n in requisitos_pld(pais, tipo)[1]],
+        "pais": pais,
         "documentos_subidos": [d.get("tipo") for d in docs],
         "ya_firmado": bool(exp.get("firma_at")),
     }
@@ -855,6 +913,10 @@ class AvisoIn(BaseModel):
 async def generar_aviso(request: Request, body: AvisoIn):
     uid = await _uid(request)
     cfg = await _config(uid)
+    pais = await pais_de_usuario(uid)
+    if pais != PAIS_DEFAULT:
+        raise HTTPException(400, "En " + datos_pais(pais)["nombre"] + " el reporte se presenta ante "
+                            + AUTORIDAD_PLD[pais] + ". El aviso en XML es solo para México.")
 
     if not re.match(r"^\d{4}-\d{2}$", body.periodo or ""):
         raise HTTPException(400, "El periodo debe ir como 2026-03.")
@@ -1024,6 +1086,21 @@ async def _guardar_xml(uid: str, aviso_id: str, periodo: str, referencia: str, x
     return ruta
 
 
+async def _reparar_raiz_xml(ruta: str) -> None:
+    """Los avisos guardados antes de declarar xsi:schemaLocation los rechaza
+    el portal de la UIF (cvc-elt.1). Se corrigen en el archivo al volver a
+    descargarlos; si algo falla se entrega el archivo tal como está."""
+    try:
+        actual = (await download_object(BUCKET, ruta, timeout=30)).decode("utf-8")
+        reparado = con_ubicacion_esquema(actual)
+        if reparado != actual:
+            await upload_object(BUCKET, ruta, reparado.encode("utf-8"),
+                                content_type="application/xml", timeout=30)
+            log.info("XML PLD reparado (schemaLocation): %s", ruta)
+    except Exception as exc:
+        log.warning("no se pudo reparar el XML PLD %s: %s", ruta, exc)
+
+
 @router.get("/avisos/{aviso_id}/xml")
 async def descargar_xml(request: Request, aviso_id: str):
     """Liga temporal para descargar el XML de un aviso ya generado."""
@@ -1034,6 +1111,8 @@ async def descargar_xml(request: Request, aviso_id: str):
     if aviso.get("formato") != "INM" and aviso.get("estatus") != "presentado":
         raise HTTPException(409, "Este aviso tiene el formato anterior y el SAT lo rechazaría. "
                                  "Tócale «Rehacer aviso» y vuelve a generarlo.")
+    if aviso.get("formato") == "INM":
+        await _reparar_raiz_xml(aviso["xml_ruta"])
     url = await create_signed_object_url(BUCKET, aviso["xml_ruta"], expires_in=300, timeout=15)
     if not aviso.get("descargado_at"):
         await _sb_patch("pld_avisos", {"id": f"eq.{aviso_id}"},
@@ -1225,6 +1304,7 @@ async def generar_modificatorio(request: Request, aviso_id: str, body: Modificat
 async def resumen(request: Request):
     uid = await _uid(request)
     cfg = await _config(uid)
+    pais = await pais_de_usuario(uid)
     hoy = date.today()
 
     exps = await _sb_get("pld_expedientes", {
@@ -1288,7 +1368,9 @@ async def resumen(request: Request):
         "periodos_pendientes": lista_periodos,
         "inusuales_urgentes": urgentes,
         "avisos": avisos,
-        "alertas": alertas_pld(cfg, hoy, pendientes, avisos, inusuales, fecha_limite),
+        "alertas": alertas_pld(cfg, hoy, pendientes, avisos, inusuales, fecha_limite) if pais == PAIS_DEFAULT else [],
+        "pais": pais,
+        "autoridad": AUTORIDAD_PLD.get(pais),
         "pasos": PASOS,
         "listo_para_avisar": bool(cfg.get("rfc_sujeto_obligado") and cfg.get("responsable_nombre")),
     }

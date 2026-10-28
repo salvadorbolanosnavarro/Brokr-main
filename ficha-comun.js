@@ -170,6 +170,7 @@ function bkRenderBitacora(entradas, titulos) {
       adjuntos: e.adjuntos,
       categorias: e.categorias,
       editadoEn: e.editado_en,
+      sup: e.sup,
     });
   });
   return html;
@@ -180,30 +181,42 @@ function bkRenderBitacora(entradas, titulos) {
 // automático de lo que pasó, no algo que tenga sentido "corregir".
 const BK_TIPOS_EDITABLES = ['nota', 'archivo'];
 
-function bkItemBitacora({ id, tipo, titulo, texto, hora, adjuntos, categorias, editadoEn }) {
+// En Broquer para Empresas solo el dueño o un administrador borra notas.
+// Cada página resuelve el permiso con /org: cPuedeEliminar (contactos y
+// clientes) o puedeEliminar (propiedades). Sin permiso resuelto, no se borra.
+function bkPuedeBorrar() {
+  if (typeof cPuedeEliminar !== 'undefined') return cPuedeEliminar === true;
+  if (typeof puedeEliminar !== 'undefined') return puedeEliminar === true;
+  return false;
+}
+
+function bkItemBitacora({ id, tipo, titulo, texto, hora, adjuntos, categorias, editadoEn, sup }) {
   const adj = (typeof haRenderAdjuntos === 'function') ? haRenderAdjuntos(adjuntos) : '';
   const cats = (categorias && categorias.length)
     ? '<div class="tke-chips" style="margin-top:6px">' +
       categorias.map(n => '<span class="tke-chip" style="cursor:default">' + bkEsc(n) + '</span>').join('') +
       '</div>'
     : '';
+  // Un comentario urgente de supervisión solo lo corrige quien lo escribió.
   const editable = id && BK_TIPOS_EDITABLES.includes(tipo) &&
+    (!sup || sup.autor === _bkSup.yo) &&
     typeof bkEditarNota === 'function' && typeof bkEliminarNota === 'function';
   const acciones = editable
     ? `<div class="bk-bita__acciones">
         ${editadoEn ? '<span class="bk-hint" title="Editada">(editada)</span>' : ''}
         <button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="bkEditarNota('${bkEsc(String(id))}')">Editar</button>
-        <button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="bkEliminarNota('${bkEsc(String(id))}')">Eliminar</button>
+        ${bkPuedeBorrar() ? `<button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="bkEliminarNota('${bkEsc(String(id))}')">Eliminar</button>` : ''}
       </div>`
     : '';
-  return `<article class="bk-bita__item">
-    <span class="bk-bita__ico bk-bita__ico--${bkEsc(tipo)}">${BK_BITA_ICONOS[tipo] || BK_BITA_ICONOS.nota}</span>
+  return `<article class="bk-bita__item${sup ? ' bk-bita__item--urgente' : ''}">
+    <span class="bk-bita__ico bk-bita__ico--${sup ? 'urgente' : bkEsc(tipo)}">${sup ? BK_ICO_URGENTE : (BK_BITA_ICONOS[tipo] || BK_BITA_ICONOS.nota)}</span>
     <div class="bk-bita__cuerpo">
       <header class="bk-bita__head">
-        <span class="bk-bita__tipo">${bkEsc(titulo)}</span>
+        <span class="bk-bita__tipo">${sup ? 'Urgente de supervisión' : bkEsc(titulo)}</span>
         <time class="bk-bita__hora">${bkEsc(hora)}</time>
       </header>
       ${texto ? `<p class="bk-bita__txt">${bkEsc(texto)}</p>` : ''}
+      ${sup ? bkSupEstado(id, sup) : ''}
       ${cats}
       ${acciones}
       ${adj}
@@ -358,9 +371,9 @@ function bkBuscadorContactos(inputId, hiddenId, cajaId, vacioTexto) {
    Antes se mandaba el PATCH con "return=minimal": si el cliente era de un
    compañero, la base (RLS) no actualizaba nada, respondía 200 igual y la
    pantalla decía "Etapa: Descartado" aunque al recargar volvía a la de antes.
-   Ahora se pide la fila de vuelta; si no se actualizó ninguna y el cambio es
-   solo de etapa/probabilidad, lo hace el servidor (que revisa permisos del
-   equipo). Cualquier otro caso se reporta como error, nunca como éxito. */
+   Ahora se pide la fila de vuelta; si no se actualizó ninguna, lo hace el
+   servidor (que revisa permisos del equipo: asignado, admin o "ver contactos
+   del equipo"). Si tampoco puede, se reporta como error, nunca como éxito. */
 async function bkPatchContacto(id, fields) {
   const sb = window.brokrSb;
   const r = await sb.fetch('rest/v1/contactos?id=eq.' + encodeURIComponent(id), {
@@ -372,14 +385,20 @@ async function bkPatchContacto(id, fields) {
   const filas = await r.json().catch(() => []);
   if (Array.isArray(filas) && filas.length) return;
 
+  // El cliente es de otro (lo creó alguien más y me lo asignaron, o lo veo
+  // por el permiso del equipo): el servidor revisa permisos y guarda sin
+  // cambiar al creador. Solo etapa/probabilidad → /etapa; lo demás → general.
   const soloEtapa = Object.keys(fields).every(k => ['estatus', 'probabilidad', 'updated_at'].includes(k));
-  if (!soloEtapa) throw new Error('No tienes permiso para modificar este contacto.');
   const tok = await sb.ensureToken();
   const cuerpo = {};
-  if ('estatus' in fields) cuerpo.estatus = fields.estatus;
-  if ('probabilidad' in fields) cuerpo.probabilidad = fields.probabilidad;
+  if (soloEtapa) {
+    if ('estatus' in fields) cuerpo.estatus = fields.estatus;
+    if ('probabilidad' in fields) cuerpo.probabilidad = fields.probabilidad;
+  } else {
+    Object.assign(cuerpo, fields);
+  }
   const r2 = await fetch((window.API_BASE || 'https://api.broquer.app') + '/org/contactos/' +
-    encodeURIComponent(id) + '/etapa', {
+    encodeURIComponent(id) + (soloEtapa ? '/etapa' : ''), {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
     body: JSON.stringify(cuerpo),
@@ -388,4 +407,199 @@ async function bkPatchContacto(id, fields) {
     const j = await r2.json().catch(() => ({}));
     throw new Error(j.detail || ('Error ' + r2.status));
   }
+}
+
+/* Guardar el formulario "Nuevo / Editar cliente". Un cliente nuevo se
+   inserta con quien lo crea como dueño. Uno existente se ACTUALIZA sin
+   mandar user_id: antes se reenviaba la fila completa con user_id = quien
+   guardaba, así que la base lo rechazaba si el cliente era de otro (aunque
+   estuviera asignado a quien editaba) y, cuando un admin lo editaba, el
+   cliente pasaba a ser del admin sin que nadie lo notara. */
+async function bkGuardarContacto(contacto, existe) {
+  if (existe) {
+    const campos = Object.assign({}, contacto);
+    ['id', 'user_id', 'org_id', 'asignado_a', 'created_at'].forEach(k => delete campos[k]);
+    await bkPatchContacto(contacto.id, campos);
+    return;
+  }
+  const sb = window.brokrSb;
+  const uid = typeof _userId === 'function' ? await _userId() : null;
+  if (!uid) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+  const r = await sb.fetch('rest/v1/contactos?on_conflict=id', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(Object.assign({}, contacto, { user_id: uid })),
+  });
+  if (!r.ok) throw new Error('Supabase: ' + r.status + ' ' + await r.text().catch(() => ''));
+  return r.json();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Anterior / siguiente — recorrer la lista sin cerrar la ficha
+   Al abrir la ficha desde el tablero o la lista se toma una foto del
+   orden que se ve en pantalla (con los filtros puestos). Las flechas
+   caminan sobre esa foto, así que cambiar de etapa al cliente actual no
+   lo mueve de lugar a media vuelta. Teclado: ← y →.
+   ══════════════════════════════════════════════════════════════════ */
+let _bkNav = null;   // { ids, i, abrir }
+
+const BK_ICO_ANT = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>';
+const BK_ICO_SIG = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>';
+
+// id: el que se acaba de abrir. ordenVisible(): ids en el orden de la
+// pantalla. abrir(id): abre otro sin cerrar la ficha.
+function bkFichaNav(id, ordenVisible, abrir) {
+  const ov = document.getElementById('detail-ov');
+  const bar = ov && ov.querySelector('.bk-ficha__bar');
+  if (!bar) return;
+  let nav = document.getElementById('bk-ficha-nav');
+  if (!nav) {
+    nav = document.createElement('div');
+    nav.id = 'bk-ficha-nav';
+    nav.className = 'bk-ficha__nav';
+    nav.innerHTML =
+      `<button type="button" class="bk-icon-btn bk-icon-btn--sm" onclick="bkFichaNavIr(-1)" title="Anterior (←)" aria-label="Anterior">${BK_ICO_ANT}</button>` +
+      '<span class="bk-ficha__nav-pos" aria-live="polite"></span>' +
+      `<button type="button" class="bk-icon-btn bk-icon-btn--sm" onclick="bkFichaNavIr(1)" title="Siguiente (→)" aria-label="Siguiente">${BK_ICO_SIG}</button>`;
+    bar.insertBefore(nav, bar.lastElementChild);
+  }
+  id = String(id);
+  const yaAbierta = ov.classList.contains('is-open');
+  if (!yaAbierta || !_bkNav || !_bkNav.ids.includes(id)) {
+    _bkNav = { ids: ordenVisible().map(String), abrir };
+  }
+  _bkNav.i = _bkNav.ids.indexOf(id);
+  const n = _bkNav.ids.length;
+  nav.hidden = _bkNav.i < 0 || n < 2;
+  if (nav.hidden) return;
+  const [ant, sig] = nav.querySelectorAll('button');
+  ant.disabled = _bkNav.i === 0;
+  sig.disabled = _bkNav.i === n - 1;
+  nav.querySelector('.bk-ficha__nav-pos').textContent = (_bkNav.i + 1) + ' de ' + n;
+}
+
+function bkFichaNavIr(paso) {
+  if (!_bkNav || _bkNav.i < 0) return;
+  const j = _bkNav.i + paso;
+  if (j < 0 || j >= _bkNav.ids.length) return;
+  bkCerrarMenu();
+  _bkNav.abrir(_bkNav.ids[j]);
+}
+
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+  if (ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey || bkHayMenuAbierto()) return;
+  const ov = document.getElementById('detail-ov');
+  if (!ov || !ov.classList.contains('is-open')) return;
+  const t = ev.target;
+  if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+  // Otro modal encima de la ficha (editar, confirmar) se queda con las flechas
+  if (document.querySelector('.overlay.open, .cdel-overlay.is-open')) return;
+  ev.preventDefault();
+  bkFichaNavIr(ev.key === 'ArrowLeft' ? -1 : 1);
+});
+
+/* ══════════════════════════════════════════════════════════════════
+   Urgente de supervisión — el dueño o un admin deja en la bitácora una
+   nota urgente para el agente del cliente (routers/supervision.py). Las
+   columnas de esa marca solo las escribe el backend; aquí se pinta la
+   marca, la opción en el editor de notas y el botón "Marcar como atendido".
+   ══════════════════════════════════════════════════════════════════ */
+const BK_ICO_URGENTE = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008M10.3 3.86L1.82 18a1.5 1.5 0 001.29 2.25h17.78A1.5 1.5 0 0022.18 18L13.7 3.86a1.5 1.5 0 00-2.6 0z"/></svg>';
+let _bkSup = { yo: null, esSup: false };
+let _bkSupListo = null;
+
+async function bkSupApi(ruta, opts) {
+  const sb = window.brokrSb;
+  const tok = sb && sb.ensureToken ? await sb.ensureToken() : null;
+  if (!tok) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+  const r = await fetch((window.API_BASE || 'https://api.broquer.app') + ruta, Object.assign({}, opts, {
+    headers: Object.assign({ Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, (opts || {}).headers),
+  }));
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || ('Error ' + r.status));
+  return j;
+}
+
+// Quién soy y si superviso (owner/admin de una empresa). Una vez por página.
+function bkSupPreparar() {
+  if (!_bkSupListo) {
+    _bkSupListo = (async () => {
+      try { _bkSup.yo = typeof _userId === 'function' ? await _userId() : null; } catch {}
+      try {
+        const org = await bkSupApi('/org');
+        _bkSup.esSup = org.es_empresa === true && org.es_admin === true;
+      } catch {}
+    })();
+  }
+  return _bkSupListo;
+}
+
+function bkSupEstado(id, sup) {
+  if (sup.atendidoEn) {
+    return `<p class="bk-sup-estado is-ok">Atendido · ${bkEsc(bkDiaEtiqueta(sup.atendidoEn))}, ${bkEsc(bkHora(sup.atendidoEn))}</p>`;
+  }
+  const puede = id && (sup.para === _bkSup.yo || _bkSup.esSup);
+  return `<p class="bk-sup-estado">Pendiente de atender
+    ${puede ? `<button type="button" class="bk-btn bk-btn--sm" onclick="bkSupAtender('${bkEsc(String(id))}', this)">Marcar como atendido</button>` : ''}</p>`;
+}
+
+async function bkSupAtender(id, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    await bkSupApi('/supervision/comentarios/' + encodeURIComponent(id) + '/atendido', { method: 'POST' });
+    if (typeof showToast === 'function') showToast('Marcado como atendido');
+    window.dispatchEvent(new Event('brokr-supervision-cambio'));
+    if (typeof cargarBitacora === 'function' && typeof detContacto !== 'undefined' && detContacto) cargarBitacora();
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    alert('No se pudo marcar como atendido.\n\n' + (e.message || e));
+  }
+}
+
+// La opción en el editor de notas. Solo la ve quien supervisa.
+function bkSupComposer() {
+  const comp = document.getElementById('f-composer');
+  if (!comp) return;
+  let fila = document.getElementById('f-nota-urgente-fila');
+  if (!fila) {
+    fila = document.createElement('label');
+    fila.id = 'f-nota-urgente-fila';
+    fila.className = 'bk-sup-check';
+    fila.innerHTML = '<input type="checkbox" id="f-nota-urgente"/>' +
+      '<span><strong>Urgente para el agente</strong> · le llega un aviso y queda pendiente hasta que lo atienda</span>';
+    comp.insertBefore(fila, comp.querySelector('.bk-composer__pie'));
+  }
+  document.getElementById('f-nota-urgente').checked = false;
+  fila.hidden = !_bkSup.esSup;
+  bkSupPreparar().then(() => { fila.hidden = !_bkSup.esSup; });
+}
+
+function bkSupMarcado() {
+  const el = document.getElementById('f-nota-urgente');
+  return !!(el && el.checked && _bkSup.esSup);
+}
+
+async function bkSupCrear(datos) {
+  const j = await bkSupApi('/supervision/comentarios', { method: 'POST', body: JSON.stringify(datos) });
+  window.dispatchEvent(new Event('brokr-supervision-cambio'));
+  return j.actividad;
+}
+
+// Lo que cada ficha pasa como `sup` al pintar su bitácora.
+function bkSupDeActividad(a) {
+  return a && a.urgente ? { para: a.para_usuario, autor: a.user_id, atendidoEn: a.atendido_en } : null;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Conteo del encabezado (Clientes y Directorio)
+   Con filtros activos el badge #count-badge dice "12 de 340"; sin
+   filtros, solo el total.
+   ══════════════════════════════════════════════════════════════════ */
+function cPintarConteo(filtrados, total) {
+  const badge = document.getElementById('count-badge');
+  if (!badge) return;
+  badge.textContent = filtrados === total ? total : filtrados + ' de ' + total;
+  badge.title = filtrados === total ? total + ' en total' : filtrados + ' con los filtros actuales, de ' + total + ' en total';
+  badge.style.display = total ? '' : 'none';
 }

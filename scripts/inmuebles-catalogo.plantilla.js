@@ -67,7 +67,7 @@
   function fmtMonto(n, moneda) {
     var v = Number(n);
     if (!isFinite(v) || v <= 0) return 'Precio a consultar';
-    return '$' + v.toLocaleString('es-MX', { maximumFractionDigits: 0 }) + ' ' + (moneda || 'MXN');
+    return '$' + v.toLocaleString(window.bkLocale ? bkLocale() : 'es-MX', { maximumFractionDigits: 0 }) + ' ' + (moneda || 'MXN');
   }
   function precioTexto(o) {
     if (!o) return '';

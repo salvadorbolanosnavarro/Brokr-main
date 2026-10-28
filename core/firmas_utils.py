@@ -12,6 +12,8 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
+from core.paises import PAIS_DEFAULT, normalizar_pais, telefono_e164
+
 
 _ALFABETO_FOLIO = "23456789BCDFGHJKMNPQRSTVWXYZ"
 
@@ -45,9 +47,11 @@ def _fecha_larga(iso: Optional[str]) -> str:
         return str(iso)
 
 
-def _tel(v: str) -> str:
-    """Normaliza a E.164 mexicano. Un número mal normalizado es un código que
-    nunca llega y una firma que nunca ocurre."""
+def _tel(v: str, pais: str = PAIS_DEFAULT) -> str:
+    """Normaliza a E.164 con la lada del país de la cuenta. Un número mal
+    normalizado es un código que nunca llega y una firma que nunca ocurre."""
+    if normalizar_pais(pais) != PAIS_DEFAULT:
+        return telefono_e164(v, pais)
     d = re.sub(r"\D", "", v or "")
     if not d:
         return ""

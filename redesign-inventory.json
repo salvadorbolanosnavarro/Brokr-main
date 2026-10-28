@@ -1,5 +1,5 @@
 {
-  "baseline": "1f5fc8d5a5a7650bd315bfead3515d708f828bae",
+  "baseline": "ee9c557969168092644d4ed231a3b84211d83434",
   "pages": [
     {
       "path": "404.html",
@@ -14,6 +14,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "sitio-engine.js"
       ],
       "runtime_status": "not-certified"
@@ -58,6 +61,33 @@
       "scripts": [
         "mobile-inputs.js",
         "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "_t.html",
+      "exists": true,
+      "app": null,
+      "shared_shell": false,
+      "shared_theme": true,
+      "source_unchanged": true,
+      "controls": [
+        {
+          "tag": "select",
+          "id": "c-filtro-fecha"
+        },
+        {
+          "tag": "select"
+        },
+        {
+          "tag": "input"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "/filtro-fecha.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -342,7 +372,12 @@
         "index.html"
       ],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
+        "paises.js",
+        "admin-paises.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -368,6 +403,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js",
         "inmuebles-catalogo.js",
         "bk-api.js",
@@ -389,7 +427,10 @@
         "javascript:history.back()"
       ],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -408,6 +449,9 @@
         "vendor/react-18.2.0/react.production.min.js",
         "vendor/react-18.2.0/react-dom.production.min.js",
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js",
         "avm-runtime.js"
       ],
@@ -466,6 +510,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -503,6 +550,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -598,6 +648,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js",
         "inmuebles-catalogo.js"
       ],
@@ -680,6 +733,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js",
         "inmuebles-catalogo.js"
       ],
@@ -731,6 +787,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js",
         "bk-api.js",
         "buzon.js"
@@ -1108,10 +1167,15 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "historial-adjuntos.js",
         "ficha-comun.js",
         "categorias.js",
         "clientes-ficha.js",
+        "supervision.js",
+        "filtro-fecha.js",
         "tarea-nueva.js",
         "app-shell.js",
         "inmuebles-catalogo.js",
@@ -1497,10 +1561,14 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "historial-adjuntos.js",
         "ficha-comun.js",
         "categorias.js",
         "contactos-ficha.js",
+        "filtro-fecha.js",
         "app-shell.js",
         "inmuebles-catalogo.js",
         "bk-api.js",
@@ -2171,6 +2239,10 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
+        "contratos-paises.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -2273,6 +2345,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -2290,6 +2365,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js",
         "bk-api.js",
         "crm-ajustes.js",
@@ -2813,7 +2891,11 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "cumplimiento-aviso.js",
+        "cumplimiento-paises.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -2837,7 +2919,10 @@
         "soporte.html"
       ],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -2892,6 +2977,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -2954,6 +3042,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js",
         "bk-api.js",
         "estadisticas-plus.js"
@@ -3220,7 +3311,11 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
+        "paises.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -3341,6 +3436,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -3357,7 +3455,10 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -3472,6 +3573,7 @@
         },
         {
           "tag": "button",
+          "id": "gen-ficha-btn",
           "onclick": "generarFicha()"
         },
         {
@@ -3485,6 +3587,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -3512,6 +3617,22 @@
         {
           "tag": "button",
           "id": "fin-btn-cuentas"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button"
         },
         {
           "tag": "input",
@@ -3667,6 +3788,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js",
         "bk-api.js",
         "finanzas-plus.js"
@@ -3747,7 +3871,10 @@
         "verificar-firma.html"
       ],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -3890,6 +4017,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -3929,6 +4059,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js",
         "soporte-form.js"
       ],
@@ -4030,6 +4163,115 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
+        "app-shell.js"
+      ],
+      "runtime_status": "not-certified"
+    },
+    {
+      "path": "impuestos.html",
+      "exists": true,
+      "app": "impuestos",
+      "shared_shell": true,
+      "shared_theme": true,
+      "source_unchanged": false,
+      "controls": [
+        {
+          "tag": "form",
+          "id": "imp-form",
+          "onsubmit": "event.preventDefault()"
+        },
+        {
+          "tag": "select",
+          "id": "imp-moneda"
+        },
+        {
+          "tag": "input",
+          "id": "imp-venta",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "imp-costo",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "imp-mejoras",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "imp-fcompra",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "imp-fventa",
+          "type": "date"
+        },
+        {
+          "tag": "input",
+          "id": "imp-casa",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "imp-reinvierte",
+          "type": "checkbox"
+        },
+        {
+          "tag": "input",
+          "id": "imp-uvt",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "imp-icm",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "imp-uit",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "imp-uf",
+          "type": "text"
+        },
+        {
+          "tag": "input",
+          "id": "imp-ufusadas",
+          "type": "text"
+        },
+        {
+          "tag": "button",
+          "id": "imp-calc",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "id": "imp-copiar",
+          "type": "button"
+        },
+        {
+          "tag": "button",
+          "type": "button",
+          "onclick": "window.print()"
+        }
+      ],
+      "removed_control_ids": [],
+      "removed_ids": [],
+      "links": [],
+      "scripts": [
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
+        "paises.js",
+        "impuestos-reglas.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -4186,6 +4428,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "home-design.js",
         "app-shell.js",
         "capacitor-bridge.js",
@@ -4339,6 +4584,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -4411,7 +4659,11 @@
         "soporte.html"
       ],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
+        "paises.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -4430,6 +4682,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -4469,6 +4724,11 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
+        "paises.js",
+        "legal-paises.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -4577,6 +4837,10 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
+        "paises.js",
         "capacitor-bridge.js"
       ],
       "runtime_status": "not-certified"
@@ -4594,6 +4858,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js",
         "bk-api.js",
         "mi-sitio-web.js"
@@ -4616,7 +4883,10 @@
         "preview-inicio.html"
       ],
       "scripts": [
-        "../mobile-inputs.js"
+        "../mobile-inputs.js",
+        "../ui/date-picker.js",
+        "../ui/actions.js",
+        "../ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -4662,7 +4932,10 @@
         "preview-inicio.html"
       ],
       "scripts": [
-        "../mobile-inputs.js"
+        "../mobile-inputs.js",
+        "../ui/date-picker.js",
+        "../ui/actions.js",
+        "../ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -4695,7 +4968,10 @@
         "preview-inicio.html"
       ],
       "scripts": [
-        "../mobile-inputs.js"
+        "../mobile-inputs.js",
+        "../ui/date-picker.js",
+        "../ui/actions.js",
+        "../ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -4741,7 +5017,10 @@
         "preview-inicio.html"
       ],
       "scripts": [
-        "../mobile-inputs.js"
+        "../mobile-inputs.js",
+        "../ui/date-picker.js",
+        "../ui/actions.js",
+        "../ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -5292,6 +5571,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "inmuebles-catalogo.js",
         "propiedades-editor.js",
         "historial-adjuntos.js",
@@ -5345,7 +5627,11 @@
         "legal.html"
       ],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
+        "paises.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -5384,7 +5670,10 @@
         "login.html"
       ],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -5461,7 +5750,10 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -5478,6 +5770,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "inmuebles-catalogo.js",
         "sitio-engine.js"
       ],
@@ -5574,6 +5869,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "soporte-form.js"
       ],
       "runtime_status": "not-certified"
@@ -5606,6 +5904,10 @@
         {
           "tag": "select",
           "id": "tk-filtro-asignado"
+        },
+        {
+          "tag": "select",
+          "id": "tk-filtro-categoria"
         },
         {
           "tag": "button",
@@ -5726,6 +6028,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js",
         "ficha-comun.js",
         "categorias.js",
@@ -5763,7 +6068,10 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -5780,6 +6088,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -5812,7 +6123,10 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -5886,6 +6200,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -5919,7 +6236,10 @@
         "soporte.html"
       ],
       "scripts": [
-        "../mobile-inputs.js"
+        "../mobile-inputs.js",
+        "../ui/date-picker.js",
+        "../ui/actions.js",
+        "../ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -5935,7 +6255,10 @@
       "removed_ids": [],
       "links": [],
       "scripts": [
-        "mobile-inputs.js"
+        "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js"
       ],
       "runtime_status": "not-certified"
     },
@@ -6010,6 +6333,9 @@
       "links": [],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -6363,6 +6689,9 @@
       ],
       "scripts": [
         "mobile-inputs.js",
+        "ui/date-picker.js",
+        "ui/actions.js",
+        "ui/overlays.js",
         "app-shell.js"
       ],
       "runtime_status": "not-certified"
@@ -6375,6 +6704,13 @@
       "file": "Contrato HTTP efectivo actual",
       "handler": "registro de main",
       "path_expression": "'/'"
+    },
+    {
+      "method": "POST",
+      "path": "/adjuntos/ligas",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/adjuntos/ligas'"
     },
     {
       "method": "GET",
@@ -6431,6 +6767,13 @@
       "file": "Contrato HTTP efectivo actual",
       "handler": "registro de main",
       "path_expression": "'/admin/user/modulos'"
+    },
+    {
+      "method": "POST",
+      "path": "/admin/user/pais",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/admin/user/pais'"
     },
     {
       "method": "POST",
@@ -7925,6 +8268,13 @@
     },
     {
       "method": "PATCH",
+      "path": "/org/contactos/{contacto_id}",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/org/contactos/{contacto_id}'"
+    },
+    {
+      "method": "PATCH",
       "path": "/org/contactos/{contacto_id}/etapa",
       "file": "Contrato HTTP efectivo actual",
       "handler": "registro de main",
@@ -8471,6 +8821,34 @@
     },
     {
       "method": "POST",
+      "path": "/supervision/comentarios",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/supervision/comentarios'"
+    },
+    {
+      "method": "POST",
+      "path": "/supervision/comentarios/{actividad_id}/atendido",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/supervision/comentarios/{actividad_id}/atendido'"
+    },
+    {
+      "method": "GET",
+      "path": "/supervision/contador",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/supervision/contador'"
+    },
+    {
+      "method": "GET",
+      "path": "/supervision/pendientes",
+      "file": "Contrato HTTP efectivo actual",
+      "handler": "registro de main",
+      "path_expression": "'/supervision/pendientes'"
+    },
+    {
+      "method": "POST",
       "path": "/telemetria/sesion-modulo",
       "file": "Contrato HTTP efectivo actual",
       "handler": "registro de main",
@@ -8815,6 +9193,13 @@
       "path": "/usuario/eliminar-cuenta"
     },
     {
+      "file": "routers/adjuntos_ligas.py",
+      "handler": "adjuntos_ligas",
+      "method": "POST",
+      "path_expression": "'/adjuntos/ligas'",
+      "path": "/adjuntos/ligas"
+    },
+    {
       "file": "routers/admin_accounts.py",
       "handler": "admin_set_rol",
       "method": "POST",
@@ -8834,6 +9219,13 @@
       "method": "POST",
       "path_expression": "'/admin/user/modulos'",
       "path": "/admin/user/modulos"
+    },
+    {
+      "file": "routers/admin_accounts.py",
+      "handler": "admin_set_pais",
+      "method": "POST",
+      "path_expression": "'/admin/user/pais'",
+      "path": "/admin/user/pais"
     },
     {
       "file": "routers/admin_accounts.py",
@@ -10607,6 +10999,13 @@
       "path": "/org/contactos/{contacto_id}/etapa"
     },
     {
+      "file": "routers/organizaciones.py",
+      "handler": "editar_contacto",
+      "method": "PATCH",
+      "path_expression": "'/org/contactos/{contacto_id}'",
+      "path": "/org/contactos/{contacto_id}"
+    },
+    {
       "file": "routers/pdf_downloads.py",
       "handler": "descargar_avm_pdf",
       "method": "GET",
@@ -10899,6 +11298,34 @@
       "method": "GET",
       "path_expression": "'/subscription/status'",
       "path": "/subscription/status"
+    },
+    {
+      "file": "routers/supervision.py",
+      "handler": "crear_comentario",
+      "method": "POST",
+      "path_expression": "'/supervision/comentarios'",
+      "path": "/supervision/comentarios"
+    },
+    {
+      "file": "routers/supervision.py",
+      "handler": "listar_pendientes",
+      "method": "GET",
+      "path_expression": "'/supervision/pendientes'",
+      "path": "/supervision/pendientes"
+    },
+    {
+      "file": "routers/supervision.py",
+      "handler": "contar_pendientes",
+      "method": "GET",
+      "path_expression": "'/supervision/contador'",
+      "path": "/supervision/contador"
+    },
+    {
+      "file": "routers/supervision.py",
+      "handler": "marcar_atendido",
+      "method": "POST",
+      "path_expression": "'/supervision/comentarios/{actividad_id}/atendido'",
+      "path": "/supervision/comentarios/{actividad_id}/atendido"
     },
     {
       "file": "routers/system.py",

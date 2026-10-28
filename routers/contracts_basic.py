@@ -13,8 +13,9 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from core.auth import get_user_id_from_token
+from core.subscriptions import require_paid_feature_access
 from core.config import settings
+from core.paises import PAIS_DEFAULT, datos_pais, pais_de_usuario
 from core.telemetry import _track_groq
 
 
@@ -31,18 +32,27 @@ class ContratoRequest(BaseModel):
 @router.post("/contrato")
 async def generar_contrato(req: ContratoRequest, request: Request):
     """Generate a DOCX contract from form data, with AI-drafted special clauses."""
-    user_id = await get_user_id_from_token(request)
+    user_id = await require_paid_feature_access(request)
+    pais = await pais_de_usuario(user_id)
 
     clausulas_redactadas = []
     if req.clausulas_especiales:
         tipo_label = "arrendamiento" if req.tipo == "arrendamiento" else "promesa de compraventa"
         lista_clausulas = "\n".join(f"{i+1}. {c}" for i, c in enumerate(req.clausulas_especiales))
+        if pais == PAIS_DEFAULT:
+            abogado = ("derecho inmobiliario mexicano con 20 años de experiencia redactando contratos "
+                       "conforme al Código Civil Federal y los códigos civiles estatales")
+            tribunales = "tribunales mexicanos"
+        else:
+            nombre_pais = datos_pais(pais)["nombre"]
+            abogado = (f"derecho inmobiliario de {nombre_pais} con 20 años de experiencia redactando contratos "
+                       f"conforme al Código Civil y las leyes de arrendamiento de {nombre_pais}")
+            tribunales = f"los tribunales de {nombre_pais}"
         prompt_clausulas = (
-            "Eres un abogado especialista en derecho inmobiliario mexicano con 20 años de experiencia "
-            "redactando contratos conforme al Código Civil Federal y los códigos civiles estatales.\n\n"
+            f"Eres un abogado especialista en {abogado}.\n\n"
             f"El usuario quiere incluir las siguientes cláusulas especiales en un contrato de {tipo_label}. "
             "Para cada una, redacta una cláusula jurídicamente correcta, con lenguaje formal, precisa y "
-            "ejecutable ante tribunales mexicanos. Usa numeración romana (PRIMERA ESPECIAL, SEGUNDA ESPECIAL, etc.).\n\n"
+            f"ejecutable ante {tribunales}. Usa numeración romana (PRIMERA ESPECIAL, SEGUNDA ESPECIAL, etc.).\n\n"
             "No incluyas explicaciones ni comentarios — solo la cláusula redactada lista para insertarse en el contrato.\n\n"
             "Cláusulas a redactar:\n"
             + lista_clausulas
@@ -81,6 +91,7 @@ async def generar_contrato(req: ContratoRequest, request: Request):
             clausulas_redactadas = req.clausulas_especiales
 
     datos_completos = dict(req.datos)
+    datos_completos["pais"] = pais
     datos_completos["clausulas_especiales"] = clausulas_redactadas
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:

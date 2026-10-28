@@ -57,6 +57,21 @@ class AvisoInmTests(unittest.TestCase):
         xml = (ROOT / "tests/golden/ejemplo_inm_oficial.xml").read_text(encoding="utf-8")
         self.assertEqual(pld_inm.validar_xsd(xml.split("?>", 1)[1]), [])
 
+    def test_la_raiz_declara_schema_location_como_el_ejemplo_oficial(self):
+        # Sin xsi:schemaLocation el portal de la UIF responde
+        # «cvc-elt.1: Cannot find the declaration of element 'archivo'».
+        xml, _ = pld_inm.construir_xml(CFG, "2026-09", [_op()], {"e1": EXP_FISICA})
+        oficial = (ROOT / "tests/golden/ejemplo_inm_oficial.xml").read_text(encoding="utf-8")
+        raiz = xml.splitlines()[1].split(">", 1)[0] + ">"
+        self.assertEqual(raiz, oficial.split("\n")[2].strip())
+        self.assertEqual(pld_inm.validar_xsd(xml), [])
+
+    def test_repara_xml_guardado_sin_schema_location(self):
+        viejo = f'<?xml version="1.0" encoding="UTF-8"?>\n<archivo xmlns="{pld_inm.NS}"><informe/></archivo>'
+        reparado = pld_inm.con_ubicacion_esquema(viejo)
+        self.assertIn(f'xsi:schemaLocation="{pld_inm.NS} inm.xsd"', reparado)
+        self.assertEqual(pld_inm.con_ubicacion_esquema(reparado), reparado)
+
     def test_aviso_completo_persona_fisica_pasa_el_xsd(self):
         xml, problemas = pld_inm.construir_xml(CFG, "2026-09", [_op()], {"e1": EXP_FISICA})
         self.assertEqual(problemas, [])

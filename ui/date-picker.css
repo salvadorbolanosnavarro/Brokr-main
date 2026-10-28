@@ -1,0 +1,22 @@
+/* Only the shared calendar and its proxy fields; original ISO inputs stay intact. */
+.ui-date-field{position:relative;display:inline-grid;min-width:0;max-width:100%;vertical-align:middle;flex:1}
+.ui-date-field>.ui-date-source{opacity:0;pointer-events:none;width:100%;box-sizing:border-box;height:var(--ui-control);min-height:var(--ui-control);margin:0}
+.ui-date-trigger{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;gap:var(--ui-space-2);width:100%;min-width:0;min-height:var(--ui-control);padding:var(--ui-space-3) var(--ui-space-4);background:var(--ui-paper);color:var(--ui-ink);border:1px solid var(--ui-border);border-radius:var(--ui-radius);font:400 var(--ui-text-base)/1.4 var(--ui-font);text-align:left;cursor:pointer;box-shadow:none}
+.ui-date-trigger::after{content:'▦';color:var(--ui-muted)}
+.ui-date-trigger:disabled{background:var(--ui-surface);color:var(--ui-muted);cursor:not-allowed}
+.ui-date-trigger[aria-invalid=true]{border-color:var(--ui-danger)}
+.ui-date-trigger:focus-visible,.ui-date-dialog button:focus-visible{outline:2px solid var(--ui-ink);outline-offset:2px}
+.ui-date-dialog{width:calc(100% - 32px);max-width:var(--ui-panel);max-height:calc(100dvh - 32px);overflow:auto;padding:var(--ui-space-4);border:1px solid var(--ui-border);border-radius:var(--ui-radius-card);background:var(--ui-paper);color:var(--ui-ink);font:400 var(--ui-text-base)/1.5 var(--ui-font);box-shadow:var(--ui-shadow)}
+.ui-date-dialog::backdrop{background:var(--ui-overlay)}
+.ui-date-dialog header{display:flex;align-items:center;gap:var(--ui-space-2);padding:0 0 var(--ui-space-4)}
+.ui-date-dialog h2{flex:1;margin:0;font:600 var(--ui-text-base)/1.4 var(--ui-font);text-align:center;text-transform:none;letter-spacing:0}
+.ui-date-dialog button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--ui-control-small);height:var(--ui-control-small);min-width:var(--ui-control-small);padding:0 var(--ui-space-2);border:1px solid var(--ui-border);border-radius:var(--ui-radius);font:600 var(--ui-text-sm)/1 var(--ui-font);background:var(--ui-paper);color:var(--ui-ink);cursor:pointer;box-shadow:none}
+.ui-date-dialog button:disabled{color:var(--ui-muted);background:var(--ui-surface);cursor:not-allowed;opacity:.5}
+.ui-date-dialog button[aria-pressed=true]{background:var(--ui-sky);border-color:var(--ui-ink)}
+.ui-date-dialog button[aria-current=date]{text-decoration:underline}
+.ui-date-week,.ui-date-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:var(--ui-space-1)}
+.ui-date-week span{text-align:center;font-size:var(--ui-text-xs);color:var(--ui-muted);padding:var(--ui-space-2) 0}
+.ui-date-days button{min-width:0;width:100%;padding:0}
+.ui-date-dialog footer{display:flex;justify-content:flex-end;gap:var(--ui-space-3);padding-top:var(--ui-space-4)}
+.ui-date-dialog [data-date-today]{background:var(--ui-action);border-color:var(--ui-action)}
+@media(max-width:420px){.ui-date-week,.ui-date-days{gap:0}.ui-date-dialog{padding:var(--ui-space-3)}}

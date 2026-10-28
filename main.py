@@ -2,7 +2,7 @@ from core.staging_safety import install_staging_safety
 install_staging_safety()
 
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from core.cors import instalar_cors
 from limites import exigir_cupo, exigir_sesion
 from core.auth import get_user_id_from_token
 from core.config import settings
@@ -269,12 +269,9 @@ app.include_router(facebook_reconcile_router)
 
 app.include_router(facebook_refresh_token_router)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS: modo "observar" por default (acepta todo y anota orígenes fuera de
+# la lista); CORS_MODO=estricto en Railway lo cierra. Ver core/cors.py.
+instalar_cors(app)
 
 # whatsapp.py es el módulo de WhatsApp (multi-número, IA de recepción, webhook
 # propio bajo /whatsapp2 — el prefijo interno del router no cambió aunque el
@@ -639,6 +636,20 @@ app.include_router(buzon_router)
 # potenciales y ciclo diario (ver routers/alertas.py).
 from routers.alertas import router as alertas_router
 app.include_router(alertas_router)
+
+# Tokens de WhatsApp: conversión única con WA_TOKENS_ACCION (cifrar/descifrar).
+from routers.whatsapp_token_crypto import router as whatsapp_token_crypto_router
+app.include_router(whatsapp_token_crypto_router)
+
+# Adjuntos del historial: ligas temporales (el bucket adjuntos-historial
+# pasa a privado). Ver routers/adjuntos_ligas.py.
+from routers.adjuntos_ligas import router as adjuntos_ligas_router
+app.include_router(adjuntos_ligas_router)
+
+# Comentarios urgentes de supervisión: el admin deja una nota urgente al
+# agente de un cliente (ver routers/supervision.py).
+from routers.supervision import router as supervision_router
+app.include_router(supervision_router)
 
 # Cierres y comisiones: modal de cierre, ingresos por cobrar, PLD y reporte
 # de operaciones cerradas (ver routers/cierres.py).

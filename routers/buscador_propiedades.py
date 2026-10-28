@@ -38,6 +38,7 @@ from core.auth import require_user_id
 from core.config import settings
 from core.catalogo_inmuebles import tipo_label
 from core.database import delete_rows, get_rows, patch_rows, post_rows, upsert_rows
+from core.paises import PAIS_DEFAULT, datos_pais, pais_de_usuario
 from routers import avm_websearch as avm
 
 router = APIRouter(tags=["buscador_propiedades"])
@@ -87,7 +88,7 @@ _PORTALES_SITE = (
 )
 
 
-def _construir_queries(req: Dict[str, Any]) -> List[str]:
+def _construir_queries(req: Dict[str, Any], pais: str = PAIS_DEFAULT) -> List[str]:
     clave_tipo = req.get("tipo_inmueble") or "casa"
     tipo = _TIPO_LABELS.get(clave_tipo) or tipo_label(clave_tipo).lower()
     op = "venta" if (req.get("operacion") or "venta") == "venta" else "renta"
@@ -104,7 +105,8 @@ def _construir_queries(req: Dict[str, Any]) -> List[str]:
 
     base = f"{tipo} en {op} {lugar}{rango}".strip()
     queries = [base]
-    for dominio in _PORTALES_SITE:
+    portales = _PORTALES_SITE if pais == PAIS_DEFAULT else (*list(datos_pais(pais)["portales"])[:4], "easybroker.com")
+    for dominio in portales:
         queries.append(f"{tipo} {op} {lugar} site:{dominio}")
     if req.get("estado"):
         queries.append(f'{tipo} {op} {lugar} "{req["estado"]}"')
@@ -126,7 +128,9 @@ async def _recolectar_candidatos(req: Dict[str, Any]) -> List[Dict[str, Any]]:
     respaldo: Firecrawl entra solo cuando los 4 proveedores gratuitos no
     devolvieron nada para una query), pero sin campos de valuación —
     aquí solo interesan enlaces y snippets, no leer cada página completa."""
-    queries = _construir_queries(req)
+    # Portales y buscador del país de la cuenta dueña del requerimiento.
+    pais = await pais_de_usuario(req.get("user_id"))
+    queries = _construir_queries(req, pais)
     candidatos: List[Dict[str, Any]] = []
     seen = set()
 
@@ -135,8 +139,7 @@ async def _recolectar_candidatos(req: Dict[str, Any]) -> List[Dict[str, Any]]:
         canon = avm._canonical_url(url)
         if not url or canon in seen:
             return
-        host = avm._host(url)
-        if any(bad in host for bad in avm.BLOCKED_FETCH_DOMAINS):
+        if not avm.es_dominio_inmobiliario(url):
             return
         item["portal"] = avm._portal_name(url)
         seen.add(canon)
@@ -147,10 +150,10 @@ async def _recolectar_candidatos(req: Dict[str, Any]) -> List[Dict[str, Any]]:
             if len(candidatos) >= MAX_CANDIDATOS:
                 break
             batches = await asyncio.gather(
-                avm._search_google_cse(client, query),
-                avm._search_serpapi(client, query),
-                avm._search_brave(client, query),
-                avm._search_tavily(client, query),
+                avm._search_google_cse(client, query, pais),
+                avm._search_serpapi(client, query, pais),
+                avm._search_brave(client, query, pais),
+                avm._search_tavily(client, query, pais),
                 return_exceptions=True,
             )
             antes = len(candidatos)
@@ -160,7 +163,7 @@ async def _recolectar_candidatos(req: Dict[str, Any]) -> List[Dict[str, Any]]:
                 for item in batch:
                     _agregar(item)
             if len(candidatos) == antes:
-                for item in await avm._search_firecrawl(client, query):
+                for item in await avm._search_firecrawl(client, query, pais):
                     _agregar(item)
     return candidatos[:MAX_CANDIDATOS]
 
@@ -427,6 +430,7 @@ async def buscar_manual(body: BusquedaManualIn, request: Request):
         raise HTTPException(status_code=400, detail="Para guardar la búsqueda diaria, elige primero un cliente.")
 
     criterios = {
+        "user_id": uid,
         "operacion": body.operacion,
         "tipo_inmueble": body.tipo_inmueble,
         "colonia": body.colonia.strip() or None,

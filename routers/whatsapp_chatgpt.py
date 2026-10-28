@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from core.auth import require_user_id
 from core.config import settings
 from core.database import get_rows, upsert_rows
+from core.whatsapp_secrets import proteger_para_guardar, revelar_filas
 
 router = APIRouter(prefix="/whatsapp-chatgpt", tags=["whatsapp-chatgpt"])
 
@@ -41,7 +42,7 @@ async def _user_id(request: Request) -> str:
 
 async def _sb_get(table: str, params: dict[str, Any]) -> list[dict[str, Any]]:
     try:
-        return await get_rows(table, params, timeout=15)
+        return revelar_filas(table, await get_rows(table, params, timeout=15))
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -55,12 +56,12 @@ async def _sb_upsert(
     conflict: str,
 ) -> list[dict[str, Any]]:
     try:
-        return await upsert_rows(
+        return revelar_filas(table, await upsert_rows(
             table,
-            payload,
+            proteger_para_guardar(table, payload),
             conflict=conflict,
             timeout=15,
-        )
+        ))
     except Exception as exc:
         raise HTTPException(
             status_code=500,

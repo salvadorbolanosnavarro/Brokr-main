@@ -28,6 +28,7 @@ from pydantic import BaseModel
 from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
+from core.paises import heredar_pais
 from core.permissions import ROLE_AGENT, VALID_ORG_ROLES, VALID_PERMISSIONS, default_permission
 
 router = APIRouter()
@@ -544,6 +545,11 @@ async def aceptar_invitacion(req: AceptarReq, request: Request):
     await _sb_patch("organizacion_invitaciones", {"id": f"eq.{inv['id']}"}, {
         "aceptada_el": datetime.now(timezone.utc).isoformat(),
     })
+
+    # El equipo trabaja en el país del dueño de la empresa.
+    dueno = await _sb_get("organizaciones", {"id": f"eq.{inv['org_id']}", "select": "owner_id", "limit": "1"})
+    if dueno and dueno[0].get("owner_id"):
+        await heredar_pais(user_id, dueno[0]["owner_id"])
 
     # ── Sus datos ──
     # Si el dueño de la empresa marcó "traer datos", el inventario y los
@@ -1071,6 +1077,35 @@ async def borrar_tarea(tarea_id: str, request: Request):
 _PROBABILIDADES = {"baja", "media", "alta"}
 
 
+async def _contacto_editable(contacto_id: str, user_id: str, detalle_403: str) -> dict:
+    """El cliente, si quien pide puede editarlo: su creador, el agente
+    asignado, un owner/admin de la empresa o un compañero con el permiso
+    "ver contactos del equipo". Si no, 404/403."""
+    filas = await _sb_get("contactos", {
+        "id": f"eq.{contacto_id}", "select": "id,user_id,org_id,asignado_a", "limit": "1"})
+    if not filas:
+        raise HTTPException(status_code=404, detail="Ese cliente ya no existe.")
+    c = filas[0]
+
+    permitido = c.get("user_id") == user_id
+    if not permitido:
+        ctx = await get_org_context(user_id)
+        if ctx and ctx.get("activo") and ctx.get("org_id"):
+            misma_org = c.get("org_id") == ctx["org_id"]
+            if not misma_org and not c.get("org_id") and c.get("user_id"):
+                # Contactos viejos sin org: cuentan si su dueño es del equipo.
+                misma_org = bool(await _sb_get("organizacion_miembros", {
+                    "org_id": f"eq.{ctx['org_id']}", "user_id": f"eq.{c['user_id']}",
+                    "select": "user_id", "limit": "1"}))
+            permitido = misma_org and (
+                c.get("asignado_a") == user_id
+                or ctx.get("rol_org") in ("owner", "admin")
+                or permiso_efectivo(ctx, "ver_contactos_equipo"))
+    if not permitido:
+        raise HTTPException(status_code=403, detail=detalle_403)
+    return c
+
+
 @router.patch("/org/contactos/{contacto_id}/etapa")
 async def cambiar_etapa_contacto(contacto_id: str, request: Request):
     user_id = await get_user_id_from_token(request)
@@ -1099,29 +1134,8 @@ async def cambiar_etapa_contacto(contacto_id: str, request: Request):
     if not cambios:
         raise HTTPException(status_code=400, detail="No hay nada que cambiar.")
 
-    filas = await _sb_get("contactos", {
-        "id": f"eq.{contacto_id}", "select": "id,user_id,org_id,asignado_a", "limit": "1"})
-    if not filas:
-        raise HTTPException(status_code=404, detail="Ese cliente ya no existe.")
-    c = filas[0]
-
-    permitido = c.get("user_id") == user_id
-    if not permitido:
-        ctx = await get_org_context(user_id)
-        if ctx and ctx.get("activo") and ctx.get("org_id"):
-            misma_org = c.get("org_id") == ctx["org_id"]
-            if not misma_org and not c.get("org_id") and c.get("user_id"):
-                # Contactos viejos sin org: cuentan si su dueño es del equipo.
-                misma_org = bool(await _sb_get("organizacion_miembros", {
-                    "org_id": f"eq.{ctx['org_id']}", "user_id": f"eq.{c['user_id']}",
-                    "select": "user_id", "limit": "1"}))
-            permitido = misma_org and (
-                c.get("asignado_a") == user_id
-                or ctx.get("rol_org") in ("owner", "admin")
-                or permiso_efectivo(ctx, "ver_contactos_equipo"))
-    if not permitido:
-        raise HTTPException(status_code=403,
-                            detail="No tienes permiso para cambiar la etapa de este cliente.")
+    await _contacto_editable(contacto_id, user_id,
+                             "No tienes permiso para cambiar la etapa de este cliente.")
 
     cambios["updated_at"] = datetime.now(timezone.utc).isoformat()
     await _sb_patch("contactos", {"id": f"eq.{contacto_id}"}, cambios)
@@ -1131,3 +1145,81 @@ async def cambiar_etapa_contacto(contacto_id: str, request: Request):
     if not despues or any(despues[0].get(k) != v for k, v in cambios.items() if k != "updated_at"):
         raise HTTPException(status_code=500, detail="No se pudo guardar. Intenta de nuevo.")
     return {"ok": True, **{k: v for k, v in cambios.items() if k != "updated_at"}}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# EDITAR UN CLIENTE DE OTRO (formulario "Editar cliente")
+# Mismo hueco que la etapa, pero con el formulario completo: la regla de RLS
+# de UPDATE solo deja escribir al creador o a un admin, así que el agente
+# asignado recibía "new row violates row-level security policy" al guardar
+# las notas de un cliente que alguien más dio de alta y le asignó. El
+# navegador intenta primero directo y, si no se actualizó ninguna fila, cae
+# aquí. Solo se aceptan los campos del formulario y de la ficha: nunca
+# user_id (el creador), org_id ni asignado_a.
+# ═══════════════════════════════════════════════════════════════════════════
+
+_CAMPOS_TEXTO = {"nombre", "telefono", "wa", "email", "tipo", "sexo", "empresa", "calle",
+                 "num_ext", "num_int", "colonia", "cp", "mpio", "notas",
+                 "descripcion_privada", "fuente", "estatus"}
+_CAMPOS_LISTA = {"etiquetas", "operaciones"}
+_MAX_TEXTO_CONTACTO = 20000
+
+
+def _limpiar_cambios_contacto(body: dict) -> Dict[str, Any]:
+    cambios: Dict[str, Any] = {}
+    for k, v in body.items():
+        if k in _CAMPOS_TEXTO:
+            if v is not None and not isinstance(v, str):
+                raise HTTPException(status_code=400, detail=f"Valor no válido en {k}.")
+            cambios[k] = v[:_MAX_TEXTO_CONTACTO] if isinstance(v, str) else None
+        elif k in _CAMPOS_LISTA:
+            if not isinstance(v, list) or len(v) > 500:
+                raise HTTPException(status_code=400, detail=f"Valor no válido en {k}.")
+            cambios[k] = v
+        elif k == "es_potencial":
+            if not isinstance(v, bool):
+                raise HTTPException(status_code=400, detail="Valor no válido en es_potencial.")
+            cambios[k] = v
+        elif k == "probabilidad":
+            v = str(v).strip().lower() if v not in (None, "") else None
+            if v is not None and v not in _PROBABILIDADES:
+                raise HTTPException(status_code=400, detail="Probabilidad no válida.")
+            cambios[k] = v
+        # Cualquier otra llave (user_id, org_id, asignado_a, id, updated_at…) se ignora.
+    if "estatus" in cambios and cambios["estatus"]:
+        cambios["estatus"] = cambios["estatus"].strip().lower()[:40]
+    return cambios
+
+
+@router.patch("/org/contactos/{contacto_id}")
+async def editar_contacto(contacto_id: str, request: Request):
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Inicia sesión.")
+    if not _ID_SEGURO.match(contacto_id or ""):
+        raise HTTPException(status_code=404, detail="Ese cliente no existe.")
+    try:
+        body = await request.json()
+    except Exception:
+        body = None
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="Solicitud inválida.")
+    cambios = _limpiar_cambios_contacto(body)
+    if not cambios:
+        raise HTTPException(status_code=400, detail="No hay nada que cambiar.")
+
+    await _contacto_editable(contacto_id, user_id, "No tienes permiso para editar este cliente.")
+
+    marca = datetime.now(timezone.utc)
+    cambios["updated_at"] = marca.isoformat()
+    await _sb_patch("contactos", {"id": f"eq.{contacto_id}"}, cambios)
+
+    # Se COMPRUEBA que sí quedó: la marca de tiempo de esta edición está en la fila.
+    despues = await _sb_get("contactos", {"id": f"eq.{contacto_id}", "select": "updated_at", "limit": "1"})
+    try:
+        guardado = datetime.fromisoformat(str(despues[0]["updated_at"]).replace("Z", "+00:00"))
+    except Exception:
+        guardado = None
+    if guardado is None or abs((guardado - marca).total_seconds()) > 1:
+        raise HTTPException(status_code=500, detail="No se pudo guardar. Intenta de nuevo.")
+    return {"ok": True}

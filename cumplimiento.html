@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Broquer — Cumplimiento</title>
+<title>Cumplimiento · Broquer</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -199,15 +199,10 @@
     display: block;
     width: 100%;
     text-align: left;
-    padding: var(--sp-3) var(--sp-4);
-    border: none;
-    background: none;
     cursor: pointer;
-    font-family: var(--font-sans);
     border-bottom: 1px solid var(--line);
   }
   .cp-sugerencia:last-child { border-bottom: none; }
-  .cp-sugerencia:hover { background: var(--paper-2); }
   .cp-sugerencia__n { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
   .cp-sugerencia__d { font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
   .cp-vinculo {
@@ -229,6 +224,14 @@
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="cumplimiento">
 
@@ -899,6 +902,7 @@
   }
   function pesos(n) {
     var v = Number(n || 0);
+    if (window.bkPais && bkPais() !== 'MX') return bkDinero(v, null, { maximumFractionDigits: 2 });
     return v.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 });
   }
   function fechaCorta(iso) {
@@ -1041,6 +1045,11 @@
   function pintarLeyenda() {
     var u = RESUMEN ? RESUMEN.umbral_pesos : 0;
     var c = CONFIG || {};
+    if (window.bkPais && bkPais() !== 'MX') {
+      g('cp-ley-pie').textContent = 'Monto de alerta interna: ' + pesos(u) + '. Ventana de acumulación: ' +
+        (c.meses_acumulacion || 6) + ' meses. Conservación: ' + (c.retencion_anios || 10) + ' años.';
+      return;
+    }
     g('cp-ley-pie').textContent =
       'Umbral vigente de aviso: ' + pesos(u) + ' — equivale a ' +
       Number(c.umbral_aviso_uma || 8025).toLocaleString('es-MX') + ' UMA a ' +
@@ -1082,7 +1091,7 @@
       g('cp-alerta-24h').classList.add('cp-oculto');
     }
 
-    g('cp-alerta-config').classList.toggle('cp-oculto', !!RESUMEN.listo_para_avisar);
+    g('cp-alerta-config').classList.toggle('cp-oculto', !!RESUMEN.listo_para_avisar || (RESUMEN.pais || 'MX') !== 'MX');
   }
 
   /* ══════════════ EXPEDIENTES ══════════════ */
@@ -1980,6 +1989,7 @@
 </script>
 
 <script src="cumplimiento-aviso.js" defer></script>
+<script src="cumplimiento-paises.js" defer></script>
 <script src="app-shell.js" defer></script>
 </body>
 </html>

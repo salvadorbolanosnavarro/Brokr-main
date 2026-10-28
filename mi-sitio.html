@@ -50,8 +50,6 @@
 }
 .ms-slug-wrap:focus-within { border-color: var(--forest); box-shadow: var(--focus); }
 .ms-slug-wrap span { padding-left: var(--sp-4); font-size: var(--fs-xs); color: var(--mute); white-space: nowrap; }
-.ms-slug-wrap .bk-input { border: none; background: none; box-shadow: none; }
-.ms-slug-wrap .bk-input:focus { border: none; box-shadow: none; }
 
 .ms-hint { font-size: var(--fs-caption); color: var(--mute); margin-top: var(--sp-1); }
 .ms-hint.is-err { color: var(--danger); }
@@ -89,14 +87,14 @@
    Sus colores son CONTENIDO (preview de otro producto). ═══ */
 .mock-editorial { background:#FFFFFF; padding:14px 14px 12px; border-radius:inherit; }
 .mock-editorial .m-kicker { width:38%; height:5px; border-radius:99px; background:#0A5DE0; opacity:.85; }
-.mock-editorial .m-nombre { margin-top:10px; font-weight:900; font-size:26px; letter-spacing:-.05em; line-height:.95; color:#0B0B0F; }
+.mock-editorial .m-nombre { margin-top:10px; font-weight:900; font-size:var(--ui-text-section); letter-spacing:-.05em; line-height:.95; color:#0B0B0F; }
 .mock-editorial .m-nombre::after { content:'.'; color:#0A5DE0; }
 .mock-editorial .m-cards { display:flex; gap:7px; margin-top:14px; }
 .mock-editorial .m-cards div { flex:1; height:44px; border-radius:9px; border:1px solid rgba(10,11,13,.12); background:linear-gradient(180deg,#EDEFF2 62%,#FFFFFF 62%); }
 
 .mock-ejecutiva { background:linear-gradient(180deg,#F8F9FA,#EFF4FA); padding:14px 14px 12px; }
 .mock-ejecutiva .m-kicker { width:38%; height:5px; border-radius:99px; background:#0A5DE0; }
-.mock-ejecutiva .m-nombre { margin-top:10px; font-weight:900; font-size:26px; letter-spacing:-.05em; line-height:.95; color:#0A1832; }
+.mock-ejecutiva .m-nombre { margin-top:10px; font-weight:900; font-size:var(--ui-text-section); letter-spacing:-.05em; line-height:.95; color:#0A1832; }
 .mock-ejecutiva .m-nombre::after { content:'.'; color:#0A5DE0; }
 .mock-ejecutiva .m-body { display:flex; gap:8px; margin-top:14px; }
 .mock-ejecutiva .m-side { width:36%; height:44px; border-radius:10px; background:linear-gradient(200deg,#10307E,#081C4E); }
@@ -130,6 +128,14 @@
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="mi-sitio">
 

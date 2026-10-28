@@ -1,0 +1,2974 @@
+{
+  "baseline": "bb6610b4",
+  "limitation": "Test-only HTTP fixtures. Chromium mobile emulation; not real iOS or real permissions/persistence.",
+  "results": [
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "data",
+      "passed": true,
+      "image": "test-results/crm/buzon-agente-data-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        },
+        {
+          "method": "GET",
+          "path": "/whatsapp2/mensajes"
+        },
+        {
+          "method": "PATCH",
+          "path": "/buzon/lead-qa"
+        },
+        {
+          "method": "POST",
+          "path": "/buzon/manual"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "empty",
+      "passed": true,
+      "image": "test-results/crm/buzon-agente-empty-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "error",
+      "passed": true,
+      "image": "test-results/crm/buzon-agente-error-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "loading",
+      "passed": true,
+      "image": "test-results/crm/buzon-agente-loading-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "data",
+      "passed": true,
+      "image": "test-results/crm/alertas-agente-data-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        },
+        {
+          "method": "PATCH",
+          "path": "/alertas/requerimientos/alerta-qa"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "empty",
+      "passed": true,
+      "image": "test-results/crm/alertas-agente-empty-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "error",
+      "passed": true,
+      "image": "test-results/crm/alertas-agente-error-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "loading",
+      "passed": true,
+      "image": "test-results/crm/alertas-agente-loading-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "data",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-agente-data-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "empty",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-agente-empty-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "error",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-agente-error-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "loading",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-agente-loading-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "data",
+      "passed": true,
+      "image": "test-results/crm/buzon-admin-data-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        },
+        {
+          "method": "GET",
+          "path": "/whatsapp2/mensajes"
+        },
+        {
+          "method": "PATCH",
+          "path": "/buzon/lead-qa"
+        },
+        {
+          "method": "POST",
+          "path": "/buzon/manual"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "empty",
+      "passed": true,
+      "image": "test-results/crm/buzon-admin-empty-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "error",
+      "passed": true,
+      "image": "test-results/crm/buzon-admin-error-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "loading",
+      "passed": true,
+      "image": "test-results/crm/buzon-admin-loading-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "data",
+      "passed": true,
+      "image": "test-results/crm/alertas-admin-data-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        },
+        {
+          "method": "PATCH",
+          "path": "/alertas/requerimientos/alerta-qa"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "empty",
+      "passed": true,
+      "image": "test-results/crm/alertas-admin-empty-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "error",
+      "passed": true,
+      "image": "test-results/crm/alertas-admin-error-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "loading",
+      "passed": true,
+      "image": "test-results/crm/alertas-admin-loading-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "data",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-admin-data-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "PATCH",
+          "path": "/crm/etapas/etapa-qa"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "empty",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-admin-empty-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "error",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-admin-error-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "loading",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-admin-loading-1440.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "data",
+      "passed": true,
+      "image": "test-results/crm/buzon-agente-data-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        },
+        {
+          "method": "GET",
+          "path": "/whatsapp2/mensajes"
+        },
+        {
+          "method": "PATCH",
+          "path": "/buzon/lead-qa"
+        },
+        {
+          "method": "POST",
+          "path": "/buzon/manual"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        },
+        {
+          "method": "GET",
+          "path": "/whatsapp2/mensajes"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "empty",
+      "passed": true,
+      "image": "test-results/crm/buzon-agente-empty-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "error",
+      "passed": true,
+      "image": "test-results/crm/buzon-agente-error-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "loading",
+      "passed": true,
+      "image": "test-results/crm/buzon-agente-loading-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "data",
+      "passed": true,
+      "image": "test-results/crm/alertas-agente-data-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        },
+        {
+          "method": "PATCH",
+          "path": "/alertas/requerimientos/alerta-qa"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "empty",
+      "passed": true,
+      "image": "test-results/crm/alertas-agente-empty-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "error",
+      "passed": true,
+      "image": "test-results/crm/alertas-agente-error-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "loading",
+      "passed": true,
+      "image": "test-results/crm/alertas-agente-loading-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "data",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-agente-data-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "empty",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-agente-empty-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "error",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-agente-error-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "loading",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-agente-loading-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/subscription/status"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "data",
+      "passed": true,
+      "image": "test-results/crm/buzon-admin-data-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        },
+        {
+          "method": "GET",
+          "path": "/whatsapp2/mensajes"
+        },
+        {
+          "method": "PATCH",
+          "path": "/buzon/lead-qa"
+        },
+        {
+          "method": "POST",
+          "path": "/buzon/manual"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        },
+        {
+          "method": "GET",
+          "path": "/whatsapp2/mensajes"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "empty",
+      "passed": true,
+      "image": "test-results/crm/buzon-admin-empty-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "error",
+      "passed": true,
+      "image": "test-results/crm/buzon-admin-error-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "loading",
+      "passed": true,
+      "image": "test-results/crm/buzon-admin-loading-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/respuestas"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/propiedades"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "data",
+      "passed": true,
+      "image": "test-results/crm/alertas-admin-data-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        },
+        {
+          "method": "PATCH",
+          "path": "/alertas/requerimientos/alerta-qa"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "empty",
+      "passed": true,
+      "image": "test-results/crm/alertas-admin-empty-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "error",
+      "passed": true,
+      "image": "test-results/crm/alertas-admin-error-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "loading",
+      "passed": true,
+      "image": "test-results/crm/alertas-admin-loading-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/org/miembros"
+        },
+        {
+          "method": "GET",
+          "path": "/alertas/requerimientos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "data",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-admin-data-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "PATCH",
+          "path": "/crm/etapas/etapa-qa"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "empty",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-admin-empty-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "error",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-admin-error-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "loading",
+      "passed": true,
+      "image": "test-results/crm/crm-ajustes-admin-loading-390.png",
+      "calls": [
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/org"
+        },
+        {
+          "method": "GET",
+          "path": "/config/public"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/usuarios"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/wa2_conversaciones"
+        },
+        {
+          "method": "GET",
+          "path": "/buzon/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/supervision/contador"
+        },
+        {
+          "method": "GET",
+          "path": "/__stage/supabase/rest/v1/tareas"
+        },
+        {
+          "method": "GET",
+          "path": "/crm/catalogos"
+        }
+      ]
+    }
+  ]
+}

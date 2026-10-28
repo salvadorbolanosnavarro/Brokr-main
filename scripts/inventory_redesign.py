@@ -9,7 +9,7 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = '1f5fc8d5a5a7650bd315bfead3515d708f828bae'
+BASE = 'ee9c557969168092644d4ed231a3b84211d83434'
 def git(*args):
     return subprocess.check_output(['git', *args], cwd=ROOT, text=True)
 class Page(HTMLParser):

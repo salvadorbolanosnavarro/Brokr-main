@@ -4,7 +4,7 @@
 (function () {
   'use strict';
   var esc = window.bkEsc, api = window.bkApi, toast = window.bkToast;
-  function money(n) { return '$' + Number(n || 0).toLocaleString('es-MX', { maximumFractionDigits: 0 }); }
+  function money(n) { return '$' + Number(n || 0).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX', { maximumFractionDigits: 0 }); }
   async function pintar() {
     var ancla = document.getElementById('fin-comisiones'); if (!ancla) return;
     var cont = document.getElementById('fin-por-cobrar');

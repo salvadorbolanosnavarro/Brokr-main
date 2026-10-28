@@ -126,3 +126,10 @@ cubre 55 HTML y las 348 operaciones del contrato HTTP efectivo. No se ha modific
 la rama main ni ejecutado sus migraciones en producción.
 
 Los envíos de Supabase Auth (registro, recuperación, OTP, reenvío e invitaciones) se bloquean también en el frontend compilado y HTTPX del backend de staging. El acceso con contraseña del usuario QA sigue disponible. Los triggers que llamen servicios externos desde PostgreSQL necesitan auditoría del esquema exportado; el guardia del backend no controla conexiones iniciadas por la propia base.
+
+
+### Actualización del rediseño — 28 de octubre
+
+La rama del PR #180 incorpora main ee9c5579 (países y permisos de Max incluidos). Cloudflare debe seguir publicando esta rama; no cambiar el despliegue de producción. Para probar datos reales de staging, el export de esquema debe corresponder a este main actualizado, incluidas las migraciones de países. Mantén `WA_TOKENS_ACCION` vacío en Railway staging: es una conversión operativa de tokens que no se necesita en la demo. No pegues llaves en el chat.
+
+La tabla `docs/redesign/COBERTURA-UI-Y-ENDPOINTS.md` distingue lo probado con datos ficticios de lo pendiente real. La demo permanece operativa sin credenciales; guardar ahí solo cambia este navegador.

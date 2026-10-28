@@ -45,8 +45,24 @@ function abrirDetalle(id) {
   });
 
   setDetTab('info');
+  bkFichaNav(c.id, clOrdenVisible, clIrA);
   document.getElementById('detail-ov').classList.add('is-open');
   document.body.classList.add('bk-sin-scroll');
+}
+
+// El orden del tablero: columna por columna, de arriba abajo, con los filtros.
+function clOrdenVisible() {
+  const filtrados = contactosFiltrados();
+  return ETAPAS.flatMap(e => filtrados
+    .filter(c => String(c.estatus || 'nuevo').toLowerCase() === e.clave)
+    .map(c => c.id));
+}
+
+// Saltar a otro cliente sin cerrar la ficha, en la misma pestaña.
+function clIrA(id) {
+  const tab = detTabActual;
+  abrirDetalle(id);
+  if (tab !== 'info') setDetTab(tab);
 }
 
 function cerrarDetalle() {
@@ -129,10 +145,10 @@ function clMenuProb(btn) {
 
 function clMenuMas(btn) {
   if (!detContacto) return;
-  bkAbrirMenu(btn, [
-    { id: 'editar', etiqueta: 'Editar cliente' },
-    { id: 'eliminar', etiqueta: 'Eliminar cliente', peligro: true, separa: true },
-  ], (v) => {
+  const items = [{ id: 'editar', etiqueta: 'Editar cliente' }];
+  // En Broquer para Empresas solo el dueño o un administrador borra.
+  if (cPuedeEliminar) items.push({ id: 'eliminar', etiqueta: 'Eliminar cliente', peligro: true, separa: true });
+  bkAbrirMenu(btn, items, (v) => {
     if (v === 'editar') editarDesdeDetalle();
     if (v === 'eliminar') eliminarDesdeDetalle();
   });
@@ -140,36 +156,41 @@ function clMenuMas(btn) {
 
 async function setEtapa(v) {
   if (!detContacto) return;
-  const prev = String(detContacto.estatus || '').toLowerCase();
+  // Fijar el contacto ANTES del await: si mientras se guarda el usuario pasa
+  // al siguiente con las flechas, detContacto ya es otro y el cambio de etapa
+  // se anotaba en la bitácora del contacto equivocado.
+  const c = detContacto;
+  const prev = String(c.estatus || '').toLowerCase();
   if (prev === v) return;
-  detContacto.estatus = v;
-  clRenderEstado(detContacto);
+  c.estatus = v;
+  clRenderEstado(c);
   try {
-    await patchContacto(detContacto.id, { estatus: v || null });
+    await patchContacto(c.id, { estatus: v || null });
     renderActual();
     showToast(v ? 'Etapa: ' + etapaInfo(v).nombre : 'Etapa quitada');
-    clRegistrarCambioEtapa(detContacto.id, prev, v);
+    clRegistrarCambioEtapa(c.id, prev, v);
   } catch (e) {
-    detContacto.estatus = prev;
-    clRenderEstado(detContacto);
+    c.estatus = prev;
+    if (detContacto === c) clRenderEstado(c);
     showToast(e.message || 'No se pudo guardar la etapa');
   }
 }
 
 async function setProbabilidad(v) {
   if (!detContacto) return;
-  const prev = String(detContacto.probabilidad || '').toLowerCase();
+  const c = detContacto;
+  const prev = String(c.probabilidad || '').toLowerCase();
   if (prev === v) return;
-  detContacto.probabilidad = v;
-  clRenderEstado(detContacto);
+  c.probabilidad = v;
+  clRenderEstado(c);
   try {
-    await patchContacto(detContacto.id, { probabilidad: v || null });
+    await patchContacto(c.id, { probabilidad: v || null });
     renderActual();
     const info = clProbInfo(v);
     showToast(info ? 'Probabilidad: ' + info.l : 'Probabilidad quitada');
   } catch (e) {
-    detContacto.probabilidad = prev;
-    clRenderEstado(detContacto);
+    c.probabilidad = prev;
+    if (detContacto === c) clRenderEstado(c);
     showToast(e.message || 'No se pudo guardar la probabilidad');
   }
 }
@@ -287,6 +308,7 @@ async function cargarBitacora() {
   const feed = document.getElementById('f-bitacora-feed');
   feed.innerHTML = '<div class="bk-cargando">Cargando la bitácora…</div>';
   const cid = detContacto.id;
+  await bkSupPreparar();
   let acts = [];
   try {
     acts = await restGet('actividades?select=*&contacto_id=eq.' + encodeURIComponent(cid) + '&order=created_at.desc&limit=200');
@@ -313,6 +335,7 @@ async function cargarBitacora() {
     fecha: a.created_at,
     categorias: catsPorActividad[a.id],
     editado_en: a.editado_en,
+    sup: bkSupDeActividad(a),
   }));
 
   // Operaciones históricas del contacto: su fecha es texto libre, así que
@@ -415,6 +438,7 @@ async function bkEditarNota(id) {
 }
 
 async function bkEliminarNota(id) {
+  if (!bkPuedeBorrar()) return;
   if (!confirm('¿Eliminar esta nota? No se puede deshacer.')) return;
   let fila;
   try {
@@ -464,6 +488,7 @@ async function clNuevaCategoriaNota() {
 function clAbrirNota() {
   const comp = document.getElementById('f-composer');
   comp.hidden = false;
+  bkSupComposer();
   document.getElementById('f-nota-texto').focus();
   CL_NOTA_CATS = [];
   clPintarCategoriasNota();
@@ -485,14 +510,17 @@ async function clGuardarNota() {
   const propAdjunta = document.getElementById('f-nota-prop-sel').value || null;
   btn.disabled = true;
   try {
-    const rows = await restPost('actividades', {
-      tipo: texto ? 'nota' : 'archivo',
-      texto: texto,
-      adjuntos: adjuntos,
-      contacto_id: detContacto.id,
-      propiedad_id: propAdjunta,
-      org_id: cOrgId,
-    });
+    const urgente = bkSupMarcado();
+    const rows = urgente
+      ? await bkSupCrear({ texto, adjuntos, contacto_id: detContacto.id, propiedad_id: propAdjunta })
+      : await restPost('actividades', {
+        tipo: texto ? 'nota' : 'archivo',
+        texto: texto,
+        adjuntos: adjuntos,
+        contacto_id: detContacto.id,
+        propiedad_id: propAdjunta,
+        org_id: cOrgId,
+      });
     const nueva = Array.isArray(rows) ? rows[0] : rows;
     if (nueva && nueva.id) {
       for (const catId of CL_NOTA_CATS) await catVincular('actividades_categorias', 'actividad_id', nueva.id, catId);
@@ -502,7 +530,7 @@ async function clGuardarNota() {
     clQuitarPropNota();
     document.getElementById('f-composer').hidden = true;
     await cargarBitacora();
-    showToast(texto ? 'Nota guardada' : 'Archivos guardados');
+    showToast(urgente ? 'Comentario urgente enviado al agente' : texto ? 'Nota guardada' : 'Archivos guardados');
   } catch (e) {
     alert('No se pudo guardar en la bitácora.\n\n' + (e.message || e));
   } finally {
@@ -730,10 +758,11 @@ function crearTareaVinculada() {
 
 async function vincularTareaExistente(tareaId) {
   if (!detContacto || !tareaId) return;
+  const cid = detContacto.id;
   const uid = await _userId();
   if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
   try {
-    await restPost('tareas_contactos', { user_id: uid, tarea_id: tareaId, contacto_id: detContacto.id });
+    await restPost('tareas_contactos', { user_id: uid, tarea_id: tareaId, contacto_id: cid });
     await cargarTareasVinculadas();
     showToast('Tarea vinculada');
   } catch (e) {
@@ -807,7 +836,7 @@ function editarDesdeDetalle() {
 }
 
 async function eliminarDesdeDetalle() {
-  if (!detContacto) return;
+  if (!detContacto || !cPuedeEliminar) return;
   const c = detContacto;
   if (!confirm(`¿Eliminar a ${c.nombre || 'este cliente'}?\n\nSe pierde su bitácora completa: notas, archivos y todo su historial. No se puede deshacer.`)) return;
   try {
@@ -870,7 +899,7 @@ function bpRenderResultados(resultados, ultimaBusqueda) {
   feed.innerHTML = (resultados || []).length
     ? resultados.map(r => {
         const precioTxt = r.precio
-          ? ' · $' + Number(r.precio).toLocaleString('es-MX') + (r.precio_confirmado ? '' : ' (sin confirmar)')
+          ? ' · $' + Number(r.precio).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') + (r.precio_confirmado ? '' : ' (sin confirmar)')
           : '';
         return `<div class="bk-fila">
           <span class="bk-fila__ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg></span>

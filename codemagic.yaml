@@ -5,12 +5,12 @@ workflows:
     max_build_duration: 60
     environment:
       groups:
-        - code_signing
+        - code_signing 
       vars:
         XCODE_PROJECT: "App.xcodeproj"
         XCODE_SCHEME: "App"
         APP_STORE_APPLE_ID: 6775727897
-        APP_VERSION: "2.0"
+        APP_VERSION: "2.3"
       node: 22
       xcode: latest
     integrations:

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Broquer — Video</title>
+<title>Video · Broquer</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
@@ -19,12 +19,10 @@
   }
   .vid-dd.is-open { display: block; }
   .vid-op {
-    display: flex; gap: var(--sp-3); align-items: center; width: 100%;
-    padding: var(--sp-3); background: none; border: 0; border-bottom: 1px solid var(--line);
+    display: flex; gap: var(--sp-3); align-items: center; width: 100%; border-bottom: 1px solid var(--line);
     cursor: pointer; text-align: left;
   }
   .vid-op:last-child { border-bottom: 0; }
-  .vid-op:hover { background: var(--paper-2); }
   .vid-op__img { width: 56px; height: 40px; flex: 0 0 auto; object-fit: cover; border-radius: var(--r); background: var(--paper-2); }
   .vid-op__c { min-width: 0; flex: 1; }
   .vid-op__t {
@@ -65,21 +63,15 @@
   }
   .vid-ed-prompt:focus { border-color: var(--sky-blue); background: var(--paper); }
   .vid-ed-presets { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
-  .vid-ed-preset {
-    font-size: var(--fs-caption); font-weight: 600; color: var(--mute);
-    background: var(--paper-2); border: 1px solid var(--line);
-    border-radius: var(--r-pill); padding: 5px 12px; cursor: pointer;
-    white-space: nowrap; font-family: var(--font-sans);
+  .vid-ed-preset { cursor: pointer;
     transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
   }
-  .vid-ed-preset:hover, .vid-ed-preset.is-sel { border-color: var(--sky-blue); color: var(--sky-blue); }
   .vid-ed-barra { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-4); }
   .vid-ed-cuenta { font-size: var(--fs-xs); font-weight: 600; color: var(--mute); }
   .vid-ed-prog { background: var(--line); border-radius: var(--r-pill); height: 6px; overflow: hidden; margin-top: var(--sp-4); display: none; }
   .vid-ed-prog__b { height: 100%; background: var(--sky-blue); border-radius: var(--r-pill); width: 0; transition: width .3s var(--ease); }
   .vid-ed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-4); margin-top: var(--sp-5); }
   .vid-ed-card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
-  .vid-ed-card.is-sel { border-color: var(--sky-blue); box-shadow: 0 0 0 1px var(--sky-blue); }
   .vid-ed-card__imgs { display: grid; grid-template-columns: 1fr 1fr; cursor: pointer; }
   .vid-ed-card__wrap { position: relative; overflow: hidden; background: var(--paper-2); }
   .vid-ed-card__wrap img { width: 100%; height: 150px; object-fit: cover; display: block; }
@@ -95,12 +87,9 @@
   .vid-ed-card__est.err { color: var(--danger); font-weight: 600; }
   .vid-ed-card__est.run { color: var(--sky-blue); font-weight: 600; }
   .vid-ed-card__usar {
-    flex: 0 0 auto; font-size: var(--fs-caption); font-weight: 600; color: var(--sky-blue);
-    background: none; border: 1px solid var(--line); border-radius: var(--r-sm);
-    padding: 4px 9px; cursor: pointer; font-family: var(--font-sans);
+    flex: 0 0 auto; cursor: pointer;
     transition: border-color var(--dur) var(--ease);
   }
-  .vid-ed-card__usar:hover { border-color: var(--sky-blue); }
   .vid-ed-chk {
     position: absolute; top: 6px; right: 6px; width: 20px; height: 20px;
     border-radius: var(--r-sm); border: 2px solid var(--paper);
@@ -114,12 +103,9 @@
   /* Formatos */
   .vid-formatos { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
   .vid-fmt {
-    display: flex; align-items: center; gap: var(--sp-3); cursor: pointer;
-    padding: var(--sp-3) var(--sp-4); background: var(--paper);
-    border: 1px solid var(--line); border-radius: var(--r); min-width: 210px;
+    display: flex; align-items: center; gap: var(--sp-3); cursor: pointer; min-width: 210px;
     transition: border-color var(--dur) var(--ease);
   }
-  .vid-fmt.is-sel { border-color: var(--sky-blue); }
   .vid-fmt__box { flex: 0 0 auto; background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r); }
   .vid-fmt__box--h { width: 34px; height: 19px; }
   .vid-fmt__box--v { width: 19px; height: 34px; }
@@ -152,6 +138,14 @@
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="video">
 
@@ -401,7 +395,7 @@
   function money(n, moneda) {
     const v = Number(n) || 0;
     if (!v) return '';
-    return '$' + v.toLocaleString('es-MX', { maximumFractionDigits: 0 }) +
+    return '$' + v.toLocaleString(window.bkLocale ? bkLocale() : 'es-MX', { maximumFractionDigits: 0 }) +
            (moneda && moneda !== 'MXN' ? ' ' + moneda : '');
   }
 
