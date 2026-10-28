@@ -8,6 +8,8 @@ La demo usa los HTML y scripts del rediseño con datos ficticios guardados
 únicamente en el navegador. No usa Railway ni Supabase y no requiere claves.
 No demuestra persistencia del servidor, permisos reales ni integraciones.
 
+Estado 28/oct/2026: broquer-staging ya tiene esta rama como Production branch, build condicional (solo esta rama corre build_staging.py) y BROQUER_STAGING_MODE=demo.
+
 En el proyecto existente **broquer-staging** de Cloudflare:
 
 1. **Workers & Pages > broquer-staging > Settings > Builds & deployments**.
