@@ -302,7 +302,9 @@ body {
 (function(){
   var campo = document.getElementById('r-pais-campo');
   if (!campo || !window.bkPaisSelector) return;
-  function telEjemplo(c){ var t = document.getElementById('r-telefono'); if (t) t.placeholder = 'Ej. ' + bkPaisCfg(c).telEjemplo; }
+  var t = document.getElementById('r-telefono');
+  var fijarLada = window.bkTelefonoLada ? bkTelefonoLada(t, bkPais()) : function(){};
+  function telEjemplo(c){ if (t) t.placeholder = 'Ej. ' + bkPaisCfg(c).telEjemplo; fijarLada(c); }
   var sel = bkPaisSelector({ className: 'reg-input', onCambio: telEjemplo });
   sel.id = 'r-pais';
   campo.insertBefore(sel, campo.querySelector('.reg-hint'));
@@ -337,6 +339,8 @@ async function guardar(){
       selPais.dispatchEvent(new Event('change'));
     }
   }
+  // Se guarda con lada (+57…) para que el número diga de qué país es.
+  const tel = selPais && window.bkTelefonoE164 ? bkTelefonoE164(telefono, selPais.value) : telefono;
 
   const token = sessionStorage.getItem('sb_token') || localStorage.getItem('sb_token');
   const userRaw = sessionStorage.getItem('sb_user') || localStorage.getItem('sb_user') || '{}';
@@ -362,7 +366,7 @@ async function guardar(){
     },
     body: JSON.stringify({
       nombre: nombreCompleto,
-      telefono
+      telefono: tel
     })
   });
 
@@ -380,7 +384,7 @@ async function guardar(){
         id: user.id,
         email: user.email,
         nombre: nombreCompleto,
-        telefono
+        telefono: tel
       })
     });
     if(!r2.ok){

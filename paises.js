@@ -192,6 +192,41 @@
     return dig.length === bkPaisCfg(c).digitosTel || !!bkPaisPorTelefono(tel);
   }
 
+  /* Teléfono en E.164 (+573001234567) con la lada del país elegido, para
+     que el número diga de qué país es aunque la cuenta no tenga país.
+     Mismo criterio que core/paises.py:telefono_e164. */
+  function bkTelefonoE164(tel, c) {
+    var s = String(tel || '').trim();
+    var dig = s.replace(/\D/g, '');
+    if (/^00/.test(s)) dig = dig.slice(2);
+    if (!dig) return '';
+    var cfg = bkPaisCfg(c);
+    return '+' + (dig.length === cfg.digitosTel ? cfg.lada : '') + dig;
+  }
+
+  /* Pone la lada del país ("+57") pegada a la izquierda del campo de
+     teléfono. Regresa una función para cambiarla cuando cambia el país. */
+  function bkTelefonoLada(input, c) {
+    if (!input) return function () {};
+    var caja = document.createElement('div');
+    caja.style.cssText = 'display:flex;gap:var(--sp-2,8px);align-items:stretch';
+    var lada = document.createElement('span');
+    lada.className = input.className;
+    lada.setAttribute('aria-hidden', 'true');
+    lada.style.cssText = 'flex:none;width:auto;display:flex;align-items:center;font-weight:600';
+    input.parentNode.insertBefore(caja, input);
+    caja.appendChild(lada);
+    caja.appendChild(input);
+    input.style.flex = '1';
+    input.style.minWidth = '0';
+    var fijar = function (pais) {
+      var cfg = bkPaisCfg(pais);
+      lada.textContent = '+' + cfg.lada;
+    };
+    fijar(c);
+    return fijar;
+  }
+
   /* Si el teléfono es de otro país que el elegido, pregunta antes de seguir:
      "Notamos que tu teléfono es de Perú pero seleccionaste México". Regresa
      una promesa con el país con que se queda la cuenta, o null si la
@@ -352,5 +387,7 @@
   window.bkPaisSelector = bkPaisSelector;
   window.bkPaisPorTelefono = bkPaisPorTelefono;
   window.bkTelefonoValido = bkTelefonoValido;
+  window.bkTelefonoE164 = bkTelefonoE164;
+  window.bkTelefonoLada = bkTelefonoLada;
   window.bkPaisAvisoTelefono = bkPaisAvisoTelefono;
 })();
