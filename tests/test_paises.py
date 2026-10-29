@@ -51,6 +51,21 @@ class PaisesEspejoTests(unittest.TestCase):
             self.assertEqual(js[codigo]["sinModulos"], ["isr"])
 
 
+    def test_telefono_se_guarda_con_lada_igual_que_el_servidor(self):
+        casos = [("300 455 8482", "CO"), ("443 123 4567", "MX"), ("912 345 678", "PE"),
+                 ("+57 300 123 4567", "MX"), ("0057 300 123 4567", "MX"), ("52 443 123 4567", "MX"), ("", "CO")]
+        js = _node(
+            "global.window={};global.localStorage={getItem(){return null},setItem(){}};"
+            "require('./paises.js');"
+            f"console.log(JSON.stringify({json.dumps(casos)}.map(c=>window.bkTelefonoE164(c[0],c[1]))))"
+        )
+        self.assertEqual(js[0], "+573004558482")
+        self.assertEqual(js[4], "+573001234567")
+        for (tel, pais), r in zip(casos, js):
+            with self.subTest(tel=tel, pais=pais):
+                self.assertEqual(r, paises.telefono_e164(tel.removeprefix("00"), pais))
+
+
 @unittest.skipUnless(NODE, "node no está instalado")
 class ImpuestosReglasTests(unittest.TestCase):
     def calc(self, pais: str, datos: dict) -> dict:
