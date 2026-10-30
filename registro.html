@@ -328,10 +328,17 @@ async function guardar(){
   const nombreCompleto = apellidos ? nombre + ' ' + apellidos : nombre;
   if(!nombre){ showMsg('Ingresa tu nombre'); return; }
   if(!apellidos){ showMsg('Ingresa tus apellidos'); return; }
+  if(!telefono){ showMsg('Ingresa tu teléfono'); document.getElementById('r-telefono').focus(); return; }
 
   // Teléfono con lada de otro país: se pregunta antes de guardar.
   const selPais = document.getElementById('r-pais');
-  if(telefono && selPais && window.bkPaisAvisoTelefono){
+  if(selPais && window.bkTelefonoValido && !bkTelefonoValido(telefono, selPais.value)){
+    const cp = bkPaisCfg(selPais.value);
+    showMsg('El teléfono debe tener ' + cp.digitosTel + ' dígitos, o escríbelo con lada (ej. +' + cp.lada + ' …).');
+    document.getElementById('r-telefono').focus();
+    return;
+  }
+  if(selPais && window.bkPaisAvisoTelefono){
     const elegido = await bkPaisAvisoTelefono(telefono, selPais.value);
     if(!elegido){ document.getElementById('r-telefono').focus(); return; }
     if(elegido !== selPais.value){
