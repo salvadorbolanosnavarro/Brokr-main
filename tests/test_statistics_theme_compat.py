@@ -2,6 +2,7 @@
 from pathlib import Path
 import re
 import unittest
+from core.design import theme_tokens
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,7 +16,7 @@ class StatisticsThemeCompatibilityTests(unittest.TestCase):
         canonical = (ROOT / "brokr-theme.css").read_text(encoding="utf-8")
 
         used = set(VAR_USE.findall(statistics))
-        available = set(VAR_DEF.findall(canonical)) | set(VAR_DEF.findall(statistics))
+        available = set(theme_tokens()) | set(VAR_DEF.findall(statistics))
         missing = sorted(used - available)
 
         self.assertEqual(

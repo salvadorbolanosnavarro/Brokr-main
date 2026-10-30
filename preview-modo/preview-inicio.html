@@ -20,16 +20,21 @@
   .visita .detalle{ font-size: var(--fs-desc); color: var(--sky-ink); }
 
   .filtros{ display:flex; gap:8px; margin-bottom:16px; }
-  .filtro{
-    border:1px solid var(--line); background:var(--white); border-radius:999px;
-    padding: 8px 16px; font-size: var(--fs-desc); font-weight:700; color:var(--muted-ink);
-  }
-  .filtro[aria-pressed="true"]{ background: var(--ink); color: var(--white); border-color:var(--ink); }
 
   @media (min-width: 1024px){
     .layout{ display:grid; grid-template-columns: 1fr 360px; gap: 60px; align-items:start; }
   }
 </style>
+<link rel="stylesheet" href="../styles/mobile-inputs.css">
+<script defer src="../mobile-inputs.js"></script>
+<link rel="stylesheet" href="../ui/tokens.css">
+<link rel="stylesheet" href="../ui/date-picker.css">
+<script defer src="../ui/date-picker.js"></script>
+<link rel="stylesheet" href="../ui/actions.css">
+<script defer src="../ui/actions.js"></script>
+<link rel="stylesheet" href="../ui/fields.css">
+<link rel="stylesheet" href="../ui/overlays.css">
+<script defer src="../ui/overlays.js"></script>
 </head>
 <body class="modo">
   <div class="modo-preview-banner">Vista previa del sistema "modo" — datos de ejemplo, no conectados a Broquer real</div>

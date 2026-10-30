@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Inmuebles — Broquer</title>
+<title>Inmuebles · Broquer</title>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <link rel="stylesheet" href="propiedades-plus.css"/>
 <style>
@@ -41,33 +41,22 @@
 .props-head__actions { display: flex; gap: 10px; align-items: center; }
 
 /* New btn */
-.btn-new-prop {
-  height: 44px; padding: 0 18px;
-  background: var(--forest); color: var(--paper);
-  border: none; border-radius: var(--r-pill);
-  font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
+.btn-new-prop { cursor: pointer;
   display: inline-flex; align-items: center; gap: 8px;
   transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
-.btn-new-prop:hover { background: var(--ink-2); }
 .btn-new-prop:active { transform: scale(.98); }
 
 /* Botón importar EasyBroker — estilo outline secundario */
-.btn-import-eb {
-  height: 44px; padding: 0 16px;
-  background: white; color: var(--ink);
-  border: 1.5px solid var(--paper-2); border-radius: var(--r-pill);
-  font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
+.btn-import-eb { cursor: pointer;
   display: inline-flex; align-items: center; gap: 8px;
   transition: all var(--dur) var(--ease);
   margin-right: 8px;
 }
-.btn-import-eb:hover { border-color: var(--ink); background: var(--bone); }
 .btn-import-eb:active { transform: scale(.98); }
 .btn-import-eb:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 600px) {
-  .btn-import-eb { padding: 0 12px; font-size: var(--fs-xs); }
-  .btn-import-eb svg { width: 12px; height: 12px; }
+  .btn-import-eb svg { width: 12px; height: var(--ui-control); }
 }
 
 /* Modal de progreso de importación */
@@ -105,12 +94,9 @@
 .eb-import-summary { margin-top: 16px; font-size: var(--fs-sm); line-height: 1.7; color: var(--ink); }
 .eb-import-summary b { font-weight: 600; }
 .eb-import-btn {
-  margin-top: 18px; height: 38px; padding: 0 22px;
-  background: var(--forest); color: white;
-  border: none; border-radius: var(--r-pill); font-size: var(--fs-sm); font-weight: 600;
+  margin-top: 18px;
   cursor: pointer;
 }
-.eb-import-btn:hover { background: var(--ink-2); }
 .eb-import-picker { text-align: left; margin-bottom: 4px; }
 .eb-pick-opt {
   display: flex; align-items: center; gap: 10px;
@@ -118,7 +104,7 @@
   font-size: var(--fs-sm); color: var(--ink); cursor: pointer;
 }
 .eb-pick-opt:hover { background: var(--paper-2); }
-.eb-pick-opt input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--ink); }
+.eb-pick-opt input { width: 16px; cursor: pointer; accent-color: var(--ink); }
 .eb-pick-note {
   font-size: var(--fs-caption); color: var(--mute);
   margin-top: 10px; padding: 0 10px; line-height: 1.5;
@@ -141,46 +127,31 @@
   border: 1px solid var(--line-2);
   border-radius: var(--r-pill);
   padding: 0 16px;
-  height: 44px;
+  height: var(--ui-control);
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .props-search-wrap:focus-within { border-color: var(--ink); box-shadow: var(--focus); }
 .props-search-wrap svg { flex-shrink: 0; color: var(--mute); }
 .props-search-wrap input {
-  flex: 1; background: none; border: none; outline: none;
-  color: var(--ink); font-size: var(--fs-sm); font-family: inherit;
-  letter-spacing: -0.01em;
+  flex: 1; outline: none;
+  color: var(--ink);
 }
 .props-search-wrap input::placeholder { color: var(--mute-2); }
 
 .props-toolbar select {
-  height: 44px; padding: 0 36px 0 14px;
-  background: var(--bone) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%236B6B66' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E") right 14px center/10px no-repeat;
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-pill);
-  color: var(--ink); font-size: var(--fs-sm); font-weight: 500;
-  appearance: none; cursor: pointer;
+  color: var(--ink); cursor: pointer;
 }
-.props-toolbar select:hover { border-color: var(--line-3); }
 
 /* Estatus multi-selección */
 .props-filter-est-wrap {
   position: relative;
 }
 .props-filter-est-btn {
-  height: 44px; padding: 0 36px 0 14px;
-  background: var(--bone) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%236B6B66' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E") right 14px center/10px no-repeat;
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-pill);
-  color: var(--ink); font-size: var(--fs-sm); font-weight: 500;
-  cursor: pointer; font-family: inherit;
-  white-space: nowrap;
+  cursor: pointer;
   display: flex; align-items: center; gap: 8px;
   transition: border-color var(--dur) var(--ease);
 }
-.props-filter-est-btn:hover { border-color: var(--line-3); }
 .props-filter-est-btn svg { display: none; } /* la flecha es el bg */
-.props-filter-est-btn.is-active { border-color: var(--ink); background-color: var(--paper-2); }
 .props-est-dropdown {
   display: none;
   position: absolute; top: calc(100% + 6px); left: 0; z-index: 200;
@@ -211,9 +182,8 @@
   transition: border-color var(--dur) var(--ease);
 }
 .props-price-wrap:focus-within { border-color: var(--ink); }
-.props-price-wrap input {
-  background: none; border: none; outline: none;
-  color: var(--ink); font-size: var(--fs-sm); font-weight: 500; font-family: inherit;
+.props-price-wrap input { outline: none;
+  color: var(--ink);
   width: 100px;
 }
 .props-price-wrap input::placeholder { color: var(--mute-2); }
@@ -243,16 +213,10 @@
   flex-wrap: wrap;
 }
 .props-pager button {
-  min-width: 38px; height: 38px; padding: 0 12px;
-  background: var(--bone); border: 1px solid var(--line-2);
-  border-radius: var(--r); color: var(--ink-2);
-  font-size: var(--fs-sm); font-weight: 500; cursor: pointer; font-family: inherit;
+  min-width: 38px; cursor: pointer;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.props-pager button:hover:not(:disabled):not(.is-current) { background: var(--paper-2); border-color: var(--line-3); }
-.props-pager button.is-current {
-  background: var(--sky-navy); color: var(--paper); border-color: var(--ink);
-  font-weight: 600; cursor: default;
+.props-pager button.is-current { cursor: default;
 }
 .props-pager button:disabled { opacity: .35; cursor: not-allowed; }
 .props-pager .gap { color: var(--mute-2); padding: 0 4px; user-select: none; }
@@ -302,7 +266,7 @@
 }
 .prop-card-img .placeholder span {
   font-family: var(--font-mono); font-size: var(--fs-label-3);
-  letter-spacing: 0.02em; 
+  letter-spacing: 0.02em;
 }
 
 /* Floating badges on image */
@@ -373,17 +337,11 @@
   margin-top: auto;
 }
 .prop-act-btn {
-  flex: 1; height: 36px;
-  border-radius: var(--r-pill);
-  font-size: var(--fs-xs); font-weight: 500; font-family: inherit;
+  flex: 1;
   cursor: pointer;
-  background: var(--paper); color: var(--ink-2);
-  border: 1px solid var(--line-2);
   transition: all var(--dur) var(--ease);
   display: inline-flex; align-items: center; justify-content: center; gap: 5px;
 }
-.prop-act-btn:hover { background: var(--paper-2); border-color: var(--line-3); }
-.prop-act-del:hover { color: var(--danger); border-color: rgba(231,8,102,.30); background: var(--danger-soft); }
 
 /* ── Status badges ────────────────────────── */
 .badge {
@@ -440,14 +398,10 @@
 }
 .prop-modal-hdr h3 { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700; letter-spacing: -0.025em; }
 .prop-modal-close {
-  width: 36px; height: 36px;
-  background: var(--paper-2); border: none;
-  border-radius: 50%; color: var(--ink-2);
-  font-size: var(--fs-h5); cursor: pointer;
+  width: var(--ui-control-small); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: background var(--dur) var(--ease);
 }
-.prop-modal-close:hover { background: var(--line); }
 
 .prop-modal-body { padding: 24px 26px; }
 
@@ -455,7 +409,7 @@
 .pf-section {
   font-family: var(--font-mono);
   font-size: var(--fs-label-3); font-weight: 500;
-  letter-spacing: 0.02em; 
+  letter-spacing: 0.02em;
   color: var(--mute);
   padding: 18px 0 10px;
   margin-bottom: 12px;
@@ -473,24 +427,15 @@
   letter-spacing: -0.005em;
 }
 .pf-field input, .pf-field textarea, .pf-field select {
-  width: 100%; height: 44px; padding: 0 14px;
-  background: var(--bone);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r);
-  color: var(--ink); font-size: var(--fs-sm); font-family: inherit;
+  width: 100%;
+  color: var(--ink);
   outline: none;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.pf-field input:focus, .pf-field textarea:focus, .pf-field select:focus {
-  border-color: var(--ink); box-shadow: var(--focus);
-}
-.pf-field textarea { resize: vertical; min-height: 88px; padding: 12px 14px; height: auto; }
+.pf-field textarea { resize: vertical; }
 .pf-field select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%236B6B66' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
-  padding-right: 36px;
 }
 
 .pf-actions {
@@ -498,22 +443,12 @@
   padding-top: 18px; border-top: 1px solid var(--line); margin-top: 20px;
   position: sticky; bottom: 0; background: var(--bone);
 }
-.pf-cancel-btn {
-  height: 44px; padding: 0 18px;
-  background: transparent; border: 1px solid var(--line-2);
-  color: var(--ink-2); border-radius: var(--r-pill);
-  font-size: var(--fs-sm); font-weight: 500; cursor: pointer; font-family: inherit;
+.pf-cancel-btn { cursor: pointer;
 }
-.pf-cancel-btn:hover { background: var(--paper-2); }
-.pf-save-btn {
-  height: 44px; padding: 0 22px;
-  background: var(--forest); border: none; color: var(--paper);
-  border-radius: var(--r-pill);
-  font-size: var(--fs-sm); font-weight: 600; cursor: pointer; font-family: inherit;
+.pf-save-btn { cursor: pointer;
   display: inline-flex; align-items: center; gap: 8px;
   transition: background var(--dur) var(--ease);
 }
-.pf-save-btn:hover { background: var(--ink-2); }
 
 /* ══ Ficha del inmueble: lo propio de una propiedad ══
    (el resto de la ficha —cabecera, pestañas, bitácora, filas— sale del
@@ -546,10 +481,8 @@
   scrollbar-width: thin;
 }
 .pf-galeria__tira button {
-  flex-shrink: 0; border: none; padding: 0; cursor: pointer;
-  width: 96px; height: 68px;
-  border-radius: var(--r-sm); overflow: hidden;
-  background: var(--paper-2);
+  flex-shrink: 0; cursor: pointer;
+  width: 96px; overflow: hidden;
 }
 .pf-galeria__tira img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .pf-ubic {
@@ -579,22 +512,17 @@
 }
 .foto-preview-item .foto-quitar {
   position: absolute; top: -6px; right: -6px;
-  width: 22px; height: 22px;
-  background: var(--sky-navy); color: var(--paper);
-  border: 2px solid var(--bone); border-radius: 50%;
-  font-size: var(--fs-caption); cursor: pointer;
+  width: var(--ui-control-small); cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
 .foto-preview-item .foto-mover {
   position: absolute; top: 50%; transform: translateY(-50%);
-  width: 18px; height: 26px; padding: 0;
-  background: rgba(20,20,20,.6); color: #fff; border: none;
-  font-size: var(--fs-xs); line-height: 1; cursor: pointer;
+  width: var(--ui-control-small); cursor: pointer;
   opacity: 0; transition: opacity .12s;
 }
 .foto-preview-item:hover .foto-mover, .foto-preview-item:focus-within .foto-mover { opacity: 1; }
-.foto-preview-item .foto-mover--izq { left: 0; border-radius: var(--r-sm) 0 0 var(--r-sm); }
-.foto-preview-item .foto-mover--der { right: 0; border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+.foto-preview-item .foto-mover--izq { left: 0; }
+.foto-preview-item .foto-mover--der { right: 0; }
 .foto-preview-item .foto-mover:disabled { opacity: 0 !important; pointer-events: none; }
 @media (max-width: 720px) {
   /* Sin hover en touch: los botones de mover quedan siempre visibles */
@@ -617,8 +545,8 @@
 /* ── Selección múltiple ───────────────────────────────────────── */
 .prop-card { position: relative; }
 .prop-check {
-  position: absolute; top: 10px; left: 10px;
-  width: 26px; height: 26px;
+  position: static;
+  width: var(--ui-control-small); height: var(--ui-control-small);
   background: rgba(255,255,255,.92);
   border: 1.5px solid rgba(15,24,41,.25);
   border-radius: var(--r-sm);
@@ -664,6 +592,7 @@
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%) translateY(120px);
+  visibility: hidden; pointer-events: none;
   background: var(--ink);
   color: white;
   border-radius: var(--r-pill);
@@ -675,22 +604,14 @@
   transition: transform .28s cubic-bezier(.16,1,.3,1);
   max-width: 92vw;
 }
-.bulk-bar.is-visible { transform: translateX(-50%) translateY(0); }
+.bulk-bar.is-visible { transform: translateX(-50%) translateY(0); visibility:visible; pointer-events:auto; }
 .bulk-bar__count { letter-spacing: -.01em; }
 .bulk-bar__sep { width: 1px; height: 18px; background: rgba(255,255,255,.2); }
 .bulk-bar__btn {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 14px;
-  border-radius: var(--r-pill);
-  font-size: var(--fs-sm); font-weight: 500;
   cursor: pointer;
-  border: none;
   transition: background .15s ease;
 }
-.bulk-bar__btn--danger { background: var(--danger); color: white; }
-.bulk-bar__btn--danger:hover { background: var(--danger); }
-.bulk-bar__btn--ghost { background: transparent; color: rgba(255,255,255,.85); }
-.bulk-bar__btn--ghost:hover { background: rgba(255,255,255,.1); color: white; }
 
 /* Modal de confirmación de borrado */
 .confirm-del-overlay {
@@ -714,20 +635,13 @@
 .confirm-del-modal p { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.45; margin-bottom: 18px; }
 .confirm-del-modal .actions { display: flex; gap: 8px; justify-content: flex-end; }
 .confirm-del-modal button {
-  padding: 9px 18px; border-radius: var(--r);
-  font-size: var(--fs-sm); font-weight: 500;
-  cursor: pointer; border: none;
+  cursor: pointer;
   transition: all .15s ease;
 }
-.confirm-del-modal .btn-cancel { background: var(--paper-2); color: var(--ink); }
-.confirm-del-modal .btn-cancel:hover { background: var(--paper-2); }
-.confirm-del-modal .btn-confirm { background: var(--danger); color: white; }
-.confirm-del-modal .btn-confirm:hover { background: var(--danger); }
 
 @media (max-width: 700px) {
   .props-select-all { padding: 6px 10px; font-size: var(--fs-xs); }
   .bulk-bar { bottom: 16px; padding: 8px 10px 8px 18px; font-size: var(--fs-sm); gap: 10px; }
-  .bulk-bar__btn { padding: 6px 12px; font-size: var(--fs-xs); }
 }
 
 /* Etiqueta de amenidad/etiqueta dentro de la ficha */
@@ -744,17 +658,9 @@
 
 /* Toggle Archivadas — misma métrica del filtro de estatus */
 .props-arch-toggle {
-  display: inline-flex; align-items: center; gap: 7px;
-  height: 40px; padding: 0 16px; flex-shrink: 0;
-  background: var(--bone);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-pill);
-  font-family: inherit; font-size: var(--fs-sm); font-weight: 500;
-  color: var(--ink-2); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; cursor: pointer;
   transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
-.props-arch-toggle:hover { border-color: var(--line-3); }
-.props-arch-toggle.is-active { border-color: var(--ink); background: var(--paper-2); color: var(--ink); }
 
 /* Badges de estatus adicionales */
 .badge-reservada  { background: var(--info-soft);  color: var(--info); }
@@ -823,11 +729,9 @@
 .lightbox-overlay { overscroll-behavior: contain; }
 .lightbox-close, .lightbox-nav {
   position: absolute; display: flex; align-items: center; justify-content: center;
-  width: 44px; height: 44px; border-radius: var(--r-pill);
-  background: rgba(255,255,255,.12); border: none; color: #fff;
+  width: var(--ui-control-small);
   cursor: pointer; transition: background var(--dur) var(--ease);
 }
-.lightbox-close:hover, .lightbox-nav:hover { background: rgba(255,255,255,.24); }
 .lightbox-close { top: 16px; right: 16px; }
 .lightbox-nav--prev { left: 16px; top: 50%; transform: translateY(-50%); }
 .lightbox-nav--next { right: 16px; top: 50%; transform: translateY(-50%); }
@@ -838,7 +742,7 @@
   padding: 6px 14px; border-radius: var(--r-pill); letter-spacing: .02em;
 }
 @media (max-width: 640px) {
-  .lightbox-nav { width: 38px; height: 38px; }
+  .lightbox-nav { width: var(--ui-control-small); }
   .lightbox-img-wrap { padding: 48px 8px; }
 }
 </style>
@@ -861,6 +765,16 @@
   .props-head__title h1 { font-size:var(--fs-h3) !important; }
 }
 </style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="props">
 
@@ -868,7 +782,7 @@
     <!-- HEADER -->
     <div class="props-head">
       <div class="props-head__top">
-        <div class="props-head__title">
+        <div class="props-head__title"><p>Inventario</p><h1>Inmuebles</h1><p>Venta y renta en la misma ficha.</p>
         </div>
         <div class="props-head__actions">
           <button class="btn-import-eb" onclick="abrirCsvModal()" title="Importa propiedades desde un archivo CSV">
@@ -983,7 +897,7 @@
 
 <!-- ── MODAL: FORM ─────────────────────────── -->
 <div id="prop-modal" class="prop-modal-overlay" onclick="if(event.target===this)closePropModal()">
-  <div class="prop-modal-box" onclick="event.stopPropagation()">
+  <div class="prop-modal-box" data-ui-modal onclick="event.stopPropagation()">
     <div class="prop-modal-hdr">
       <h3 id="prop-modal-title">Nuevo inmueble</h3>
       <button onclick="closePropModal()" class="prop-modal-close" aria-label="Cerrar"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
@@ -1102,15 +1016,15 @@
           </div>
         </div>
 
-        <div class="pf-actions">
+
+      </form>
+    </div><div class="ui-modal-foot">
           <button type="button" onclick="closePropModal()" class="pf-cancel-btn">Cancelar</button>
-          <button type="submit" class="pf-save-btn">
+          <button type="submit" form="prop-form" class="pf-save-btn">
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
             Guardar inmueble
           </button>
         </div>
-      </form>
-    </div>
   </div>
 </div>
 
@@ -1543,9 +1457,7 @@ function renderProps(props, totalForCount) {
     const ubic = [p.colonia, p.ciudad].filter(Boolean).join(', ');
 
     return `<div class="prop-card ${selectedIds.has(p.id) ? 'is-selected' : ''} ${p.archivada ? 'is-archived' : ''}" data-id="${p.id}" onclick="onPropCardClick(event, '${p.id}')">
-      <div class="prop-check" onclick="event.stopPropagation();toggleSelectProp('${p.id}')">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-      </div>
+      ${puedeEliminar ? `<div class="prop-card-select"><button type="button" class="prop-check" aria-label="Seleccionar inmueble" aria-pressed="${selectedIds.has(p.id)}" onclick="event.stopPropagation();toggleSelectProp('${p.id}')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></button><span>Seleccionar inmueble</span></div>` : ''}
       <div class="prop-card-img">
         ${foto}
         <div class="img-badge-wrap">
@@ -2019,6 +1931,7 @@ function updateSelectionUI() {
   document.querySelectorAll('.prop-card[data-id]').forEach(card => {
     const isSel = selectedIds.has(card.dataset.id);
     card.classList.toggle('is-selected', isSel);
+    card.querySelector('.prop-check')?.setAttribute('aria-pressed',String(isSel));
   });
 
   // 2. Checkbox "Seleccionar todo" — basado en el filtro completo, no en la página
@@ -2027,6 +1940,7 @@ function updateSelectionUI() {
   const selectAllEl = g('props-select-all');
   const selectAllLabel = g('props-select-all-label');
   if (selectAllEl) {
+    selectAllEl.hidden = !puedeEliminar;
     selectAllEl.classList.toggle('is-active', allSelected);
     if (selectAllLabel) {
       const total = filteredIds.length;
@@ -2038,6 +1952,7 @@ function updateSelectionUI() {
 
   // 3. Barra flotante
   const bar = g('bulk-bar');
+  bar.hidden = selectedIds.size === 0;
   const count = g('bulk-bar-count');
   if (selectedIds.size > 0) {
     count.textContent = selectedIds.size + (selectedIds.size === 1 ? ' seleccionado' : ' seleccionados');
@@ -2406,7 +2321,7 @@ async function ebEjecutarImport() {
     sumEl.innerHTML =
       '<div><b>' + nuevas + '</b> propiedades nuevas importadas</div>' +
       '<div><b>' + actualizadas + '</b> actualizadas con datos más recientes</div>' +
-      '<div style="color:var(--line-2);margin-top:4px;font-size:var(--fs-xs)">Encontradas en tu EasyBroker: ' + data.total_easybroker + '</div>' +
+      '<div style="color:var(--mute);margin-top:4px;font-size:var(--fs-xs)">Encontradas en tu EasyBroker: ' + data.total_easybroker + '</div>' +
       (data.limite_alcanzado
         ? '<div style="color:var(--mute);margin-top:6px;font-size:var(--fs-xs)">Se alcanzó el máximo de ' + (data.limite || 1000) + ' propiedades por importación. Vuelve a importar para traer el resto.</div>'
         : '') +
@@ -2742,7 +2657,7 @@ else { window.addEventListener('brokr-shell-ready', () => { loadProps(); _preloa
 <!-- ── MODAL: IMPORTAR CSV ─────────────────────────────────── -->
 <!-- Modal: comisión real al cerrar una operación -->
 <div id="comision-modal" class="prop-modal-overlay" onclick="if(event.target===this)cerrarComisionModal()">
-  <div class="prop-modal-box" onclick="event.stopPropagation()" style="max-width:420px">
+  <div class="prop-modal-box" data-ui-modal onclick="event.stopPropagation()" style="max-width:420px">
     <div class="prop-modal-hdr">
       <h3>Registrar comisión</h3>
       <button onclick="cerrarComisionModal()" class="prop-modal-close" aria-label="Cerrar"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
@@ -2759,7 +2674,7 @@ else { window.addEventListener('brokr-shell-ready', () => { loadProps(); _preloa
 </div>
 
 <div id="csv-modal" class="prop-modal-overlay" onclick="if(event.target===this)cerrarCsvModal()">
-  <div class="prop-modal-box" onclick="event.stopPropagation()" style="max-width:520px">
+  <div class="prop-modal-box" data-ui-modal onclick="event.stopPropagation()" style="max-width:520px">
     <div class="prop-modal-hdr">
       <h3>Importar desde CSV</h3>
       <button onclick="cerrarCsvModal()" class="prop-modal-close" aria-label="Cerrar"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg></button>
@@ -2773,7 +2688,7 @@ else { window.addEventListener('brokr-shell-ready', () => { loadProps(); _preloa
       <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="procesarCsv(this.files[0])"/>
       <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
         <span class="csv-link" onclick="descargarPlantillaCsv()">Descargar plantilla CSV</span>
-        <span style="font-size:var(--fs-caption);color:var(--mute-2)">UTF-8 · separado por comas</span>
+        <span style="font-size:var(--fs-caption);color:var(--mute)">UTF-8 · separado por comas</span>
       </div>
       <div class="csv-report" id="csv-report" style="display:none"></div>
       <div class="pf-actions" style="position:static">
@@ -2785,7 +2700,7 @@ else { window.addEventListener('brokr-shell-ready', () => { loadProps(); _preloa
 </div>
 
 <!-- ── Barra flotante de selección múltiple ─────────────────── -->
-<div class="bulk-bar" id="bulk-bar">
+<div class="bulk-bar" id="bulk-bar" hidden>
   <span class="bulk-bar__count" id="bulk-bar-count">0 seleccionados</span>
   <span class="bulk-bar__sep"></span>
   <button class="bulk-bar__btn bulk-bar__btn--danger" onclick="confirmarBorrarSeleccionados()">

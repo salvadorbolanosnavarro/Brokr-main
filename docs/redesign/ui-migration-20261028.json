@@ -1,0 +1,92 @@
+[
+  {
+    "name": "index",
+    "width": 1440,
+    "errors": [],
+    "overflow": false,
+    "title": "48px",
+    "smallFields": 0,
+    "fab": false
+  },
+  {
+    "name": "contactos",
+    "width": 1440,
+    "errors": [],
+    "overflow": false,
+    "title": "48px",
+    "smallFields": 0,
+    "fab": false
+  },
+  {
+    "name": "propiedades",
+    "width": 1440,
+    "errors": [],
+    "overflow": false,
+    "title": "48px",
+    "smallFields": 0,
+    "fab": false
+  },
+  {
+    "name": "tareas",
+    "width": 1440,
+    "errors": [],
+    "overflow": false,
+    "title": "48px",
+    "smallFields": 0,
+    "fab": false
+  },
+  {
+    "name": "finanzas",
+    "width": 1440,
+    "errors": [],
+    "overflow": false,
+    "title": "48px",
+    "smallFields": 0,
+    "fab": false
+  },
+  {
+    "name": "index",
+    "width": 390,
+    "errors": [],
+    "overflow": false,
+    "title": "32px",
+    "smallFields": 0,
+    "fab": false
+  },
+  {
+    "name": "contactos",
+    "width": 390,
+    "errors": [],
+    "overflow": false,
+    "title": "32px",
+    "smallFields": 0,
+    "fab": false
+  },
+  {
+    "name": "propiedades",
+    "width": 390,
+    "errors": [],
+    "overflow": false,
+    "title": "32px",
+    "smallFields": 0,
+    "fab": false
+  },
+  {
+    "name": "tareas",
+    "width": 390,
+    "errors": [],
+    "overflow": false,
+    "title": "32px",
+    "smallFields": 0,
+    "fab": false
+  },
+  {
+    "name": "finanzas",
+    "width": 390,
+    "errors": [],
+    "overflow": false,
+    "title": "32px",
+    "smallFields": 0,
+    "fab": false
+  }
+]

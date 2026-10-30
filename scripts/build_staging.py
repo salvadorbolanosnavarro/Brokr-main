@@ -1,0 +1,105 @@
+"""Build only tracked public assets for the existing broquer-staging Pages project."""
+import base64
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+from urllib.parse import urlsplit
+from staging_brand import brand_asset, write_brand_artwork, MONOGRAM
+
+ROOT = Path(__file__).resolve().parents[1]
+PROD_DB = 'https://urtgysmtnvoqaljuhntz.supabase.co'
+PROD_KEY = 'sb_publishable_EVGLfmHVorBpQQWAh-vypA_hANNk_-i'
+BRANCH = 'work/redesign-preview-20261003'
+
+def config(env):
+    if env.get('CF_PAGES_BRANCH', BRANCH) != BRANCH:
+        raise ValueError('This build is exclusively for PR #180, never main.')
+    mode = env.get('BROQUER_STAGING_MODE', 'connected')
+    if mode == 'demo':
+        return 'https://broquer-demo.invalid/api', 'https://broquer-demo.invalid/supabase', 'DEMO_PUBLIC_NOT_A_KEY'
+    if mode != 'connected':
+        raise ValueError('BROQUER_STAGING_MODE must be connected or demo')
+    api = env.get('BROQUER_STAGING_API_URL', '').rstrip('/')
+    db = env.get('BROQUER_STAGING_SUPABASE_URL', '').rstrip('/')
+    key = env.get('BROQUER_STAGING_SUPABASE_KEY', '').strip()
+    if api != 'https://brokr-main-staging.up.railway.app':
+        raise ValueError('Use the existing Railway staging backend.')
+    parsed = urlsplit(db)
+    if parsed.scheme != 'https' or not parsed.hostname or not parsed.hostname.endswith('.supabase.co') or parsed.path or parsed.query or parsed.username or db == PROD_DB:
+        raise ValueError('A separate Supabase staging project URL is required.')
+    if not key or key == PROD_KEY or key.startswith('sb_secret_'):
+        raise ValueError('Only the public key of the separate staging project is allowed.')
+    if not key.startswith('sb_publishable_'):
+        try:
+            payload = json.loads(base64.urlsafe_b64decode(key.split('.')[1] + '==='))
+        except Exception as exc:
+            raise ValueError('Invalid Supabase public key') from exc
+        if payload.get('role') != 'anon' or payload.get('ref') != parsed.hostname.split('.')[0]:
+            raise ValueError('JWT must be anon and match the staging project.')
+    return api, db, key
+
+def build(env=os.environ):
+    api, db, key = config(env)
+    demo = env.get('BROQUER_STAGING_MODE') == 'demo'
+    output = ROOT / 'dist'
+    if output.exists(): shutil.rmtree(output)
+    allowed = {'.html','.js','.css','.json','.svg','.png','.jpg','.jpeg','.webp','.gif','.ico','.woff','.woff2','.ttf','.otf','.mp4','.webm','.pdf'}
+    excluded = {'scripts','tests','core','routers','ios','.github','supabase','staging','test-results','cloudflare','docs'}
+    paths = subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard'],cwd=ROOT,text=True).splitlines()
+    count = 0
+    for name in sorted(set(paths)):
+        p = Path(name)
+        if p.parts[0] in excluded or p.suffix.lower() not in allowed or name == 'redesign-inventory.json': continue
+        source = ROOT / p
+        if not source.is_file(): continue
+        target = output / p
+        target.parent.mkdir(parents=True,exist_ok=True)
+        if p.suffix in {'.html','.js','.css','.json','.svg'}:
+            text = source.read_text()
+            for old,new in [('https://api.broquer.app',api),(PROD_DB,db),(PROD_KEY,key)]: text = text.replace(old,new)
+            text = text.replace('api.broquer.app',urlsplit(api).hostname).replace('urtgysmtnvoqaljuhntz.supabase.co',urlsplit(db).hostname)
+            if p.suffix == '.html' and p.name != 'ui-components.html':
+                prefix = '../' * (len(p.parts)-1)
+                bootstrap = f'<script src="{prefix}demo-runtime.js" data-mode="demo"></script>\n' if demo else ''
+                text = text.replace('<head>',f'<head>\n{bootstrap}<script src="{prefix}staging-auth-guard.js"></script>',1)
+            if p.suffix == '.html' and 'styles/mobile-inputs.css' not in text:
+                prefix = '../' * (len(p.parts)-1)
+                text = text.replace('</head>',f'<link rel="stylesheet" href="{prefix}styles/mobile-inputs.css">\n</head>')
+            if 'api.broquer.app' in text or 'urtgysmtnvoqaljuhntz.supabase.co' in text or PROD_KEY in text:
+                raise ValueError(f'Production API reference remains in {name}')
+            if p.suffix in {'.html','.js','.json','.svg'} and p.parts[0] != 'brand':
+                text = brand_asset(name, text)
+            if name == 'manifest.json':
+                manifest = json.loads(text)
+                for icon in manifest.get('icons', []):
+                    icon.update(src=MONOGRAM, sizes='any', type='image/svg+xml')
+                text = json.dumps(manifest, ensure_ascii=False, indent=2) + '\n'
+            target.write_text(text)
+        else: shutil.copyfile(source,target)
+        count += 1
+    write_brand_artwork(ROOT, output)
+    (output / 'staging-auth-guard.js').write_text("""// Staging only. Password login stays available for manually created QA users.
+(() => {
+ const original = window.fetch;
+ const blocked = new Set(['/auth/v1/signup','/auth/v1/recover','/auth/v1/resend','/auth/v1/otp','/auth/v1/magiclink','/auth/v1/invite']);
+ window.fetch = function(input,options) {
+  const url = new URL(typeof input === 'string' ? input : input.url || String(input),location.href);
+  if (url.hostname.endsWith('.supabase.co') && blocked.has(url.pathname)) {
+   return Promise.resolve(new Response(JSON.stringify({error:'staging_delivery_disabled',msg:'Envíos de Auth desactivados en staging; usa el usuario QA creado en el panel.'}),{status:409,headers:{'Content-Type':'application/json'}}));
+  }
+  return original.call(this,input,options);
+ };
+})();
+""")
+    # connect-src applies even to old inline code: no production DB/API writes.
+    connections = "'self'" if demo else f"'self' {api} {db} wss://{urlsplit(db).hostname}"
+    (output / '_headers').write_text(f'''/*
+  X-Robots-Tag: noindex, nofollow
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: connect-src {connections}; object-src 'none'; base-uri 'self'
+''')
+    print(f'Staging build: {count} public assets. No backend, SQL or secret files included.')
+
+if __name__ == '__main__': build()

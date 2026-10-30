@@ -14,7 +14,7 @@
   @media (min-width: 768px){ .kpis{ grid-template-columns: repeat(3,1fr); } }
   .kpi{ border:1px solid var(--line); border-radius: var(--r-card); padding:16px; }
   .kpi .label{ font-size: var(--fs-meta); color: var(--muted-ink); font-weight:700; }
-  .kpi .value{ font-size: 1.75rem; font-weight:800; margin-top:4px; }
+  .kpi .value{ font-size: var(--ui-text-mobile); font-weight:800; margin-top:4px; }
 
   .chart-card{ border:1px solid var(--line); border-radius: var(--r-card); padding:20px; margin-bottom:24px; }
   .chart-card h2{ font-size: var(--fs-section-title); margin-bottom:16px; }
@@ -34,6 +34,16 @@
   .camp .metrics .l{ font-size: var(--fs-meta); color: var(--muted-ink); }
   .camp .actions{ display:flex; gap:8px; }
 </style>
+<link rel="stylesheet" href="../styles/mobile-inputs.css">
+<script defer src="../mobile-inputs.js"></script>
+<link rel="stylesheet" href="../ui/tokens.css">
+<link rel="stylesheet" href="../ui/date-picker.css">
+<script defer src="../ui/date-picker.js"></script>
+<link rel="stylesheet" href="../ui/actions.css">
+<script defer src="../ui/actions.js"></script>
+<link rel="stylesheet" href="../ui/fields.css">
+<link rel="stylesheet" href="../ui/overlays.css">
+<script defer src="../ui/overlays.js"></script>
 </head>
 <body class="modo">
   <div class="modo-preview-banner">Vista previa del sistema "modo" — el módulo real es facebook-ads.html (Meta Ads), aquí solo cambia la piel</div>

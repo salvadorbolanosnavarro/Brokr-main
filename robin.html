@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
 <meta name="theme-color" content="#081C4E"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
-<title>Robin — Broquer</title>
+<title>Robin · Broquer</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -12,7 +12,6 @@
 *{box-sizing:border-box}
 html{background:var(--paper)}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-sans);min-height:100vh}
-button,input{font:inherit}
 button{cursor:pointer}
 .rb-shell{min-height:100vh;background:var(--paper)}
 .rb-main{width:min(var(--page-max),calc(100% - (var(--pad-x) * 2)));margin:0 auto;padding:var(--sp-7) 0 var(--sp-12);display:grid;gap:var(--sp-7)}
@@ -61,21 +60,14 @@ button{cursor:pointer}
 .rb-lead__reason{margin:var(--sp-2) 0 0;color:var(--ink-2);font-size:var(--fs-sm);line-height:var(--lh)}
 .rb-lead__ai{display:inline-flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-3);padding:var(--sp-2) var(--sp-3);border-radius:var(--r);background:var(--info-soft);color:var(--sky-blue-press);font-size:var(--fs-xs);font-weight:650}
 .rb-actions{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;justify-content:flex-end}
-.rb-btn{min-height:var(--h-sm);padding:0 var(--sp-4);border-radius:var(--r-sm);border:1px solid transparent;background:var(--sky-blue);color:var(--paper);font-size:var(--fs-sm);font-weight:700;transition:transform var(--dur-fast) var(--ease),background var(--dur) var(--ease),border-color var(--dur) var(--ease)}
-.rb-btn:hover{background:var(--sky-blue-press)}
+.rb-btn{transition:transform var(--dur-fast) var(--ease),background var(--dur) var(--ease),border-color var(--dur) var(--ease)}
 .rb-btn:active{transform:scale(.98)}
-.rb-btn--secondary{background:var(--bone);color:var(--ink-2);border-color:var(--line-2)}
-.rb-btn--secondary:hover{background:var(--paper-2);border-color:var(--line-3)}
-.rb-btn--success{background:var(--success)}
-.rb-btn--success:hover{background:var(--success)}
 .rb-copilot{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,.7fr);gap:var(--sp-4);padding:var(--sp-5);border-radius:var(--r-lg);background:var(--paper-2);border:1px solid var(--line)}
 .rb-copilot__head{display:flex;align-items:center;gap:var(--sp-3)}
 .rb-copilot__ava{width:var(--h);height:var(--h);border-radius:var(--r);display:grid;place-items:center;background:var(--sky-blue);color:var(--paper);font-weight:800}
 .rb-copilot__title{font-size:var(--fs-h3);font-weight:800}
 .rb-copilot__sub{font-size:var(--fs-xs);color:var(--mute);margin-top:var(--sp-1)}
 .rb-chips{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-4)}
-.rb-chip{min-height:var(--h-sm);padding:0 var(--sp-3);border:1px solid var(--line-2);border-radius:var(--r-pill);background:var(--bone);color:var(--ink-2);font-size:var(--fs-xs);font-weight:650}
-.rb-chip:hover{border-color:var(--sky-blue);color:var(--sky-blue)}
 .rb-copilot__right{display:flex;flex-direction:column;gap:var(--sp-3);justify-content:flex-end}
 .rb-response{display:none;padding:var(--sp-4);background:var(--bone);border:1px solid var(--line);border-radius:var(--r);font-size:var(--fs-sm);line-height:var(--lh);color:var(--ink-2)}
 .rb-response.is-on{display:block;animation:rbIn var(--dur-slow) var(--ease-out)}
@@ -88,7 +80,8 @@ button{cursor:pointer}
 .rb-deal__amount{font-size:var(--fs-h2);font-weight:800;letter-spacing:-.035em;color:var(--ink)}
 .rb-deal__com{font-size:var(--fs-sm);line-height:var(--lh-snug);color:var(--mute)}
 .rb-deal__com b{color:var(--success)}
-.rb-deal .rb-btn,.rb-deal .rb-badge{margin-top:auto;align-self:flex-start}
+.rb-deal .rb-btn{margin-top:auto;align-self:flex-start}
+.rb-deal .rb-badge{margin-top:auto;align-self:flex-start}
 .rb-deal.is-vendido{opacity:.58}
 .rb-deal.is-vendido::after{content:"Vendido";position:absolute;right:var(--sp-4);top:var(--sp-4);padding:var(--sp-2) var(--sp-3);border-radius:var(--r-pill);background:var(--success-soft);color:var(--success);font-size:var(--fs-xs);font-weight:800}
 .rb-total{background:var(--sky-navy);border-color:var(--sky-navy);color:var(--paper)}
@@ -102,6 +95,16 @@ button{cursor:pointer}
 @media(max-width:640px){.rb-main{width:calc(100% - (var(--sp-4) * 2));padding-top:var(--sp-5);gap:var(--sp-6)}.rb-head{align-items:flex-start;flex-direction:column}.rb-copilot{padding:var(--sp-4)}.rb-inputrow{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="robin">
 <div class="rb-shell">

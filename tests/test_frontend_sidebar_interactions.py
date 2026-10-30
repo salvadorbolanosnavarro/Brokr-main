@@ -22,17 +22,20 @@ class SidebarInteractionLanguageTests(unittest.TestCase):
             self.assertIn(selector, css)
         self.assertIn('border-bottom-color: var(--sky-blue) !important;', css)
 
-    def test_segmented_controls_share_shadowed_active_pill(self):
-        css = (ROOT / "sidebar-interactions.css").read_text(encoding="utf-8")
-        self.assertIn('body[data-app="estadisticas"] .es-seg button.is-active', css)
-        self.assertIn('body[data-app="leads"] .view-seg button.active', css)
-        self.assertIn('box-shadow: var(--shadow-xs) !important;', css)
+    def test_segmented_controls_share_approved_sky_selection(self):
+        css = (ROOT / "ui/actions.css").read_text(encoding="utf-8")
+        adapter = (ROOT / "ui/actions.js").read_text(encoding="utf-8")
+        self.assertIn('.view-seg,.es-seg,.w2-seg', adapter)
+        self.assertIn('[data-ui-kind=segment][data-ui-selected=true]', css)
+        self.assertIn('background:var(--ui-sky)', css)
 
-    def test_card_radio_selections_share_focus_halo(self):
-        css = (ROOT / "sidebar-interactions.css").read_text(encoding="utf-8")
-        self.assertIn('body[data-app="avm"] .tipo-btn.selected', css)
-        self.assertIn('body[data-app="video"] .vid-fmt.is-sel', css)
-        self.assertIn('box-shadow: var(--focus) !important;', css)
+    def test_card_radio_selections_keep_pressed_state_and_focus(self):
+        css = (ROOT / "ui/actions.css").read_text(encoding="utf-8")
+        adapter = (ROOT / "ui/actions.js").read_text(encoding="utf-8")
+        self.assertIn('tipo-btn|vid-fmt', adapter)
+        self.assertIn('.is-sel,.is-selected,.selected', adapter)
+        self.assertIn("'aria-pressed'", adapter)
+        self.assertIn('outline:2px solid var(--ui-ink)', css)
 
     def test_non_sidebar_pages_are_not_targeted(self):
         css = (ROOT / "sidebar-interactions.css").read_text(encoding="utf-8")

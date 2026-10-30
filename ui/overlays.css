@@ -1,0 +1,13 @@
+/* A shared modal frame for existing forms, preserving their full contents. */
+html body [data-ui-modal]{box-sizing:border-box;display:flex;flex-direction:column;width:calc(100% - 32px);max-width:var(--ui-modal);max-height:calc(var(--vvh,100dvh) - 48px);overflow:hidden;background:var(--ui-paper);color:var(--ui-ink);border:1px solid var(--ui-border);border-radius:var(--ui-radius-card);box-shadow:var(--ui-shadow)}
+[data-ui-modal]>.handle{display:none}
+[data-ui-modal]>.sheet-header,[data-ui-modal]>.prop-modal-hdr{display:flex;align-items:center;justify-content:space-between;gap:var(--ui-space-4);padding:var(--ui-space-6);border-bottom:1px solid var(--ui-border);flex-shrink:0;background:var(--ui-paper);position:static}
+[data-ui-modal]>.sheet-body,[data-ui-modal]>.prop-modal-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:var(--ui-space-6)}
+.ui-modal-foot{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:var(--ui-space-3);padding:var(--ui-space-6);border-top:1px solid var(--ui-border);flex-shrink:0;background:var(--ui-paper)}
+[data-ui-modal] .sec-lbl,[data-ui-modal] .pf-section{display:block;margin:var(--ui-space-6) 0 var(--ui-space-4);padding:0 0 var(--ui-space-3);border-bottom:1px solid var(--ui-border);font:600 var(--ui-text-sm)/1.4 var(--ui-font);letter-spacing:0;color:var(--ui-muted)}
+[data-ui-modal] .sec-lbl::after{display:none}
+[data-ui-modal] .sec-lbl:first-child,[data-ui-modal] .pf-section:first-child{margin-top:0}
+.prop-card-select{display:flex;align-items:center;gap:var(--ui-space-3);padding:var(--ui-space-3);background:var(--ui-paper);font-size:var(--ui-text-sm)}
+html body .prop-card-select>.prop-check{position:static;width:var(--ui-control-small);height:var(--ui-control-small);min-height:var(--ui-control-small);padding:0}
+.prop-card-select>.prop-check svg{width:var(--ui-icon);height:var(--ui-icon);color:var(--ui-ink)}
+@media(max-width:700px){[data-ui-modal]>.sheet-header,[data-ui-modal]>.prop-modal-hdr,[data-ui-modal]>.sheet-body,[data-ui-modal]>.prop-modal-body,.ui-modal-foot{padding:var(--ui-space-4)}}

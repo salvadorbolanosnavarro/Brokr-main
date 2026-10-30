@@ -1,0 +1,203 @@
+{
+  "results": [
+    {
+      "width": 1440,
+      "overflow": false,
+      "h1": "48px",
+      "fields": [
+        {
+          "height": 48,
+          "font": 16
+        },
+        {
+          "height": 48,
+          "font": 16
+        },
+        {
+          "height": 48,
+          "font": 16
+        },
+        {
+          "height": 96,
+          "font": 16
+        },
+        {
+          "height": 48,
+          "font": 16
+        },
+        {
+          "height": 48,
+          "font": 16
+        },
+        {
+          "height": 48,
+          "font": 16
+        },
+        {
+          "height": 48,
+          "font": 16
+        }
+      ],
+      "buttons": [
+        {
+          "height": 48,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 48,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 48,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 48,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 48,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 44,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 44,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 44,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 44,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 44,
+          "radius": "12px",
+          "font": "14px"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "overflow": false,
+      "h1": "32px",
+      "fields": [
+        {
+          "height": 48,
+          "font": 16
+        },
+        {
+          "height": 48,
+          "font": 16
+        },
+        {
+          "height": 48,
+          "font": 16
+        },
+        {
+          "height": 96,
+          "font": 16
+        },
+        {
+          "height": 48,
+          "font": 16
+        },
+        {
+          "height": 48,
+          "font": 16
+        },
+        {
+          "height": 48,
+          "font": 16
+        },
+        {
+          "height": 48,
+          "font": 16
+        }
+      ],
+      "buttons": [
+        {
+          "height": 48,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 48,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 48,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 48,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 48,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 44,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 44,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 44,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 44,
+          "radius": "12px",
+          "font": "14px"
+        },
+        {
+          "height": 44,
+          "radius": "12px",
+          "font": "14px"
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "checks": [
+    "10 action samples",
+    "field font floor",
+    "Spanish calendar and ISO value",
+    "keyboard calendar and Escape",
+    "modal submission and repeatable field",
+    "keyboard tabs",
+    "account drawer",
+    "Broq sample conversation",
+    "no horizontal overflow"
+  ],
+  "scope": "Isolated approval page; existing modules are not migrated.",
+  "task_regression": "Tareas with categorias.js delayed 1200ms: initial sample task visible, no missing helpers",
+  "publication": "Verified in Cloud Browser: https://broquer-staging.pages.dev/ui-components",
+  "screenshot": "ui-kit-live-1793176797241.jpg"
+}
