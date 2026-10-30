@@ -5,7 +5,7 @@ passing after an HTML/CSS/JS change. Structural list/media buttons and tabs have
 separate contracts; normal action buttons must use the approved component.
 """
 from pathlib import Path
-import hashlib,json,sys
+import hashlib,json,sys,os
 ROOT=Path(__file__).resolve().parents[1]
 def inspect(report):
  errors=[];scale={'12px','14px','16px','20px','24px','32px','48px'};combinations=set()
@@ -22,7 +22,7 @@ def inspect(report):
   if r.get('failure') or r.get('errors') or r.get('overflow') or r.get('smallFields') or r.get('overlaps') or r.get('clippedKpis'):errors.append(label+': surface failure')
   if set(r.get('fontSizes',{}))-scale:errors.append(label+': non-approved text size')
   if r.get('dateFields')!=r.get('spanishDates'):errors.append(label+': date field missing Spanish proxy')
-  if '/'not in r['page'] and not r['title'].endswith(' · Broquer'):errors.append(label+': title format')
+  if '/'not in r['page'] and not r['title'].endswith(' · ' + os.environ.get('BROQUER_TEST_BRAND', 'Broquer')):errors.append(label+': title format')
   if '/'not in r['page'] and r['page']not in card_titles and r.get('h1') and r['h1']['size']!=('32px'if r['width']==390 else'48px'):errors.append(label+': module H1 scale')
   for b in r.get('buttons',[]):
    if b.get('kind')not in {'primary','secondary','text','danger'}:continue

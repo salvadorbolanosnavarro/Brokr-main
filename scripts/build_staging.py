@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 from urllib.parse import urlsplit
+from staging_brand import brand_asset, MONOGRAM
 
 ROOT = Path(__file__).resolve().parents[1]
 PROD_DB = 'https://urtgysmtnvoqaljuhntz.supabase.co'
@@ -68,6 +69,13 @@ def build(env=os.environ):
                 text = text.replace('</head>',f'<link rel="stylesheet" href="{prefix}styles/mobile-inputs.css">\n</head>')
             if 'api.broquer.app' in text or 'urtgysmtnvoqaljuhntz.supabase.co' in text or PROD_KEY in text:
                 raise ValueError(f'Production API reference remains in {name}')
+            if p.suffix in {'.html','.js','.json','.svg'} and p.parts[0] != 'brand':
+                text = brand_asset(name, text)
+            if name == 'manifest.json':
+                manifest = json.loads(text)
+                for icon in manifest.get('icons', []):
+                    icon.update(src=MONOGRAM, sizes='any', type='image/svg+xml')
+                text = json.dumps(manifest, ensure_ascii=False, indent=2) + '\n'
             target.write_text(text)
         else: shutil.copyfile(source,target)
         count += 1
