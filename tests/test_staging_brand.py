@@ -29,7 +29,7 @@ class StagingBrandTests(unittest.TestCase):
         postMessage({type:'Broquer-use-in-ficha'});
         const API='https://api.broquer.app';localStorage.getItem('broquer-session');</script>'''
         result = brand_asset('index.html', source)
-        self.assertIn('<title>Comisión Fácil · Inicio</title>', result)
+        self.assertIn('<title>+ cierres · Inicio</title>', result)
         for token in ['id="broquer-login"', 'onclick="showBroquerMaxModal()"',
                       'mailto:hola@broquer.app?subject=Broquer%20Max',
                       "'Broquer-use-in-ficha'", 'window.BroquerEditorImages',
@@ -39,7 +39,7 @@ class StagingBrandTests(unittest.TestCase):
     def test_logo_sources_and_accessible_name(self):
         source = '<a class="bk-design-brand" href="index.html" aria-label="Broquer, inicio">broquer<span>.</span></a>'
         result = brand_asset('index.html', source)
-        self.assertIn('alt="Comisión Fácil"', result)
+        self.assertIn('alt="+ cierres"', result)
         self.assertIn('href="index.html"', result)
         self.assertIn('media="(max-width:720px)"', result)
         self.assertNotIn('broquer<span>', result)
@@ -47,6 +47,6 @@ class StagingBrandTests(unittest.TestCase):
     def test_supplied_logos_do_not_replace_agent_or_provider_artwork(self):
         source = '<img src="../logotipo-black.png"><img src="logo-inmobiliaria-navarro.png"><img src="meta-tech-provider.png">'
         result = brand_asset('preview-modo/index.html', source)
-        self.assertIn('src="/brand/comision-facil-wordmark.svg"', result)
+        self.assertIn('src="/brand/mas-cierres-wordmark.svg"', result)
         self.assertIn('src="logo-inmobiliaria-navarro.png"', result)
         self.assertIn('src="meta-tech-provider.png"', result)

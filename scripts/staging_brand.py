@@ -4,16 +4,32 @@ Keep source application code, identifiers, domains, data keys and integrations
 unchanged. The supplied PNGs remain byte-for-byte originals inside SVG viewports.
 """
 import re
+import base64
 
-WORDMARK = '/brand/comision-facil-wordmark.svg'
-MONOGRAM = '/brand/comision-facil-monogram.svg'
-TOUCH_ICON = '/brand/comision-facil-monogram-original.png'
+WORDMARK = '/brand/mas-cierres-wordmark.svg'
+MONOGRAM = '/brand/mas-cierres-monogram.svg'
+TOUCH_ICON = '/brand/mas-cierres-monogram-original.png'
+
+
+def write_brand_artwork(root, output):
+    """Frame the supplied originals without changing their raster content."""
+    for kind, viewbox in [('wordmark', '305 286 1085 280'),
+                          ('monogram', '715 260 340 340')]:
+        source = root / f'brand/mas-cierres-{kind}-original.png'
+        if not source.is_file():
+            continue  # Minimal build fixtures may not include brand assets.
+        data = base64.b64encode(source.read_bytes()).decode('ascii')
+        target = output / f'brand/mas-cierres-{kind}.svg'
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewbox}" '
+                          f'role="img" aria-label="+ cierres"><image width="1774" height="887" '
+                          f'href="data:image/png;base64,{data}"/></svg>\n')
 
 
 def brand_asset(name, text):
     # A standalone commercial name, never identifiers, hosts, emails or paths.
     text = re.sub(r'(?:https?://|mailto:)[^\s\"\'<>`]+|(?<![\w@./-])Broquer(?![\w/-]|\.(?:app|com|png|svg|js))',
-                  lambda match: 'Comisión Fácil' if match[0] == 'Broquer' else match[0], text)
+                  lambda match: '+ cierres' if match[0] == 'Broquer' else match[0], text)
     text = re.sub(r'(?<![\w@./-])Broq(?![\w/-]|\.(?:app|com|png|svg|js))', 'Cecil IA', text)
     if name == 'app-shell.js':
         # Name aliases only; retain existing voice activation behavior/aliases.
@@ -21,7 +37,7 @@ def brand_asset(name, text):
     if name.endswith(('.html', '.js')):
         text = text.replace('broquer<span>.</span>',
             '<picture class="cf-brand-picture"><source media="(max-width:720px)" '
-            f'srcset="{MONOGRAM}"><img src="{WORDMARK}" alt="Comisión Fácil"></picture>')
+            f'srcset="{MONOGRAM}"><img src="{WORDMARK}" alt="+ cierres"></picture>')
         text = re.sub(r'(<span\b[^>]*class="bk-shk-mark"[^>]*>)b\.(</span>)',
                       rf'\1<img src="{MONOGRAM}" alt="">\2', text)
         # Home assistant tile uses the same brand initial without a class.

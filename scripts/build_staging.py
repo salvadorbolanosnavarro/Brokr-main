@@ -6,7 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 from urllib.parse import urlsplit
-from staging_brand import brand_asset, MONOGRAM
+from staging_brand import brand_asset, write_brand_artwork, MONOGRAM
 
 ROOT = Path(__file__).resolve().parents[1]
 PROD_DB = 'https://urtgysmtnvoqaljuhntz.supabase.co'
@@ -79,6 +79,7 @@ def build(env=os.environ):
             target.write_text(text)
         else: shutil.copyfile(source,target)
         count += 1
+    write_brand_artwork(ROOT, output)
     (output / 'staging-auth-guard.js').write_text("""// Staging only. Password login stays available for manually created QA users.
 (() => {
  const original = window.fetch;
