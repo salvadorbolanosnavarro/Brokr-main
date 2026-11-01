@@ -57,5 +57,5 @@ def brand_asset(name, text):
     if name.endswith('.html'):
         text = re.sub(r'(<link\b[^>]*rel="icon"[^>]*type=")image/png', r'\1image/svg+xml', text)
         text = re.sub(r'(<link\b[^>]*rel="apple-touch-icon"[^>]*href=")[^"]+', rf'\1{TOUCH_ICON}', text)
-        text = text.replace('</head>', '<link rel="stylesheet" href="/brand/staging-brand.css">\n</head>', 1)
+        text = text.replace('</head>', '<link rel="stylesheet" href="/brand/staging-brand.css"><link rel="stylesheet" href="/ui/refinement.css"><script defer src="/ui/iconography.js"></script>\n</head>', 1)
     return text

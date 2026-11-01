@@ -1443,7 +1443,7 @@ function renderProps(props, totalForCount) {
   grid.innerHTML = props.map(p => {
     const foto = p.fotos?.length
       ? `<img src="${p.fotos[0]}" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='<div class=\\'placeholder\\'><span>Sin foto</span></div>'" />`
-      : `<div class="placeholder"><span>Sin foto</span></div>`;
+      : `<div class="placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10 12 3l9 7M5 9v12h5v-7h4v7h5V9"/></svg><span>Sin foto</span></div>`;
 
     const specs = [];
     if (p.recamaras) specs.push(`<span><strong>${p.recamaras}</strong> rec</span>`);
@@ -1460,12 +1460,12 @@ function renderProps(props, totalForCount) {
       ${puedeEliminar ? `<div class="prop-card-select"><button type="button" class="prop-check" aria-label="Seleccionar inmueble" aria-pressed="${selectedIds.has(p.id)}" onclick="event.stopPropagation();toggleSelectProp('${p.id}')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></button><span>Seleccionar inmueble</span></div>` : ''}
       <div class="prop-card-img">
         ${foto}
-        <div class="img-badge-wrap">
-          <span class="img-badge dark">${opLabel}</span>
-          <span class="badge badge-${p.estatus}">${p.estatus}</span>
-        </div>
       </div>
       <div class="prop-card-body">
+        <div class="img-badge-wrap">
+          <span class="img-badge">${opLabel}</span>
+          <span class="badge badge-${p.estatus}">${p.estatus}</span>
+        </div>
         <div class="prop-card-loc">${ubic}</div>
         <div class="prop-card-title">${p.titulo}</div>
         <div class="prop-card-price-row">

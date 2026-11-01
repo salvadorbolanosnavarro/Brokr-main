@@ -1,0 +1,11 @@
+/* Runtime content stays usable without emoji glyphs; user records stay intact. */
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const assert=require('node:assert/strict');
+(async()=>{const b=await chromium.launch({executablePath:process.env.BROQUER_CHROMIUM_EXECUTABLE,args:['--no-sandbox']});try{
+ const p=await b.newPage();await p.goto((process.env.BROQUER_TEST_URL||'http://127.0.0.1:8084')+'/index.html');
+ await p.locator('.design-favorite .mc-icon').first().waitFor();const favorite=p.locator('.design-favorite').first();const before=await favorite.getAttribute('aria-pressed');await favorite.click();await p.waitForTimeout(150);assert.notEqual(await favorite.getAttribute('aria-pressed'),before);assert.equal(await favorite.locator('.mc-icon').count(),1);
+ await p.evaluate(()=>{const host=document.createElement('section');host.id='icon-qa';host.innerHTML='<button id="icon-qa-button">✅</button><span id="icon-qa-text">📅 Cita 🏡</span><input value="Casa 🏡"><textarea>Hola 👋</textarea><select><option value="5">★★★★★</option></select><span id="icon-qa-rights">© 2026 Marca®</span>';document.body.append(host);window.iconQaClicks=0;host.querySelector('button').addEventListener('click',()=>window.iconQaClicks++);});
+ await p.locator('#icon-qa-button svg').waitFor();await p.locator('#icon-qa-button').click();assert.equal(await p.evaluate(()=>window.iconQaClicks),1);assert.equal(await p.locator('#icon-qa-text svg').count(),2);assert.equal(await p.locator('#icon-qa input').inputValue(),'Casa 🏡');assert.equal(await p.locator('#icon-qa textarea').inputValue(),'Hola 👋');assert.equal(await p.locator('#icon-qa select').inputValue(),'5');assert.equal(await p.locator('#icon-qa option').textContent(),'5 de 5');assert.equal(await p.locator('#icon-qa-rights').textContent(),'© 2026 Marca®');
+ await p.locator('#icon-qa-text').evaluate(e=>e.textContent='⚠ Cambio');await p.waitForTimeout(150);assert.equal(await p.locator('#icon-qa-text svg').count(),1);assert.equal(await p.locator('#icon-qa-button').getAttribute('aria-label'),'Completado');
+ console.log('Iconography: dynamic text, favorites, events, accessibility, native options and untouched form values passed');
+}finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1});

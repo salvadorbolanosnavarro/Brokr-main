@@ -19,7 +19,7 @@ def inspect(report):
  card_titles={'404.html','sitio.html','expediente.html','firmar.html','unirse.html','verificar-firma.html'}
  for r in results:
   label=f"{r['page']}:{r['width']}"
-  if r.get('failure') or r.get('errors') or r.get('overflow') or r.get('smallFields') or r.get('overlaps') or r.get('clippedKpis'):errors.append(label+': surface failure')
+  if r.get('emoji') or r.get('failure') or r.get('errors') or r.get('overflow') or r.get('smallFields') or r.get('overlaps') or r.get('clippedKpis'):errors.append(label+': surface failure')
   if set(r.get('fontSizes',{}))-scale:errors.append(label+': non-approved text size')
   if r.get('dateFields')!=r.get('spanishDates'):errors.append(label+': date field missing Spanish proxy')
   if '/'not in r['page'] and not r['title'].endswith(' · ' + os.environ.get('BROQUER_TEST_BRAND', 'Broquer')):errors.append(label+': title format')
