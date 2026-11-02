@@ -133,3 +133,9 @@ Los envíos de Supabase Auth (registro, recuperación, OTP, reenvío e invitacio
 La rama del PR #180 incorpora main ee9c5579 (países y permisos de Max incluidos). Cloudflare debe seguir publicando esta rama; no cambiar el despliegue de producción. Para probar datos reales de staging, el export de esquema debe corresponder a este main actualizado, incluidas las migraciones de países. Mantén `WA_TOKENS_ACCION` vacío en Railway staging: es una conversión operativa de tokens que no se necesita en la demo. No pegues llaves en el chat.
 
 La tabla `docs/redesign/COBERTURA-UI-Y-ENDPOINTS.md` distingue lo probado con datos ficticios de lo pendiente real. La demo permanece operativa sin credenciales; guardar ahí solo cambia este navegador.
+
+### Actualización — 1 de noviembre: modo conectado
+
+Base: `broquer-redesign-staging` (`tymhlvawnqadqgwnpruk`), con la estructura exportada de producción y sin datos de clientes.
+
+Integraciones en staging: IA y datos sí salen. WhatsApp y correo solo llegan a `BROQUER_STAGING_TEST_PHONES` y `BROQUER_STAGING_TEST_EMAILS` (separados por coma, vacíos = nadie). Push solo en sandbox (`APNS_ENV=sandbox`). Anuncios de Facebook y publicación en páginas siguen bloqueados para no gastar ni publicar. Registro y recuperación de contraseña usan el correo integrado de Supabase, que solo entrega a miembros de la organización de Supabase.
