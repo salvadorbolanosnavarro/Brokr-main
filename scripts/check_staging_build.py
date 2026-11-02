@@ -29,6 +29,15 @@ class Isolation(unittest.TestCase):
         self.assertEqual(safety.validate(ENV),'qaexample')
         for change in ({'STRIPE_SECRET_KEY':'sk_live_fixture'},{'RECORDATORIOS_ACTIVOS':'true'},{'BROQUER_STAGING_PROJECT_NAME':'broquer-beta'},{'SUPABASE_URL':build.PROD_DB}):
             with self.assertRaises(RuntimeError):safety.validate(ENV|change)
+    def test_inherited_production_credentials_are_dropped(self):
+        import httpx,smtplib
+        env=ENV|{'STRIPE_SECRET_KEY':'sk_live_fixture','STRIPE_WEBHOOK_SECRET':'whsec_fixture','WHATSAPP_TOKEN':'x','INSTAGRAM_TOKEN':'y'}
+        with patch.dict(safety.os.environ,env,clear=True),patch.object(httpx.Client,'send'),patch.object(httpx.AsyncClient,'send'),patch.object(smtplib.SMTP,'sendmail'):
+            safety.install_staging_safety()
+            for name in ('STRIPE_SECRET_KEY','STRIPE_WEBHOOK_SECRET','WHATSAPP_TOKEN','INSTAGRAM_TOKEN'):
+                self.assertNotIn(name,safety.os.environ)
+            with self.assertRaises(httpx.RequestError):httpx.Client().send(httpx.Request('POST','https://api.stripe.com/v1/customers'))
+            safety._installed=False
     def test_outbound_block(self):
         import httpx,smtplib,json as J
         env=ENV|{'BROQUER_STAGING_TEST_PHONES':'+52 443 111 2222','BROQUER_STAGING_TEST_EMAILS':'qa@example.test'}
