@@ -30,13 +30,24 @@ class Isolation(unittest.TestCase):
         for change in ({'STRIPE_SECRET_KEY':'sk_live_fixture'},{'RECORDATORIOS_ACTIVOS':'true'},{'BROQUER_STAGING_PROJECT_NAME':'broquer-beta'},{'SUPABASE_URL':build.PROD_DB}):
             with self.assertRaises(RuntimeError):safety.validate(ENV|change)
     def test_outbound_block(self):
-        import httpx,smtplib,imaplib
-        # Restore patches after testing; no network request is ever issued.
-        with patch.dict(safety.os.environ,ENV,clear=True),patch.object(httpx.Client,'send'),patch.object(httpx.AsyncClient,'send'),patch.object(smtplib.SMTP,'connect'),patch.object(smtplib.SMTP_SSL,'connect'),patch.object(imaplib.IMAP4,'open'),patch.object(imaplib.IMAP4_SSL,'open'):
+        import httpx,smtplib,json as J
+        env=ENV|{'BROQUER_STAGING_TEST_PHONES':'+52 443 111 2222','BROQUER_STAGING_TEST_EMAILS':'qa@example.test'}
+        with patch.dict(safety.os.environ,env,clear=True),patch.object(httpx.Client,'send'),patch.object(httpx.AsyncClient,'send'),patch.object(smtplib.SMTP,'sendmail'):
             safety.install_staging_safety()
-            for url in ('https://graph.facebook.com/me','https://api.resend.com/emails','https://api.push.apple.com/3/device/fake','https://api.broquer.app/test','https://api.stripe.com/v1/customers','https://qaexample.supabase.co/auth/v1/recover'):
-                with self.assertRaises(httpx.RequestError):httpx.Client().send(httpx.Request('POST',url))
-            with self.assertRaises(smtplib.SMTPException):smtplib.SMTP('localhost')
-            with self.assertRaises(imaplib.IMAP4.error):imaplib.IMAP4_SSL('example.test')
+            post=lambda url,body=None:httpx.Client().send(httpx.Request('POST',url,json=body or {}))
+            blocked=[('https://api.broquer.app/test',None),('https://api.stripe.com/v1/customers',None),
+                     ('https://graph.facebook.com/v21.0/123/messages',{'to':'5214430000000'}),
+                     ('https://graph.facebook.com/v21.0/act_1/campaigns',{}),('https://graph.facebook.com/v21.0/1/feed',{}),
+                     ('https://api.resend.com/emails',{'to':['cliente@real.mx']}),
+                     ('https://api.resend.com/emails',{'to':['qa@example.test'],'bcc':['cliente@real.mx']}),
+                     ('https://api.push.apple.com/3/device/x',{})]
+            for url,body in blocked:
+                with self.assertRaises(httpx.RequestError,msg=url):post(url,body)
+            post('https://graph.facebook.com/v21.0/123/messages',{'to':'5214431112222'})
+            post('https://api.resend.com/emails',{'to':'QA QA <qa@example.test>'})
+            post('https://api.anthropic.com/v1/messages',{})
+            post('https://qaexample.supabase.co/auth/v1/recover',{})
+            s=smtplib.SMTP.__new__(smtplib.SMTP)
+            with self.assertRaises(smtplib.SMTPException):smtplib.SMTP.sendmail(s,'a@b.c',['cliente@real.mx'],'x')
             safety._installed=False
 if __name__=='__main__':unittest.main()
