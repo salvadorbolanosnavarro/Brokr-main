@@ -76,6 +76,12 @@ def _check_resend(request, test_emails):
 def install_staging_safety():
     global _installed
     if os.getenv('BROQUER_ENV','').lower() != 'staging' or _installed: return
+    # Credenciales reales heredadas de producción: en staging no existen.
+    for name in ('WHATSAPP_TOKEN','INSTAGRAM_TOKEN','IG_USER_ID'):
+        os.environ.pop(name,None)
+    if not os.getenv('STRIPE_SECRET_KEY','').startswith(('sk_test_','rk_test_')):
+        os.environ.pop('STRIPE_SECRET_KEY',None)
+        os.environ.pop('STRIPE_WEBHOOK_SECRET',None)
     ref = validate(os.environ)
     allowed = {f'{ref}.supabase.co'}
     if os.getenv('STRIPE_SECRET_KEY'): allowed.add('api.stripe.com')
