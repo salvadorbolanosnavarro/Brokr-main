@@ -537,7 +537,9 @@ async function cleanAll() {
       fd.append('prompt', prompt);
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 120000); // 2 min timeout
+      // Con IA el servidor puede tardar hasta ~100 s por foto (prueba varios
+      // modelos); cortar antes dejaba fotos en error aunque iban a salir bien.
+      const timeout = setTimeout(() => controller.abort(), useAI ? 150000 : 120000);
 
       try {
         const _tk = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';

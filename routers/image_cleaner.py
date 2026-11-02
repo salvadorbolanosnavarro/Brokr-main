@@ -54,6 +54,40 @@ if HEIF_AVAILABLE:
 GEMINI_CONCURRENCY = 2
 
 
+def _a_rgb(img: "Image.Image") -> "Image.Image":
+    """Convierte a RGB sin que la transparencia se vuelva negra."""
+    if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
+        img = img.convert("RGBA")
+        fondo = Image.new("RGB", img.size, (255, 255, 255))
+        fondo.paste(img, mask=img.split()[-1])
+        return fondo
+    return img.convert("RGB")
+
+
+def _estimar_ruido(gray) -> float:
+    """Sigma del ruido (Immerkær 1996): insensible a bordes y textura."""
+    kernel = np.array([[1, -2, 1], [-2, 4, -2], [1, -2, 1]], dtype=np.float64)
+    h, w = gray.shape
+    if h < 3 or w < 3:
+        return 0.0
+    conv = cv2.filter2D(gray.astype(np.float64), -1, kernel)[1:-1, 1:-1]
+    return float(np.sqrt(np.pi / 2) * np.abs(conv).sum() / (6.0 * (w - 2) * (h - 2)))
+
+
+def _balance_blancos_lab(l_ch, a_f, b_f, max_shift: float = 6.0, fuerza: float = 0.6):
+    """Quita la dominante de color midiendo solo zonas casi neutras.
+
+    Si la foto no tiene suficientes zonas neutras (p. ej. un jardín que llena
+    el encuadre) no se toca: es preferible no corregir a inventar un tono.
+    """
+    neutros = (np.abs(a_f) < 12) & (np.abs(b_f) < 12) & (l_ch > 40) & (l_ch < 235)
+    if neutros.mean() < 0.05:
+        return a_f, b_f
+    da = float(np.clip(a_f[neutros].mean() * fuerza, -max_shift, max_shift))
+    db = float(np.clip(b_f[neutros].mean() * fuerza, -max_shift, max_shift))
+    return a_f - da, b_f - db
+
+
 def _process_image_sync(file_bytes: bytes, content_type: str) -> tuple[bytes, str]:
     """Pipeline de mejora automática (sin IA generativa): denoising, CLAHE, WB, unsharp."""
     if not PIL_AVAILABLE:
@@ -66,19 +100,23 @@ def _process_image_sync(file_bytes: bytes, content_type: str) -> tuple[bytes, st
     img = ImageOps.exif_transpose(img)
     if img.width * img.height > MAX_IMAGE_PIXELS:
         raise ValueError("La imagen tiene demasiados píxeles.")
-    img = img.convert("RGB")
+    img = _a_rgb(img)
     if CV2_AVAILABLE:
         arr = np.array(img)
         arr_bgr = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
 
+        # Denoise solo si la foto de verdad tiene ruido. Antes se medía con la
+        # desviación estándar del Laplaciano, que sube con el DETALLE (azulejo,
+        # pasto, ladrillo), no con el ruido: en una misma tanda, las fotos con
+        # más textura salían emborronadas y las lisas no. Se usa el estimador
+        # de ruido de Immerkær, que ignora bordes y textura.
         gray = cv2.cvtColor(arr_bgr, cv2.COLOR_BGR2GRAY)
-        noise_est = np.std(cv2.Laplacian(gray.astype(np.float64), cv2.CV_64F))
-        if noise_est > 12:
-            arr_bgr = cv2.fastNlMeansDenoisingColored(arr_bgr, None, 7, 7, 7, 21)
+        if _estimar_ruido(gray) > 4.0:
+            arr_bgr = cv2.fastNlMeansDenoisingColored(arr_bgr, None, 5, 5, 7, 21)
 
         lab = cv2.cvtColor(arr_bgr, cv2.COLOR_BGR2LAB)
         l_ch, a_ch, b_ch = cv2.split(lab)
-        clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         l_ch = clahe.apply(l_ch)
 
         lut = np.arange(256, dtype=np.float32)
@@ -87,21 +125,22 @@ def _process_image_sync(file_bytes: bytes, content_type: str) -> tuple[bytes, st
         lut = np.clip(lut, 0, 255).astype(np.uint8)
         l_ch = cv2.LUT(l_ch, lut)
 
-        a_ch = np.clip((a_ch.astype(np.int16) - 128) * 1.1 + 128, 0, 255).astype(np.uint8)
-        b_ch = np.clip((b_ch.astype(np.int16) - 128) * 1.1 + 128, 0, 255).astype(np.uint8)
+        # Balance de blancos. Antes era "gray world" sobre TODA la foto: asume
+        # que el promedio de la escena es gris, y eso es falso justo en las
+        # fotos inmobiliarias típicas (jardín verde, cielo azul, piso de
+        # madera, muros terracota). Resultado: en la misma tanda, unas fotos
+        # quedaban bien y otras con dominante magenta o azul. Ahora la
+        # dominante se mide solo en los píxeles que YA son casi neutros
+        # (muros, techos, pisos grises) y la corrección se acota.
+        a_f = a_ch.astype(np.float32) - 128.0
+        b_f = b_ch.astype(np.float32) - 128.0
+        a_f, b_f = _balance_blancos_lab(l_ch, a_f, b_f)
+        a_ch = np.clip(a_f * 1.08 + 128, 0, 255).astype(np.uint8)
+        b_ch = np.clip(b_f * 1.08 + 128, 0, 255).astype(np.uint8)
         arr_bgr = cv2.cvtColor(cv2.merge([l_ch, a_ch, b_ch]), cv2.COLOR_LAB2BGR)
 
-        bc, gc, rc = cv2.split(arr_bgr.astype(np.float32))
-        mb, mg, mr = bc.mean(), gc.mean(), rc.mean()
-        mg_all = (mb + mg + mr) / 3
-        s = 0.7
-        bc = np.clip(bc * (1 + s * (mg_all / max(mb, 1) - 1)), 0, 255)
-        gc = np.clip(gc * (1 + s * (mg_all / max(mg, 1) - 1)), 0, 255)
-        rc = np.clip(rc * (1 + s * (mg_all / max(mr, 1) - 1)), 0, 255)
-        arr_bgr = cv2.merge([bc.astype(np.uint8), gc.astype(np.uint8), rc.astype(np.uint8)])
-
         blur = cv2.GaussianBlur(arr_bgr, (0, 0), 1.5)
-        arr_bgr = np.clip(cv2.addWeighted(arr_bgr, 1.45, blur, -0.45, 0), 0, 255).astype(np.uint8)
+        arr_bgr = np.clip(cv2.addWeighted(arr_bgr, 1.4, blur, -0.4, 0), 0, 255).astype(np.uint8)
         img = Image.fromarray(cv2.cvtColor(arr_bgr, cv2.COLOR_BGR2RGB))
     else:
         img = ImageEnhance.Contrast(img).enhance(1.2)
@@ -119,54 +158,116 @@ def _process_image_sync(file_bytes: bytes, content_type: str) -> tuple[bytes, st
     return out.getvalue(), out_mime
 
 
+# Proporciones que aceptan los modelos de imagen de Gemini en imageConfig.
+GEMINI_ASPECT_RATIOS = {
+    "1:1": 1.0, "2:3": 2 / 3, "3:2": 3 / 2, "3:4": 3 / 4, "4:3": 4 / 3,
+    "4:5": 4 / 5, "5:4": 5 / 4, "9:16": 9 / 16, "16:9": 16 / 9, "21:9": 21 / 9,
+}
+GEMINI_TIMEOUT_S = 60
+GEMINI_PRESUPUESTO_S = 100  # tope total por foto, entre todos los modelos
+
+
+def _aspecto_gemini(w: int, h: int) -> str:
+    r = w / max(h, 1)
+    return min(GEMINI_ASPECT_RATIOS, key=lambda k: abs(GEMINI_ASPECT_RATIOS[k] - r))
+
+
+def _ajustar_a_original(pil_out: "Image.Image", w: int, h: int) -> "Image.Image":
+    """Devuelve la imagen de Gemini con el mismo encuadre y tamaño que la entrada.
+
+    Gemini puede regresar otra proporción (p. ej. cuadrada para una foto 4:3):
+    se recorta al centro a la proporción original y se escala al tamaño de
+    entrada, en vez de entregar una foto deformada o con otro encuadre.
+    """
+    ow, oh = pil_out.size
+    objetivo = w / h
+    actual = ow / oh
+    if abs(actual - objetivo) > 0.01:
+        if actual > objetivo:
+            nw = int(round(oh * objetivo))
+            x0 = (ow - nw) // 2
+            pil_out = pil_out.crop((x0, 0, x0 + nw, oh))
+        else:
+            nh = int(round(ow / objetivo))
+            y0 = (oh - nh) // 2
+            pil_out = pil_out.crop((0, y0, ow, y0 + nh))
+    if pil_out.size != (w, h):
+        pil_out = pil_out.resize((w, h), Image.LANCZOS)
+    return pil_out
+
+
+def _prompt_gemini(instruccion: str) -> str:
+    return (
+        "You are a professional real estate photo editor. You will receive ONE photo of a real "
+        "property. Edit THIS EXACT photo; do not generate a new scene.\n"
+        "Requested edit: " + instruccion + "\n"
+        "Strict rules:\n"
+        "- Keep the same room/exterior, the same camera position, angle, lens and framing.\n"
+        "- Keep the architecture unchanged: walls, windows, doors, floors, ceilings, stairs, "
+        "fixtures and their positions, sizes and materials.\n"
+        "- Only change what the requested edit explicitly asks for; leave everything else as is.\n"
+        "- Do not add people, text, logos, watermarks, borders or extra objects.\n"
+        "- Keep it photorealistic. Output only the edited image."
+    )
+
+
 async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str) -> bytes:
     """Edita la imagen con Gemini Flash imagen-generation."""
     gemini_api_key = settings.gemini_api_key
     if not gemini_api_key:
         raise RuntimeError("GEMINI_API_KEY no configurada")
+    if not PIL_AVAILABLE:
+        raise RuntimeError("Procesamiento de imagen no disponible en el servidor")
 
-    if PIL_AVAILABLE:
-        pil = Image.open(io.BytesIO(img_bytes))
-        # Misma corrección de orientación EXIF que en _process_image_sync:
-        # sin esto, Gemini recibe (y a veces devuelve) la foto girada 90°.
-        pil = ImageOps.exif_transpose(pil)
-        if pil.width * pil.height > MAX_IMAGE_PIXELS:
-            raise ValueError("La imagen tiene demasiados píxeles.")
-        pil = pil.convert("RGB")
-        w, h = pil.size
-        if max(w, h) > 1024:
-            scale = 1024 / max(w, h)
-            pil = pil.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
-        buf = io.BytesIO()
-        pil.save(buf, format="JPEG", quality=85)
-        img_bytes = buf.getvalue()
+    pil = Image.open(io.BytesIO(img_bytes))
+    # Misma corrección de orientación EXIF que en _process_image_sync:
+    # sin esto, Gemini recibe (y a veces devuelve) la foto girada 90°.
+    pil = ImageOps.exif_transpose(pil)
+    if pil.width * pil.height > MAX_IMAGE_PIXELS:
+        raise ValueError("La imagen tiene demasiados píxeles.")
+    pil = _a_rgb(pil)
+    w, h = pil.size
+    if max(w, h) > 1024:
+        scale = 1024 / max(w, h)
+        pil = pil.resize((max(1, int(w * scale)), max(1, int(h * scale))), Image.LANCZOS)
+    w, h = pil.size
+    buf = io.BytesIO()
+    pil.save(buf, format="JPEG", quality=90)
+    img_b64 = base64.b64encode(buf.getvalue()).decode()
 
-    img_b64 = base64.b64encode(img_bytes).decode()
-    full_prompt = (
-        "You are a professional real estate photo editor. "
-        "Edit this photo: " + prompt + ". "
-        "Output only the edited image."
-    )
-    payloads = [
-        {"contents": [{"parts": [
-            {"text": full_prompt},
-            {"inline_data": {"mime_type": "image/jpeg", "data": img_b64}},
-        ]}]},
-        {"contents": [{"parts": [{"text": full_prompt}]}]},
+    parts_in = [
+        {"text": _prompt_gemini(prompt)},
+        {"inline_data": {"mime_type": "image/jpeg", "data": img_b64}},
     ]
-    model_names = [m for m in [
+    # IMPORTANTE: TODAS las variantes llevan la foto. Antes, si la primera
+    # llamada no regresaba imagen, se reintentaba con un payload de SOLO
+    # TEXTO: Gemini entonces inventaba una casa/cuarto desde cero y eso se
+    # entregaba como "la foto editada". Por eso en una misma tanda unas
+    # fotos salían bien y otras no tenían nada que ver con la original.
+    gen_config = {"responseModalities": ["TEXT", "IMAGE"], "temperature": 0.4}
+    payloads = [
+        {"contents": [{"parts": parts_in}],
+         "generationConfig": {**gen_config, "imageConfig": {"aspectRatio": _aspecto_gemini(w, h)}}},
+        # Variante sin imageConfig por si algún modelo no lo acepta (400).
+        {"contents": [{"parts": parts_in}], "generationConfig": gen_config},
+    ]
+    model_names = list(dict.fromkeys(m for m in [
         settings.gemini_image_model,
         "gemini-3.1-flash-image-preview",
         "gemini-2.5-flash-image",
         "gemini-3-pro-image-preview",
-    ] if m]
+    ] if m))
     gemini_base_url = "https://generativelanguage.googleapis.com/v1beta"
     last_err = "Sin modelos disponibles"
+    loop = asyncio.get_event_loop()
+    limite = loop.time() + GEMINI_PRESUPUESTO_S
 
-    async with httpx.AsyncClient(timeout=25) as client:
+    async with httpx.AsyncClient(timeout=GEMINI_TIMEOUT_S) as client:
         for model_name in model_names:
             url = f"{gemini_base_url}/models/{model_name}:generateContent?key={gemini_api_key}"
             for payload in payloads:
+                if loop.time() >= limite:
+                    raise RuntimeError("Broquer AI tardó demasiado con esta foto. Intenta de nuevo.")
                 try:
                     r = await client.post(url, json=payload, headers={"Content-Type": "application/json"})
                 except Exception as e:
@@ -182,22 +283,28 @@ async def _process_with_gemini(img_bytes: bytes, content_type: str, prompt: str)
                         "(~24h) o activa billing en https://aistudio.google.com/apikey."
                     )
                 if r.status_code == 200:
+                    data = None
                     try:
                         data = r.json()
                         parts = data["candidates"][0]["content"]["parts"]
-                    except Exception as e:
-                        last_err = f"JSON inválido ({model_name}): {e}"
+                    except Exception:
+                        razon = ""
+                        try:
+                            razon = data["candidates"][0].get("finishReason", "")
+                        except Exception:
+                            pass
+                        last_err = f"Sin imagen en respuesta ({model_name}) {razon}".strip()
                         continue
 
                     for part in parts:
-                        if "inlineData" in part:
-                            raw = base64.b64decode(part["inlineData"]["data"])
-                            if PIL_AVAILABLE:
-                                pil2 = Image.open(io.BytesIO(raw)).convert("RGB")
-                                out = io.BytesIO()
-                                pil2.save(out, format="JPEG", quality=92)
-                                return out.getvalue()
-                            return raw
+                        datos = part.get("inlineData") or part.get("inline_data")
+                        if datos and datos.get("data"):
+                            raw = base64.b64decode(datos["data"])
+                            pil2 = _a_rgb(Image.open(io.BytesIO(raw)))
+                            pil2 = _ajustar_a_original(pil2, w, h)
+                            out = io.BytesIO()
+                            pil2.save(out, format="JPEG", quality=92)
+                            return out.getvalue()
 
                     text_parts = [p.get("text", "") for p in parts if "text" in p]
                     last_err = f"Sin imagen en respuesta ({model_name}): {' '.join(text_parts)[:150]}"
