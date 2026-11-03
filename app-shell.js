@@ -1378,7 +1378,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     if (/(?:^|[?&#])(?:token_hash|access_token|code|type|error|error_description)=/.test(qs + hs)) {
       return 'login.html' + qs + hs;
     }
-    return 'login.html';
+    return IS_IOS_NATIVE ? 'login.html' : 'landing.html';
   }
 
   async function authInit() {
