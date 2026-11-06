@@ -1,0 +1,1037 @@
+{
+  "checked_at": "2026-10-19T18:30:03.583449+00:00",
+  "base_commit": "bb6610b465322d2c81897d26d8a0b94a187a8408",
+  "browser": "Chromium 133.0.6943.0",
+  "viewport_widths": [
+    390,
+    1440
+  ],
+  "limitations": [
+    "HTTP fixtures only; not live database, authentication or RLS validation.",
+    "Chromium mobile emulation; not Safari/WebView or a physical iPhone.",
+    "Real staging deployment and live schema migration remain pending."
+  ],
+  "surface": [
+    {
+      "page": "404.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "404.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "admin.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "admin.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "aviso-privacidad.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "aviso-privacidad.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "avm.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "avm.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "bandeja.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "bandeja.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "blog.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "blog.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "bolsa.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "bolsa.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "buscador.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "buscador.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "clientes.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "clientes.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "contactos.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "contactos.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "contratos.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "contratos.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "correo.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "correo.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "cumplimiento.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "cumplimiento.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "empresas.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "empresas.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "equipo.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "equipo.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "estadisticas.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "estadisticas.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "expediente.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "expediente.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "facebook-ads.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "facebook-ads.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "facebook-callback.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "facebook-callback.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "ficha-manual.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "ficha-manual.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "finanzas.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "finanzas.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "firmar.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "firmar.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "firmas.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "firmas.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "guia-agente.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "guia-agente.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "image-cleaner.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "image-cleaner.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "index.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "index.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "isr.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "isr.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "landing.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "landing.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "leads.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "leads.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "legal.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "legal.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "login.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "login.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "mi-sitio.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "mi-sitio.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "preview-modo/index.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "preview-modo/index.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "preview-modo/preview-agenda.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "preview-modo/preview-agenda.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "preview-modo/preview-campanas.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "preview-modo/preview-campanas.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "preview-modo/preview-inicio.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "preview-modo/preview-inicio.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "propiedades.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "propiedades.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "registro.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "registro.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "reset-password.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "reset-password.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "robin.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "robin.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "sitio.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "sitio.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "soporte.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "soporte.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "tareas.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "tareas.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "unirse.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "unirse.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "verificador.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "verificador.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "verificar-firma.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "verificar-firma.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "video.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "video.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "videos/landing.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "videos/landing.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "whatsapp-callback.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "whatsapp-callback.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "whatsapp-chatgpt.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "whatsapp-chatgpt.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "whatsapp.html",
+      "width": 390,
+      "passed": true,
+      "small_inputs": []
+    },
+    {
+      "page": "whatsapp.html",
+      "width": 1440,
+      "passed": true,
+      "small_inputs": []
+    }
+  ],
+  "crm_cases": [
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "data",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "empty",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "error",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "loading",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "data",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "empty",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "error",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "loading",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "data",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "empty",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "error",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "agente",
+      "scenario": "loading",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "data",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "empty",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "error",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "loading",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "data",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "empty",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "error",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "loading",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "data",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "empty",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "error",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 1440,
+      "role": "admin",
+      "scenario": "loading",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "data",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "empty",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "error",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "loading",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "data",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "empty",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "error",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "loading",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "data",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "empty",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "error",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "agente",
+      "scenario": "loading",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "data",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "empty",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "error",
+      "passed": true
+    },
+    {
+      "page": "buzon.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "loading",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "data",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "empty",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "error",
+      "passed": true
+    },
+    {
+      "page": "alertas.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "loading",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "data",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "empty",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "error",
+      "passed": true
+    },
+    {
+      "page": "crm-ajustes.html",
+      "width": 390,
+      "role": "admin",
+      "scenario": "loading",
+      "passed": true
+    }
+  ],
+  "inline_scripts": {
+    "checked": 48,
+    "syntax_errors": 0
+  },
+  "unit_tests": {
+    "modules": [
+      "tests.test_buzon",
+      "tests.test_alertas",
+      "tests.test_crm"
+    ],
+    "passed": 14
+  },
+  "staging_isolation": {
+    "passed": 4
+  },
+  "design_audit": {
+    "html_files": 47,
+    "violations": 0
+  },
+  "changed_source_sha256": {
+    "alertas.js": "08112618b381f4957c13fbad940e1947eb60f2adb11e5589dd94ad649dd4f237",
+    "bk-api.js": "96dc8edbecfd95a34196d791ed1aed3b4742ca2ea7a50087a50a3e2c9c4ecc5a",
+    "brokr-theme.css": "b980710092c71263d8d61cdc775f36eae86dd5be0af1f1b000635b36aee8ca47",
+    "buzon.html": "5c93e3da1d53a860b72c3f719f594d08b08b0c02f38e9993cab1d82d9c475b53",
+    "buzon.js": "e1ed3697a3b0dd2f6007b96800d68b8f615decca67fa9283d10cae02bfc534b3",
+    "crm-ajustes.js": "46552450b35f6178cac7f37157177971cd735a042db71fa8d7e45b39c00f298e",
+    "estadisticas.html": "dfd06a2a993fa5d8a23578d969853f68a738de70966304ee03d8e12c0a24bba6",
+    "isr.html": "6ffb3393410aea9ddc1ad3ef5c4aa8beccf6376625ce11f8cb9aae44f3051ffc",
+    "scripts/check_crm_states.cjs": "aef67c85e4c8dcf99b663a71238f3b8a1a799a0aa016dbe0bf2faa46bd299769",
+    "scripts/check_inline_scripts.py": "302b8ea7d91a123b3b684dd3978dffe4ac6d790351024f8f0465e062e8f29b4a",
+    "scripts/check_module_surface.cjs": "2c7ca58b1142c993d6cb2e00c474a69c8d6a6876b334549e7b6c7672f1f151b1",
+    "scripts/check_public_flows.cjs": "2dfbdc77cf2b59833984dd9a8442a4bf400d1c284035adce7d7441369f2c6af3",
+    "scripts/inventory_redesign.py": "0fe1fc518d51270beb3ec5b8ae99183579d9b2934f0e2e0fd07df5d71dd4dfb9",
+    "styles/module-states.css": "e5f7f58f3e65d618e595f0c26bd27f7e54b0b9622cebe12cf1b97dad30a0b4ed"
+  }
+}

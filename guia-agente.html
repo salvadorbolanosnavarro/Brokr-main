@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Broquer — Guía del Agente</title>
+<title>Ayuda · Broquer</title>
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
@@ -115,18 +115,11 @@
 }
 .guide-contact p { font-size:var(--fs-xs); color: rgba(255,255,255,.6); }
 .guide-contact-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 11px 22px; background: var(--paper); color: var(--ink);
-  border: 1px solid var(--line); border-radius: var(--r-pill);
-  font-size:var(--fs-xs); font-weight: 600; letter-spacing: -0.005em;
-  font-family: inherit; cursor: pointer; text-decoration: none;
-  white-space: nowrap;
-  box-shadow: var(--shadow-sm);
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-decoration: none;
   transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
 }
 .guide-contact-btn:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow);
 }
 .guide-contact-btn:active { transform: translateY(0); }
 .guide-contact-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
@@ -143,18 +136,10 @@
 }
 .guide-danger p { font-size:var(--fs-sm); color: var(--ink-2); line-height: 1.6; }
 .guide-danger-btn {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 11px 22px; background: var(--danger); color: #fff;
-  border: 1px solid rgba(0,0,0,0.05); border-radius: var(--r-pill);
-  font-size:var(--fs-xs); font-weight: 600; letter-spacing: -0.005em;
-  font-family: inherit; cursor: pointer; text-decoration: none;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px var(--danger-soft), 0 4px 14px var(--danger-soft);
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-decoration: none;
   transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
 }
-.guide-danger-btn:hover {
-  background: var(--danger); transform: translateY(-1px);
-  box-shadow: 0 2px 4px var(--danger-soft), 0 8px 22px var(--danger-soft);
+.guide-danger-btn:hover { transform: translateY(-1px);
 }
 .guide-danger-btn:active { transform: translateY(0); }
 .guide-danger-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
@@ -243,6 +228,16 @@
 .wa-tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--bone); }
 @media (max-width:600px){ .wa-tbl { min-width: 460px; } }
 </style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="guia">
 

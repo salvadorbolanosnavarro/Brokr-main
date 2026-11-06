@@ -21,23 +21,19 @@
   }
   .home-header *, .modules-header *, .profile-header *, .panel-topbar *, header *, .topbar *, .nav-top *, .app-header *, .hdr *, .navbar * { color:var(--ink)!important; }
   /* Inputs */
-  input, select, textarea {
-    background:var(--bone)!important; border:1px solid var(--line-2)!important; color:var(--ink)!important;
-    border-radius:var(--r)!important; font-family:var(--font-sans)!important; font-size: var(--fs-sm)!important; padding:10px 12px!important;
+  input, select, textarea { color:var(--ink)!important;
     outline:none!important; transition:border-color .2s ease;
   }
-  input:focus, select:focus, textarea:focus { border-color:var(--ink)!important; }
   /* Buttons */
-  button, .btn, .ui-btn, .isr-calc-btn, .props-new-btn, .pe-save-btn, .prf-stripe-btn.primary, .pf-save-btn, .btn-pdf, .pe-toggle-slider {
+  .pe-toggle-slider {
     font-family:var(--font-sans)!important; letter-spacing:-0.005em!important;
   }
-  button:not([class]), .btn-primary, .ui-btn, .pf-save-btn, .pe-save-btn, .isr-calc-btn, .props-new-btn, .btn-pdf, .prf-stripe-btn.primary {
-    background:var(--forest)!important; color:var(--paper)!important;
-    border:none!important; border-radius:var(--r)!important;
-    padding:11px 18px!important; font-weight:600!important; cursor:pointer!important;
-    box-shadow:var(--shadow-xs)!important; font-size: var(--fs-sm)!important;
+  button:not([class]),.btn-primary,.ui-btn,.pf-save-btn { cursor:pointer!important;
   }
-  button:not([class]):hover, .btn-primary:hover, .ui-btn:hover, .pf-save-btn:hover, .pe-save-btn:hover, .isr-calc-btn:hover { opacity:.92!important; }
+  .pe-save-btn,.isr-calc-btn,.props-new-btn,.btn-pdf,.prf-stripe-btn.primary { cursor:pointer!important;
+  }
+  button:not([class]):hover,.btn-primary:hover,.ui-btn:hover,.pf-save-btn:hover { opacity:.92!important; }
+  .pe-save-btn:hover,.isr-calc-btn:hover { opacity:.92!important; }
   /* Badges, chips */
   .badge, .chip, .pill, .stat-pill .lbl, .res-tipo-lbl, .isr-badge {
     background:var(--paper-2)!important; color:var(--ink-2)!important; border:1px solid var(--line)!important;
@@ -57,14 +53,14 @@
   /* Force any greeting "name" or page title light text to be dark */
   .greeting-text .hello, .greeting-text .name, .profile-name, .profile-sub, .panel-title, .modules-header h2 { color:var(--ink)!important; }
   /* Avatar-style circles that were translucent on navy → bone */
-  .home-avatar, .profile-avatar, .pr-icon, .act-icon, .scw-avatar, .notif-bell, .stat-pill {
+  .profile-avatar,.pr-icon,.act-icon,.scw-avatar,.notif-bell,.stat-pill {
     background:var(--bone)!important; border:1px solid var(--line)!important; color:var(--ink)!important;
   }
 </style>
 
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>ISR — Broquer®</title>
+<title>Cálculo de ISR · Broquer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <style>
 /* ═══════════════════════════════════════
@@ -200,23 +196,9 @@ html, body {
 }
 .field input, .field select {
   width: 100%;
-  min-height: var(--h);
-  padding: 10px 14px;
-  background: var(--bone);
-  border: 1.5px solid var(--line);
-  border-radius: var(--r3);
   color: var(--ink-2);
-  font-size: var(--fs-sm);
-  font-family: var(--font-sans);
-  font-weight: 500;
   outline: none;
   transition: border-color .2s, background .2s;
-  appearance: none;
-}
-.field input:focus, .field select:focus {
-  border-color: var(--ink);
-  background: white;
-  box-shadow: 0 0 0 3px var(--paper-2);
 }
 .field input::placeholder { color: var(--mute); font-weight: 400; }
 .field-hint {
@@ -251,31 +233,19 @@ html, body {
 /* ── BOTÓN CALCULAR ── */
 .btn-calc {
   width: 100%;
-  min-height: 52px;
-  padding: 14px;
-  background: var(--sky-blue);
-  border: none;
-  border-radius: var(--r2);
-  color: white;
-  font-size: var(--fs-sm);
-  font-weight: 700;
-  font-family: var(--font-sans);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   transition: opacity .2s, transform .1s;
-  letter-spacing: .2px;
 }
 .btn-calc:hover { opacity: .92; }
 .btn-calc:active { transform: scale(0.98); }
 .btn-calc:disabled { opacity: .45; cursor: not-allowed; }
 .btn-calc .btn-teal-line {
   display: block;
-  width: 28px; height: 2px;
-  background: var(--sky-blue-lift);
-  border-radius: var(--r-xs);
+  width: var(--ui-control-small);
   margin-right: -4px;
 }
 
@@ -294,20 +264,9 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: white;
-  border: 1.5px solid var(--line);
-  border-radius: var(--r3);
-  min-height: var(--h);
-  padding: 8px 16px;
-  color: var(--mute);
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  font-family: var(--font-sans);
   cursor: pointer;
   transition: border-color .15s, color .15s;
 }
-.btn-secondary:hover { border-color: var(--ink); color: var(--ink); }
-.btn-secondary.teal { border-color: var(--ink); color: var(--ink); }
 .res-tipo-tag {
   font-size: var(--fs-caption);
   font-weight: 700;
@@ -415,15 +374,6 @@ html, body {
 /* ── MES/AÑO PICKER ── */
 .mp-trigger {
   width: 100%;
-  min-height: var(--h);
-  padding: 10px 14px;
-  background: var(--bone);
-  border: 1.5px solid var(--line);
-  border-radius: var(--r3);
-  color: var(--ink-2);
-  font-size: var(--fs-sm);
-  font-family: var(--font-sans);
-  font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -432,9 +382,6 @@ html, body {
   text-align: left;
 }
 .mp-trigger:focus, .mp-trigger.open {
-  border-color: var(--ink);
-  background: white;
-  box-shadow: 0 0 0 3px var(--paper-2);
   outline: none;
 }
 .mp-trigger .mp-val { flex: 1; }
@@ -479,19 +426,11 @@ html, body {
   color: white;
 }
 .mp-year-btn {
-  width: 34px; height: 34px;
-  border-radius: var(--r-sm);
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: white;
-  font-size: var(--fs-body);
+  width: var(--ui-control-small);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.15s;
-  font-family: var(--font-sans);
 }
-.mp-year-btn:hover { background: rgba(255,255,255,0.18); }
-.mp-year-btn:active { background: rgba(255,255,255,0.25); }
 
 .mp-months {
   display: grid;
@@ -526,18 +465,9 @@ html, body {
 /* ── GUÍA TERRENO / CONSTRUCCIÓN ── */
 .terreno-help-btn {
   margin-top: 10px;
-  background: transparent;
-  border: 1px dashed var(--line);
-  border-radius: var(--r3);
-  padding: 8px 12px;
-  font-size: var(--fs-xs);
-  font-weight: 600;
-  font-family: var(--font-sans);
-  color: var(--ink);
   cursor: pointer;
   transition: background .15s, border-color .15s;
 }
-.terreno-help-btn:hover { background: var(--paper-2); border-color: var(--ink); }
 .terreno-help {
   margin-top: 10px;
   background: var(--paper-2);
@@ -607,6 +537,16 @@ html, body {
 .d5 { animation-delay: 0.34s; }
 .d6 { animation-delay: 0.41s; }
 </style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="isr">
 

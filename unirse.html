@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Broquer — Unirte a un equipo</title>
+<title>Unirte a un equipo · Broquer</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="theme-color" content="#081C4E"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
@@ -97,18 +97,13 @@
   .un-datos p { margin: 0; font-size: var(--fs-sm); color: var(--ink-2); line-height: var(--lh); }
 
   .un-botones { display: flex; flex-direction: column; gap: var(--sp-3); }
-  .un-botones .bk-btn { width: 100%; min-height: var(--h); }
+  .un-botones .bk-btn { width: 100%; }
   .un-liga {
     align-self: center;
-    padding: var(--sp-2) var(--sp-3);
-    border: 0;
-    background: none;
-    color: var(--mute);
-    font: 600 var(--fs-sm)/1 var(--font-sans);
     text-decoration: none;
     cursor: pointer;
   }
-  .un-liga:hover { color: var(--sky-blue); text-decoration: underline; text-underline-offset: 3px; }
+  .un-liga:hover { text-decoration: underline; text-underline-offset: 3px; }
   .un-pie {
     margin: var(--sp-5) 0 0;
     font-size: var(--fs-xs);
@@ -138,11 +133,21 @@
     .un-card { padding: var(--sp-6) var(--sp-5); border-radius: var(--r-lg); }
   }
 </style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
-<body>
+<body data-design-public="unirse">
 <div class="un-page">
 <div class="un-wrap">
-  <div class="un-marca"><img src="logotipo-black.png" alt="Broquer"/></div>
+  <div class="un-marca"><span class="bk-design-brand" role="img" aria-label="Broquer">broquer<span>.</span></span></div>
   <section class="un-card">
 
     <!-- Estado: cargando -->
