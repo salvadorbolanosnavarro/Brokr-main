@@ -1,6 +1,5 @@
 import asyncio
 import io
-import uuid as _uuid
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request
@@ -9,9 +8,9 @@ from core.auth import get_user_id_from_token
 from core.config import settings
 from core.database import get_rows, patch_rows
 from core.property_photos import (
-    FOTOS_BUCKET as _FOTOS_BUCKET,
     foto_migrable as _foto_migrable,
     fotos_en_proceso as _fotos_en_proceso,
+    importar_foto_externa,
 )
 from routers.organizaciones import get_org_id_for_user
 
@@ -20,10 +19,6 @@ router = APIRouter()
 SUPABASE_URL = settings.supabase_url
 SUPABASE_SERVICE_KEY = settings.supabase_service_key
 
-_EXT_POR_MIME = {
-    "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png",
-    "image/webp": "webp", "image/gif": "gif", "image/heic": "heic",
-}
 _FOTO_MAX_LADO = 1600
 _FOTO_CALIDAD = 82
 
@@ -49,33 +44,8 @@ def _comprimir_imagen(raw: bytes):
 
 
 async def _foto_a_storage(client: httpx.AsyncClient, url: str, sb_headers: dict):
-    """Download, compress and store one external property photo."""
-    try:
-        rd = await client.get(url, timeout=30.0, follow_redirects=True)
-        if rd.status_code != 200 or not rd.content:
-            return None
-        mime = (rd.headers.get("content-type") or "image/jpeg").split(";")[0].strip().lower()
-        raw = rd.content
-    except Exception:
-        return None
-
-    ext = _EXT_POR_MIME.get(mime, "jpg")
-    comp, mime_c, ext_c = await asyncio.to_thread(_comprimir_imagen, raw)
-    if comp:
-        raw, mime, ext = comp, mime_c, ext_c
-
-    nombre = f"{_uuid.uuid4().hex}.{ext}"
-    try:
-        ru = await client.post(
-            f"{SUPABASE_URL}/storage/v1/object/{_FOTOS_BUCKET}/{nombre}",
-            headers={**sb_headers, "Content-Type": mime},
-            content=raw, timeout=60.0,
-        )
-    except Exception:
-        return None
-    if ru.status_code not in (200, 201):
-        return None
-    return f"{SUPABASE_URL}/storage/v1/object/public/{_FOTOS_BUCKET}/{nombre}"
+    """Download (SSRF-safe), validate, compress and store one external property photo."""
+    return await importar_foto_externa(url, comprimir=_comprimir_imagen)
 
 
 async def _migrar_fotos_org(org_id: str):
@@ -218,27 +188,7 @@ async def easybroker_migrar_fotos(request: Request):
     ultimo_id = cursor
 
     async def _subir_una(client, url):
-        try:
-            rd = await client.get(url, timeout=30.0, follow_redirects=True)
-            if rd.status_code != 200 or not rd.content:
-                return None
-            mime = (rd.headers.get("content-type") or "image/jpeg").split(";")[0].strip().lower()
-            raw = rd.content
-        except Exception:
-            return None
-        ext = _EXT_POR_MIME.get(mime, "jpg")
-        nombre = f"{_uuid.uuid4().hex}.{ext}"
-        try:
-            ru = await client.post(
-                f"{SUPABASE_URL}/storage/v1/object/{_FOTOS_BUCKET}/{nombre}",
-                headers={**sb_headers, "Content-Type": mime},
-                content=raw, timeout=60.0,
-            )
-        except Exception:
-            return None
-        if ru.status_code not in (200, 201):
-            return None
-        return f"{SUPABASE_URL}/storage/v1/object/public/{_FOTOS_BUCKET}/{nombre}"
+        return await importar_foto_externa(url)
 
     async def _resolver(client, f):
         if _foto_migrable(f):

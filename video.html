@@ -310,6 +310,7 @@
 
 </div>
 
+<script src="archivos-seguros.js" defer></script>
 <script src="app-shell.js" defer></script>
 <script>
 (function () {
@@ -832,11 +833,13 @@
       if (lista[i].indexOf('data:') !== 0) { urls.push(lista[i]); continue; }
       const resp = await fetch(lista[i]);
       const blob = await resp.blob();
-      const ruta = uid + '/video-fuentes/' + sello + '-' + i + '.jpg';
+      // Bucket público: solo fotos confirmadas por contenido (archivos-seguros.js).
+      const v = await window.bkArchivos.validar(blob, 'foto_propiedad');
+      const ruta = uid + '/video-fuentes/' + sello + '-' + i + '.' + v.extension;
       const r = await window.brokrSb.fetch('storage/v1/object/fotos-propiedades/' + ruta, {
         method: 'POST',
         body: blob,
-        headers: { 'Content-Type': blob.type || 'image/jpeg', 'x-upsert': 'true' },
+        headers: { 'Content-Type': v.mime, 'x-upsert': 'true' },
       });
       if (!r.ok) throw new Error('No se pudo subir la foto ' + (i + 1) + '.');
       urls.push(window.brokrSb.url + '/storage/v1/object/public/fotos-propiedades/' + ruta);

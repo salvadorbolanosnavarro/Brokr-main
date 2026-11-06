@@ -7,6 +7,7 @@ from fastapi import APIRouter, Request
 
 from routers.whatsapp_access import _ids_visibles, _require_user
 from routers.whatsapp_data import sb_get
+from routers.whatsapp_media_storage import firmar_medios
 from routers.whatsapp_utils import in_filter as _in_filter
 
 
@@ -74,6 +75,8 @@ async def wa2_mensajes_list_core(request, conversacion_id: str,
     if after:
         rows = await sb_get("wa2_mensajes", {**base, "created_at": f"gt.{after}",
                                              "order": "created_at.asc", "limit": "200"})
+        # Los archivos de los chats son privados: ligas firmadas que caducan.
+        await firmar_medios(rows)
         return {"mensajes": rows, "hay_mas_antiguos": False, "incremental": True}
 
     params = {**base, "order": "created_at.desc", "limit": str(limit + 1)}
@@ -85,6 +88,7 @@ async def wa2_mensajes_list_core(request, conversacion_id: str,
     if hay_mas:
         rows = rows[:limit]
     rows.reverse()
+    await firmar_medios(rows)
 
     # Bajar los mensajes ya NO marca la conversación como leída. Leer es un
     # acto del agente, no un efecto secundario de que el navegador refresque:

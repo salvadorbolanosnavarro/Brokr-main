@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from core.cors import instalar_cors
+from core.security_headers import instalar_cabeceras_seguras
 from limites import exigir_cupo, exigir_sesion
 from core.auth import get_user_id_from_token
 from core.config import settings
@@ -269,6 +270,7 @@ app.include_router(facebook_refresh_token_router)
 # CORS: modo "observar" por default (acepta todo y anota orígenes fuera de
 # la lista); CORS_MODO=estricto en Railway lo cierra. Ver core/cors.py.
 instalar_cors(app)
+instalar_cabeceras_seguras(app)
 
 # whatsapp.py es el módulo de WhatsApp (multi-número, IA de recepción, webhook
 # propio bajo /whatsapp2 — el prefijo interno del router no cambió aunque el
@@ -642,6 +644,10 @@ app.include_router(whatsapp_token_crypto_router)
 # pasa a privado). Ver routers/adjuntos_ligas.py.
 from routers.adjuntos_ligas import router as adjuntos_ligas_router
 app.include_router(adjuntos_ligas_router)
+
+# Reporte de archivos riesgosos ya guardados (solo lectura, solo admins).
+from routers.admin_archivos import router as admin_archivos_router
+app.include_router(admin_archivos_router)
 
 # Comentarios urgentes de supervisión: el admin deja una nota urgente al
 # agente de un cliente (ver routers/supervision.py).

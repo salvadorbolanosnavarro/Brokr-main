@@ -1,5 +1,5 @@
 {
-  "count": 355,
+  "count": 356,
   "operations": [
     {
       "body": false,
@@ -15,6 +15,18 @@
       "method": "POST",
       "params": [],
       "path": "/adjuntos/ligas",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:sensibles"
+      ],
+      "path": "/admin/archivos/reporte",
       "responses": [
         "200",
         "422"

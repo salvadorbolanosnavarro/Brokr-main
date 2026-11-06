@@ -17,8 +17,25 @@
 //      HTML de la galería de esa nota.
 
 const HA_BUCKET = 'adjuntos-historial';
-const HA_MAX_BYTES = 25 * 1024 * 1024; // 25 MB por archivo
-const HA_ACCEPT = 'image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt';
+const HA_ACCEPT = 'image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt,.csv';
+
+// Validador central de archivos (archivos-seguros.js). Este módulo se carga en
+// Contactos, Clientes, Inmuebles y Tareas, así que desde aquí se trae para
+// todas esas páginas (Inmuebles lo usa también para fotos y documentos).
+function haValidador() {
+  if (window.bkArchivos) return Promise.resolve(window.bkArchivos);
+  if (!window._bkArchivosCarga) {
+    window._bkArchivosCarga = new Promise((ok, falla) => {
+      const s = document.createElement('script');
+      s.src = 'archivos-seguros.js';
+      s.onload = () => (window.bkArchivos ? ok(window.bkArchivos) : falla(new Error('validador no disponible')));
+      s.onerror = () => { window._bkArchivosCarga = null; falla(new Error('No se pudo revisar el archivo. Revisa tu conexión e intenta de nuevo.')); };
+      document.head.appendChild(s);
+    });
+  }
+  return window._bkArchivosCarga;
+}
+haValidador().catch(() => {});
 
 // Estado de los adjuntos que el usuario ya eligió/subió para la nota que
 // está escribiendo, agrupado por el id del contenedor de preview (así
@@ -85,13 +102,13 @@ _haInyectarEstilos();
 
 async function haSubirArchivo(file) {
   if (!window.brokrSb) throw new Error('La app aún se está cargando. Intenta de nuevo en un segundo.');
-  if (file.size > HA_MAX_BYTES) throw new Error('pesa más de 25 MB');
-  const extMatch = /\.([a-zA-Z0-9]+)$/.exec(file.name || '');
-  const ext = (extMatch ? extMatch[1] : 'bin').toLowerCase();
-  const ruta = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  // Tipo real por contenido; nombre interno UUID. El nombre original solo se
+  // guarda como dato para mostrarlo.
+  const v = await (await haValidador()).validar(file, 'adjunto_historial');
+  const ruta = v.nombreInterno;
   const r = await window.brokrSb.fetch('storage/v1/object/' + HA_BUCKET + '/' + ruta, {
     method: 'POST',
-    headers: { 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'true' },
+    headers: { 'Content-Type': v.mime },
     body: file,
     timeoutMs: 120000, // archivos hasta 25 MB en redes lentas necesitan más que el timeout default de 15 s
   });
@@ -104,10 +121,10 @@ async function haSubirArchivo(file) {
   }
   return {
     url: window.brokrSb.url + '/storage/v1/object/public/' + HA_BUCKET + '/' + ruta,
-    nombre: file.name || ruta,
-    tipo: file.type || 'application/octet-stream',
+    nombre: v.nombreOriginal,
+    tipo: v.mime,
     tamano: file.size,
-    categoria: haCategoria(file.type),
+    categoria: haCategoria(v.mime),
   };
 }
 
@@ -162,6 +179,9 @@ function haAgregarArchivos(fileList, previewElId) {
     haSubirArchivo(file).then((meta) => {
       item.estado = 'ok';
       item.url = meta.url;
+      item.nombre = meta.nombre;
+      item.tipo = meta.tipo;
+      item.categoria = meta.categoria;
       _haRenderPreview(previewElId);
     }).catch((err) => {
       item.estado = 'error';

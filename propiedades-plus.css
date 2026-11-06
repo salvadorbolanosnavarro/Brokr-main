@@ -132,6 +132,12 @@
 .px-docs li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 6px 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--paper); }
 .px-docs li a { font-size: var(--fs-sm); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .px-docs .px-op__del { width: 32px; height: 32px; }
+.px-doc__acciones { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+@media (max-width: 560px) {
+  .px-docs li.px-doc { flex-wrap: wrap; }
+  .px-docs li.px-doc a { flex: 1 1 100%; }
+  .px-doc__acciones { width: 100%; justify-content: flex-end; flex-wrap: wrap; }
+}
 .foto-preview-item.px-baja-res { outline: 2px solid var(--warn); outline-offset: -2px; }
 .px-baja-res__tag {
   position: absolute; left: 4px; bottom: 4px; padding: 2px 6px; border-radius: var(--r-pill);

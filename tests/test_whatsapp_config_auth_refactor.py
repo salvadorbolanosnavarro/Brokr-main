@@ -48,10 +48,10 @@ class WhatsAppConfigAuthRegressionTests(unittest.TestCase):
         if media_extracted:
             self.assertNotIn("async def _guardar_archivo(", source)
             self.assertNotIn("async def _borrar_archivos(", source)
-            self.assertNotIn("from core.storage import delete_objects, upload_object", source)
-            self.assertIn("from core.storage import delete_objects, upload_object", media_source)
+            self.assertNotIn("from core.storage import (create_signed_object_urls, delete_objects, download_object, object_path_from_url,\n                          upload_object)", source)
+            self.assertIn("from core.storage import (create_signed_object_urls, delete_objects, download_object, object_path_from_url,\n                          upload_object)", media_source)
         else:
-            self.assertIn("from core.storage import delete_objects, upload_object", source)
+            self.assertIn("from core.storage import (create_signed_object_urls, delete_objects, download_object, object_path_from_url,\n                          upload_object)", source)
 
         compile(source, "whatsapp.py", "exec")
         compile(access_source, "routers/whatsapp_access.py", "exec")
