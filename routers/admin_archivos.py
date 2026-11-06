@@ -13,6 +13,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
 
 from core.admin import require_admin
+from core.property_photos import rescatar_fotos_de_buckets_de_clientes
 from core.reporte_archivos import a_csv, construir
 
 
@@ -38,3 +39,15 @@ async def reporte_archivos(request: Request, sensibles: bool = True):
             "X-Content-Type-Options": "nosniff",
         },
     )
+
+
+@router.post("/admin/archivos/copiar-fotos")
+async def copiar_fotos_de_clientes(request: Request):
+    """Copia al bucket público las fotos de inmuebles que apuntan a buckets de
+    clientes (requisito antes de volverlos privados). No borra originales."""
+    await require_admin(request)
+    try:
+        return await rescatar_fotos_de_buckets_de_clientes()
+    except Exception as exc:
+        log.warning("copiar fotos falló: %s", type(exc).__name__)
+        raise HTTPException(503, "No se pudieron copiar las fotos. Intenta más tarde.") from None
