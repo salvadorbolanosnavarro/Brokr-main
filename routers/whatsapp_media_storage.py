@@ -6,7 +6,7 @@ import logging
 
 from core.config import settings
 from core.file_validation import ArchivoRechazado, se_abre_en_linea, validar_archivo
-from core.property_photos import FOTOS_BUCKET
+from core.property_photos import copiar_foto_a_inventario
 from core.storage import (create_signed_object_urls, delete_objects, download_object, object_path_from_url,
                           upload_object)
 
@@ -56,18 +56,7 @@ async def publicar_foto(media_path: str | None) -> str | None:
     Las fotos de un inmueble salen en fichas públicas; los medios de WhatsApp
     son privados. Por eso no se liga la foto del chat: se copia.
     """
-    if not media_path:
-        return None
-    try:
-        contenido = await download_object(WA_MEDIA_BUCKET, media_path, timeout=40)
-        val = validar_archivo(contenido, media_path, "foto_importada")
-        return await upload_object(FOTOS_BUCKET, val.nombre_interno, contenido,
-                                   content_type=val.mime, timeout=60)
-    except ArchivoRechazado:
-        return None
-    except Exception as e:
-        log.warning("No se pudo copiar una foto de WhatsApp al inventario: %s", e)
-        return None
+    return await copiar_foto_a_inventario(WA_MEDIA_BUCKET, media_path)
 
 
 def ruta_del_medio(mensaje: dict) -> str | None:
