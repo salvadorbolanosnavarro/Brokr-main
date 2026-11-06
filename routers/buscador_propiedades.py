@@ -113,8 +113,16 @@ def _construir_queries(req: Dict[str, Any], pais: str = PAIS_DEFAULT) -> List[st
     return queries
 
 
+# Formato actual del AVM: bloque con un anuncio por línea. Solo cuenta como
+# "precio de la página" cuando trae UN anuncio (página de detalle); si trae
+# varios es un listado y se sigue por _extraer_enlaces_de_listado.
+_RE_PRECIO_ANUNCIO_UNICO = re.compile(
+    re.escape(avm.MARCA_ANUNCIOS) + r" \(alta confianza, 1 anuncio,[^\n]*\n1\) [^\n]*?precio=([\d.]+)"
+)
+
+
 def _extraer_precio(texto: str) -> Optional[float]:
-    m = _RE_PRECIO_ESTRUCTURADO.search(texto or "")
+    m = _RE_PRECIO_ESTRUCTURADO.search(texto or "") or _RE_PRECIO_ANUNCIO_UNICO.search(texto or "")
     if not m:
         return None
     try:
