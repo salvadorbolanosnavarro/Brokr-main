@@ -1,5 +1,5 @@
 {
-  "count": 356,
+  "count": 357,
   "operations": [
     {
       "body": false,
@@ -18,6 +18,15 @@
       "responses": [
         "200",
         "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [],
+      "path": "/admin/archivos/copiar-fotos",
+      "responses": [
+        "200"
       ]
     },
     {

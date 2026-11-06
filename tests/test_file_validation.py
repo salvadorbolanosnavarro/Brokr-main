@@ -335,7 +335,7 @@ class PuntosDeSubidaTests(unittest.TestCase):
             "routers/soporte.py": ['"soporte_captura"'],
             "routers/machotes.py": ['"machote"'],
             "routers/image_cleaner.py": ['"imagen_editor"'],
-            "routers/whatsapp_media_storage.py": ['"whatsapp_media"', '"foto_importada"'],
+            "routers/whatsapp_media_storage.py": ['"whatsapp_media"', "copiar_foto_a_inventario"],
             "core/property_photos.py": ['"foto_importada"', "fetch_public_bytes"],
             "migrar_fotos.py": ['"foto_propiedad"'],
         }
@@ -434,14 +434,50 @@ class WhatsAppMediaTests(unittest.TestCase):
 
     def test_fotos_de_whatsapp_se_copian_al_inventario(self):
         import routers.whatsapp_media_storage as wm
-        with mock.patch.object(wm, "download_object", mock.AsyncMock(return_value=JPG)), \
-             mock.patch.object(wm, "upload_object", mock.AsyncMock(return_value="https://sb/fotos/x.jpg")) as up:
+        with mock.patch("core.storage.download_object", mock.AsyncMock(return_value=JPG)), \
+             mock.patch("core.storage.upload_object", mock.AsyncMock(return_value="https://sb/fotos/x.jpg")) as up:
             url = asyncio.run(wm.publicar_foto("u1/c1/1-a.jpg"))
         self.assertEqual(url, "https://sb/fotos/x.jpg")
         self.assertEqual(up.call_args.args[0], "fotos-propiedades")
         brain = (ROOT / "routers/whatsapp_prospect_brain.py").read_text(encoding="utf-8")
         self.assertIn("publicar_foto(f.get(\"media_path\"))", brain)
         self.assertNotIn('fotos = [f["media_url"]', brain)
+
+
+class RescateFotosTests(unittest.TestCase):
+    def test_copia_fotos_ligadas_a_chats_y_actualiza_el_inmueble(self):
+        import core.property_photos as pp
+        base = "https://sb.test/storage/v1/object/public/"
+        filas = [
+            {"id": "p1", "fotos": [base + "fotos-propiedades/ok.jpg", base + "wa-media/u/c/1-a.jpg"]},
+            {"id": "p2", "fotos": [base + "fotos-propiedades/b.jpg"]},
+            {"id": "p3", "fotos": [base + "adjuntos-historial/x.html"]},  # no es foto: se deja, no se copia
+        ]
+        descargas = {"u/c/1-a.jpg": JPG, "x.html": WHATSAPP_HTML}
+        parches = []
+
+        async def get_rows(tabla, params, timeout=None):
+            return filas if params["offset"] == "0" else []
+
+        async def patch_rows(tabla, params, payload, timeout=None):
+            parches.append((params["id"], payload["fotos"]))
+
+        with mock.patch("core.database.get_rows", get_rows), mock.patch("core.database.patch_rows", patch_rows), \
+             mock.patch("core.storage.settings", _cfg()), \
+             mock.patch("core.storage.download_object", mock.AsyncMock(side_effect=lambda b, r, **k: descargas[r])), \
+             mock.patch("core.storage.upload_object", mock.AsyncMock(return_value=base + "fotos-propiedades/nueva.jpg")), \
+             mock.patch("core.storage.delete_object", mock.AsyncMock(side_effect=AssertionError("no borra"))):
+            res = asyncio.run(pp.rescatar_fotos_de_buckets_de_clientes())
+        self.assertEqual(res, {"inmuebles": 1, "fotos_copiadas": 1, "fotos_no_copiadas": 1})
+        self.assertEqual(parches, [("eq.p1", [base + "fotos-propiedades/ok.jpg", base + "fotos-propiedades/nueva.jpg"])])
+
+    def test_boton_solo_admin(self):
+        import routers.admin_archivos as aa
+        with mock.patch.object(aa, "require_admin", mock.AsyncMock(side_effect=HTTPException(403, "x"))), \
+             mock.patch.object(aa, "rescatar_fotos_de_buckets_de_clientes", mock.AsyncMock()) as r:
+            with self.assertRaises(HTTPException):
+                asyncio.run(aa.copiar_fotos_de_clientes(object()))
+        r.assert_not_called()
 
 
 class ImportacionesTests(unittest.TestCase):
