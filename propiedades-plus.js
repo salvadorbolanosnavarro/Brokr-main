@@ -147,16 +147,39 @@
     cont.innerHTML = C.caractCheckboxes('caracteristicas', sel || []);
   }
 
-  // ── Multimedia: documentos públicos ──
+  // ── Multimedia: documentos del inmueble ──
+  // Un documento sale en la ficha pública solo si publico !== false. Los que
+  // ya existían antes de este cambio no tienen la marca y siguen públicos
+  // (así ninguna ficha cambia); todo documento NUEVO nace privado y publicarlo
+  // es una acción explícita con aviso.
   var docs = [];
-  var MAX_DOC = 15 * 1024 * 1024;
+  function docEsPublico(d) { return !!d && d.publico !== false; }
   function pintarDocs() {
     var ul = g('px-docs-list'); if (!ul) return;
     ul.innerHTML = docs.map(function (d, i) {
-      return '<li><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' + esc(d.nombre) + '</a>' +
+      var pub = docEsPublico(d);
+      return '<li class="px-doc"><a href="' + esc(d.url) + '" target="_blank" rel="noopener">' + esc(d.nombre) + '</a>' +
+        '<span class="px-doc__acciones">' +
+        '<span class="bk-chip' + (pub ? ' bk-chip--success' : '') + '">' + (pub ? 'En ficha pública' : 'Privado') + '</span>' +
+        '<button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" data-publicar-doc="' + i + '">' +
+        (pub ? 'Quitar de la ficha' : 'Mostrar en ficha') + '</button>' +
         '<button type="button" class="px-op__del" data-quitar-doc="' + i + '" aria-label="Quitar documento">' +
-        '<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button></li>';
+        '<svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button></span></li>';
     }).join('');
+  }
+  // Publicar exige confirmar el aviso; despublicar es inmediato.
+  function pxDocPublicar(i) {
+    var d = docs[i]; if (!d) return;
+    if (!docEsPublico(d)) {
+      var aviso = (window.bkArchivos && window.bkArchivos.AVISO_PUBLICO) || 'Este archivo será visible para cualquier persona con la liga.';
+      if (!confirm(aviso + '\n\n¿Mostrar «' + (d.nombre || 'este documento') + '» en la ficha pública del inmueble?')) return;
+      d.publico = true;
+    } else {
+      d.publico = false;
+    }
+    pintarDocs();
+    if (typeof propFormDirty !== 'undefined') propFormDirty = true;
+    if (typeof mostrarToast === 'function') mostrarToast(d.publico ? 'Se mostrará en la ficha pública al guardar.' : 'Ya no saldrá en la ficha pública al guardar.');
   }
   async function subirDocumentos(e) {
     var files = Array.from(e.target.files || []); if (!files.length) return;
@@ -164,20 +187,24 @@
     var token = await getValidToken();
     if (!token) { prog.textContent = 'Tu sesión expiró. Vuelve a iniciar sesión.'; return; }
     var carpeta = (typeof pOrgId !== 'undefined' && pOrgId) || (typeof getCurrentUserId === 'function' && getCurrentUserId()) || 'sin-cuenta';
+    if (!window.bkArchivos) { prog.textContent = 'La página aún se está cargando. Intenta de nuevo en un segundo.'; return; }
     for (var i = 0; i < files.length; i++) {
-      var f = files[i];
-      if (f.size > MAX_DOC) { prog.textContent = f.name + ' pesa más de 15 MB; no se subió.'; continue; }
-      if (!/^(application\/pdf|image\/)/.test(f.type)) { prog.textContent = f.name + ' no es PDF ni imagen; no se subió.'; continue; }
+      var f = files[i], v;
+      // Tipo real por contenido (archivos-seguros.js): un HTML renombrado a
+      // .pdf no se sube. Nombre interno UUID; el original es solo un dato.
+      try { v = await window.bkArchivos.validar(f, 'documento_propiedad'); }
+      catch (err) { prog.textContent = f.name + ': ' + err.message; continue; }
       prog.textContent = 'Subiendo ' + (i + 1) + ' de ' + files.length + '…';
-      var limpio = f.name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-80);
-      var ruta = carpeta + '/' + Date.now() + '_' + Math.random().toString(36).slice(2, 7) + '_' + limpio;
+      var ruta = carpeta + '/' + v.nombreInterno;
       try {
         var r = await fetch(SB_URL + '/storage/v1/object/documentos-publicos/' + ruta, {
           method: 'POST', body: f,
-          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': f.type || 'application/octet-stream', 'x-upsert': 'true' }
+          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': v.mime }
         });
         if (!r.ok) throw new Error((await r.text()).slice(0, 160));
-        docs.push({ nombre: f.name, url: SB_URL + '/storage/v1/object/public/documentos-publicos/' + ruta, tipo: f.type, tamano: f.size });
+        // Todo documento nuevo nace PRIVADO: no sale en la ficha pública
+        // hasta que el agente lo publique a propósito (ver pxDocPublicar).
+        docs.push({ nombre: v.nombreOriginal, url: SB_URL + '/storage/v1/object/public/documentos-publicos/' + ruta, tipo: v.mime, tamano: f.size, publico: false });
         pintarDocs();
         if (typeof propFormDirty !== 'undefined') propFormDirty = true;
       } catch (err) { prog.textContent = 'No se pudo subir ' + f.name + ': ' + err.message; return; }
@@ -768,7 +795,7 @@
       '<textarea id="px-videos" rows="2" placeholder="https://youtu.be/…"></textarea></div></div>' +
     '<div class="pf-row"><div class="pf-field full"><label>Tour virtual' + NOTA('Matterport, Kuula u otra liga https, una por renglón') + '</label>' +
       '<textarea id="px-tours" rows="2" placeholder="https://my.matterport.com/show/?m=…"></textarea></div></div>' +
-    '<div class="pf-row"><div class="pf-field full"><label>Documentos públicos' + NOTA('planos, volantes, lista de precios · PDF o imagen, máx. 15 MB') + '</label>' +
+    '<div class="pf-row"><div class="pf-field full"><label>Documentos' + NOTA('planos, volantes, lista de precios · PDF o imagen, máx. 15 MB · quedan privados hasta que elijas «Mostrar en ficha»') + '</label>' +
       '<input type="file" id="px-docs-input" accept="application/pdf,image/*" multiple class="px-file"/>' +
       '<ul id="px-docs-list" class="px-docs"></ul><div id="px-docs-progress" class="px-nota"></div></div></div>';
 
@@ -787,8 +814,11 @@
       g('fotos-upload').insertAdjacentElement('afterend', nota);
       g('px-docs-input').addEventListener('change', subirDocumentos);
       g('px-docs-list').addEventListener('click', function (e) {
+        var pub = e.target.closest('[data-publicar-doc]');
+        if (pub) { pxDocPublicar(Number(pub.dataset.publicarDoc)); return; }
         var b = e.target.closest('[data-quitar-doc]'); if (!b) return;
         docs.splice(Number(b.dataset.quitarDoc), 1); pintarDocs();
+        if (typeof propFormDirty !== 'undefined') propFormDirty = true;
       });
     }
     var del = document.querySelector('#bulk-bar .bulk-bar__btn--danger');

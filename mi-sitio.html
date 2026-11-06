@@ -145,6 +145,7 @@
 
 <div class="bk-toast-stack" id="toast-stack"></div>
 
+<script src="archivos-seguros.js" defer></script>
 <script src="app-shell.js" defer></script>
 <script src="bk-api.js" defer></script>
 <script src="mi-sitio-web.js" defer></script>
@@ -386,12 +387,13 @@ async function subirFoto(file) {
   if (!token) { progress.textContent = 'Tu sesión expiró. Vuelve a iniciar sesión.'; return; }
   progress.textContent = 'Subiendo…';
   try {
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    // Bucket público: solo fotos confirmadas por contenido (archivos-seguros.js).
+    const v = await window.bkArchivos.validar(file, 'foto_propiedad');
     const uid = await userId();
-    const name = `perfil_${uid}_${Date.now()}.${ext}`;
+    const name = `perfil_${uid}_${v.nombreInterno}`;
     const r = await fetch(`${SB_URL}/storage/v1/object/fotos-propiedades/${name}`, {
       method: 'POST',
-      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': file.type, 'x-upsert': 'true' },
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': v.mime },
       body: file,
     });
     if (!r.ok) throw new Error(await r.text());

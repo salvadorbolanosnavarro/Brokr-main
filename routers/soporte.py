@@ -21,6 +21,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from core.auth import require_user_id
 from core.config import settings
 from core.database import get_rows
+from core.file_validation import ArchivoRechazado, validar_archivo
 from core.organizations import get_org_id_for_user
 
 log = logging.getLogger("soporte")
@@ -128,7 +129,13 @@ async def enviar_mensaje(
         if len(datos) > MAX_IMAGEN:
             raise HTTPException(413, "La imagen pesa más de 5 MB.")
         if datos:
-            adjuntos.append({"filename": f"captura.{TIPOS_IMAGEN[tipo]}",
+            # El tipo real lo deciden los bytes, no el navegador: un HTML con
+            # etiqueta image/png no llega como adjunto al correo de soporte.
+            try:
+                val = validar_archivo(datos, imagen.filename, "soporte_captura")
+            except ArchivoRechazado as exc:
+                raise HTTPException(422, exc.mensaje) from None
+            adjuntos.append({"filename": f"captura.{val.extension}",
                              "content": base64.b64encode(datos).decode()})
 
     if not settings.resend_api_key:

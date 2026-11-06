@@ -7,9 +7,14 @@
 // Sube un blob de foto al bucket "fotos-propiedades" y regresa su URL pública.
 // Compartido entre el <input type=file> normal y las fotos que llegan ya
 // editadas desde el Editor de imágenes (ver preloadFotosDesdeEditor).
+// El bucket es PÚBLICO: antes de subir, archivos-seguros.js confirma por
+// contenido que es una foto (un WhatsApp.html renombrado no pasa). La
+// extensión y el tipo que diga el navegador (ext, contentType) ya no deciden.
 async function subirFotoABucket(blob, ext, contentType, userToken) {
-  const name = `prop_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-  const r = await fetch(`${SB_URL}/storage/v1/object/fotos-propiedades/${name}`, { method:'POST', headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+userToken, 'Content-Type':contentType, 'x-upsert':'true' }, body:blob });
+  if (!window.bkArchivos) throw new Error('La página aún se está cargando. Intenta de nuevo en un segundo.');
+  const v = await window.bkArchivos.validar(blob, 'foto_propiedad');
+  const name = `prop_${v.nombreInterno}`;
+  const r = await fetch(`${SB_URL}/storage/v1/object/fotos-propiedades/${name}`, { method:'POST', headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+userToken, 'Content-Type':v.mime }, body:blob });
   if (!r.ok) {
     const errTxt = await r.text();
     if (r.status === 401 || r.status === 403 || errTxt.includes('row-level security')) {

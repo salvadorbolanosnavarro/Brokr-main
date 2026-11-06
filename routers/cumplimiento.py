@@ -50,6 +50,7 @@ from core.auth import require_user_id
 from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
 from core.storage import create_signed_object_url, delete_object, download_object, upload_object
+from core.file_validation import leer_upload
 from core.pld_inm import TIPOS_BROQUER_INM, catalogos, con_ubicacion_esquema, construir_xml, validar_xsd
 from core.pld_alertas import PASOS, alertas_pld
 from core.paises import PAIS_DEFAULT, datos_pais, pais_de_usuario
@@ -73,13 +74,7 @@ LIGA_DIAS_VIGENCIA = 14
 # es una identificación oficial, no una foto de fachada.
 FIRMA_SEGUNDOS = 300
 
-# Tamaño máximo por documento subido (10 MB). Una INE escaneada no pesa más.
-MAX_BYTES = 10 * 1024 * 1024
-
-MIMES_OK = {
-    "image/jpeg", "image/png", "image/webp", "image/heic",
-    "application/pdf",
-}
+# Tipos y tamaño máximo de documentos: core.file_validation (perfil expediente_pld).
 
 # ── Documentos exigibles por tipo de persona ──────────────────────────────
 # Esto define la barra de completitud. Si la autoridad pide uno más, se
@@ -756,17 +751,11 @@ def _limpio(nombre: str) -> str:
 
 async def _subir(user_id: str, expediente_id: str, tipo: str,
                  archivo: UploadFile, quien: str) -> dict:
-    contenido = await archivo.read()
-    if not contenido:
-        raise HTTPException(400, "El archivo llegó vacío.")
-    if len(contenido) > MAX_BYTES:
-        raise HTTPException(413, "El archivo pesa más de 10 MB. Comprímelo o toma la foto de nuevo.")
-    mime = (archivo.content_type or "application/octet-stream").lower()
-    if mime not in MIMES_OK:
-        raise HTTPException(415, "Solo se aceptan fotos (JPG, PNG, WEBP) o archivos PDF.")
+    contenido, val = await leer_upload(archivo, "expediente_pld")
+    mime = val.mime
 
     sello = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-    ruta = f"{user_id}/{expediente_id}/{_limpio(tipo)}-{sello}-{_limpio(archivo.filename)}"
+    ruta = f"{user_id}/{expediente_id}/{_limpio(tipo)}-{sello}-{val.nombre_interno}"
 
     try:
         await upload_object(
@@ -1075,7 +1064,7 @@ async def _guardar_xml(uid: str, aviso_id: str, periodo: str, referencia: str, x
     ruta = f"{uid}/avisos/aviso-{periodo}-{referencia}.xml"
     try:
         await upload_object(BUCKET, ruta, xml.encode("utf-8"),
-                            content_type="application/xml", timeout=30)
+                            content_type="application/xml", timeout=30, server_generated_xml=True)
     except Exception as exc:
         log.warning("upload XML PLD falló: %s", exc)
         raise HTTPException(500, "Se armó el aviso pero no se pudo guardar el archivo.") from exc
@@ -1095,7 +1084,7 @@ async def _reparar_raiz_xml(ruta: str) -> None:
         reparado = con_ubicacion_esquema(actual)
         if reparado != actual:
             await upload_object(BUCKET, ruta, reparado.encode("utf-8"),
-                                content_type="application/xml", timeout=30)
+                                content_type="application/xml", timeout=30, server_generated_xml=True)
             log.info("XML PLD reparado (schemaLocation): %s", ruta)
     except Exception as exc:
         log.warning("no se pudo reparar el XML PLD %s: %s", ruta, exc)
@@ -1113,11 +1102,13 @@ async def descargar_xml(request: Request, aviso_id: str):
                                  "Tócale «Rehacer aviso» y vuelve a generarlo.")
     if aviso.get("formato") == "INM":
         await _reparar_raiz_xml(aviso["xml_ruta"])
-    url = await create_signed_object_url(BUCKET, aviso["xml_ruta"], expires_in=300, timeout=15)
+    nombre_xml = f"aviso-{aviso.get('periodo')}-{aviso.get('referencia')}.xml"
+    url = await create_signed_object_url(BUCKET, aviso["xml_ruta"], expires_in=300, timeout=15,
+                                         download=nombre_xml)
     if not aviso.get("descargado_at"):
         await _sb_patch("pld_avisos", {"id": f"eq.{aviso_id}"},
                         {"descargado_at": datetime.now(timezone.utc).isoformat()})
-    return {"url": url, "nombre": f"aviso-{aviso.get('periodo')}-{aviso.get('referencia')}.xml"}
+    return {"url": url, "nombre": nombre_xml}
 
 
 @router.post("/avisos/{aviso_id}/subido")

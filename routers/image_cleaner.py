@@ -12,6 +12,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from core.auth import get_user_id_from_token
 from core.config import settings
 from core.executors import _thread_pool
+from core.file_validation import ArchivoRechazado, validar_archivo
 from core.telemetry import _track_gemini_image
 from limites import exigir_cupo, exigir_sesion
 
@@ -353,6 +354,13 @@ async def clean_images(
             raise HTTPException(status_code=413, detail="Cada imagen debe pesar 12 MB o menos.")
         if not raw:
             raise HTTPException(status_code=400, detail="Una de las imágenes llegó vacía.")
+        # El tipo real lo deciden los bytes; el content-type solo filtró arriba.
+        try:
+            ct = validar_archivo(raw, uf.filename, "imagen_editor").mime
+        except ArchivoRechazado as exc:
+            raise HTTPException(status_code=exc.status_code, detail=exc.mensaje) from None
+        if ct == "image/heic" and not HEIF_AVAILABLE:
+            raise HTTPException(status_code=415, detail="Solo se aceptan imágenes JPG, PNG, WEBP o HEIC.")
         total += len(raw)
         if total > MAX_TOTAL_BYTES:
             raise HTTPException(status_code=413, detail="El lote completo de imágenes es demasiado pesado.")

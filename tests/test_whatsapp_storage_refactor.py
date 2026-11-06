@@ -21,7 +21,7 @@ class WhatsAppStorageRegressionTests(unittest.TestCase):
         storage_source = media_source if media_extracted else source
 
         self.assertIn(
-            "from core.storage import delete_objects, upload_object",
+            "from core.storage import (create_signed_object_urls, delete_objects, download_object, object_path_from_url,\n                          upload_object)",
             storage_source,
         )
         self.assertIn("await upload_object(", storage_source)
@@ -31,7 +31,7 @@ class WhatsAppStorageRegressionTests(unittest.TestCase):
         )
         if media_extracted:
             self.assertNotIn(
-                "from core.storage import delete_objects, upload_object",
+                "from core.storage import (create_signed_object_urls, delete_objects, download_object, object_path_from_url,\n                          upload_object)",
                 source,
             )
             self.assertNotIn("async def _guardar_archivo(", source)

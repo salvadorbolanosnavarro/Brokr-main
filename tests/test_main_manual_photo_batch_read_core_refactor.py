@@ -28,7 +28,7 @@ class MainManualPhotoBatchReadCoreRefactorTests(unittest.TestCase):
         block = self.block
         self.assertIn('filas = await get_rows("propiedades", params, timeout=30)', block)
         self.assertIn('except Exception:\n        raise HTTPException(status_code=500, detail="No se pudo leer el inventario.")', block)
-        self.assertIn('f"{SUPABASE_URL}/storage/v1/object/{_FOTOS_BUCKET}/{nombre}"', block)
+        self.assertIn('return await importar_foto_externa(url)', block)
         self.assertIn('await patch_rows(', block)
         self.assertIn('"propiedades"', block)
         self.assertIn('{"id": f"eq.{pid}"}', block)

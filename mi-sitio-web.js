@@ -195,10 +195,11 @@
     prev.textContent = 'Subiendo…';
     try {
       var sb = window.brokrSb, tok = await sb.ensureToken();
-      var ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '');
-      var nombre = 'sitio_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+      // Bucket público: solo imágenes confirmadas por contenido (archivos-seguros.js).
+      var v = await window.bkArchivos.validar(file, 'foto_propiedad');
+      var nombre = 'sitio_' + v.nombreInterno;
       var r = await fetch(sb.url + '/storage/v1/object/fotos-propiedades/' + nombre, {
-        method: 'POST', headers: { apikey: sb.key, Authorization: 'Bearer ' + tok, 'Content-Type': file.type, 'x-upsert': 'true' }, body: file });
+        method: 'POST', headers: { apikey: sb.key, Authorization: 'Bearer ' + tok, 'Content-Type': v.mime }, body: file });
       if (!r.ok) throw new Error('No se pudo subir');
       var url = sb.url + '/storage/v1/object/public/fotos-propiedades/' + nombre;
       document.getElementById(id).value = url;
