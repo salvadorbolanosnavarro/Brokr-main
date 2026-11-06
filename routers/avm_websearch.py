@@ -14,7 +14,9 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from core.subscriptions import require_paid_feature_access
-from core.avm_fuentes import fuentes_publicas, pagina_leida, sanear_resultado, urls_no_consultadas
+from core.avm_fuentes import (
+    fuentes_publicas, pagina_leida, sanear_resultado, urls_no_consultadas, urls_permitidas,
+)
 from core.cache import cache_get, cache_set
 from core.config import settings
 from core.database import rest_url, service_headers
@@ -137,45 +139,127 @@ PREMIUM_FETCH_DOMAINS = {
 }
 
 
+# La extracción estructurada pide una LISTA de anuncios, no uno solo. Antes
+# el esquema era un objeto plano (un precio, una superficie): en una página
+# de resultados con 20 locales Firecrawl devolvía uno al azar o ninguno, y
+# el modelo, con la advertencia de multi-listado encima, terminaba sin
+# comparables aunque la página trajera la oferta completa de la zona.
+# (Caso real: 14 páginas leídas sin errores → solo 2 comparables.)
 _FIRECRAWL_LISTING_PROMPT = (
-    "Extrae del anuncio inmobiliario en esta página: precio de venta o renta "
-    "(solo el número, sin símbolos de moneda ni separadores), la moneda, "
-    "superficie de terreno en m2, superficie de construcción en m2, número "
-    "de recámaras, número de baños y número de estacionamientos. Si un dato "
-    "no aparece explícitamente en la página, omite ese campo — nunca "
-    "inventes ni adivines un valor."
+    "Extrae TODOS los anuncios inmobiliarios individuales que aparezcan en "
+    "esta página. Si es el detalle de un solo anuncio, devuelve una lista con "
+    "ese único anuncio. Si es una página de resultados o listado, devuelve un "
+    "elemento por cada anuncio visible. Para cada anuncio: título, ubicación "
+    "(colonia/calle tal como aparece), operación (venta o renta), precio (solo "
+    "el número, sin símbolos de moneda ni separadores), moneda, superficie de "
+    "terreno en m2, superficie de construcción en m2, recámaras, baños, "
+    "estacionamientos y la liga (URL) del anuncio individual. Si un dato no "
+    "aparece explícitamente para ESE anuncio, omite el campo — nunca inventes "
+    "ni adivines un valor, y nunca mezcles datos de anuncios distintos. No "
+    "incluyas anuncios sin precio."
 )
 
 _FIRECRAWL_LISTING_SCHEMA = {
     "type": "object",
     "properties": {
-        "precio": {"type": "number"},
-        "moneda": {"type": "string"},
-        "m2_terreno": {"type": "number"},
-        "m2_construccion": {"type": "number"},
-        "recamaras": {"type": "number"},
-        "banos": {"type": "number"},
-        "estacionamientos": {"type": "number"},
+        "anuncios": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "titulo": {"type": "string"},
+                    "ubicacion": {"type": "string"},
+                    "operacion": {"type": "string"},
+                    "precio": {"type": "number"},
+                    "moneda": {"type": "string"},
+                    "m2_terreno": {"type": "number"},
+                    "m2_construccion": {"type": "number"},
+                    "recamaras": {"type": "number"},
+                    "banos": {"type": "number"},
+                    "estacionamientos": {"type": "number"},
+                    "url": {"type": "string"},
+                },
+            },
+        },
     },
 }
 
+# Encabezado del bloque estructurado dentro de page_text. Sin el nombre de
+# la herramienta: este texto llega al modelo y podría repetirlo.
+MARCA_ANUNCIOS = "ANUNCIOS ESTRUCTURADOS DE LA PÁGINA"
+MAX_ANUNCIOS_POR_PAGINA = 30
+# El bloque estructurado tiene su propio presupuesto de caracteres: antes
+# compartía el recorte con el markdown y podía comerse el texto de la página.
+MAX_STRUCT_CHARS = 6000
+# Tope total de page_text (bloque estructurado + advertencia + markdown).
+MAX_PAGE_TEXT_CHARS = MAX_TEXT_CHARS_PER_URL + MAX_STRUCT_CHARS + 1200
 
-def _formatea_estructurado_firecrawl(datos: Dict[str, Any]) -> str:
-    """Igual que _extract_json_ld: una línea de alta confianza que el
-    prompt de valuación (regla 10) sabe leer antes que el texto libre."""
-    etiquetas = {
-        "precio": "precio", "moneda": "moneda", "m2_terreno": "m2_terreno",
-        "m2_construccion": "m2_construccion", "recamaras": "recamaras",
-        "banos": "banos", "estacionamientos": "estacionamientos",
-    }
-    partes = [
-        f"{etiquetas[campo]}={datos[campo]}"
-        for campo in etiquetas
-        if datos.get(campo) not in (None, "")
-    ]
-    if not partes:
+_CAMPOS_ANUNCIO = ("precio", "moneda", "operacion", "m2_construccion", "m2_terreno",
+                   "recamaras", "banos", "estacionamientos")
+
+
+def _limpia_campo(valor: Any) -> str:
+    return _sameish_text(str(valor)).replace("|", "/")[:140]
+
+
+def _anuncios_estructurados(datos: Any) -> List[Dict[str, Any]]:
+    """Normaliza la respuesta "json" de Firecrawl a una lista de anuncios.
+    Acepta el formato actual ({"anuncios": [...]}) y el anterior (un solo
+    anuncio como objeto plano)."""
+    if not isinstance(datos, dict):
+        return []
+    lista = datos.get("anuncios")
+    if isinstance(lista, list):
+        return [a for a in lista if isinstance(a, dict)]
+    if datos.get("precio") not in (None, ""):
+        return [datos]
+    return []
+
+
+def _formatea_estructurado_firecrawl(datos: Dict[str, Any], url_pagina: str = "") -> str:
+    """Bloque de alta confianza que el prompt de valuación (regla 10) lee
+    antes que el texto libre: un anuncio por línea, cada uno con su propio
+    precio y superficie, para que una página de listado rinda un comparable
+    por anuncio en vez de ninguno."""
+    from urllib.parse import urljoin
+
+    lineas: List[str] = []
+    vistos = set()
+    for anuncio in _anuncios_estructurados(datos):
+        precio = anuncio.get("precio")
+        if precio in (None, "", 0):
+            continue
+        partes: List[str] = []
+        for campo in ("titulo", "ubicacion"):
+            if anuncio.get(campo):
+                partes.append(_limpia_campo(anuncio[campo]))
+        for campo in _CAMPOS_ANUNCIO:
+            if anuncio.get(campo) not in (None, ""):
+                partes.append(f"{campo}={_limpia_campo(anuncio[campo])}")
+        liga = str(anuncio.get("url") or "").strip()
+        if liga and url_pagina and not liga.startswith(("http://", "https://")):
+            liga = urljoin(url_pagina, liga)
+        if liga.startswith(("http://", "https://")):
+            partes.append(f"url={liga}")
+        clave = "|".join(partes)
+        if clave in vistos:
+            continue
+        vistos.add(clave)
+        lineas.append(" | ".join(partes))
+        if len(lineas) >= MAX_ANUNCIOS_POR_PAGINA:
+            break
+    if not lineas:
         return ""
-    return "DATO ESTRUCTURADO FIRECRAWL (alta confianza): " + ", ".join(partes) + ".\n\n"
+    cuerpo = ""
+    for i, linea in enumerate(lineas, 1):
+        siguiente = f"{i}) {linea}\n"
+        if len(cuerpo) + len(siguiente) > MAX_STRUCT_CHARS:
+            break
+        cuerpo += siguiente
+    total = cuerpo.count("\n")
+    return (f"{MARCA_ANUNCIOS} (alta confianza, {total} anuncio"
+            f"{'s' if total != 1 else ''}, cada línea es un anuncio distinto con sus propios datos):\n"
+            + cuerpo + "\n")
 
 
 # API v2 de Firecrawl (la actual). Antes se llamaba a /v1/scrape pero con el
@@ -251,7 +335,7 @@ async def _firecrawl_scrape(url: str) -> Dict[str, Any]:
         text = (data.get("markdown") or "")[:MAX_TEXT_CHARS_PER_URL]
         estructurado = data.get("json") or {}
         if isinstance(estructurado, dict):
-            linea = _formatea_estructurado_firecrawl(estructurado)
+            linea = _formatea_estructurado_firecrawl(estructurado, url)
             if linea:
                 text = linea + text
         meta = data.get("metadata") or {}
@@ -259,6 +343,12 @@ async def _firecrawl_scrape(url: str) -> Dict[str, Any]:
         return {"ok": True, "page_text": text, "credits": credits}
     except Exception as exc:
         return {"ok": False, "error": str(exc)[:120], "page_text": "", "credits": 0}
+
+
+# Versión del formato guardado en caché. Las filas viejas ("ok_firecrawl")
+# traen el bloque estructurado de un solo anuncio y el texto recortado más
+# corto: no se reutilizan, se vuelven a leer y se sobrescriben.
+CACHE_FETCH_STATUS = "ok_firecrawl_v2"
 
 
 async def _avm_cache_lookup(url: str) -> Optional[str]:
@@ -278,6 +368,7 @@ async def _avm_cache_lookup(url: str) -> Optional[str]:
                 headers=service_headers(),
                 params={
                     "url": f"eq.{canon}",
+                    "fetch_status": f"eq.{CACHE_FETCH_STATUS}",
                     "creado_en": f"gte.{cutoff}",
                     "select": "page_text",
                     "limit": "1",
@@ -305,8 +396,8 @@ async def _avm_cache_store(url: str, colonia: str, ciudad: str, page_text: str) 
                     "host": _host(url),
                     "colonia": colonia or None,
                     "ciudad": ciudad or None,
-                    "fetch_status": "ok_firecrawl",
-                    "page_text": page_text[:MAX_TEXT_CHARS_PER_URL],
+                    "fetch_status": CACHE_FETCH_STATUS,
+                    "page_text": page_text[:MAX_PAGE_TEXT_CHARS],
                     "creado_en": datetime.now(timezone.utc).isoformat(),
                 },
             )
@@ -351,6 +442,36 @@ def es_dominio_inmobiliario(url: str) -> bool:
     return any(host == d or host.endswith("." + d) for d in DOMINIOS_INMOBILIARIOS)
 
 
+# Inmobiliarias locales (sitios propios fuera de los portales): muchas veces
+# son la única oferta publicada de locales/oficinas en ciudades medianas. Se
+# aceptan solo si el título o resumen del buscador ya parece un anuncio
+# (operación + superficie + precio), y nunca de medios o redes sociales,
+# para no volver a meter notas de periódico (ver es_dominio_inmobiliario).
+_NO_ANUNCIOS = (
+    "elpais.com", "eluniversal.com.mx", "milenio.com", "excelsior.com.mx", "jornada.com.mx",
+    "elfinanciero.com.mx", "eleconomista.com.mx", "expansion.mx", "forbes.com.mx", "infobae.com",
+    "quadratin.com.mx", "lavozdemichoacan.com.mx", "wikipedia.org", "facebook.com", "instagram.com",
+    "tiktok.com", "youtube.com", "x.com", "twitter.com", "linkedin.com", "pinterest.com",
+    "reddit.com", "google.com", "gob.mx",
+)
+_NO_ANUNCIO_HOST_RE = re.compile(r"noticia|periodic|diario|news|revista|blog", re.IGNORECASE)
+_ANUNCIO_OP_RE = re.compile(r"\b(venta|vendo|renta|rento|arrendamiento|alquiler)\b", re.IGNORECASE)
+_ANUNCIO_M2_RE = re.compile(r"\d[\d,\.]*\s?(m2|m²|mts|metros)", re.IGNORECASE)
+_ANUNCIO_PRECIO_RE = re.compile(r"\$\s?\d[\d,\.]{2,}|\b\d[\d,\.]{3,}\s?(mxn|pesos)\b", re.IGNORECASE)
+
+
+def parece_anuncio_inmobiliario(item: Dict[str, Any]) -> bool:
+    url = item.get("url", "")
+    host = _host(url)
+    if not host or _NO_ANUNCIO_HOST_RE.search(host):
+        return False
+    if any(host == d or host.endswith("." + d) for d in _NO_ANUNCIOS):
+        return False
+    texto = f"{item.get('title', '')} {item.get('snippet', '')}"
+    return bool(_ANUNCIO_OP_RE.search(texto) and _ANUNCIO_M2_RE.search(texto)
+                and _ANUNCIO_PRECIO_RE.search(texto))
+
+
 def _host(url: str) -> str:
     try:
         from urllib.parse import urlparse
@@ -391,14 +512,26 @@ def _build_search_queries(req: AvmWebSearchRequest, colonias_vecinas: List[str] 
     # a la API sin pasar por el selector del frontend) no metemos comillas
     # vacías a la query — eso ensucia la búsqueda en vez de acotarla.
     lugar = " ".join(f'"{v}"' for v in (req.colonia, req.ciudad) if v)
-    base = f'{tipo} en {op} {lugar} precio m2'
+    # Sin "precio m2": los anuncios casi nunca publican esa frase literal y
+    # con las comillas de colonia/ciudad la búsqueda base se quedaba casi
+    # sin resultados (sobre todo locales/oficinas en renta).
+    base = f'{tipo} en {op} {lugar}'.strip()
     if req.pais == PAIS_DEFAULT:
-        portales = ["inmuebles24.com", "lamudi.com.mx", "propiedades.com", "vivanuncios.com.mx"]
+        # MercadoLibre es de los portales con más oferta fuera de CDMX y
+        # antes no tenía búsqueda propia.
+        portales = ["inmuebles24.com", "lamudi.com.mx", "propiedades.com", "vivanuncios.com.mx",
+                    "inmuebles.mercadolibre.com.mx"]
     else:
         portales = list(datos_pais(req.pais)["portales"])[:4]
     queries = [base] + [f'{tipo} {op} {lugar} site:{d}' for d in portales + ["easybroker.com"]]
     if req.estado:
         queries.append(f'{tipo} {op} {lugar} "{req.estado}"')
+    # Búsqueda a nivel ciudad con la superficie del sujeto: trae anuncios
+    # de tamaño parecido de zonas cercanas cuando la colonia tiene poca
+    # oferta publicada (el modelo decide si son comparables por ubicación).
+    superficie = req.m2_terreno if req.tipo_inmueble == "terreno" else (req.m2_construccion or req.m2_terreno)
+    if req.ciudad and superficie and superficie > 0:
+        queries.append(f'{tipo} en {op} "{req.ciudad}" {int(round(superficie))} m2')
     # Colonias colindantes reales (descubiertas por geocodificación, no
     # adivinadas por el modelo): una query genérica por cada una para
     # ampliar la búsqueda sin disparar el número de queries tanto como el
@@ -406,7 +539,7 @@ def _build_search_queries(req: AvmWebSearchRequest, colonias_vecinas: List[str] 
     for vecina in colonias_vecinas[:3]:
         lugar_vecina = " ".join(f'"{v}"' for v in (vecina, req.ciudad) if v)
         if lugar_vecina:
-            queries.append(f'{tipo} en {op} {lugar_vecina} precio m2')
+            queries.append(f'{tipo} en {op} {lugar_vecina}')
     return queries
 
 
@@ -646,7 +779,7 @@ async def _collect_search_candidates(req: AvmWebSearchRequest, colonias_vecinas:
         canon = _canonical_url(url)
         if not url or canon in seen:
             return False
-        if not es_dominio_inmobiliario(url):
+        if not (es_dominio_inmobiliario(url) or parece_anuncio_inmobiliario(item)):
             return False
         item["portal"] = _portal_name(url)
         item["query"] = query
@@ -856,23 +989,35 @@ def _advertencia_multi_listado(texto: str) -> str:
     """Si el texto trae muchos precios distintos, probablemente es una
     página de resultados/listado (varias propiedades revueltas) y no el
     detalle de un solo anuncio — el modelo no debería asumir que el primer
-    precio que ve corresponde a la superficie del sujeto. Se marca con una
-    advertencia explícita en vez de dejar que el modelo lo adivine."""
+    precio que ve corresponde a la superficie del sujeto. Si la página ya
+    trae el bloque de anuncios estructurados, cada línea de ese bloque sí es
+    un anuncio individual usable (antes la advertencia hacía que se
+    descartaran todos)."""
     precios_unicos = set(_PRECIO_MXN_RE.findall(texto or ""))
-    if len(precios_unicos) >= 5:
+    if len(precios_unicos) < 5:
+        return ""
+    if MARCA_ANUNCIOS in (texto or ""):
         return (
-            "ADVERTENCIA AUTOMÁTICA: esta página trae "
-            f"{len(precios_unicos)} precios distintos — probablemente es un "
-            "listado de resultados con varias propiedades, no el detalle de "
-            "un solo anuncio. No le asignes ninguno de estos precios a la "
-            "superficie del inmueble sujeto a menos que el texto deje "
-            "clarísimo que corresponden a una sola propiedad. Si esta misma "
-            "página trae un indicador agregado del portal (precio promedio/"
-            "medio de la zona, rango de precios, número de propiedades "
-            "activas), sí puedes usar ESE dato como comparable de baja "
-            "confianza.\n\n"
+            "ADVERTENCIA AUTOMÁTICA: esta página es un listado de resultados "
+            "con varias propiedades. Usa cada línea del bloque de anuncios "
+            "estructurados como un comparable individual (cada una trae su "
+            "propio precio y superficie). No le asignes al inmueble sujeto "
+            "precios sueltos del texto libre de abajo que no estén en ese "
+            "bloque.\n\n"
         )
-    return ""
+    return (
+        "ADVERTENCIA AUTOMÁTICA: esta página trae "
+        f"{len(precios_unicos)} precios distintos — probablemente es un "
+        "listado de resultados con varias propiedades, no el detalle de "
+        "un solo anuncio. Solo usa un precio como comparable individual si "
+        "el texto deja claro qué superficie (y de preferencia qué ubicación) "
+        "le corresponde a ESE precio; cada tarjeta de anuncio con precio y "
+        "m² propios cuenta como un comparable distinto. Si esta misma "
+        "página trae un indicador agregado del portal (precio promedio/"
+        "medio de la zona, rango de precios, número de propiedades "
+        "activas), también puedes usar ESE dato como comparable de baja "
+        "confianza.\n\n"
+    )
 
 
 def _parse_precio_mxn(raw: str) -> float | None:
@@ -1248,7 +1393,7 @@ async def _claude_extract_and_value(
             # Sin estados técnicos ni nombres de herramientas: la IA no debe
             # poder repetirlos en el resultado (ver core/avm_fuentes.py).
             "lectura": "pagina_completa" if pagina_leida(evidence_item.get("fetch_status", "")) else "solo_resumen_del_buscador",
-            "texto_visible_limitado": evidence_item.get("page_text", "")[:MAX_TEXT_CHARS_PER_URL]
+            "texto_visible_limitado": evidence_item.get("page_text", "")[:MAX_PAGE_TEXT_CHARS]
                 .replace("DATO ESTRUCTURADO FIRECRAWL", "DATO ESTRUCTURADO DEL ANUNCIO"),
         })
 
@@ -1277,13 +1422,13 @@ Reglas duras:
 7. Aplica factor negociación de -5% a precios de oferta en venta. En renta usa -3% si aplica.
 8. Penaliza comparables sospechosos: anuncio viejo, datos incompletos, precio/m² extremo, ubicación poco clara, submercado distinto.
 9. Esta salida es una estimación de valor, no avalúo certificado.
-10. Cada "texto_visible_limitado" puede traer, antes del texto de la página, una línea "DATO ESTRUCTURADO JSON-LD (alta confianza): ..." o "DATO ESTRUCTURADO DEL ANUNCIO (alta confianza): ..." — ambas son precio/superficie extraídos del propio código o render de la página (nunca inventados, no aparecen si la página no traía el dato), mucho más confiables que el texto suelto de abajo. Si alguna está presente, úsala como fuente principal de ese comparable en vez de intentar leerlo del texto plano.
-11. Si una fuente trae "ADVERTENCIA AUTOMÁTICA: ... probablemente es un listado de resultados con varias propiedades...", esa página mezcla precios de varios anuncios distintos: NO le asignes un precio a una superficie a menos que el texto deje clarísimo que un precio específico corresponde a una superficie específica. Pero esa misma página de listado casi siempre trae también un indicador agregado del portal (ej. "precio promedio/medio de casas en venta en X colonia: $Y", "rango de precios", "N propiedades activas") — ESE dato SÍ lo puedes usar como comparable de baja confianza (descripción: "Indicador estadístico de mercado — no es un anuncio individual"), en vez de descartar la página entera y quedarte sin nada.
+10. Cada "texto_visible_limitado" puede traer, antes del texto de la página, una línea "DATO ESTRUCTURADO JSON-LD (alta confianza): ..." o un bloque "ANUNCIOS ESTRUCTURADOS DE LA PÁGINA (alta confianza ...)" con un anuncio por línea (título, ubicación, precio, superficies y, si la hay, la url de ese anuncio). Son datos extraídos del propio código o render de la página (nunca inventados), mucho más confiables que el texto suelto de abajo. CADA LÍNEA del bloque es un anuncio distinto y cuenta como un comparable individual por separado: evalúa todas (no solo la primera), inclúyelas si son del mismo tipo de inmueble y operación y de una ubicación comparable, y descártalas con motivo si no. Si la línea trae url, usa esa url en el comparable; si no, usa la url de la página.
+11. Si una fuente trae "ADVERTENCIA AUTOMÁTICA: ... listado de resultados con varias propiedades...", esa página mezcla varios anuncios: usa sus anuncios estructurados (regla 10) o cada tarjeta del texto que traiga precio y superficie propios como comparables individuales distintos, pero NO cruces un precio de un anuncio con la superficie de otro. Si además trae un indicador agregado del portal (ej. "precio promedio/medio en X colonia: $Y", "rango de precios", "N propiedades activas"), puedes usarlo como comparable de baja confianza (descripción: "Indicador estadístico de mercado — no es un anuncio individual").
 12. Vuelve a sumar/promediar tú mismo los precio_m2 de los comparables que marques incluido_en_promedio antes de reportar valor_por_m2 — no arrastres un cálculo mental impreciso; verifica la aritmética.
 13. NUNCA dejes valor_estimado en 0 ni respondas que "no fue posible" generar una estimación — eso no le sirve de nada a un agente inmobiliario. Siempre entrega un número, usando en orden lo mejor disponible: (a) comparables individuales de la colonia; (b) comparables de zonas adyacentes/similares; (c) el indicador estadístico agregado del portal (regla 11) para la colonia o ciudad; (d) si de plano no hay NINGÚN precio en toda la evidencia (ni individual ni agregado), da tu mejor estimación razonada a partir de lo que sí sepas del tipo de inmueble y la zona, dejándolo explícito en advertencias. Cuanto más débil la evidencia, más ancho el rango (valor_minimo/valor_maximo) y más baja la nivel_confianza — pero siempre con un valor_estimado numérico. Reserva nivel_confianza='baja' + un rango amplio para estos casos; jamás una respuesta vacía.
 14. Si menos de 3 comparables individuales son útiles, aplica igualmente la regla 13 (rango conservador, nivel_confianza='baja') en vez de negarte a estimar.
-15. Tono de "advertencias" y "razon_confianza": son para un agente inmobiliario que se lo va a enseñar a su cliente, no una advertencia legal. Nada de MAYÚSCULAS tipo alarma ni acumular varios avisos de "esto no es un avalúo certificado" — eso ya va aparte en el campo "metodologia" del sistema, no lo repitas aquí. Explica en 1-2 oraciones, en tono profesional y directo, POR QUÉ la confianza es la que es (ej. "los portales consultados bloquearon el acceso directo a varios anuncios, así que el rango se apoya más en el indicador de mercado que en anuncios individuales") — sin sonar catastrófico. Baja confianza con un rango amplio es una estimación honesta, no un fracaso.
-16. Nunca menciones, en ningún campo, cómo se obtuvo la información: ni herramientas, ni proveedores, ni buscadores, ni que alguna página no se pudo leer, falló o estaba bloqueada. Si una fuente solo trae "solo_resumen_del_buscador", úsala con lo que muestra y ya. Habla del mercado, no del proceso.{moneda_regla}
+15. Tono de "advertencias" y "razon_confianza": son para un agente inmobiliario que se lo va a enseñar a su cliente, no una advertencia legal. Nada de MAYÚSCULAS tipo alarma ni acumular varios avisos de "esto no es un avalúo certificado" — eso ya va aparte en el campo "metodologia" del sistema, no lo repitas aquí. Explica en 1-2 oraciones, en tono profesional y directo, POR QUÉ la confianza es la que es, hablando del mercado (ej. "hay pocos locales de tamaño similar publicados en la colonia, así que el rango se apoya también en oferta de colonias vecinas") — sin sonar catastrófico. Baja confianza con un rango amplio es una estimación honesta, no un fracaso.
+16. Nunca menciones, en ningún campo (incluidas "recomendaciones"), cómo se obtuvo la información: ni herramientas, ni proveedores, ni buscadores, ni que algún portal o página no se pudo leer, no dio acceso, falló o estaba bloqueada, ni recomiendes "verificar en portales" por esa razón. Si una fuente solo trae "solo_resumen_del_buscador", úsala con lo que muestra y ya. En "url" de los comparables solo pon ligas que aparezcan en la evidencia. Habla del mercado, no del proceso.{moneda_regla}
 
 Responde ÚNICAMENTE JSON válido con esta estructura:
 {{
@@ -1330,7 +1475,7 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
         "instruccion_calculo": "Extrae comparables reales de la evidencia; calcula precio/m²; descarta duplicados/outliers; promedia solo incluidos; aplica ajustes; calcula valor estimado y rango.",
     }
 
-    async with httpx.AsyncClient(timeout=120) as client:
+    async with httpx.AsyncClient(timeout=180) as client:
         response = await client.post(
             f"{ANTHROPIC_BASE}/messages",
             headers={
@@ -1340,7 +1485,8 @@ Responde ÚNICAMENTE JSON válido con esta estructura:
             },
             json={
                 "model": legacy_main_settings.anthropic_avm_model,
-                "max_tokens": 8000,
+                # Más anuncios por página → más comparables en la respuesta.
+                "max_tokens": 12000,
                 "temperature": 0.05,
                 "system": system_prompt,
                 "messages": [{"role": "user", "content": json.dumps(user_msg, ensure_ascii=False)}],
@@ -1510,4 +1656,4 @@ async def avm_websearch(req: AvmWebSearchRequest, request: Request):
 
     # Lo que ve la persona: sin ligas de páginas no consultadas ni menciones
     # de herramientas, proveedores o bloqueos (core/avm_fuentes.py).
-    return sanear_resultado(resultado, urls_no_consultadas(paginas))
+    return sanear_resultado(resultado, urls_no_consultadas(paginas), urls_permitidas(paginas))
