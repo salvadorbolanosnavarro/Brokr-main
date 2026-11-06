@@ -60,7 +60,7 @@ class RutaTests(unittest.TestCase):
 class LigasTests(unittest.TestCase):
     def _correr(self, urls, visibles, token="tok-usuario"):
         cliente = _Cliente(visibles)
-        firmar = mock.AsyncMock(side_effect=lambda bucket, ruta, expires_in: f"https://firmada/{bucket}/{ruta}?e={expires_in}")
+        firmar = mock.AsyncMock(side_effect=lambda bucket, ruta, expires_in, **kw: f"https://firmada/{bucket}/{ruta}?e={expires_in}")
         req = mock.Mock()
         req.headers = {"authorization": f"Bearer {token}"} if token else {}
         with mock.patch.object(al, "require_user_id", mock.AsyncMock(return_value="u1")), \

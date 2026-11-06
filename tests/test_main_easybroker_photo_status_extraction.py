@@ -30,7 +30,9 @@ class EasyBrokerPhotoStatusExtractionTests(unittest.TestCase):
         self.assertNotIn('_FOTOS_BUCKET', self.main)
         self.assertNotIn('foto_migrable as _foto_migrable', self.main)
         self.assertNotIn('fotos_en_proceso as _fotos_en_proceso', self.main)
-        self.assertIn('FOTOS_BUCKET as _FOTOS_BUCKET', self.router)
+        # Las fotos externas se importan por la puerta central (SSRF + validación de contenido).
+        self.assertIn('importar_foto_externa,', self.router)
+        self.assertNotIn('/storage/v1/object/', self.router)
         self.assertIn('foto_migrable as _foto_migrable', self.router)
         self.assertIn('fotos_en_proceso as _fotos_en_proceso', self.router)
         self.assertIn('FOTOS_BUCKET as _FOTOS_BUCKET', self.bulk)

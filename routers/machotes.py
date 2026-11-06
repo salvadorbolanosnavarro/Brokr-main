@@ -19,6 +19,7 @@ from core.paises import pais_de_usuario
 from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
 from core.executors import _thread_pool
+from core.file_validation import ArchivoRechazado, validar_archivo
 from core.telemetry import _track_anthropic
 from routers.organizaciones import get_org_id_for_user
 
@@ -95,6 +96,10 @@ def _leer_docx_subido(file: UploadFile, content: bytes):
         raise HTTPException(status_code=400, detail="Tu contrato pesa más de 12 MB. Quítale las imágenes pesadas y vuelve a subirlo.")
     if not (file.filename or "").lower().endswith(".docx"):
         raise HTTPException(status_code=400, detail="Solo aceptamos archivos .docx (Word).")
+    try:
+        validar_archivo(content, file.filename, "machote")
+    except ArchivoRechazado:
+        raise HTTPException(status_code=400, detail="Ese archivo no es un Word (.docx) válido. Ábrelo en Word y guárdalo otra vez como .docx.") from None
 
 
 @router.post("/contrato/machote/abrir")

@@ -1433,16 +1433,15 @@ async function _fmSubirFotosAlBucket(lista, token) {
     if (u.startsWith('data:')) {
       try {
         const blob = await (await fetch(u)).blob();
-        const mime = blob.type || 'image/jpeg';
-        const ext  = (mime.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
-        const name = `prop_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        // Bucket público: solo fotos confirmadas por contenido (archivos-seguros.js).
+        const v = await window.bkArchivos.validar(blob, 'foto_propiedad');
+        const name = `prop_${v.nombreInterno}`;
         const r = await fetch(`${SB_URL_FM}/storage/v1/object/fotos-propiedades/${name}`, {
           method: 'POST',
           headers: {
             'apikey': SB_KEY_FM,
             'Authorization': 'Bearer ' + token,
-            'Content-Type': mime,
-            'x-upsert': 'true'
+            'Content-Type': v.mime
           },
           body: blob
         });
@@ -1579,6 +1578,7 @@ function onTipoFichaChange() {
 }
 
 </script>
+<script src="archivos-seguros.js" defer></script>
 <script src="app-shell.js" defer></script>
 </body>
 </html>

@@ -69,6 +69,7 @@ from core.auth import require_user_id
 from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
 from core.storage import create_signed_object_url, delete_object, download_object, upload_object
+from core.file_validation import leer_upload
 from core.subscriptions import has_paid_feature_access, require_paid_feature_access
 from core.firmas_utils import _email_ok, _fecha_larga, _folio, _le_toca, _limpio, _mail_layout, _mask_email, _mask_tel, _resumen_estado, _tel
 from core.firmas_policy import ROLES, TIPOS, TIPOS_CON_AGENTE
@@ -105,11 +106,8 @@ OTP_INTENTOS  = 5
 FIRMA_SEGUNDOS     = 900
 FIRMA_SEGUNDOS_INE = 300
 
-MAX_PDF_BYTES   = 20 * 1024 * 1024
-MAX_IMG_BYTES   = 8 * 1024 * 1024
+# Tipos y tamaños de archivo: core.file_validation (perfiles firma_documento e identificacion).
 MAX_TRAZO_BYTES = 1 * 1024 * 1024
-
-MIMES_IMG = {"image/jpeg", "image/png", "image/webp", "image/heic"}
 
 # ── El texto del consentimiento ───────────────────────────────────────────
 # Esto es lo que sostiene todo lo demás. Si alguien impugna la firma, lo
@@ -586,18 +584,13 @@ async def subir_archivo(request: Request, documento_id: str, archivo: UploadFile
     if doc.get("estado") not in ("borrador",):
         raise HTTPException(409, "Ya no puedes cambiar el archivo: el documento salió a firma.")
 
-    contenido = await archivo.read()
-    if not contenido:
-        raise HTTPException(400, "El archivo llegó vacío.")
-    if len(contenido) > MAX_PDF_BYTES:
-        raise HTTPException(413, "El archivo pesa más de 20 MB. Compártelo más ligero.")
-
+    contenido, val = await leer_upload(archivo, "firma_documento")
     nombre_final = _limpio(archivo.filename)
 
     # Si llega un Word se convierte aquí mismo. Se firma el PDF, no el .docx:
     # un Word se abre y se edita sin dejar rastro, y entonces el hash deja de
     # significar nada. Además así el agente no tiene que exportar a mano.
-    if contenido[:4] == b"PK\x03\x04" and nombre_final.lower().endswith((".docx", ".dotx")):
+    if val.tipo == "docx":
         contenido = await _docx_a_pdf_bytes(contenido, doc.get("titulo") or "Documento")
         nombre_final = re.sub(r"\.(docx|dotx)$", ".pdf", nombre_final, flags=re.I)
 
@@ -622,7 +615,7 @@ async def subir_archivo(request: Request, documento_id: str, archivo: UploadFile
 
     await _borrar_ruta(doc.get("archivo_ruta") or "")
     sello = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-    ruta = f"{uid}/{documento_id}/original-{sello}-{nombre_final}"
+    ruta = f"{uid}/{documento_id}/original-{sello}.pdf"
     await _subir_bytes(ruta, contenido, "application/pdf")
 
     digest = _sha256(contenido)
@@ -1310,14 +1303,8 @@ async def publico_ine(request: Request, token: str,
     if cara not in ("frente", "reverso"):
         raise HTTPException(400, "Indica si es el frente o el reverso.")
 
-    contenido = await archivo.read()
-    if not contenido:
-        raise HTTPException(400, "La foto llegó vacía.")
-    if len(contenido) > MAX_IMG_BYTES:
-        raise HTTPException(413, "Esa foto pesa más de 8 MB. Tómala de nuevo con menos resolución.")
-    mime = (archivo.content_type or "").lower()
-    if mime not in MIMES_IMG:
-        raise HTTPException(415, "Sube una foto (JPG, PNG o WEBP).")
+    contenido, val = await leer_upload(archivo, "identificacion")
+    mime = val.mime
 
     sello = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     ruta = f"{doc['user_id']}/{doc['id']}/ine-{firmante['id']}-{cara}-{sello}"

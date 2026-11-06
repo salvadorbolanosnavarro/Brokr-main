@@ -22,19 +22,19 @@ class WhatsAppStorageCoreGuardTests(unittest.TestCase):
 
     def test_media_upload_delegates_to_core_storage(self):
         self.assertIn(
-            "from core.storage import delete_objects, upload_object",
+            "from core.storage import (create_signed_object_urls, delete_objects, download_object, object_path_from_url,\n                          upload_object)",
             self.storage_source,
         )
         self.assertIn("url = await upload_object(", self.storage_source)
         self.assertIn("WA_MEDIA_BUCKET", self.storage_source)
         self.assertIn(
-            'content_type=mime or "application/octet-stream"',
+            'content_type=val.mime',
             self.storage_source,
         )
         self.assertIn("timeout=40", self.storage_source)
         if self.media_extracted:
             self.assertNotIn(
-                "from core.storage import delete_objects, upload_object",
+                "from core.storage import (create_signed_object_urls, delete_objects, download_object, object_path_from_url,\n                          upload_object)",
                 self.source,
             )
 

@@ -28,24 +28,14 @@ from __future__ import annotations
 import asyncio
 import base64
 import sys
-import uuid
 
 from core.config import settings
 from core.database import get_rows, patch_rows
 from core.storage import upload_object
+from core.file_validation import ArchivoRechazado, validar_archivo
 
 
 BUCKET = "fotos-propiedades"
-
-EXT_POR_MIME = {
-    "image/jpeg": "jpg",
-    "image/jpg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-    "image/gif": "gif",
-    "image/heic": "heic",
-}
-
 
 def es_base64(foto):
     return isinstance(foto, str) and foto.startswith("data:")
@@ -54,14 +44,9 @@ def es_base64(foto):
 async def subir_foto(data_uri: str) -> str | None:
     """Decodifica una data URI y la sube con el Storage canónico de Core."""
     try:
-        header, b64data = data_uri.split(",", 1)
+        _, b64data = data_uri.split(",", 1)
     except ValueError:
         return None
-
-    mime = "image/jpeg"
-    if ":" in header and ";" in header:
-        mime = header.split(":", 1)[1].split(";", 1)[0].strip().lower()
-    ext = EXT_POR_MIME.get(mime, "jpg")
 
     try:
         raw = base64.b64decode(b64data)
@@ -70,13 +55,18 @@ async def subir_foto(data_uri: str) -> str | None:
     if not raw:
         return None
 
-    nombre = f"{uuid.uuid4().hex}.{ext}"
+    try:
+        val = validar_archivo(raw, None, "foto_propiedad")
+    except ArchivoRechazado:
+        print("    ! Se omitió un dato que no es una foto válida (JPG, PNG, WebP, GIF o HEIC).")
+        return None
+    nombre = val.nombre_interno
     try:
         return await upload_object(
             BUCKET,
             nombre,
             raw,
-            content_type=mime,
+            content_type=val.mime,
             timeout=120,
         )
     except Exception as exc:

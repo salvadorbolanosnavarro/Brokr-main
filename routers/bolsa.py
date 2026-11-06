@@ -36,6 +36,7 @@ from core.auth import require_user_id
 from core.config import settings
 from core.catalogo_inmuebles import OPERACION_KEYS, TIPO_KEYS, es_error_columna_faltante, tipo_familia
 from core.database import rest_url, service_headers
+from core.file_validation import solo_publicos
 
 router = APIRouter(prefix="/bolsa", tags=["bolsa"])
 log = logging.getLogger("broquer.bolsa")
@@ -84,7 +85,7 @@ def _publica(fila: dict, agentes: dict, uid: str) -> dict:
         "otras_caracteristicas": fila.get("otras_caracteristicas"),
         "videos":           fila.get("videos") or [],
         "tours":            fila.get("tours") or [],
-        "documentos":       fila.get("documentos") or [],
+        "documentos":       solo_publicos(fila.get("documentos")),
         "precio":           fila.get("precio"),
         "moneda":           fila.get("moneda") or "MXN",
         "colonia":          fila.get("colonia"),

@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import quote, urlencode
 
 from core.catalogo_inmuebles import CARACTERISTICAS, OPERACIONES, TIPOS, UNIDADES_PRECIO, tipo_label
+from core.file_validation import solo_publicos
 
 OP_LABEL = {o["key"]: o["label"] for o in OPERACIONES}
 UNIDAD = {u["key"]: u["label"] for u in UNIDADES_PRECIO}
@@ -280,7 +281,7 @@ def ficha(p: dict, base: str, asesor: Optional[dict], mostrar_asesor: bool, wa: 
         grupos = '<div class="tags">' + "".join(f'<span class="tag">{e(a)}</span>' for a in p["amenidades"]) + "</div>"
     precios = "".join(f'<div>{e(OP_LABEL.get(o["tipo"], o["tipo"]))}: <strong>{e(precio_txt(p, o))}</strong></div>' for o in ops[1:])
     mm = "".join(_embed_video(v) for v in (p.get("videos") or [])[:3]) + "".join(_embed_tour(t) for t in (p.get("tours") or [])[:2])
-    docs = [d for d in (p.get("documentos") or []) if isinstance(d, dict) and str(d.get("url", "")).startswith("https://")]
+    docs = solo_publicos(p.get("documentos"))
     docs_html = ("<h2>Documentos</h2><ul>" + "".join(f'<li><a href="{e(d["url"])}" target="_blank" rel="noopener" download>{e(d.get("nombre") or "Documento")}</a></li>' for d in docs) + "</ul>") if docs else ""
     mapa = ""
     if p.get("mostrar_ubicacion_exacta") and p.get("lat") and p.get("lng"):

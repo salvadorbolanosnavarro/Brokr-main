@@ -26,7 +26,6 @@
 #   app.include_router(finanzas_router)
 # ──────────────────────────────────────────────────────────────────────────
 
-import os
 import io
 import csv
 import json
@@ -46,6 +45,7 @@ from core.config import settings
 from core.database import delete_rows, get_rows, patch_rows, post_rows
 from core.design import pdf_palette
 from core.storage import create_signed_object_url, delete_object, upload_object
+from core.file_validation import leer_upload
 
 router = APIRouter(prefix="/finanzas", tags=["finanzas"])
 log = logging.getLogger("broquer.finanzas")
@@ -55,8 +55,7 @@ log = logging.getLogger("broquer.finanzas")
 ANTHROPIC_API_KEY = settings.anthropic_api_key
 
 BUCKET = "fin-comprobantes"
-MAX_BYTES = 10 * 1024 * 1024
-MIMES_OK = {"image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf"}
+# Tipos y tamaño de comprobantes/tickets: core.file_validation.
 
 # Categorías del gremio que se siembran en el primer uso. La `clave` permite
 # ligar comisiones automáticas y no re-sembrar aunque el usuario renombre.
@@ -488,11 +487,6 @@ async def borrar_movimiento(request: Request, mov_id: str):
 # COMPROBANTES (ticket/factura adjunta a un movimiento)
 # ══════════════════════════════════════════════════════════════════════════
 
-def _limpio(nombre: Optional[str]) -> str:
-    base = os.path.basename(nombre or "archivo")
-    return "".join(ch for ch in base if ch.isalnum() or ch in "._-")[:80] or "archivo"
-
-
 @router.post("/movimientos/{mov_id}/comprobante")
 async def subir_comprobante(request: Request, mov_id: str,
                             archivo: UploadFile = File(...)):
@@ -502,16 +496,10 @@ async def subir_comprobante(request: Request, mov_id: str,
                           "select": "id", "limit": "1"})
     if not movs:
         raise HTTPException(404, "No encontré ese movimiento.")
-    contenido = await archivo.read()
-    if not contenido:
-        raise HTTPException(400, "El archivo llegó vacío.")
-    if len(contenido) > MAX_BYTES:
-        raise HTTPException(413, "El archivo pesa más de 10 MB.")
-    mime = (archivo.content_type or "application/octet-stream").lower()
-    if mime not in MIMES_OK:
-        raise HTTPException(415, "Solo se aceptan fotos (JPG, PNG, WEBP) o PDF.")
+    contenido, val = await leer_upload(archivo, "comprobante")
+    mime = val.mime
     sello = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-    ruta = f"{uid}/{mov_id}/{sello}-{_limpio(archivo.filename)}"
+    ruta = f"{uid}/{mov_id}/{sello}-{val.nombre_interno}"
     try:
         await upload_object(
             BUCKET,
@@ -561,16 +549,8 @@ async def leer_ticket(request: Request, archivo: UploadFile = File(...)):
     uid = await _uid(request)
     if not ANTHROPIC_API_KEY:
         raise HTTPException(500, "El servidor no tiene configurada la IA.")
-    contenido = await archivo.read()
-    if not contenido:
-        raise HTTPException(400, "El archivo llegó vacío.")
-    if len(contenido) > MAX_BYTES:
-        raise HTTPException(413, "El archivo pesa más de 10 MB.")
-    mime = (archivo.content_type or "").lower()
-    if mime == "image/heic":
-        raise HTTPException(415, "HEIC no es compatible aquí. Toma la foto de nuevo o compártela como JPG.")
-    if mime not in ("image/jpeg", "image/png", "image/webp", "application/pdf"):
-        raise HTTPException(415, "Solo se aceptan fotos (JPG, PNG, WEBP) o PDF.")
+    contenido, val = await leer_upload(archivo, "ticket_ia")
+    mime = val.mime
 
     cats = await _asegurar_categorias(uid)
     nombres_cat = [{"id": c["id"], "nombre": c["nombre"], "tipo": c["tipo"]} for c in cats]

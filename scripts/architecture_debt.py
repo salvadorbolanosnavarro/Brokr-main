@@ -141,7 +141,7 @@ LARGE_FILE_MAX_BYTES = {
     # /firmas/documentos/{documento_id}/nom151 para reintentar la emisión de
     # la constancia a mano cuando el sellado automático falla (PR #150) —
     # funcionalidad de producto real, no debt.
-    "routers/firmas.py": 124_394,
+    "routers/firmas.py": 123_516,
     # Bumped 80 bytes: se agregó la etapa "Futuro" al pipeline por defecto
     # (ETAPAS_DEFAULT) — un estatus nuevo para contactos/leads, no debt.
     # Bumped 18 bytes: se agregó "ajena" (inmueble de otro colega externo)

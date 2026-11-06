@@ -26,6 +26,7 @@ from pydantic import BaseModel
 from core.auth import require_user_id
 from core.config import settings
 from core.database import rest_url
+from core.file_validation import se_abre_en_linea
 from core.storage import create_signed_object_url
 
 
@@ -83,7 +84,11 @@ async def _liga(client: httpx.AsyncClient, token: str, url: str) -> str | None:
     if not ruta or not await _usuario_ve_adjunto(client, token, url):
         return None
     try:
-        return await create_signed_object_url(BUCKET, ruta, expires_in=DURACION_SEGUNDOS)
+        # Lo que no sea imagen, video, audio o PDF se entrega como descarga
+        # (Content-Disposition: attachment): nunca se abre como página web.
+        return await create_signed_object_url(
+            BUCKET, ruta, expires_in=DURACION_SEGUNDOS,
+            download=None if se_abre_en_linea(ruta) else True)
     except Exception as exc:
         log.warning("adjuntos: no se pudo firmar %s: %s", ruta, exc)
         return None

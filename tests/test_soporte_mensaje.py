@@ -39,7 +39,10 @@ class _Cliente:
         return _Resp(_Cliente.codigo)
 
 
-def _imagen(datos=b"\x89PNG....", tipo="image/png"):
+PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 24
+
+
+def _imagen(datos=PNG, tipo="image/png"):
     return UploadFile(io.BytesIO(datos), filename="c.png", headers=Headers({"content-type": tipo}))
 
 
@@ -72,7 +75,7 @@ class SoporteMensajeTests(unittest.TestCase):
         self.assertIn("Ana Pérez", p["subject"])
         self.assertIn("No me carga la ficha", p["html"])
         self.assertIn("Casa &lt;Uno&gt;", p["html"])
-        self.assertEqual(base64.b64decode(p["attachments"][0]["content"]), b"\x89PNG....")
+        self.assertEqual(base64.b64decode(p["attachments"][0]["content"]), PNG)
         self.assertEqual(p["attachments"][0]["filename"], "captura.png")
 
     def test_sin_imagen_no_manda_adjuntos(self):
@@ -82,7 +85,9 @@ class SoporteMensajeTests(unittest.TestCase):
     def test_valida_mensaje_e_imagen(self):
         for kwargs, codigo in (({"mensaje": "  "}, 422),
                                ({"imagen": _imagen(tipo="application/pdf")}, 422),
-                               ({"imagen": _imagen(b"x" * (s.MAX_IMAGEN + 1))}, 413)):
+                               ({"imagen": _imagen(b"x" * (s.MAX_IMAGEN + 1))}, 413),
+                               # HTML con etiqueta de imagen: lo delatan sus bytes.
+                               ({"imagen": _imagen(b"<html><script>x</script></html>")}, 422)):
             with self.assertRaises(HTTPException) as e:
                 self._enviar(**kwargs)
             self.assertEqual(e.exception.status_code, codigo)

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from routers.whatsapp_media_storage import publicar_foto
+
 
 async def _responder_conversacion_core(item: dict, numero: dict, user_id: str, *,
                                        sb_get, _entrenamiento_de, _parse_ts, datetime,
@@ -248,15 +250,17 @@ async def _responder_conversacion_core(item: dict, numero: dict, user_id: str, *
         elif tipo == "registrar_inmueble":
             datos = accion.get("datos") or {}
             # Se recuperan las fotos que el remitente mandó EN ESTA conversación
-            # para adjuntarlas al inmueble. Ya viven en el almacenamiento de
-            # Broquer, así que son ligas propias y permanentes.
+            # para adjuntarlas al inmueble. Los medios de WhatsApp son privados
+            # (chats de clientes), así que cada foto se COPIA al bucket público
+            # de fotos de inmuebles en vez de ligar la del chat.
             fotos_rows = await sb_get("wa2_mensajes", {
                 "conversacion_id": f"eq.{item['conversacion_id']}", "direction": "eq.in",
-                "media_url": "not.is.null", "select": "body,media_url",
+                "media_url": "not.is.null", "select": "body,media_url,media_path",
                 "order": "created_at.desc", "limit": "20"})
-            fotos = [f["media_url"] for f in fotos_rows
-                     if (f.get("body") or "").lower().startswith("[foto")]
-            fotos.reverse()
+            fotos_chat = [f for f in fotos_rows if (f.get("body") or "").lower().startswith("[foto")]
+            fotos_chat.reverse()
+            copias = await asyncio.gather(*(publicar_foto(f.get("media_path")) for f in fotos_chat))
+            fotos = [c for c in copias if c]
 
             inmueble_id = await _alta_inmueble(user_id, datos, item["wa_id"], fotos)
             if inmueble_id:
