@@ -26,7 +26,16 @@ _INTERNO_RE = re.compile(
     r"bloque(?:o|os|ad[oa]s?|ar|aron|an|ó)\b|bloqueó|"
     r"\brobots?\b|captcha|proxy|anti-?bots?|"
     r"no\s+(?:se\s+)?(?:pudo|pudieron|pude|pudimos)\s+(?:leer|acceder|abrir|consultar)|"
-    r"acceso\s+denegado|sin\s+acceso|cr[eé]dito\s+de\s+",
+    r"acceso\s+denegado|sin\s+acceso|cr[eé]dito\s+de\s+|"
+    # "varios portales no permitieron acceso completo durante la consulta"
+    # (se coló en un PDF real) y variantes.
+    # Solo cuando el sujeto es un portal/sitio/página: "acceso" a secas es
+    # vocabulario normal de valuación (acceso vehicular, acceso directo…).
+    r"(?:portal|sitio|p[aá]gina|fuente)\w*\b[^.;]{0,50}?\bno\s+(?:nos\s+)?(?:permit\w*|dier\w*)\s+(?:el\s+|un\s+)?acceso|"
+    r"(?:portal|sitio|p[aá]gina|fuente)\w*\b[^.;]{0,50}?\b(?:impidi\w*|restringi\w*|limit\w*)\s+(?:el\s+)?acceso|"
+    r"no\s+(?:se\s+)?(?:logr\w*|consigui\w*)\s+(?:leer|acceder|abrir|consultar)|"
+    r"no\s+(?:estuvo|estuvieron|estaba|estaban)\s+disponibles?\s+(?:durante|al\s+momento|en\s+la\s+consulta)|"
+    r"durante\s+la\s+consulta|al\s+momento\s+de\s+(?:la\s+)?consulta",
     re.IGNORECASE,
 )
 _ORACIONES_RE = re.compile(r"(?<=[.!?;])\s+")
@@ -65,6 +74,28 @@ def urls_no_consultadas(paginas: Iterable[Dict[str, Any]]) -> Set[str]:
             if p.get("url") and not pagina_leida(p.get("fetch_status", ""))}
 
 
+_URL_RE = re.compile(r"https?://[^\s|)\]\"'<>]+")
+
+
+def urls_permitidas(paginas: Iterable[Dict[str, Any]]) -> Set[str]:
+    """Ligas que un comparable puede llevar: las páginas consultadas y las
+    ligas de anuncios que aparecen dentro de ellas (p. ej. cada anuncio de
+    una página de listado). Cualquier otra liga (inventada, o de una página
+    que no se pudo leer) se quita."""
+    permitidas: Set[str] = set()
+    for p in paginas:
+        if not pagina_leida(p.get("fetch_status", "")):
+            continue
+        clave = _normaliza_url(p.get("url"))
+        if clave:
+            permitidas.add(clave)
+        for liga in _URL_RE.findall(p.get("page_text") or ""):
+            liga = _normaliza_url(liga.rstrip(".,;"))
+            if liga:
+                permitidas.add(liga)
+    return permitidas
+
+
 def limpiar_texto(texto: Any) -> Any:
     """Quita las oraciones que hablan de herramientas, proveedores o bloqueos."""
     if not isinstance(texto, str) or not _INTERNO_RE.search(texto):
@@ -73,16 +104,20 @@ def limpiar_texto(texto: Any) -> Any:
     return " ".join(oraciones).strip()
 
 
-def sanear_resultado(resultado: Dict[str, Any], urls_ocultas: Iterable[str] = ()) -> Dict[str, Any]:
+def sanear_resultado(resultado: Dict[str, Any], urls_ocultas: Iterable[str] = (),
+                     permitidas: Iterable[str] | None = None) -> Dict[str, Any]:
     """Deja el resultado listo para mostrarse. Se puede llamar varias veces.
 
     urls_ocultas: ligas que no se consultaron (se quitan de los comparables).
     Si el resultado trae el formato viejo de fuentes (con "lectura"), las que
     no se leyeron también se toman como ocultas.
+    permitidas: si se da (al armar el resultado en el backend), los
+    comparables solo conservan ligas de ese conjunto (ver urls_permitidas).
     """
     if not isinstance(resultado, dict):
         return resultado
     ocultas = {_normaliza_url(u) for u in urls_ocultas if u}
+    solo = None if permitidas is None else {_normaliza_url(u) for u in permitidas if u}
 
     fuentes = resultado.get("fuentes_consultadas")
     if isinstance(fuentes, list):
@@ -110,7 +145,8 @@ def sanear_resultado(resultado: Dict[str, Any], urls_ocultas: Iterable[str] = ()
         for c in resultado.get(campo) or []:
             if not isinstance(c, dict):
                 continue
-            if _normaliza_url(c.get("url")) in ocultas:
+            clave = _normaliza_url(c.get("url"))
+            if clave and (clave in ocultas or (solo is not None and clave not in solo)):
                 c["url"] = ""
             for k in ("descripcion", "motivo", "motivo_inclusion_o_descarte", "fuente"):
                 if k in c:

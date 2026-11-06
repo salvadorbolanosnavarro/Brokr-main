@@ -90,7 +90,7 @@ class CableadoTests(unittest.TestCase):
     def test_websearch_y_pdf_sanean(self):
         ws = (ROOT / "routers" / "avm_websearch.py").read_text(encoding="utf-8")
         self.assertIn('resultado["fuentes_consultadas"] = fuentes_publicas(paginas)', ws)
-        self.assertIn("return sanear_resultado(resultado, urls_no_consultadas(paginas))", ws)
+        self.assertIn("return sanear_resultado(resultado, urls_no_consultadas(paginas), urls_permitidas(paginas))", ws)
         self.assertNotIn('resultado["firecrawl"] =', ws)
         self.assertNotIn('"fetch_status": evidence_item.get("fetch_status"', ws)
         self.assertNotIn('detail=f"Error de Claude', ws)
