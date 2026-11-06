@@ -1,0 +1,112 @@
+# Lleva cada cambio de main a la rama de staging (+cierres). Solo en ese sentido:
+# nunca escribe en main. Si hay conflicto o fallan las pruebas, staging se queda
+# como estaba y se abre un aviso en Issues.
+name: Sincronizar main a staging
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: sync-main-a-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+env:
+  STAGING_BRANCH: work/redesign-preview-20261003
+  ISSUE_TITLE: "Sincronización main → staging detenida"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Descargar staging
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.STAGING_BRANCH }}
+          fetch-depth: 0
+
+      - name: Integrar main
+        id: merge
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          if git merge-base --is-ancestor origin/main HEAD; then
+            echo "Staging ya tiene todo main."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! git merge --no-edit -m "Integra de main: $(git log -1 --format=%s origin/main)" origin/main; then
+            git diff --name-only --diff-filter=U > conflictos.txt
+            git merge --abort
+            exit 1
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Preparar Python
+        if: steps.merge.outputs.changed == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Mismas pruebas que Quality, más las de aislamiento de staging. No incluye
+      # architecture_debt.py porque ya falla en staging antes de esta integración
+      # (react-dom en vendor/ y legal.html rebasan su límite).
+      - name: Probar el resultado
+        if: steps.merge.outputs.changed == 'true'
+        env:
+          BROQUER_STAGING_MODE: demo
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-ci.txt
+          python -m compileall -q core routers scripts main.py limites.py push.py whatsapp.py admin_consola.py migrar_fotos.py
+          python scripts/audit_ui_kit.py
+          python -m unittest discover -s tests -p 'test_*.py'
+          python audit.py
+          python scripts/check_staging.py
+          python scripts/check_staging_build.py
+          python scripts/build_staging.py
+
+      - name: Subir a staging
+        if: steps.merge.outputs.changed == 'true'
+        run: |
+          for intento in 1 2 3; do
+            git push origin "HEAD:${STAGING_BRANCH}" && exit 0
+            sleep 10
+            git pull --no-rebase --no-edit origin "$STAGING_BRANCH" || exit 1
+          done
+          exit 1
+
+      - name: Cerrar aviso anterior
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue list --state open --search "\"$ISSUE_TITLE\" in:title" --json number --jq '.[].number' |
+            while read -r n; do gh issue close "$n" --comment "Resuelto: staging ya integra main."; done
+
+      - name: Avisar que se detuvo
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          {
+            echo "main no se pudo integrar a \`$STAGING_BRANCH\`. Staging sigue como estaba y producción no se tocó."
+            echo
+            echo "- Commit de main: \`$GITHUB_SHA\`"
+            echo "- Detalle: $RUN_URL"
+            if [ -s conflictos.txt ]; then
+              echo
+              echo "Archivos en conflicto:"
+              sed 's/^/- /' conflictos.txt
+            fi
+          } > aviso.md
+          n=$(gh issue list --state open --search "\"$ISSUE_TITLE\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$n" ]; then gh issue comment "$n" --body-file aviso.md
+          else gh issue create --title "$ISSUE_TITLE" --body-file aviso.md; fi
