@@ -1,35 +1,34 @@
 """Presentation-only brand substitution for the existing staging build.
 
 Keep source application code, identifiers, domains, data keys and integrations
-unchanged. The supplied PNGs remain byte-for-byte originals inside SVG viewports.
+unchanged. Web artwork is exported from the supplied logos.
 """
 import re
 import base64
 
-WORDMARK = '/brand/mas-cierres-wordmark.svg'
-MONOGRAM = '/brand/mas-cierres-monogram.svg'
-TOUCH_ICON = '/brand/mas-cierres-monogram-original.png'
+WORDMARK = '/brand/cecil-wordmark.webp'
+ASSISTANT = '/brand/cecil-assistant.webp'
+MONOGRAM = '/brand/cecil-icon.svg'
+TOUCH_ICON = '/brand/cecil-icon.png'
 
 
 def write_brand_artwork(root, output):
-    """Frame the supplied originals without changing their raster content."""
-    for kind, viewbox in [('wordmark', '305 286 1085 280'),
-                          ('monogram', '715 260 340 340')]:
-        source = root / f'brand/mas-cierres-{kind}-original.png'
-        if not source.is_file():
-            continue  # Minimal build fixtures may not include brand assets.
-        data = base64.b64encode(source.read_bytes()).decode('ascii')
-        target = output / f'brand/mas-cierres-{kind}.svg'
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewbox}" '
-                          f'role="img" aria-label="+ cierres"><image width="1774" height="887" '
-                          f'href="data:image/png;base64,{data}"/></svg>\n')
+    """Embed the platform's compact icon for favicon and manifest use."""
+    source = root / TOUCH_ICON.lstrip('/')
+    if not source.is_file():
+        return  # Minimal build fixtures may not include brand assets.
+    data = base64.b64encode(source.read_bytes()).decode('ascii')
+    target = output / MONOGRAM.lstrip('/')
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" '
+                      f'role="img" aria-label="Cecil"><image width="180" height="180" '
+                      f'href="data:image/png;base64,{data}"/></svg>\n')
 
 
 def brand_asset(name, text):
     # A standalone commercial name, never identifiers, hosts, emails or paths.
     text = re.sub(r'(?:https?://|mailto:)[^\s\"\'<>`]+|(?<![\w@./-])Broquer(?![\w/-]|\.(?:app|com|png|svg|js))',
-                  lambda match: '+ cierres' if match[0] == 'Broquer' else match[0], text)
+                  lambda match: 'Cecil' if match[0] == 'Broquer' else match[0], text)
     text = re.sub(r'(?<![\w@./-])Broq(?![\w/-]|\.(?:app|com|png|svg|js))', 'Cecil IA', text)
     if name == 'app-shell.js':
         # Name aliases only; retain existing voice activation behavior/aliases.
@@ -37,7 +36,7 @@ def brand_asset(name, text):
     if name.endswith(('.html', '.js')):
         text = text.replace('broquer<span>.</span>',
             '<picture class="cf-brand-picture"><source media="(max-width:720px)" '
-            f'srcset="{MONOGRAM}"><img src="{WORDMARK}" alt="+ cierres"></picture>')
+            f'srcset="{WORDMARK}"><img src="{WORDMARK}" alt="Cecil"></picture>')
         text = re.sub(r'(<span\b[^>]*class="bk-shk-mark"[^>]*>)b\.(</span>)',
                       rf'\1<img src="{MONOGRAM}" alt="">\2', text)
         # Home assistant tile uses the same brand initial without a class.
@@ -49,11 +48,18 @@ def brand_asset(name, text):
         'logotipo-broquer.png': WORDMARK, 'logotipo.png': WORDMARK,
         'logotipo-brokr.svg': WORDMARK,
         'isotipo-black.png': MONOGRAM, 'isotipo-white.png': MONOGRAM,
-        'broq-icon.png': MONOGRAM, 'favicon.png': MONOGRAM,
+        'broq-icon.png': ASSISTANT, 'favicon.png': MONOGRAM,
         'favicon.svg': MONOGRAM, 'icon-192.png': MONOGRAM, 'icon-512.png': MONOGRAM,
     }
     for old, new in images.items():
         text = re.sub(r'(?<![\w/-])(?:\.\./|\./|/)?' + re.escape(old) + r'(?![\w.-])', new, text)
+    if name == 'app-shell.js':
+        text = text.replace('<div class="bk-shk-name">Cecil IA</div>',
+            f'<div class="bk-shk-name"><img class="cecil-assistant-logo" src="{ASSISTANT}" alt="Cecil IA"></div>')
+    if name == 'landing.html':
+        # The legacy decorative reel has the previous logo baked into its frames.
+        text = re.sub(r'<video[^>]+poster="animacion-broquer\.png"[^>]*>.*?</video>',
+            f'<img class="cecil-hero-logo" src="{WORDMARK}" alt="Cecil">', text, count=1, flags=re.S)
     if name.endswith('.html'):
         text = re.sub(r'(<link\b[^>]*rel="icon"[^>]*type=")image/png', r'\1image/svg+xml', text)
         text = re.sub(r'(<link\b[^>]*rel="apple-touch-icon"[^>]*href=")[^"]+', rf'\1{TOUCH_ICON}', text)
