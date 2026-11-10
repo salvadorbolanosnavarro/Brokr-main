@@ -716,7 +716,8 @@ html, body {
         </div>
       </div>
       <div id="alert-pre1981" class="alert-warn" style="display:none"><svg width="13" height="13" style="vertical-align:-2px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 17H2L12 3zm0 7v4m0 3h.01"/></svg> <strong>Anterior a 1981:</strong> El notario usará avalúo referencial. Se aplica INPC desde enero de 1981.</div>
-      <div id="alert-pre1990" class="alert-info" style="display:none"><strong>1981–1989:</strong> Se aplica reconversión monetaria (÷1,000 por eliminación de tres ceros en 1993).</div>
+      <div id="alert-pre1990" class="alert-info" style="display:none"><strong>Antes de 1993:</strong> la escritura está en <strong>viejos pesos</strong>. Se aplica reconversión monetaria (÷1,000 por la eliminación de tres ceros el 1 de enero de 1993).
+        <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:500"><input type="checkbox" id="f-viejos-pesos" checked/> El costo de adquisición lo capturé en viejos pesos, tal como dice la escritura</label></div>
     </div>
 
     <!-- Terreno / Construcción -->
@@ -949,12 +950,16 @@ const TABLA_ANEXO9_VENTA2025 = [
   147487.33, 147487.33, 155888.50, 167714.53, 157350.15, 139222.25
 ];
 // Devuelve el factor Anexo 9 para una operación (anioC → anioV).
-// idx en la tabla = año_venta − año_adquisición ("años transcurridos" cumplidos).
-// Si año_venta ≠ 2025, escala por inflación dic 2024 → dic (año_venta − 1).
+// La tabla es la del Anexo 9 2025: idx = 2025 − año_adquisición. Para ventas en
+// otro año se toma la fila del MISMO año de adquisición y se escala por inflación
+// dic 2024 → dic (año_venta − 1). (Antes se indexaba por año_venta − año_adq, lo
+// que para ventas 2026+ tomaba la fila de un año ANTERIOR — en 1987→1988 el factor
+// se triplicaba por la hiperinflación.)
 async function getFactorTablaSAT(anioC, anioV) {
-  const anios = anioV - anioC;
-  if (anios <= 0) return 1.00;
-  const idx = Math.min(anios, TABLA_ANEXO9_VENTA2025.length - 1);
+  if (anioV - anioC <= 0) return 1.00;
+  const idx = 2025 - anioC;
+  if (idx <= 0) return 1.00; // adquisición 2025+: no hay fila; manda el factor INPC
+  if (idx >= TABLA_ANEXO9_VENTA2025.length) return 1.00;
   const factorBase = TABLA_ANEXO9_VENTA2025[idx];
   if (anioV === 2025) return factorBase;
   try {
@@ -1019,7 +1024,7 @@ function onAnioChange() {
       alertPre.style.display='none';
     }
   }
-  if (g('alert-pre1990')) g('alert-pre1990').style.display = (a>=1982&&a<1990)?'block':'none';
+  if (g('alert-pre1990')) g('alert-pre1990').style.display = (a>=1982&&a<1993)?'block':'none';
   if (g('compra-note')) g('compra-note').textContent = (a>0&&a<1982)?'Pre-1982 no soportado — consulta notario directo':'';
   if (a>0&&av>a) {
     const anos=av-a;
@@ -1190,8 +1195,16 @@ async function calcISR() {
   const factor=Math.max(factorINPC,factorTabla);
   const factorUsado=factor===factorTabla&&factorTabla>factorINPC?'tabla':'inpc';
 
-  // Art. 124 LISR: depreciación 3% anual, costo no menor al 20% del inicial → tope 80%.
-  const depPct=Math.min(0.80,anios*0.03);
+  // Reconversión monetaria: antes del 1/ene/1993 los montos están en viejos pesos.
+  const reconversion = anioC<1993 && !!(g('f-viejos-pesos')||{}).checked;
+  const compraCapturada = compra;
+  if (reconversion) compra = compra/1000;
+
+  // Art. 124 LISR: depreciación 3% por CADA año transcurrido (sin el tope de 20 años
+  // del art. 120, que sólo aplica para dividir la ganancia); residual mínimo 20% → tope 80%.
+  const mesesTenencia=(anioV-anioC)*12+(mesV-mesC);
+  const aniosDeprec=Math.max(1,Math.floor(mesesTenencia/12));
+  const depPct=Math.min(0.80,aniosDeprec*0.03);
 
   let costoAct=0, debugTerreno=null;
   if (tipo==='terreno') {
@@ -1200,7 +1213,7 @@ async function calcISR() {
     const pctT=(parseInt((g('f-pct-terreno')||{}).value)||20)/100;
     const pctC=1-pctT;
     const valT=compra*pctT, valC=compra*pctC;
-    const anosConst=anios;
+    const anosConst=aniosDeprec;
     const valCDep=valC*(1-depPct);
     const terrenoAct=valT*factor, constAct=valCDep*factor;
     costoAct=terrenoAct+constAct;
@@ -1265,7 +1278,7 @@ async function calcISR() {
     ivaMonto=ivaBase*0.16;
   }
 
-  _isrData={tipo,formaAdq,pctCopro,venta,compra,costoAct,costoFinal,pisoAplicado,depPct,mej,mejA,com,esc,deducTotal,deducFinal,ganTotal,factor,factorINPC,factorTabla,factorUsado,inpcAdq,inpcVenta,mesC,anioC,mesV,anioV,mesEnajINPC,anioEnajINPC,inpcVentaFallback,inpcVentaMesSolicitado,inpcVentaAnioSolicitado,mN,baseGrav,ganAcum,isrAcum,isrTotal,isrFederal,isrEstatal,anios,tasaEfec,tasaEfecPct,exenta,exentaParcial,nota,preAnio1981,LIMITE_EX,debugTerreno,ivaBase,ivaMonto};
+  _isrData={tipo,formaAdq,pctCopro,venta,compra,compraCapturada,reconversion,aniosDeprec,costoAct,costoFinal,pisoAplicado,depPct,mej,mejA,com,esc,deducTotal,deducFinal,ganTotal,factor,factorINPC,factorTabla,factorUsado,inpcAdq,inpcVenta,mesC,anioC,mesV,anioV,mesEnajINPC,anioEnajINPC,inpcVentaFallback,inpcVentaMesSolicitado,inpcVentaAnioSolicitado,mN,baseGrav,ganAcum,isrAcum,isrTotal,isrFederal,isrEstatal,anios,tasaEfec,tasaEfecPct,exenta,exentaParcial,nota,preAnio1981,LIMITE_EX,debugTerreno,ivaBase,ivaMonto};
   renderResult(_isrData);
 }
 
@@ -1299,13 +1312,16 @@ function renderResult(d) {
   if(d.pctCopro<100) bd+=`<div class="br" style="border-color:rgba(0,85,204,0.25)"><span class="bl" style="color:var(--forest)">Copropiedad ${d.pctCopro}% (art. 92 LISR) — todos los montos son la parte proporcional de este copropietario</span><span class="bv"></span></div>`;
   if(d.formaAdq==='herencia') bd+=`<div class="br sub"><span class="bl">Adquisición por herencia — costo y fecha del autor de la sucesión (art. 124 LISR)</span><span class="bv"></span></div>`;
   if(d.formaAdq==='donacion') bd+=`<div class="br sub"><span class="bl">Adquisición por donación — costo y fecha del donante (art. 124 LISR)</span><span class="bv"></span></div>`;
-  bd+=`<div class="br"><span class="bl">Precio de venta${d.pctCopro<100?` (${d.pctCopro}%)`:''}</span><span class="bv">${fmt(d.venta)}</span></div><div class="br sub"><span class="bl">${adqLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">${vtaLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">Factor INPC (truncado a 4 decimales)</span><span class="bv">${d.factorINPC.toFixed(4)}</span></div><div class="br sub"><span class="bl">Factor Tabla SAT (Anexo 9, ${d.anios} años)</span><span class="bv">${d.factorTabla.toFixed(4)}</span></div><div class="br sub"><span class="bl">Factor utilizado (mayor — art. 121 fr. I)</span><span class="bv" style="font-weight:600">${d.factor.toFixed(4)}</span></div>`;
+  bd+=`<div class="br"><span class="bl">Precio de venta${d.pctCopro<100?` (${d.pctCopro}%)`:''}</span><span class="bv">${fmt(d.venta)}</span></div><div class="br sub"><span class="bl">${adqLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">${vtaLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">Factor INPC (truncado a 4 decimales)</span><span class="bv">${d.factorINPC.toFixed(4)}</span></div><div class="br sub"><span class="bl">Factor Tabla SAT (Anexo 9, adquisición ${d.anioC})</span><span class="bv">${d.factorTabla.toFixed(4)}</span></div><div class="br sub"><span class="bl">Factor utilizado (mayor — art. 121 fr. I)</span><span class="bv" style="font-weight:600">${d.factor.toFixed(4)}</span></div>`;
 
+  if(d.reconversion){
+    bd+=`<div class="br sub"><span class="bl">Costo en escritura (viejos pesos): ${fmt(d.compraCapturada)} ÷ 1,000 — reconversión 1993</span><span class="bv">${fmt(d.compra)}</span></div>`;
+  }
   if(d.debugTerreno){
     const dt=d.debugTerreno;
     bd+=`<div class="br sub"><span class="bl">Terreno (${(dt.pctT*100).toFixed(0)}%): ${fmt(dt.valT)} × factor</span><span class="bv">${fmt(dt.terrenoAct)}</span></div>`;
     bd+=`<div class="br sub"><span class="bl">Construcción (${(dt.pctC*100).toFixed(0)}%): ${fmt(dt.valC)}</span><span class="bv"></span></div>`;
-    bd+=`<div class="br sub"><span class="bl">Deprec. ${dt.anosConst} años × 3% = ${(dt.depPct*100).toFixed(0)}% → ${fmt(dt.valCDep)}</span><span class="bv"></span></div>`;
+    bd+=`<div class="br sub"><span class="bl">Deprec. ${dt.anosConst} años × 3% = ${(dt.depPct*100).toFixed(0)}%${dt.anosConst*0.03>0.80?' (tope art. 124)':''} → ${fmt(dt.valCDep)}</span><span class="bv"></span></div>`;
     bd+=`<div class="br sub"><span class="bl">Construcción dep. × factor</span><span class="bv">${fmt(dt.constAct)}</span></div>`;
   }
 
@@ -1446,6 +1462,7 @@ function resetISR() {
   if(g('compra-note'))g('compra-note').textContent='';
   if(g('alert-pre1981'))g('alert-pre1981').style.display='none';
   if(g('alert-pre1990'))g('alert-pre1990').style.display='none';
+  if(g('f-viejos-pesos'))g('f-viejos-pesos').checked=true;
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
