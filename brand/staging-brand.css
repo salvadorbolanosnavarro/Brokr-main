@@ -1,0 +1,30 @@
+/* Brand artwork only. Existing layout, color tokens and controls stay intact. */
+.bk-design-brand .cf-brand-picture {
+  display:inline-block;width:3.65em;height:1em;vertical-align:middle;
+  position:relative;line-height:1;
+}
+.bk-design-brand .cf-brand-picture img {
+  position:absolute;inset:50% 0 auto;width:100%;height:1.4em;
+  object-fit:contain;transform:translateY(-50%);max-width:none;
+}
+.bk-shk-mark img,.cf-assistant-mark {
+  display:inline-block;width:1em;height:1em;object-fit:contain;vertical-align:middle;
+}
+@media(max-width:720px){
+  .bk-design-brand .cf-brand-picture img{width:1.5em;height:1.5em;}
+}
+/* The full wordmark fits the app bar at either breakpoint. */
+@media(max-width:720px){
+  .bk-design-brand .cf-brand-picture{width:2.85em;}
+  .bk-design-brand .cf-brand-picture img{width:100%;height:1.2em;}
+}
+.bk-shk-name .cecil-assistant-logo{
+  display:block;width:auto;height:1.4em;max-width:100%;object-fit:contain;
+  background:#fff;border-radius:4px;padding:2px 5px;
+}
+.ln-broqbar__ico img[src="/brand/cecil-assistant.webp"]{
+  width:62px;height:auto;object-fit:contain;
+}
+.ln-hero__media .cecil-hero-logo{
+  display:block;width:100%;max-width:560px;margin:auto;padding:clamp(32px,7vw,90px) clamp(28px,6vw,80px);
+}

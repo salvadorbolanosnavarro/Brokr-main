@@ -66,13 +66,14 @@
   }
 
   async function recargar() {
+    window.bkRenderState(panel(), 'loading', { title: 'Cargando ajustes…' });
     try {
       CAT = await api('/crm/catalogos');
       var aviso = document.getElementById('crm-aviso');
       aviso.hidden = CAT.es_admin;
       aviso.textContent = CAT.es_admin ? '' : 'Puedes ver los ajustes, pero sólo el dueño o un administrador de la cuenta los puede cambiar.';
     } catch (e) {
-      panel().innerHTML = '<div class="bk-empty"><div class="bk-empty__title">No se pudieron cargar los ajustes</div><div class="bk-empty__text">' + esc(e.message) + '</div></div>';
+      window.bkRenderState(panel(), 'error', { title: 'No se pudieron cargar los ajustes', detail: e.message, onRetry: async function () { if (await recargar()) abrir(actual); } });
       return false;
     }
     return true;
@@ -90,7 +91,9 @@
     pintarTabs();
     var p = PESTANAS.find(function (x) { return x.id === id; }) || PESTANAS[0];
     panel().innerHTML = '<div class="bk-cargando">Cargando…</div>';
-    Promise.resolve(p.render(panel(), CAT)).catch(function (e) { panel().innerHTML = '<p>' + esc(e.message) + '</p>'; });
+    Promise.resolve(p.render(panel(), CAT)).then(function () {
+      panel().setAttribute('aria-busy', 'false'); panel().dataset.state = 'data';
+    }).catch(function (e) { window.bkRenderState(panel(), 'error', { title: 'No se pudieron mostrar los ajustes', detail: e.message, onRetry: function () { abrir(actual); } }); });
   }
   window.crmAbrir = abrir;
 
@@ -114,6 +117,7 @@
             '<button class="bk-btn bk-btn--danger bk-btn--sm" data-del="' + esc(e.id) + '"' + dis + '>Eliminar</button>' +
           '</span></div>';
       }).join('') + '</div>' +
+      (!CAT.etapas.length ? '<div class="bk-state" role="status"><p class="bk-state__title">Aún no hay etapas</p><p class="bk-state__detail">' + (CAT.es_admin ? 'Agrega la primera etapa de tu pipeline.' : 'El dueño o administrador puede crear las etapas de la cuenta.') + '</p></div>' : '') +
       (CAT.es_admin ? '<div class="crm-nuevo"><input class="bk-input" id="crm-etapa-nueva" placeholder="Nueva etapa, p. ej. Visita agendada" maxlength="60"/>' +
         '<button class="bk-btn bk-btn--forest" id="crm-etapa-add">Agregar etapa</button></div>' : '');
     var lista = el.querySelector('#crm-etapas');
