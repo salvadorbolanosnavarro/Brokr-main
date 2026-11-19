@@ -67,6 +67,11 @@ def build(env=os.environ):
         if 'api.broquer.app' in text or 'urtgysmtnvoqaljuhntz' in text or PROD_KEY in text:
             raise ValueError(f'Production reference remains: {path.relative_to(output)}')
         path.write_text(text)
+    audit_script=ROOT/'scripts/staging_network_audit.js'
+    if audit_script.exists():
+        (output/'staging-network-audit.js').write_bytes(audit_script.read_bytes())
+        for page in output.rglob('*.html'):
+            page.write_text(page.read_text().replace('</head>','<script src="/staging-network-audit.js" defer></script>\n</head>',1))
     connections=f"'self' {api} {db} wss://{urlsplit(db).hostname}"
     (output/'_headers').write_text(f"/*\n  X-Robots-Tag: noindex, nofollow\n  Content-Security-Policy: connect-src {connections}; object-src 'none'; base-uri 'self'\n")
     (output/'preview-release.json').write_text(json.dumps({'source_pr':217,'design': '086fd40e7953439eceb17822abca7e29aea4bd8e','mode':'staging-preview','api':api,'database_ref':urlsplit(db).hostname.split('.')[0]},indent=2))
