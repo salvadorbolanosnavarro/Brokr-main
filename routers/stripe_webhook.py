@@ -1,3 +1,4 @@
+from core.side_effects import require_staging_stripe_key, is_staging, disabled, _block
 from datetime import datetime
 import hashlib
 import hmac
@@ -64,6 +65,7 @@ def _verify_stripe_signature(
 @router.post("/subscription/webhook")
 async def stripe_webhook(request: Request):
     """Process the legacy Stripe subscription webhook contract."""
+    require_staging_stripe_key()
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature", "")
 
@@ -76,6 +78,10 @@ async def stripe_webhook(request: Request):
         event = await request.json()
     except Exception as exc:
         raise HTTPException(status_code=400, detail="Webhook inválido.") from exc
+    if is_staging() and event.get("livemode") is not False:
+        raise HTTPException(status_code=400, detail="Staging solo acepta eventos Stripe con livemode=false.")
+    if disabled():
+        _block("stripe", "WEBHOOK")
     event_type = event.get("type", "")
     obj = event.get("data", {}).get("object", {})
 

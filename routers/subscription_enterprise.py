@@ -1,3 +1,4 @@
+from core.side_effects import require_staging_stripe_key
 from datetime import datetime
 
 import httpx
@@ -134,6 +135,7 @@ async def empresa_plan(request: Request):
 
 @router.post("/subscription/empresa/checkout")
 async def empresa_checkout(req: EmpresaCheckoutRequest, request: Request):
+    require_staging_stripe_key()
     if not STRIPE_SECRET_KEY:
         raise HTTPException(status_code=500, detail="Stripe no configurado en el servidor.")
 
@@ -243,6 +245,7 @@ async def empresa_checkout(req: EmpresaCheckoutRequest, request: Request):
 
 @router.post("/subscription/empresa/asientos")
 async def empresa_asientos(req: EmpresaAsientosRequest, request: Request):
+    require_staging_stripe_key()
     if not STRIPE_SECRET_KEY:
         raise HTTPException(status_code=500, detail="Stripe no configurado en el servidor.")
 
