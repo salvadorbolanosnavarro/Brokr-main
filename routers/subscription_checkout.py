@@ -1,3 +1,4 @@
+from core.side_effects import require_staging_stripe_key
 import httpx
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
@@ -32,6 +33,7 @@ class CheckoutRequest(BaseModel):
 
 @router.post("/subscription/checkout")
 async def subscription_checkout(req: CheckoutRequest, request: Request):
+    require_staging_stripe_key()
     if not STRIPE_SECRET_KEY:
         raise HTTPException(status_code=500, detail="Stripe no configurado en el servidor.")
 

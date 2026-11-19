@@ -1,5 +1,7 @@
 from core.staging_safety import install_staging_safety
 install_staging_safety()
+from core.side_effects import install_side_effects_safety, SideEffectsMiddleware
+install_side_effects_safety()
 
 from fastapi import FastAPI, HTTPException
 from core.cors import instalar_cors
@@ -183,6 +185,7 @@ from routers.ficha_pdf import create_router as create_ficha_pdf_router
 from routers.solicitud_arrendamiento import create_router as create_solicitud_arrendamiento_router
 from routers.contact_file_import import create_router as create_contact_file_import_router
 app = FastAPI()
+app.add_middleware(SideEffectsMiddleware)
 app.include_router(create_contact_file_import_router(lambda: {
     "get_user_id_from_token": get_user_id_from_token,
     "HTTPException": HTTPException,

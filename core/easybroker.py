@@ -13,6 +13,7 @@ from pathlib import Path
 import httpx
 
 from core.config import settings
+from core.side_effects import is_staging
 
 
 EB_BASE = "https://api.easybroker.com/v1"
@@ -28,6 +29,8 @@ _EB_ESPERA_MAX = 20.0
 
 
 def _load_legacy_config() -> dict:
+    if is_staging():
+        return {}  # Ignore any mounted/generated legacy config in staging.
     try:
         if _CONFIG_FILE.exists():
             return json.loads(_CONFIG_FILE.read_text())

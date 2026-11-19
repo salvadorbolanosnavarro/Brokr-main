@@ -31,9 +31,6 @@ def validate(env):
     for name in ('API_BASE_URL','BROQUER_API_BASE'):
         if env.get(name,'').rstrip('/') != 'https://brokr-main-staging.up.railway.app':
             raise RuntimeError(f'{name} must target the existing staging API.')
-    stripe = env.get('STRIPE_SECRET_KEY','')
-    if stripe and not stripe.startswith(('sk_test_','rk_test_')):
-        raise RuntimeError('Staging only accepts test-mode Stripe credentials.')
     return ref
 
 _READ_ONLY_PROVIDERS = {
@@ -76,15 +73,12 @@ def _check_resend(request, test_emails):
 def install_staging_safety():
     global _installed
     if os.getenv('BROQUER_ENV','').lower() != 'staging' or _installed: return
-    # Credenciales reales heredadas de producción: en staging no existen.
+    # Preserve the existing removal of legacy global Meta tokens.
     for name in ('WHATSAPP_TOKEN','INSTAGRAM_TOKEN','IG_USER_ID'):
-        os.environ.pop(name,None)
-    if not os.getenv('STRIPE_SECRET_KEY','').startswith(('sk_test_','rk_test_')):
-        os.environ.pop('STRIPE_SECRET_KEY',None)
-        os.environ.pop('STRIPE_WEBHOOK_SECRET',None)
+        os.environ.pop(name, None)
     ref = validate(os.environ)
     allowed = {f'{ref}.supabase.co'}
-    if os.getenv('STRIPE_SECRET_KEY'): allowed.add('api.stripe.com')
+    allowed.add('api.stripe.com')  # Runtime validation returns a controlled 503.
     allowed |= _READ_ONLY_PROVIDERS | {'graph.facebook.com','api.resend.com','api.sandbox.push.apple.com'}
     test_phones = _digits_set(os.getenv('BROQUER_STAGING_TEST_PHONES',''))
     test_emails = _emails_set(os.getenv('BROQUER_STAGING_TEST_EMAILS',''))
@@ -98,14 +92,8 @@ def install_staging_safety():
         if request.url.host == 'api.resend.com':
             _check_resend(request, test_emails)
         if request.url.host == 'api.stripe.com':
-            # Prevent per-user credentials from bypassing the test key configured above.
-            auth = request.headers.get('authorization','')
-            if auth.lower().startswith('basic '):
-                import base64
-                try: auth = base64.b64decode(auth[6:]).decode()
-                except Exception: auth = ''
-            if not any(v in auth for v in ('sk_test_','rk_test_')):
-                raise httpx.RequestError('Only Stripe test requests are allowed',request=request)
+            from core.side_effects import _guard
+            _guard(request)
     async def send_async(self,request,*args,**kwargs):
         check(request)
         kwargs["follow_redirects"] = False

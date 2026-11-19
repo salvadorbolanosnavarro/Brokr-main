@@ -1,3 +1,4 @@
+from core.side_effects import require_staging_stripe_key
 from datetime import datetime
 
 import httpx
@@ -21,6 +22,7 @@ def _stripe_headers() -> dict:
 @router.post("/subscription/cancel")
 async def subscription_cancel(request: Request):
     """Cancela la suscripción activa del usuario al final del período actual (at_period_end)."""
+    require_staging_stripe_key()
     if not settings.stripe_secret_key:
         raise HTTPException(status_code=500, detail="Stripe no configurado.")
 
