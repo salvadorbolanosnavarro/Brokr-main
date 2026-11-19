@@ -4324,6 +4324,13 @@ body[data-app="facebook-ads"]{--page-max:980px}
     const profile = await authInit();
     if (!profile) return; // redirected to login/landing
 
+    // Optional UI only: do not delay or change the existing application boot.
+    const cecilRollout = document.createElement('script');
+    cecilRollout.src = '/ui/cecil-rollout.js';
+    cecilRollout.onload = () => window.bkCecilRollout?.({api: API_BASE, token: getToken(), userId: profile.user.id});
+    document.head.appendChild(cecilRollout);
+
+
     // Un admin puede apagar módulos por cuenta desde la Consola, sin tocar
     // el rol ni la suscripción. Si el módulo de esta página está apagado
     // para esta cuenta, se manda de regreso a Inicio en vez de dejar entrar
