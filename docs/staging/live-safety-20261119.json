@@ -1,0 +1,43 @@
+[
+  {
+    "at_utc": "2026-11-19T23:17:55.240795+00:00",
+    "url": "https://brokr-main-staging.up.railway.app/subscription/checkout",
+    "method": "POST",
+    "authenticated": false,
+    "status": 503,
+    "headers": {
+      "cache-control": "no-store",
+      "date": "Thu, 19 Nov 2026 23:17:55 GMT",
+      "x-broquer-simulated": "false",
+      "x-railway-request-id": "JcEGiynlQLGpNuiNBhdwDg"
+    },
+    "body": {
+      "ok": false,
+      "simulated": false,
+      "external_call_performed": false,
+      "code": "STAGING_STRIPE_TEST_KEY_REQUIRED",
+      "message": "Stripe requiere una llave sk_test_ en staging.",
+      "blocked_operations": [
+        {
+          "provider": "stripe",
+          "method": "CONFIG",
+          "kind": "stripe_configuration"
+        }
+      ]
+    }
+  },
+  {
+    "at_utc": "2026-11-19T23:17:59.453436+00:00",
+    "url": "https://brokr-main-staging.up.railway.app/whatsapp-chatgpt/send-test",
+    "method": "POST",
+    "authenticated": false,
+    "status": 401,
+    "headers": {
+      "date": "Thu, 19 Nov 2026 23:17:59 GMT",
+      "x-railway-request-id": "WfFlf2cYTjew7YOJH4GxDA"
+    },
+    "body": {
+      "detail": "Inicia sesión para conectar WhatsApp."
+    }
+  }
+]
