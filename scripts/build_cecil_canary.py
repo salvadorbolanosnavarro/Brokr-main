@@ -57,7 +57,7 @@ def build(output, *, staging=False):
             output.mkdir(parents=True)
             pages=[]
             for path in source.rglob('*'):
-                if not path.is_file() or path.parts[-2]=='scripts':continue
+                if not path.is_file() or any(part in {'scripts','__pycache__'} for part in path.relative_to(source).parts):continue
                 relative=path.relative_to(source)
                 # No demo runtime, test fixtures, API rewriting or staging guard.
                 if path.name in {'demo-runtime.js','staging-auth-guard.js'}:continue

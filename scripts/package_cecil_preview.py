@@ -18,6 +18,8 @@ def audit(directory):
         raise ValueError('Empty preview output')
     manifest = {}
     for path in files:
+        if path.suffix.lower() in {'.py','.pyc','.sql','.env'} or '__pycache__' in path.parts:
+            raise ValueError(f'Non-public source in artifact: {path}')
         payload = path.read_bytes()
         if any(word in payload.lower() for word in FORBIDDEN):
             raise ValueError(f'Production reference in published file: {path.relative_to(directory)}')
