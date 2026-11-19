@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Inicio · Cecil</title>
+<meta name="description" content="Somos un AI Real Estate Operating System (REOS): CRM (inmuebles, contactos, tareas y estadísticas), conexión con tu WhatsApp, contratos, firma electrónica, cumplimiento de ley, estimaciones de valor, cálculos de ISR, Facebook Ads, edición de imágenes, video, sitio web y el mejor y más inteligente asistente de IA 24/7: Cecil IA."/>
+<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
+<link rel="apple-touch-icon" href="/cecil/brand/cecil-icon.png"/>
+<meta name="theme-color" content="#FFFFFF"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --paper -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+/* ════════════════════════════════════════════════════════════════
+   BROQUER 2 — Sistema de diseño "Blanca"
+   Semilla del rediseño total. Sustituye a brokr-theme.css.
+
+   Dirección: mundo blanco a la Zillow. La página es papel; el azul
+   es la única voz de acción; las tarjetas flotan con sombra suave;
+   todo es redondo y amable. El acento cantera viene de la piedra
+   rosa de Morelia: se usa poquito, solo para señalar lo nuevo.
+
+   Tipografía canon: Inter única, con tracking apretado.
+   Nada de monoespaciadas.
+   ════════════════════════════════════════════════════════════════ */
+
+
+/* ── Base ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); color: var(--ink); }
+p { margin: 0; }
+a { color: var(--sky-blue); }
+img, svg, video { display: block; max-width: 100%; }
+
+:focus-visible {
+  outline: 2px solid var(--sky-blue);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms; animation-iteration-count: 1; transition-duration: .01ms; }
+  html { scroll-behavior: auto; }
+}
+
+/* ── Contenedor ───────────────────────────────────────────────── */
+.b2-wrap { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+@media (max-width: 720px) { .b2-wrap { padding: 0 18px; } }
+
+/* ── Botones ──────────────────────────────────────────────────── */
+.b2-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  text-decoration: none; cursor: pointer;
+  transition: background .18s var(--ease), transform .18s var(--ease), box-shadow .18s var(--ease);
+}
+.b2-btn--blue:hover { transform: translateY(-1px); }
+.b2-btn--white:hover { transform: translateY(-1px); }
+
+/* ── Etiquetas ────────────────────────────────────────────────── */
+.b2-tag {
+  display: inline-flex; align-items: center;
+  font-size: var(--fs-label-3); font-weight: 700; line-height: 1;
+  padding: 5px 10px; border-radius: var(--r-pill);
+  background: var(--sky-canvas); color: var(--sky-blue-press);
+}
+.b2-tag--free   { background: var(--success-soft);   color: var(--success); }
+.b2-tag--nuevo  { background: var(--danger-soft); color: var(--danger); }
+
+/* ── Tarjeta base ─────────────────────────────────────────────── */
+.b2-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+</style>
+<style>
+/* ════════════════════════════════════════════════════════════════
+   BROQUER — Landing comercial · Rediseño "Blanca"
+   Mundo blanco a la Zillow: papel, un azul, tarjetas que flotan.
+   La firma de la página es la barra de Cecil IA: el buscador de Zillow
+   reinterpretado como el asistente que escribe solo lo que sabe hacer.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Nav (blanca, pegajosa, hairline) ───────────────────────── */
+.ln-nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.ln-nav__in {
+  max-width: 1180px; margin: 0 auto; padding: 0 28px;
+  height: 76px; display: flex; align-items: center; gap: 28px;
+}
+.ln-nav__logo img { height: 46px; width: auto; }
+.ln-nav__links { display: flex; gap: 26px; flex: 1; }
+.ln-nav__links a {
+  color: var(--ink); text-decoration: none;
+  font-size: var(--fs-sm); font-weight: 600;
+  transition: color .18s var(--ease);
+}
+.ln-nav__links a:hover { color: var(--sky-blue); }
+.ln-nav__cta { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+.ln-nav__pais select, .ln-hero__pais select {
+  height: 36px; padding: 0 var(--sp-3); border: 1px solid var(--line-2); border-radius: var(--r-pill);
+  background: var(--paper); color: var(--ink); font-family: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
+}
+.ln-nav__pais select:focus-visible, .ln-hero__pais select:focus-visible { outline: none; box-shadow: var(--focus); }
+/* En celular el menú ya va lleno: el país se elige arriba del hero. */
+.ln-hero__pais { display: none; margin: 0 auto var(--sp-4); }
+@media (max-width: 600px) { .ln-nav__pais { display: none; } .ln-hero__pais { display: block; } }
+[data-solo-mx].ln-oculto { display: none !important; }
+@media (max-width: 860px) { .ln-nav__links { display: none; } }
+@media (max-width: 460px) { .ln-nav__in { height: 64px; gap: 14px; } .ln-nav__logo img { height: 38px; } }
+
+/* ── Hero (blanco, centrado, la barra de Cecil IA al mando) ─────── */
+.ln-hero { padding: 76px 0 0; text-align: center; }
+.ln-hero__eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: var(--fs-sm); font-weight: 600; color: var(--sky-blue-press);
+  background: var(--sky-canvas); border-radius: var(--r-pill);
+  padding: 7px 16px; margin-bottom: 22px;
+}
+.ln-hero h1 {
+  font-size: clamp(var(--fs-h1), 5.4vw, var(--fs-hero)); font-weight: 800;
+  line-height: 1.02; letter-spacing: -.035em;
+  max-width: 860px; margin: 0 auto 18px;
+}
+.ln-hero h1 em { font-style: normal; color: var(--sky-blue); }
+.ln-hero__sub {
+  font-size: var(--fs-body-lg); line-height: 1.55; color: var(--mute);
+  max-width: 620px; margin: 0 auto 34px;
+}
+.ln-hero__sub strong { color: var(--ink); font-weight: 700; }
+
+/* La barra de Cecil IA: la firma de la página */
+.ln-broqbar {
+  display: flex; align-items: center; gap: 12px;
+  max-width: 640px; margin: 0 auto;
+  background: var(--paper);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 8px 8px 8px 22px;
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease), transform .2s var(--ease);
+}
+.ln-broqbar:hover { border-color: var(--sky-blue); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.ln-broqbar__ico { flex: none; }
+.ln-broqbar__ico img { height: 26px; width: 26px; }
+.ln-broqbar__txt {
+  flex: 1; min-width: 0; text-align: left;
+  font-size: var(--fs-body); color: var(--mute);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ln-broqbar__txt::after {
+  content: ''; display: inline-block; width: 2px; height: 1.05em;
+  background: var(--sky-blue); vertical-align: text-bottom; margin-left: 2px;
+  animation: ln-parpadeo 1s steps(1) infinite;
+}
+@keyframes ln-parpadeo { 50% { opacity: 0; } }
+.ln-broqbar__btn {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: background .18s var(--ease);
+}
+@media (max-width: 520px) {
+  .ln-broqbar { padding-left: 14px; }
+  .ln-broqbar__btn span { display: none; }
+}
+.ln-hero__nota { font-size: var(--fs-sm); color: var(--mute); margin-top: 16px; }
+
+/* Video de producto flotando bajo la barra */
+.ln-hero__media {
+  max-width: 940px; margin: 52px auto 0;
+  border-radius: var(--r-modal); overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+  background: var(--paper);
+}
+.ln-hero__media video { width: 100%; height: auto; }
+
+/* Cifras como tarjetitas */
+.ln-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  max-width: 940px; margin: 26px auto 0;
+}
+.ln-stat {
+  background: var(--paper-2); border-radius: var(--r-lg);
+  padding: 22px 18px; text-align: center;
+}
+.ln-stat .v { font-family: var(--font-display); font-size:var(--fs-h1); font-weight: 800; letter-spacing: -.03em; }
+.ln-stat .l { font-size: var(--fs-sm); color: var(--mute); margin-top: 4px; }
+@media (max-width: 560px) { .ln-stats { grid-template-columns: 1fr; } }
+
+/* ── Secciones ──────────────────────────────────────────────── */
+.ln-sec { padding: 84px 0; }
+.ln-sec--canvas { background: var(--paper-2); }
+.ln-sec-head { max-width: 680px; margin: 0 auto 44px; text-align: center; }
+.ln-sec-head .eyebrow {
+  display: inline-block; font-size: var(--fs-sm); font-weight: 700;
+  color: var(--sky-blue); margin-bottom: 12px;
+}
+.ln-sec-head h2 {
+  font-size:var(--fs-h1); font-weight: 800;
+  letter-spacing: -.03em; line-height: 1.08; margin-bottom: 12px;
+}
+.ln-sec-head p { font-size: var(--fs-body-lg); line-height: 1.6; color: var(--mute); }
+
+/* ── El video del recorrido ─────────────────────────────────── */
+.ln-frame {
+  position: relative; width: 100%; aspect-ratio: 16 / 9;
+  border-radius: var(--r-modal); overflow: hidden;
+  background: var(--sky-navy);
+  box-shadow: var(--shadow-lg);
+  margin-bottom: 40px;
+}
+.ln-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+.ln-poster {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border: 0; padding: 0; cursor: pointer;
+  background: var(--sky-navy); font-family: var(--font-sans); display: block;
+}
+.ln-poster__img {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  opacity: 0; transition: opacity .4s var(--ease), transform .5s var(--ease);
+}
+.ln-poster__img.is-lista { opacity: .5; }
+.ln-poster:hover .ln-poster__img.is-lista { opacity: .38; transform: scale(1.03); }
+.ln-poster__velo {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(8,65,154,.92), rgba(8,65,154,.15));
+}
+.ln-poster__c {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  color: var(--paper);
+}
+.ln-poster__play {
+  width: 76px; height: 76px; border-radius: 50%;
+  background: var(--paper); color: var(--sky-blue);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-md);
+  transition: transform .2s var(--ease);
+}
+.ln-poster:hover .ln-poster__play { transform: scale(1.07); }
+.ln-poster__play svg { width: 30px; height: 30px; margin-left: 3px; }
+.ln-poster__t { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700; }
+.ln-poster__d { font-size: var(--fs-sm); color: color-mix(in srgb, var(--paper) 78%, transparent); }
+
+/* ── Módulos: tarjetas a la Zillow ──────────────────────────── */
+.ln-mods {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+}
+@media (max-width: 980px) { .ln-mods { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 620px) { .ln-mods { grid-template-columns: 1fr; } }
+.ln-mod {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  display: flex; flex-direction: column; gap: 14px;
+  transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+}
+.ln-mod:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.ln-mod__top { display: flex; align-items: center; justify-content: space-between; }
+.ln-mod__ico {
+  width: 46px; height: 46px; border-radius: var(--r-sm);
+  background: var(--sky-canvas); color: var(--sky-blue);
+  display: flex; align-items: center; justify-content: center;
+}
+.ln-mod__ico svg { width: 24px; height: 24px; }
+.ln-mod h3 { font-size: var(--fs-h3); font-weight: 700; letter-spacing: -.015em; }
+.ln-mod p { font-size: var(--fs-sm); line-height: 1.55; color: var(--mute); }
+
+/* ── Instagram ──────────────────────────────────────────────── */
+.ig-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+@media (max-width: 900px) { .ig-grid { grid-template-columns: repeat(2, 1fr); } }
+.ig-post {
+  position: relative; display: block; aspect-ratio: 1 / 1;
+  border-radius: var(--r-lg); overflow: hidden;
+  border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+  background: var(--paper-2);
+  transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+}
+.ig-post:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.ig-post img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ig-post__play {
+  position: absolute; top: 10px; right: 10px;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--paper); color: var(--sky-blue);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+.ig-post__play svg { width: 13px; height: 13px; margin-left: 2px; }
+
+/* ── Nosotros ───────────────────────────────────────────────── */
+.ln-about { display: grid; grid-template-columns: 1.15fr .85fr; gap: 40px; align-items: start; }
+@media (max-width: 860px) { .ln-about { grid-template-columns: 1fr; } }
+.ln-about__txt { display: flex; flex-direction: column; gap: 18px; }
+.ln-about__txt p { font-size: var(--fs-body-lg); line-height: 1.65; color: var(--mute); }
+.ln-about__txt strong { color: var(--ink); }
+.ln-quote {
+  background: var(--sky-canvas);
+  border-radius: var(--r-lg);
+  padding: 34px 30px;
+}
+.ln-quote p {
+  font-family: var(--font-display); font-size: var(--fs-h3);
+  font-weight: 700; line-height: 1.35; letter-spacing: -.015em;
+  color: var(--sky-navy);
+}
+.ln-quote em { font-style: normal; color: var(--sky-blue); }
+
+/* ── Precios ────────────────────────────────────────────────── */
+.ln-planes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: stretch; }
+@media (max-width: 980px) { .ln-planes { grid-template-columns: 1fr; max-width: 460px; margin: 0 auto; } }
+.ln-price {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.ln-price--max { border: 2px solid var(--sky-blue); box-shadow: var(--shadow); position: relative; }
+.ln-price__cinta {
+  position: absolute; top: 16px; right: 16px;
+}
+.ln-price__head { padding: 26px 26px 0; }
+.ln-price__head .name { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 800; letter-spacing: -.015em; }
+.ln-price__head .sub { font-size: var(--fs-sm); color: var(--mute); margin-top: 2px; }
+.ln-price__precio { font-family: var(--font-display); font-size:var(--fs-h1); font-weight: 800; letter-spacing: -.03em; margin-top: 14px; }
+.ln-price__precio-sub { font-size: var(--fs-sm); color: var(--mute); margin-top: 2px; }
+.ln-price__body { padding: 20px 26px 26px; display: flex; flex-direction: column; gap: 18px; flex: 1; }
+.ln-price__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.ln-price__list li {
+  position: relative; padding-left: 26px;
+  font-size: var(--fs-sm); line-height: 1.5; color: var(--mute);
+}
+.ln-price__list li::before {
+  content: ''; position: absolute; left: 0; top: 3px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--sky-canvas);
+}
+.ln-price__list li::after {
+  content: ''; position: absolute; left: 4px; top: 8px;
+  width: 8px; height: 5px;
+  border-left: 2px solid var(--sky-blue); border-bottom: 2px solid var(--sky-blue);
+  transform: rotate(-45deg);
+}
+.ln-price--free .ln-price__list li::before { background: var(--success-soft); }
+.ln-price--free .ln-price__list li::after { border-color: var(--success); }
+.ln-price__note { font-size: var(--fs-label-3); color: var(--mute); text-align: center; }
+
+/* ── App Store ──────────────────────────────────────────────── */
+.ln-appstore {
+  background: var(--sky-navy);
+  background-image: radial-gradient(120% 160% at 50% 0%, rgba(13,107,240,.55), transparent 60%);
+  border-radius: var(--r-modal);
+  padding: 52px 40px; text-align: center;
+  color: var(--paper);
+}
+.ln-appstore__eyebrow { font-size: var(--fs-sm); font-weight: 600; color: color-mix(in srgb, var(--paper) 78%, transparent); margin-bottom: 12px; }
+.ln-appstore h2 {
+  font-size:var(--fs-h1); font-weight: 800; letter-spacing: -.03em;
+  line-height: 1.1; color: var(--paper); margin-bottom: 10px;
+}
+.ln-appstore p { font-size: var(--fs-body); color: color-mix(in srgb, var(--paper) 78%, transparent); max-width: 460px; margin: 0 auto 26px; line-height: 1.55; }
+.ln-appstore__badge { display: inline-block; line-height: 0; }
+.ln-appstore__badge img { height: 54px; width: auto; }
+.ln-appstore__badge:hover { opacity: .92; }
+
+/* ── CTA final ──────────────────────────────────────────────── */
+.ln-final { padding: 90px 0; background: var(--paper-2); text-align: center; }
+.ln-final h2 {
+  font-size:var(--fs-h1); font-weight: 800; letter-spacing: -.03em;
+  line-height: 1.08; max-width: 720px; margin: 0 auto 14px;
+}
+.ln-final p { font-size: var(--fs-body-lg); color: var(--mute); margin-bottom: 30px; }
+
+/* ── Footer (claro) ─────────────────────────────────────────── */
+.ln-foot { background: var(--paper); border-top: 1px solid var(--line); padding: 36px 0; }
+.ln-foot__in {
+  max-width: 1180px; margin: 0 auto; padding: 0 28px;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+}
+.ln-foot__logo img { height: 40px; width: auto; }
+.ln-foot__links { display: flex; gap: 20px; flex-wrap: wrap; }
+.ln-foot__links a { color: var(--mute); text-decoration: none; font-size: var(--fs-sm); }
+.ln-foot__links a:hover { color: var(--sky-blue); }
+.ln-foot__badge { display: block; line-height: 0; }
+.ln-foot__badge img { height: 34px; width: auto; }
+.ln-foot__meta { display: block; line-height: 0; opacity: .8; }
+.ln-foot__meta img { height: 26px; width: auto; }
+.ln-foot__copy { font-size: var(--fs-label-3); color: var(--mute); }
+</style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
+<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
+</head>
+<body>
+
+<!-- ── NAV ─────────────────────────────────────────────────── -->
+<nav class="ln-nav">
+  <div class="ln-nav__in">
+    <a class="ln-nav__logo" href="landing.html" aria-label="Cecil">
+      <img src="/cecil/brand/cecil-wordmark.webp" alt="Cecil"/>
+    </a>
+    <div class="ln-nav__links">
+      <a href="#modulos">Módulos</a>
+      <a href="#nosotros">Nosotros</a>
+      <a href="#precios">Precios</a>
+    </div>
+    <div class="ln-nav__cta">
+      <span class="ln-nav__pais" id="ln-pais"></span>
+      <button class="b2-btn b2-btn--ghost b2-btn--sm" type="button" onclick="lnAbrirDemo()">Agendar demo</button>
+      <a class="b2-btn b2-btn--ghost b2-btn--sm" href="login.html">Iniciar sesión</a>
+      <a class="b2-btn b2-btn--blue b2-btn--sm" href="registro.html">Crear cuenta</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ────────────────────────────────────────────────── -->
+<header class="ln-hero">
+  <div class="b2-wrap">
+    <div class="ln-hero__pais" id="ln-pais-hero"></div>
+    <div class="ln-hero__eyebrow">Más operaciones. Con menos fricciones.</div>
+    <h1>El primer <em>AI Real Estate Operating System</em></h1>
+    <p class="ln-hero__sub">creado por agentes inmobiliarios para agentes inmobiliarios. CRM inmobiliario, contratos, estimaciones de valor, cálculos de <span data-fuera-mx="impuestos">ISR</span>, Facebook Ads, edición de imágenes. <strong>Somos lo que no sabías que necesitabas.</strong></p>
+
+    <!-- La barra de Cecil IA: la firma del rediseño. Escribe sola lo que sabe hacer. -->
+    <a class="ln-broqbar" href="registro.html" aria-label="Crear cuenta y pedirle algo a Cecil IA">
+      <span class="ln-broqbar__ico"><img src="/cecil/brand/cecil-assistant.webp" alt=""/></span>
+      <span class="ln-broqbar__txt" id="broqbar-txt">Calcula el ISR de una venta de $2,400,000</span>
+      <span class="ln-broqbar__btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <span>Pídele a Cecil IA</span>
+      </span>
+    </a>
+    <p class="ln-hero__nota">También en iPhone y iPad.</p>
+
+    <div class="ln-hero__media">
+      <img class="cecil-hero-logo" src="/cecil/brand/cecil-wordmark.webp" alt="Cecil">
+    </div>
+
+    <div class="ln-stats">
+      <div class="ln-stat"><div class="v">REOS</div><div class="l">Una sola plataforma</div></div>
+      <div class="ln-stat"><div class="v">16+</div><div class="l">Módulos profesionales</div></div>
+      <div class="ln-stat"><div class="v">24/7</div><div class="l">Cecil IA, tu asistente IA</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ── MÓDULOS ─────────────────────────────────────────────── -->
+<section class="ln-sec ln-sec--canvas" id="modulos">
+  <div class="b2-wrap">
+
+    <div class="ln-sec-head">
+      <div class="eyebrow">Módulos</div>
+      <h2>Un verdadero sistema operativo profesional inmobiliario.</h2>
+      <p>Te aseguramos que tu actividad, ya seas agente independiente o inmobiliaria, no necesita más. ¡Mira el video!</p>
+    </div>
+
+    <!-- El recorrido en video. Para publicarlo: sustituye data-yt por el
+         identificador del video de YouTube (lo que va después de "v="). -->
+    <div class="ln-frame" id="mv-frame" data-yt="_jHa6lpK93M">
+      <button class="ln-poster" id="mv-poster" type="button" aria-label="Reproducir el recorrido por Cecil">
+        <span class="ln-poster__img" id="mv-poster-img"></span>
+        <span class="ln-poster__velo"></span>
+        <span class="ln-poster__c">
+          <span class="ln-poster__play">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72a.5.5 0 00.77.42l10.5-6.86a.5.5 0 000-.84L8.77 4.72a.5.5 0 00-.77.42z"/></svg>
+          </span>
+          <span class="ln-poster__t">Cecil en acción</span>
+          <span class="ln-poster__d">El copiloto que no sabías que te urgía</span>
+        </span>
+      </button>
+    </div>
+
+    <div class="ln-mods">
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+          </span>
+
+        </div>
+        <h3>CRM inmobiliario</h3>
+        <p>Contactos, leads, tareas e inventario en un solo lugar.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/></svg>
+          </span>
+          <span class="b2-tag">Cecil Max</span>
+        </div>
+        <h3>Finanzas</h3>
+        <p>Ingresos, gastos y la utilidad real de cada operación. Cecil IA lee tus tickets.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg>
+          </span>
+          <span class="b2-tag">Cecil Max</span>
+        </div>
+        <h3>Cecil IA, tu asistente con IA</h3>
+        <p>Pídele lo que quieras, como un cálculo de <span data-fuera-mx="impuestos">ISR</span>. Por voz o texto.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>
+          </span>
+          <span class="b2-tag">Cecil Max</span>
+        </div>
+        <h3>WhatsApp con IA</h3>
+        <p>Contesta, califica, agenda por ti y manda info a tus clientes.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/></svg>
+          </span>
+          <span class="b2-tag">Cecil Max</span>
+        </div>
+        <h3>Correo electrónico</h3>
+        <p>Conecta tu correo y lee, responde y redacta sin salir de Cecil.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+          </span>
+          <span class="b2-tag">Cecil Max</span>
+        </div>
+        <h3>Estimaciones de valor</h3>
+        <p>Comparables reales y análisis con inteligencia artificial.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V18zm2.498-6.75h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V18zm2.504-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V18zm2.498-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0012 2.25z"/></svg>
+          </span>
+          <span class="b2-tag">Cecil Max</span>
+        </div>
+        <h3>Calculadora de <span data-fuera-mx="impuestos">ISR</span></h3>
+        <p>Sorprende con un cálculo inmediato.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          </span>
+          <span class="b2-tag">Cecil Max</span>
+        </div>
+        <h3>Contratos en minutos</h3>
+        <p>Listos para firmar.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          </span>
+          <span class="b2-tag">Cecil Max</span>
+        </div>
+        <h3>Fichas técnicas</h3>
+        <p>Cualquier propiedad en un PDF listo para WhatsApp.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+          </span>
+          <span class="b2-tag">Cecil Max</span>
+        </div>
+        <h3>Editor de imágenes con IA</h3>
+        <p>Fotos que venden, sin contratar diseñador.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253 1.172.613 2.307 1.068 3.393.325.777 1.148 1.179 1.888.9l.744-.28c.831-.312 1.211-1.257.906-2.06a23.32 23.32 0 01-.658-2.187m-3.948 0A23.848 23.848 0 0113.5 11.5c0-1.605-.16-3.174-.464-4.69m0 9.38a23.4 23.4 0 00-.464-9.38m0 0a24.14 24.14 0 005.454-2.26c.1.86.152 1.735.152 2.622 0 3.85-.98 7.47-2.704 10.628"/></svg>
+          </span>
+          <span class="b2-tag">Cecil Max</span>
+        </div>
+        <h3>Anuncios en Facebook</h3>
+        <p>Simplificamos Facebook Ads.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/></svg>
+          </span>
+          <span class="b2-tag b2-tag--nuevo">Nuevo</span>
+        </div>
+        <h3>Cumplimiento legal</h3>
+        <p>Con Cecil haz las cosas bien.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zM19.5 12v6.75A2.25 2.25 0 0117.25 21H6.75A2.25 2.25 0 014.5 18.75V8.25A2.25 2.25 0 016.75 6H13.5"/></svg>
+          </span>
+          <span class="b2-tag b2-tag--nuevo">Nuevo</span>
+        </div>
+        <h3>Firma electrónica</h3>
+        <p>Manda el contrato y cada parte firma desde su celular.</p>
+      </article>
+
+      <article class="ln-mod">
+        <div class="ln-mod__top">
+          <span class="ln-mod__ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
+          </span>
+          <span class="b2-tag b2-tag--nuevo">Nuevo</span>
+        </div>
+        <h3>Bolsa inmobiliaria</h3>
+        <p>Comparte inventario con otros agentes y cierra en equipo con comisión compartida.</p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── INSTAGRAM ───────────────────────────────────────────── -->
+<section class="ln-sec" id="ig-sec" hidden>
+  <div class="b2-wrap">
+    <div class="ln-sec-head">
+      <div class="eyebrow">Echa un vistazo</div>
+      <h2>Nuestros posts más recientes</h2>
+      <p>Directo de nuestro Instagram</p>
+    </div>
+    <div class="ig-grid" id="ig-grid"></div>
+  </div>
+</section>
+
+<!-- ── NOSOTROS ────────────────────────────────────────────── -->
+<section class="ln-sec" id="nosotros">
+  <div class="b2-wrap">
+    <div class="ln-sec-head">
+      <div class="eyebrow">Nosotros</div>
+      <h2>Creado por tiburones inmobiliarios</h2>
+    </div>
+    <div class="ln-about">
+      <div class="ln-about__txt">
+        <p>Somos el<strong> primer AI Real Estate Operating System (REOS) creado por agentes inmobiliarios para agentes inmobiliarios</strong>: literalmente un sistema operativo con inteligencia artificial que concentra en una sola plataforma todo lo que un agente inmobiliario profesional necesita para operar. Somos lo que requieres y mereces.</p>
+        <p>Como<strong> agentes inmobiliarios</strong> hemos asistido a citas de captación, hemos necesitado <span data-fuera-mx="el cálculo de impuestos">el ISR</span> para ayer, nos han pedido firmar un contrato urgentemente. Cecil existe porque lo necesitábamos.</p>
+        <p>Por eso cada módulo resuelve un problema real, con el rigor de la práctica profesional y la velocidad que un verdadero tiburón necesita. <strong>Somos lo que no sabías que necesitabas.</strong></p>
+      </div>
+      <div class="ln-quote">
+        <p>El primer <em>AI Real Estate Operating System</em> creado por agentes inmobiliarios para agentes inmobiliarios.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRECIOS ─────────────────────────────────────────────── -->
+<section class="ln-sec ln-sec--canvas" id="precios">
+  <div class="b2-wrap">
+    <div class="ln-sec-head">
+      <div class="eyebrow">Precios</div>
+      <h2>Para ti o para toda tu inmobiliaria.</h2>
+      <p>Elige el plan que mejor se adapte a tu operación.</p>
+    </div>
+    <div class="ln-planes">
+
+      <div class="ln-price ln-price--free">
+        <div class="ln-price__head">
+          <div class="name">Free</div>
+          <div class="sub">Tu CRM completo, sin costo</div>
+          <div class="ln-price__precio">$0 al mes</div>
+        </div>
+        <div class="ln-price__body">
+          <ul class="ln-price__list">
+            <li>Tus Inmuebles: todo tu inventario con fotos, precios y ubicación</li>
+            <li>Contactos: tu base de clientes con notas, etiquetas e historial</li>
+            <li>Leads: los prospectos nuevos ordenados por etapa</li>
+            <li>Tareas: pendientes y recordatorios ligados a cada contacto o propiedad</li>
+            <li>Estadísticas: cómo va tu operación mes con mes</li>
+            <li>Tu cuenta en iPhone y iPad</li>
+          </ul>
+          <a class="b2-btn b2-btn--ghost" href="registro.html">Crear mi cuenta</a>
+          <div class="ln-price__note">Sin tarjeta. Sin límite de tiempo.</div>
+        </div>
+      </div>
+
+      <div class="ln-price ln-price--max">
+        <span class="ln-price__cinta b2-tag">El más elegido</span>
+        <div class="ln-price__head">
+          <div class="name">Cecil Max</div>
+          <div class="sub">Personal</div>
+          <div class="ln-price__precio" data-pais-precio>$899 al mes</div>
+        </div>
+        <div class="ln-price__body">
+          <ul class="ln-price__list">
+            <li>Cecil IA, tu superasistente con inteligencia artificial</li>
+            <li>Estimaciones de valor</li>
+            <li>Supercalculadora de <span data-fuera-mx="impuestos">ISR</span></li>
+            <li>Contratos en minutos</li>
+            <li>Fichas técnicas profesionales</li>
+            <li>Editor de imágenes instantáneo. ¡Hasta 20 a la vez!</li>
+            <li>Anuncios de Facebook</li>
+            <li>WhatsApp, ¡y más!</li>
+          </ul>
+          <a class="b2-btn b2-btn--blue" href="registro.html">Crear mi cuenta</a>
+          <div class="ln-price__note">También incluye CRM</div>
+        </div>
+      </div>
+
+      <div class="ln-price ln-price--empresa">
+        <div class="ln-price__head">
+          <div class="name">Cecil para empresas</div>
+          <div class="sub">Para tu agencia inmobiliaria</div>
+          <div class="ln-price__precio">A la medida de tu agencia</div>
+        </div>
+        <div class="ln-price__body">
+          <ul class="ln-price__list">
+            <li>Cecil Max para cada agente de tu equipo</li>
+            <li>Mismo inventario para todo el equipo</li>
+            <li>Tú decides qué información sensible puede ver tu equipo</li>
+            <li>Solo tú puedes conectar Facebook o API keys</li>
+            <li>Puedes conectar varios números de WhatsApp</li>
+            <li>Si uno de tus agentes se va tú conservas contactos y propiedades</li>
+          </ul>
+          <a class="b2-btn b2-btn--blue" href="empresas.html">Hablemos de tu empresa</a>
+          <div class="ln-price__note">Cuéntanos qué necesita tu equipo y armamos tu plan.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── APP STORE ───────────────────────────────────────────── -->
+<section class="ln-sec">
+  <div class="b2-wrap">
+    <div class="ln-appstore">
+      <div class="ln-appstore__eyebrow">También disponible para iPhone y iPad</div>
+      <h2>Lleva tu copiloto a todas partes</h2>
+      <p>Todo lo que ya sabes que hace Cecil también es capaz de hacerlo en tu iPhone/iPad.</p>
+      <a class="ln-appstore__badge" href="https://apps.apple.com/us/app/broquer/id6775727897" target="_blank" rel="noopener">
+        <img src="appstore-badge.webp" alt="Descárgalo en el App Store"/>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA FINAL ───────────────────────────────────────────── -->
+<section class="ln-final">
+  <div class="b2-wrap">
+    <h2>Tu operación inmobiliaria merece un sistema operativo a la altura</h2>
+    <p>Únete a los agentes que están cerrando más.</p>
+    <a class="b2-btn b2-btn--blue" href="registro.html">Empieza hoy</a>
+  </div>
+</section>
+
+<!-- ── FOOTER ──────────────────────────────────────────────── -->
+<footer class="ln-foot">
+  <div class="ln-foot__in">
+    <a class="ln-foot__logo" href="landing.html" aria-label="Cecil">
+      <img src="/cecil/brand/cecil-wordmark.webp" alt="Cecil"/>
+    </a>
+    <div class="ln-foot__links">
+      <a href="login.html">Iniciar sesión</a>
+      <a href="registro.html">Crear cuenta</a>
+      <a href="soporte.html">Soporte</a>
+      <a href="legal.html">Términos y privacidad</a>
+    </div>
+    <a class="ln-foot__badge" href="https://apps.apple.com/us/app/broquer/id6775727897" target="_blank" rel="noopener">
+      <img src="appstore-badge.webp" alt="Descárgalo en el App Store"/>
+    </a>
+    <span class="ln-foot__meta"><!-- AUDIT-EXEMPT-LINE: insignia oficial de Meta (marca externa) -->
+      <img src="meta-tech-provider.png" alt="Meta Tech Provider"/>
+    </span>
+    <div class="ln-foot__copy">Cecil 2026</div>
+  </div>
+</footer>
+
+<script src="paises.js"></script>
+<script>
+/* País: se elige arriba a la derecha y se recuerda para crear la cuenta.
+   La primera vez se adivina por la zona horaria del navegador. */
+(function () {
+  if (!window.bkPaisSelector) return;
+  if (!bkPaisElegido()) {
+    var zona = '';
+    try { zona = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (_) {}
+    BK_PAISES_ORDEN.forEach(function (c) {
+      if (zona && BK_PAISES[c].zonaHoraria.split('/')[1] === zona.split('/')[1]) bkPaisGuardar(c);
+    });
+  }
+  function pintar(c) {
+    var cfg = bkPaisCfg(c), mx = c === 'MX';
+    document.documentElement.lang = cfg.locale;
+    document.querySelectorAll('[data-solo-mx]').forEach(function (el) { el.classList.toggle('ln-oculto', !mx); });
+    document.querySelectorAll('[data-fuera-mx]').forEach(function (el) {
+      if (el.dataset.mx == null) el.dataset.mx = el.textContent;
+      el.textContent = mx ? el.dataset.mx : el.dataset.fueraMx;
+    });
+    document.querySelectorAll('[data-pais-precio]').forEach(function (el) {
+      el.textContent = cfg.plan.max + ' al mes';
+    });
+  }
+  // Uno en el menú (escritorio) y otro arriba del hero (celular), sincronizados.
+  var selects = [];
+  ['ln-pais', 'ln-pais-hero'].forEach(function (id) {
+    var cont = document.getElementById(id);
+    if (!cont) return;
+    var sel = bkPaisSelector({ onCambio: function (c) {
+      selects.forEach(function (s) { s.value = c; });
+      pintar(c);
+    } });
+    selects.push(sel);
+    cont.appendChild(sel);
+  });
+  pintar(bkPais());
+})();
+</script>
+<script>
+/* ── Blindaje de enlaces de autenticación ──
+   Si un enlace de recuperación de contraseña (o cualquier token de Supabase)
+   cae aquí porque la Site URL apunta a la landing, se reenvía de inmediato a
+   la página correcta con el token intacto. Sin esto, el usuario ve la landing
+   y el enlace "no sirve". */
+(function () {
+  var q = new URLSearchParams(location.search);
+  var h = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+  var tipo = q.get('type') || h.get('type') || '';
+  var hayToken = q.get('token_hash') || h.get('access_token');
+  var hayCode = q.get('code') || h.get('code');
+  var hayError = q.get('error') || h.get('error') || q.get('error_description') || h.get('error_description');
+  if (!hayToken && !hayCode && !hayError && tipo !== 'recovery') return;
+  // Con error o type=recovery (aunque no haya token), reset-password.html
+  // sabe explicar qué pasó. Un token_hash sin type también es recuperación
+  // (Supabase a veces omite el type al recaer en la Site URL). Con ?code= u
+  // otro token, login.html tiene el intercambio PKCE y el enrutador.
+  var esRecovery = tipo === 'recovery' || (q.get('token_hash') && !tipo) || hayError;
+  var destino = esRecovery ? 'reset-password.html' : 'login.html';
+  location.replace(destino + location.search + location.hash);
+})();
+</script>
+<script>
+/* Cuadrícula de Instagram: si el backend no responde, la sección
+   simplemente no aparece. */
+(function () {
+  var sec = document.getElementById('ig-sec');
+  var grid = document.getElementById('ig-grid');
+  if (!sec || !grid) return;
+  fetch('https://brokr-main-staging.up.railway.app/instagram/feed')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d || !d.posts || !d.posts.length) return;
+      grid.innerHTML = d.posts.slice(0, 8).map(function (p) {
+        var play = p.tipo === 'VIDEO'
+          ? '<span class="ig-post__play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.14v13.72a.5.5 0 00.77.42l10.5-6.86a.5.5 0 000-.84L8.77 4.72a.5.5 0 00-.77.42z"/></svg></span>'
+          : '';
+        return '<a class="ig-post" href="' + p.liga + '" target="_blank" rel="noopener">' +
+               '<img src="' + p.portada + '" alt="" loading="lazy"/>' + play + '</a>';
+      }).join('');
+      sec.hidden = false;
+    })
+    .catch(function () {});
+})();
+
+/* La barra de Cecil IA escribe sola ejemplos reales de lo que hace la
+   plataforma. Si la persona pidió menos movimiento, se queda quieto
+   el primer ejemplo. */
+(function () {
+  var nodo = document.getElementById('broqbar-txt');
+  if (!nodo) return;
+
+  var ejemplos = [
+    window.bkPaisCfg ? bkPaisCfg().ejemploBroq : 'Calcula el ISR de una venta de $2,400,000',
+    'Hazme la ficha técnica de la casa en Altozano',
+    '¿Qué leads no he contactado esta semana?',
+    'Estima el valor de un terreno de 300 m²',
+    'Amuebla las fotos de la casa de Santa María'
+  ];
+
+  var quieto = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (quieto) { nodo.textContent = ejemplos[0]; return; }
+
+  var i = 0, j = 0, borrando = false;
+
+  function paso() {
+    var frase = i === 0 && window.bkPaisCfg ? bkPaisCfg().ejemploBroq : ejemplos[i];
+    if (!borrando) {
+      j++;
+      nodo.textContent = frase.slice(0, j);
+      if (j === frase.length) { borrando = true; setTimeout(paso, 2200); return; }
+      setTimeout(paso, 34);
+    } else {
+      j -= 3;
+      if (j <= 0) {
+        j = 0; borrando = false; i = (i + 1) % ejemplos.length;
+        nodo.textContent = '';
+        setTimeout(paso, 350);
+        return;
+      }
+      nodo.textContent = frase.slice(0, j);
+      setTimeout(paso, 14);
+    }
+  }
+
+  nodo.textContent = '';
+  setTimeout(paso, 600);
+})();
+
+/* El recorrido vive en YouTube, no en el repositorio. El marco muestra
+   una carátula propia y el reproductor solo se carga cuando alguien
+   le pica play. */
+(function () {
+  var marco  = document.getElementById('mv-frame');
+  var boton  = document.getElementById('mv-poster');
+  var imagen = document.getElementById('mv-poster-img');
+  if (!marco || !boton) return;
+
+  var id = (marco.dataset.yt || '').trim();
+  var listo = id && id !== 'REEMPLAZA_CON_TU_ID';
+
+  if (listo && imagen) {
+    var prueba = new Image();
+    prueba.onload = function () {
+      if (prueba.naturalWidth > 120) {
+        imagen.style.backgroundImage = 'url(https://i.ytimg.com/vi/' + id + '/maxresdefault.jpg)';
+        imagen.classList.add('is-lista');
+      }
+    };
+    prueba.src = 'https://i.ytimg.com/vi/' + id + '/maxresdefault.jpg';
+  }
+
+  boton.addEventListener('click', function () {
+    if (!listo) {
+      alert('El video se está preparando. Muy pronto lo puedes ver aquí.');
+      return;
+    }
+    var marcoYt = document.createElement('iframe');
+    marcoYt.src = 'https://www.youtube-nocookie.com/embed/' + id +
+                  '?autoplay=1&rel=0&modestbranding=1';
+    marcoYt.title = 'Cecil, el recorrido completo';
+    marcoYt.allow = 'accelerometer; autoplay; encrypted-media; picture-in-picture';
+    marcoYt.allowFullscreen = true;
+    marco.innerHTML = '';
+    marco.appendChild(marcoYt);
+  });
+})();
+
+/* Si ya hay sesión activa, "Iniciar sesión" lleva directo al panel. */
+(function () {
+  try {
+    var tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+    if (tok) {
+      document.querySelectorAll('a[href="login.html"]').forEach(function (a) {
+        a.href = 'index.html';
+        if (a.classList.contains('b2-btn--ghost')) a.textContent = 'Entrar a mi panel';
+      });
+    }
+  } catch (e) {}
+})();
+</script>
+
+<!-- ═══ Agendar demo ═══ -->
+<style>
+  .ln-demo-ov[hidden] { display: none; }
+  .ln-demo-ov { position: fixed; inset: 0; z-index: 90; background: rgba(8,28,78,.46);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .ln-demo-card { width: 100%; max-width: 420px; background: var(--paper);
+    border: 1px solid var(--line); border-radius: var(--r-modal); padding: 28px;
+    box-shadow: var(--shadow-lg); position: relative; text-align: left; }
+  .ln-demo-card h3 { font-size: var(--fs-h3); margin: 0 0 6px; color: var(--ink); letter-spacing: -.02em; }
+  .ln-demo-card p { font-size: var(--fs-sm); color: var(--mute); margin: 0 0 18px; line-height: 1.5; }
+  .ln-demo-x { position: absolute; top: 12px; right: 14px; cursor: pointer; }
+  .ln-demo-field { margin-bottom: 12px; }
+  .ln-demo-field label { display: block; font-size: var(--fs-label-3); font-weight: 700;
+    color: var(--ink); margin-bottom: 5px; }
+  .ln-demo-field input, .ln-demo-field select, .ln-demo-field textarea {
+    width: 100%; box-sizing: border-box; color: var(--ink); }
+  .ln-demo-field input:focus, .ln-demo-field select:focus, .ln-demo-field textarea:focus {
+    outline: none; }
+  .ln-demo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ln-demo-msg { min-height: 18px; font-size: var(--fs-label-3); margin-top: 8px; }
+
+
+</style>
+
+<div class="ln-demo-ov" id="ln-demo-ov" hidden>
+  <div class="ln-demo-card">
+    <button class="ln-demo-x" type="button" onclick="lnCerrarDemo()" aria-label="Cerrar">&times;</button>
+    <h3>Agenda tu demo</h3>
+    <p>Elige el día y la hora, y te contactamos para mostrarte Cecil en vivo.</p>
+    <div class="ln-demo-field">
+      <label for="ln-demo-nombre">Tu nombre</label>
+      <input id="ln-demo-nombre" type="text" autocomplete="name" placeholder="Ej. Ana Martínez"/>
+    </div>
+    <div class="ln-demo-field">
+      <label for="ln-demo-contacto">Teléfono o correo</label>
+      <input id="ln-demo-contacto" type="text" autocomplete="tel" placeholder="Ej. 443 123 4567"/>
+    </div>
+    <div class="ln-demo-row">
+      <div class="ln-demo-field">
+        <label for="ln-demo-fecha">Fecha</label>
+        <input id="ln-demo-fecha" type="date"/>
+      </div>
+      <div class="ln-demo-field">
+        <label for="ln-demo-hora">Hora</label>
+        <select id="ln-demo-hora">
+          <option>09:00</option><option>10:00</option><option selected>11:00</option>
+          <option>12:00</option><option>13:00</option><option>16:00</option>
+          <option>17:00</option><option>18:00</option>
+        </select>
+      </div>
+    </div>
+    <div class="ln-demo-field">
+      <label for="ln-demo-mensaje">¿Algo que quieras ver en la demo? (opcional)</label>
+      <textarea id="ln-demo-mensaje" rows="2" placeholder="Ej. WhatsApp con IA y contratos"></textarea>
+    </div>
+    <button class="b2-btn b2-btn--blue" id="ln-demo-enviar" type="button" onclick="lnEnviarDemo()" style="width:100%;">Agendar demo</button>
+    <div class="ln-demo-msg" id="ln-demo-msg"></div>
+  </div>
+</div>
+
+
+
+<script>
+/* ── Agendar demo ── */
+(function () {
+  var API = 'https://brokr-main-staging.up.railway.app';
+
+  window.lnAbrirDemo = function () {
+    var ov = document.getElementById('ln-demo-ov');
+    var f = document.getElementById('ln-demo-fecha');
+    if (f && !f.value) {
+      var d = new Date(); d.setDate(d.getDate() + 1);
+      var iso = d.toISOString().slice(0, 10);
+      f.min = new Date().toISOString().slice(0, 10);
+      f.value = iso;
+    }
+    ov.hidden = false;
+  };
+  window.lnCerrarDemo = function () { document.getElementById('ln-demo-ov').hidden = true; };
+  document.getElementById('ln-demo-ov').addEventListener('click', function (e) {
+    if (e.target === this) lnCerrarDemo();
+  });
+
+  window.lnEnviarDemo = async function () {
+    var btn = document.getElementById('ln-demo-enviar');
+    var msg = document.getElementById('ln-demo-msg');
+    var body = {
+      nombre:   document.getElementById('ln-demo-nombre').value.trim(),
+      contacto: document.getElementById('ln-demo-contacto').value.trim(),
+      fecha:    document.getElementById('ln-demo-fecha').value,
+      hora:     document.getElementById('ln-demo-hora').value,
+      mensaje:  document.getElementById('ln-demo-mensaje').value.trim(),
+      origen:   'landing'
+    };
+    if (!body.nombre || !body.contacto) {
+      msg.style.color = 'var(--mute)';
+      msg.textContent = 'Escribe tu nombre y un teléfono o correo.';
+      return;
+    }
+    btn.disabled = true; btn.textContent = 'Agendando…'; msg.textContent = '';
+    try {
+      var r = await fetch(API + '/demo/agendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      var d = await r.json().catch(function () { return {}; });
+      if (!r.ok) throw new Error(d.detail || 'No se pudo agendar.');
+      msg.style.color = 'var(--sky-blue)';
+      msg.textContent = 'Listo. Tu demo quedó agendada para el ' + body.fecha + ' a las ' + body.hora + '. Te contactamos para confirmar.';
+      btn.textContent = 'Demo agendada';
+      setTimeout(lnCerrarDemo, 3200);
+    } catch (e) {
+      msg.style.color = 'var(--mute)';
+      msg.textContent = (e && e.message) ? e.message : 'No se pudo agendar. Intenta de nuevo.';
+      btn.disabled = false; btn.textContent = 'Agendar demo';
+    }
+  };
+})();
+
+
+</script>
+
+</body>
+</html>

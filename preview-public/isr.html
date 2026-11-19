@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
+<link rel="apple-touch-icon" href="/cecil/brand/cecil-icon.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style id="broquer-skin">
+  html,body{background:var(--paper)!important;color:var(--ink)!important;font-family:var(--font-sans)!important;letter-spacing:-0.01em}
+  *{font-family:var(--font-sans)!important}
+  h1,h2,h3,.title,.heading{font-family:var(--font-display)!important;letter-spacing:-0.02em!important;color:var(--ink)!important}
+  code,pre,.mono,kbd{font-family:var(--font-mono)!important}
+  /* Surfaces */
+  body, .screen, .panel, .container, .wrap, main { background:var(--canvas)!important; color:var(--ink)!important; }
+  .card, .ui-card, .box, .module, .pf-card, .stat-pill, .module-card, .cat-module, .profile-section, .activity-item, .news-ticker-wrap, .tile, .section, section, article {
+    background:var(--bone)!important; border:1px solid var(--line)!important; border-radius:var(--r-lg)!important;
+    color:var(--ink)!important; box-shadow:var(--shadow-xs)!important;
+  }
+  /* Headers/topbars that were navy → ivory */
+  .home-header, .modules-header, .profile-header, .panel-topbar, header, .topbar, .nav-top, .app-header, .hdr, .navbar {
+    background:var(--paper)!important; color:var(--ink)!important; border-bottom:1px solid var(--line)!important;
+  }
+  .home-header *, .modules-header *, .profile-header *, .panel-topbar *, header *, .topbar *, .nav-top *, .app-header *, .hdr *, .navbar * { color:var(--ink)!important; }
+  /* Inputs */
+  input, select, textarea { color:var(--ink)!important;
+    outline:none!important; transition:border-color .2s ease;
+  }
+  /* Buttons */
+  .pe-toggle-slider {
+    font-family:var(--font-sans)!important; letter-spacing:-0.005em!important;
+  }
+  button:not([class]),.btn-primary,.ui-btn,.pf-save-btn { cursor:pointer!important;
+  }
+  .pe-save-btn,.isr-calc-btn,.props-new-btn,.btn-pdf,.prf-stripe-btn.primary { cursor:pointer!important;
+  }
+  button:not([class]):hover,.btn-primary:hover,.ui-btn:hover,.pf-save-btn:hover { opacity:.92!important; }
+  .pe-save-btn:hover,.isr-calc-btn:hover { opacity:.92!important; }
+  /* Badges, chips */
+  .badge, .chip, .pill, .stat-pill .lbl, .res-tipo-lbl, .isr-badge {
+    background:var(--paper-2)!important; color:var(--ink-2)!important; border:1px solid var(--line)!important;
+    border-radius:var(--r-pill)!important; padding:3px 10px!important; font-size: var(--fs-xs)!important; font-weight:500!important;
+  }
+  /* Accent text colors that were navy or teal */
+  /* Links */
+  a { color:var(--ink)!important; text-decoration:none; }
+  a:hover { color:var(--forest)!important; }
+  /* Scrollbars */
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-thumb { background:var(--line-2); border-radius:var(--r-xs); }
+  /* Drop garish gradients on home-header */
+  .home-header::before, .home-header::after { display:none!important; }
+  /* Misc legacy */
+  .proto-nav, .bottom-nav, .tabbar { background:var(--bone)!important; border-top:1px solid var(--line)!important; }
+  /* Force any greeting "name" or page title light text to be dark */
+  .greeting-text .hello, .greeting-text .name, .profile-name, .profile-sub, .panel-title, .modules-header h2 { color:var(--ink)!important; }
+  /* Avatar-style circles that were translucent on navy → bone */
+  .profile-avatar,.pr-icon,.act-icon,.scw-avatar,.notif-bell,.stat-pill {
+    background:var(--bone)!important; border:1px solid var(--line)!important; color:var(--ink)!important;
+  }
+</style>
+
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>Cálculo de ISR · Cecil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<style>
+/* ═══════════════════════════════════════
+   Cecil DESIGN SYSTEM — ISR MODULE
+   Paleta: Blanco · Navy · Azul (desde brokr-theme.css)
+   Tipografía: Manrope (theme)
+═══════════════════════════════════════ */
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  font-family: var(--font-sans);
+  background: var(--bone);
+  color: var(--ink-2);
+  font-size: var(--fs-body);
+  min-height: 100%;
+  overflow-y: auto;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--ink);
+  padding: 0 20px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topbar-back {
+  width: 38px; height: 38px;
+  border-radius: var(--r);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: white;
+  font-size: var(--fs-h5);
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.topbar-back:active { background: rgba(255,255,255,0.15); }
+.topbar-title {
+  font-size: var(--fs-h5);
+  font-weight: 700;
+  color: white;
+  flex: 1;
+}
+.topbar-badge {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  background: var(--paper-2);
+  color: var(--ink);
+  border: 1px solid var(--line-2);
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+
+/* ── SCROLL CONTENT ── */
+.page-scroll {
+  padding: 20px var(--pad-x, 36px) 140px;
+  max-width: var(--page-max, 760px);
+  margin: 0 auto;
+}
+
+/* ── PAGE HEADER ── */
+.page-hdr {
+  margin-bottom: 18px;
+}
+.page-hdr-sub {
+  font-size: var(--fs-sm);
+  color: var(--mute);
+  line-height: 1.55;
+  margin-top: 4px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 18px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 1;
+}
+.card:has(.mp-dropdown.open) {
+  z-index: 200;
+}
+.card-label {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  
+  letter-spacing: .8px;
+  color: var(--ink);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.card-label svg { display: none; }
+.card-label-opt {
+  font-size: var(--fs-caption);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--mute);
+  font-style: italic;
+}
+
+/* ── FORM ROWS ── */
+.row1 { margin-bottom: 12px; }
+.row1:last-child { margin-bottom: 0; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.row2:last-child { margin-bottom: 0; }
+@media (max-width: 420px) { .row2 { grid-template-columns: 1fr; } }
+
+/* ── FIELDS ── */
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--mute);
+  
+  letter-spacing: .5px;
+}
+.field input, .field select {
+  width: 100%;
+  color: var(--ink-2);
+  outline: none;
+  transition: border-color .2s, background .2s;
+}
+.field input::placeholder { color: var(--mute); font-weight: 400; }
+.field-hint {
+  font-size: var(--fs-xs);
+  color: var(--ink);
+  margin-top: 1px;
+  font-weight: 500;
+}
+
+/* ── ALERTS ── */
+.alert-warn {
+  border-radius: var(--r3);
+  padding: 11px 14px;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  margin-top: 10px;
+  background: var(--warn-soft);
+  border-left: 3px solid var(--warn);
+  color: var(--forest-2);
+}
+.alert-info {
+  border-radius: var(--r3);
+  padding: 11px 14px;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  margin-top: 10px;
+  background: var(--paper-2);
+  border-left: 3px solid var(--ink);
+  color: var(--ink-2);
+}
+
+/* ── BOTÓN CALCULAR ── */
+.btn-calc {
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity .2s, transform .1s;
+}
+.btn-calc:hover { opacity: .92; }
+.btn-calc:active { transform: scale(0.98); }
+.btn-calc:disabled { opacity: .45; cursor: not-allowed; }
+.btn-calc .btn-teal-line {
+  display: block;
+  width: var(--ui-control-small);
+  margin-right: -4px;
+}
+
+/* ── RESULTADOS ── */
+#res { display: none; }
+
+.res-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.res-tipo-tag {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  background: var(--paper-2);
+  color: var(--ink);
+  border: 1px solid var(--line-2);
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  
+  letter-spacing: .5px;
+}
+
+/* Result cards grid */
+.res-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.rc {
+  background: white;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r2);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.rc.gn { background: var(--success-soft); border-color: var(--success); }
+.rc.dk { background: var(--danger-soft); border-color: var(--danger); }
+.rc-l { font-size: var(--fs-caption); font-weight: 700; color: var(--mute);  letter-spacing: .5px; margin-bottom: 6px; }
+.rc-v { font-size: var(--fs-h3); font-weight: 800; color: var(--ink-2); line-height: 1.1; margin-bottom: 3px; word-break: break-word; }
+.rc.gn .rc-v { color: var(--success); }
+.rc.dk .rc-v { color: var(--danger); }
+.rc-n { font-size: var(--fs-caption); color: var(--mute); line-height: 1.4; }
+
+/* INPC row */
+.inpc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r2);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-sm);
+}
+.inpc-cell { flex: 1; min-width: 80px; text-align: center; }
+.inpc-cell.hl .inpc-val { color: var(--ink); }
+.inpc-lbl { font-size: var(--fs-caption);  letter-spacing: .6px; color: var(--mute); margin-bottom: 3px; font-weight: 600; }
+.inpc-val { font-size: var(--fs-sm); font-weight: 700; color: var(--ink-2); }
+.inpc-arr { color: var(--mute); font-size: var(--fs-h5); flex-shrink: 0; }
+
+/* Desglose */
+.res-bkdn {
+  background: white;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r2);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.br { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
+.br:last-child { border-bottom: none; }
+.br.tot { font-weight: 700; font-size: var(--fs-sm); }
+.br.sub { padding-left: 14px; color: var(--mute); }
+.bl { color: var(--mute); }
+.br.tot .bl { color: var(--ink-2); }
+.bv { font-weight: 600; color: var(--ink-2); }
+
+/* Nota */
+.res-nota {
+  background: var(--paper-2);
+  border-left: 3px solid var(--ink);
+  border-radius: 0 var(--r3) var(--r3) 0;
+  padding: 12px 14px;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--ink-2);
+  margin-bottom: 12px;
+}
+
+/* AI Box */
+.ai-box {
+  background: var(--ink);
+  border-radius: var(--r2);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  display: none;
+}
+.ai-lbl {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--ink);
+  
+  letter-spacing: .6px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#ai-txt { font-size: var(--fs-sm); line-height: 1.65; color: rgba(255,255,255,0.85); }
+
+
+/* ── MES/AÑO PICKER ── */
+.mp-trigger {
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: border-color .2s, background .2s;
+  text-align: left;
+}
+.mp-trigger:focus, .mp-trigger.open {
+  outline: none;
+}
+.mp-trigger .mp-val { flex: 1; }
+.mp-trigger .mp-arrow {
+  font-size: var(--fs-xs);
+  color: var(--mute);
+  transition: transform 0.2s;
+}
+.mp-trigger.open .mp-arrow { transform: rotate(180deg); }
+.mp-trigger .mp-placeholder { color: var(--mute); font-weight: 400; }
+
+.mp-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0; right: 0;
+  background: white;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r2);
+  box-shadow: var(--shadow-md);
+  z-index: 300;
+  overflow: hidden;
+  display: none;
+}
+.mp-dropdown.open { display: block; }
+.mp-dropdown.open-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.mp-year-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--ink);
+}
+.mp-year-nav .mp-yr {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h5);
+  font-weight: 700;
+  color: white;
+}
+.mp-year-btn {
+  width: var(--ui-control-small);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+
+.mp-months {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 12px;
+}
+.mp-month {
+  padding: 10px 4px;
+  border-radius: var(--r-sm);
+  text-align: center;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  color: var(--ink-2);
+  border: 1.5px solid transparent;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.mp-month:hover { background: var(--paper-2); border-color: var(--line-2); }
+.mp-month.selected {
+  background: var(--ink);
+  color: white;
+  border-color: var(--ink);
+  font-weight: 700;
+}
+
+.mp-wrap {
+  position: relative;
+}
+
+/* ── GUÍA TERRENO / CONSTRUCCIÓN ── */
+.terreno-help-btn {
+  margin-top: 10px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.terreno-help {
+  margin-top: 10px;
+  background: var(--paper-2);
+  border-left: 3px solid var(--ink);
+  border-radius: 0 var(--r3) var(--r3) 0;
+  padding: 12px 14px;
+  font-size: var(--fs-xs);
+  line-height: 1.55;
+  color: var(--ink-2);
+  animation: fadeUp 0.25s ease;
+}
+.th-title { font-weight: 700; color: var(--ink-2); margin-bottom: 8px; font-size: var(--fs-sm); }
+.th-list { margin: 0 0 12px 18px; padding: 0; }
+.th-list li { margin-bottom: 6px; }
+.th-list em { color: var(--ink-2); font-style: italic; }
+.th-parser {
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r3);
+  padding: 12px;
+  margin-top: 8px;
+}
+.th-parser-title { font-weight: 700; font-size: var(--fs-xs); color: var(--mute); margin-bottom: 8px;  letter-spacing: .5px; }
+.th-parser-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+@media (max-width: 420px) { .th-parser-grid { grid-template-columns: 1fr; } }
+.th-parser-out {
+  font-size: var(--fs-xs);
+  color: var(--mute);
+  background: var(--bone);
+  border-radius: var(--r3);
+  padding: 8px 10px;
+  font-family: var(--font-sans);
+}
+.th-parser-out.calculated {
+  color: var(--ink-2);
+  background: var(--success-soft);
+  border: 1px solid var(--success);
+  font-weight: 600;
+}
+
+/* ── NOTAS EDUCATIVAS ── */
+.edu-notes-title { font-weight: 700; margin-top: 14px; margin-bottom: 6px; color: var(--ink-2); font-size: var(--fs-xs); }
+.edu-note {
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border-radius: var(--r3);
+  background: var(--paper-2, var(--bone));
+  border-left: 2px solid var(--mute);
+  color: var(--mute);
+}
+.edu-note strong { color: var(--ink-2); }
+.edu-note.warn { background: var(--warn-soft); border-left-color: var(--warn); color: var(--forest-2); }
+.edu-note.warn strong { color: var(--forest-2); }
+
+/* ── ANIMACIONES ── */
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.anim { animation: fadeUp 0.35s ease both; }
+.d1 { animation-delay: 0.06s; }
+.d2 { animation-delay: 0.13s; }
+.d3 { animation-delay: 0.20s; }
+.d4 { animation-delay: 0.27s; }
+.d5 { animation-delay: 0.34s; }
+.d6 { animation-delay: 0.41s; }
+</style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
+<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
+</head>
+<body data-app="isr">
+
+
+<!-- CONTENT -->
+<div class="page-scroll">
+
+  <!-- FORMULARIO -->
+  <div id="isr-form">
+
+
+    <!-- Tipo -->
+    <div class="card anim d2">
+      <div class="card-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Tipo de operación</div>
+      <div class="row1">
+        <div class="field">
+          <label>¿Qué se está vendiendo?</label>
+          <select id="f-tipo" onchange="onTipoChange()">
+            <option value="casa">Casa habitación o departamento</option>
+            <option value="terreno">Terreno</option>
+            <option value="comercial">Inmueble comercial</option>
+          </select>
+        </div>
+      </div>
+      <div class="row1">
+        <div class="field">
+          <label>¿Cómo adquirió el vendedor el inmueble?</label>
+          <select id="f-forma-adq" onchange="onFormaAdqChange()">
+            <option value="compra">Compra directa</option>
+            <option value="herencia">Herencia o legado</option>
+            <option value="donacion">Donación</option>
+          </select>
+        </div>
+      </div>
+      <div id="alert-adq-gratuita" class="alert-info" style="display:none"></div>
+      <div class="row1">
+        <div class="field">
+          <label>¿El inmueble tiene un solo dueño?</label>
+          <select id="f-copro" onchange="onCoproChange()">
+            <option value="no">Sí — un solo propietario (100%)</option>
+            <option value="si">No — copropiedad o sociedad conyugal</option>
+          </select>
+        </div>
+      </div>
+      <div class="row1" id="row-pct-copro" style="display:none">
+        <div class="field">
+          <label>Porcentaje de copropiedad del vendedor (%)</label>
+          <input type="number" id="f-pct-copro" value="50" min="1" max="99" step="1" autocomplete="off"/>
+          <span class="field-hint">Cada copropietario calcula su ISR sobre su parte proporcional (art. 92 LISR). Este cálculo es para el copropietario con este porcentaje — repite el cálculo para cada uno. Si es casa habitación, la exención de 700,000 UDIS aplica <strong>completa a cada copropietario</strong> sobre su parte.</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Precio de venta -->
+    <div class="card anim d3">
+      <div class="card-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> Precio de venta</div>
+      <div class="row1">
+        <div class="field">
+          <label>Precio de venta (MXN)</label>
+          <input type="text" id="f-venta" placeholder="Ej. $3,500,000" oninput="fmtMoneyField(this)" autocomplete="off"/>
+        </div>
+      </div>
+      <div class="row1">
+        <div class="field">
+          <label>Fecha de firma de la escritura</label>
+          <input type="date" id="f-fecha-v" autocomplete="off" style="font-variant-numeric:tabular-nums"/>
+          <span class="field-hint">El día importa: el valor de las UDIS cambia diariamente. El INPC se toma del mes inmediato anterior a esta fecha (art. 124 LISR).</span>
+          <!-- Compatibilidad: hidden inputs replicados desde f-fecha-v para integraciones legadas -->
+          <input type="hidden" id="f-mes-v" value=""/>
+          <input type="hidden" id="f-anio-v" value=""/>
+          <input type="hidden" id="f-dia-v" value=""/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Costo de adquisición -->
+    <div class="card anim d3">
+      <div class="card-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> Costo de adquisición del vendedor</div>
+      <div class="row1">
+        <div class="field">
+          <label id="lbl-compra">¿Cuánto pagó el vendedor cuando compró? (MXN)</label>
+          <input type="text" id="f-compra" placeholder="Ej. $1,800,000" oninput="fmtMoneyField(this)" autocomplete="off"/>
+          <span class="field-hint" id="compra-note"></span>
+        </div>
+      </div>
+      <div class="row1">
+        <div class="field">
+          <label id="lbl-fecha-adq">Mes y año de adquisición</label>
+          <div class="mp-wrap">
+            <button type="button" class="mp-trigger" id="mp-trigger-c" onclick="mpToggle('c')">
+              <span class="mp-val" id="mp-display-c"><span class="mp-placeholder">Selecciona mes y año</span></span>
+              <span class="mp-arrow">▼</span>
+            </button>
+            <div class="mp-dropdown" id="mp-dropdown-c">
+              <div class="mp-year-nav">
+                <button class="mp-year-btn" onclick="mpPrevYear('c')">‹</button>
+                <span class="mp-yr" id="mp-year-c">2005</span>
+                <button class="mp-year-btn" onclick="mpNextYear('c')">›</button>
+              </div>
+              <div class="mp-months" id="mp-months-c"></div>
+            </div>
+          </div>
+          <!-- Hidden inputs for compatibility -->
+          <input type="hidden" id="f-mes-c" value=""/>
+          <input type="hidden" id="f-anio-c" value=""/>
+        </div>
+      </div>
+      <div id="alert-pre1981" class="alert-warn" style="display:none"><svg width="13" height="13" style="vertical-align:-2px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 17H2L12 3zm0 7v4m0 3h.01"/></svg> <strong>Anterior a 1981:</strong> El notario usará avalúo referencial. Se aplica INPC desde enero de 1981.</div>
+      <div id="alert-pre1990" class="alert-info" style="display:none"><strong>Antes de 1993:</strong> la escritura está en <strong>viejos pesos</strong>. Se aplica reconversión monetaria (÷1,000 por la eliminación de tres ceros el 1 de enero de 1993).
+        <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:500"><input type="checkbox" id="f-viejos-pesos" checked/> El costo de adquisición lo capturé en viejos pesos, tal como dice la escritura</label></div>
+    </div>
+
+    <!-- Terreno / Construcción -->
+    <div class="card anim d4" id="sec-terreno-const">
+      <div class="card-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3H3v7l9 11 9-11V3z"/><line x1="3" y1="7" x2="21" y2="7"/></svg> Terreno / Construcción <span class="card-label-opt">art. 124 LISR</span></div>
+      <div class="page-hdr-sub" style="margin-bottom:12px">La construcción se deprecia 3% anual (máx 80% — art. 124 LISR: el costo no será inferior al 20% del inicial). Por defecto 20% terreno / 80% construcción; ajústalo con tu boleta predial.</div>
+      <div class="row2">
+        <div class="field">
+          <label>% Terreno</label>
+          <input type="number" id="f-pct-terreno" value="20" min="0" max="100" oninput="onPctTerreno(this)"/>
+        </div>
+        <div class="field">
+          <label>% Construcción</label>
+          <input type="number" id="f-pct-const" value="80" min="0" max="100" oninput="onPctConst(this)"/>
+        </div>
+      </div>
+      <span class="field-hint" id="deprec-note"></span>
+      <button type="button" class="terreno-help-btn" onclick="toggleTerrenoHelp()">¿Cómo decido este porcentaje?</button>
+      <div id="terreno-help" class="terreno-help" style="display:none">
+        <div class="th-title">De dónde obtener el % terreno · % construcción</div>
+        <ol class="th-list">
+          <li><strong>Boleta predial / catastral</strong> (lo más preciso): trae desglosado <em>valor del terreno</em> y <em>valor de la construcción</em>. Pégalos abajo y te calculo el % automáticamente.</li>
+          <li><strong>Avalúo bancario o pericial</strong>: si hubo crédito hipotecario o avalúo reciente, aparece desglosado.</li>
+          <li><strong>Estimación por zona</strong> (cuando no hay otros datos):
+            <ul style="margin-top:4px">
+              <li>Residencial denso (CDMX, GDL, MTY centro): <strong>40–55% terreno</strong></li>
+              <li>Suburbano residencial: <strong>20–35% terreno</strong></li>
+              <li>Industrial / bodega: <strong>30–50% terreno</strong></li>
+              <li>Comercial zona prime: <strong>45–60% terreno</strong></li>
+            </ul>
+          </li>
+        </ol>
+        <div class="th-parser">
+          <div class="th-parser-title">Calcular desde boleta predial</div>
+          <div class="th-parser-grid">
+            <div class="field"><label>Valor terreno (boleta)</label><input type="text" id="f-vt-boleta" placeholder="Ej. $800,000" oninput="fmtMoneyField(this);parserBoleta()" autocomplete="off"/></div>
+            <div class="field"><label>Valor construcción (boleta)</label><input type="text" id="f-vc-boleta" placeholder="Ej. $1,200,000" oninput="fmtMoneyField(this);parserBoleta()" autocomplete="off"/></div>
+          </div>
+          <div class="th-parser-out" id="th-parser-out">Pega los valores de tu boleta y calculamos los porcentajes.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deducciones -->
+    <div class="card anim d4">
+      <div class="card-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Deducciones <span class="card-label-opt">opcionales</span></div>
+      <div class="row1"><div class="field">
+        <label>Mejoras y ampliaciones (MXN)</label>
+        <input type="text" id="f-mej" placeholder="Ej. $200,000" oninput="fmtMoneyField(this)" autocomplete="off"/>
+        <span class="field-hint">Sólo si el vendedor tiene <strong>CFDI/factura</strong> a su nombre. Sin factura el notario no la deducirá. Captura el monto <strong>con IVA incluido</strong>. Se deprecia 3% anual igual que la construcción (art. 124 LISR).</span>
+      </div></div>
+      <div class="row1"><div class="field">
+        <label>Escrituración cuando adquirió (MXN)</label>
+        <input type="text" id="f-esc" placeholder="Ej. $45,000" oninput="fmtMoneyField(this)" autocomplete="off"/>
+        <span class="field-hint">Honorarios notariales, derechos de registro e ISAI pagados al comprar.</span>
+      </div></div>
+      <div class="row1"><div class="field">
+        <label>Comisión del agente en esta venta (MXN)</label>
+        <input type="text" id="f-com" placeholder="Ej. $105,000" oninput="fmtMoneyField(this)" autocomplete="off"/>
+        <span class="field-hint">Monto con IVA. Requiere <strong>CFDI</strong> emitido por el agente o inmobiliaria.</span>
+      </div></div>
+    </div>
+
+    <!-- Hidden defaults: el agente ya no llena exención aquí — se muestra como leyenda en resultados -->
+    <select id="f-pri" style="display:none"><option value="si" selected>Sí</option></select>
+    <select id="f-exp" style="display:none"><option value="nose" selected>No lo sé</option></select>
+
+    <!-- Botón -->
+    <button id="calc-btn" class="btn-calc anim d6" onclick="calcISR()">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      Calcular ISR
+    </button>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div id="res">
+    <div class="res-topbar">
+      <button class="btn-secondary" onclick="resetISR()">← Nuevo cálculo</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn-secondary teal" onclick="descargarPDF()">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          PDF
+        </button>
+        <span class="res-tipo-tag" id="res-tipo"></span>
+      </div>
+    </div>
+    <div class="res-cards" id="res-cards"></div>
+    <div id="res-inpc-row" class="inpc-row" style="display:none">
+      <div class="inpc-cell"><div class="inpc-lbl">INPC adquisición</div><div class="inpc-val" id="res-inpc-adq">—</div></div>
+      <div class="inpc-arr">→</div>
+      <div class="inpc-cell"><div class="inpc-lbl">INPC enajenación<br><span style="font-size: var(--fs-caption);opacity:0.7">mes anterior</span></div><div class="inpc-val" id="res-inpc-venta">—</div></div>
+      <div class="inpc-arr">=</div>
+      <div class="inpc-cell hl"><div class="inpc-lbl">Factor</div><div class="inpc-val" id="res-factor">—</div></div>
+    </div>
+    <div id="res-bkdn" class="res-bkdn"></div>
+    <div id="res-nota" class="res-nota" style="display:none"></div>
+    <div id="ai-box" class="ai-box">
+      <div class="ai-lbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg> Análisis de Cecil</div>
+      <div id="ai-txt"></div>
+    </div>
+  </div>
+
+</div><!-- /page-scroll -->
+
+
+<script>
+/* ═══════════════════════════════════════
+   LÓGICA ISR — 100% intacta
+═══════════════════════════════════════ */
+function g(id) { return document.getElementById(id); }
+function getRawNum(val) { return parseFloat((val||'').replace(/[$,]/g,'').trim())||0; }
+function fmt(n) { return '$'+Math.round(n).toLocaleString('es-MX'); }
+function pct(n) { return n.toFixed(2)+'%'; }
+function fmtMoneyField(input) {
+  const raw = getRawNum(input.value);
+  if (!raw) { input.value=''; return; }
+  input.value = '$'+raw.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+
+// ─────────────────────────────────────────────────────────────────
+// INPC + UDIS dinámicos desde Banxico SIE vía backend Cecil.
+// La calculadora YA NO usa una tabla local — siempre consulta valores
+// oficiales en tiempo real. Si Banxico no responde, el cálculo se BLOQUEA
+// con un mensaje claro (mejor bloquear que mentir).
+// Cobertura: SP74625 INPC mensual 1982+ · SP68257 UDIS diaria.
+// ─────────────────────────────────────────────────────────────────
+const API_BASE = (typeof window !== 'undefined' && window.API_BASE) ? window.API_BASE : 'https://brokr-main-staging.up.railway.app';
+
+async function fetchBanxicoINPCDetalle(anio, mes) {
+  const r = await fetch(`${API_BASE}/api/inpc/${anio}/${mes}`);
+  if (!r.ok) {
+    let detail = `INPC ${anio}-${String(mes).padStart(2,'0')} no disponible`;
+    try { const e = await r.json(); if (e.detail) detail = e.detail; } catch(_){}
+    throw new Error(detail);
+  }
+  // El backend devuelve { valor, anio, mes, solicitado, fallback }. Cuando el mes
+  // solicitado aún no lo publica el INEGI, anio/mes traen el último mes realmente
+  // publicado y fallback queda en true.
+  return await r.json();
+}
+
+async function fetchBanxicoINPC(anio, mes) {
+  const d = await fetchBanxicoINPCDetalle(anio, mes);
+  return d.valor;
+}
+
+async function fetchBanxicoUDIS(fechaISO /* YYYY-MM-DD */) {
+  const r = await fetch(`${API_BASE}/api/udis/${fechaISO}`);
+  if (!r.ok) {
+    let detail = `UDIS del ${fechaISO} no disponibles`;
+    try { const e = await r.json(); if (e.detail) detail = e.detail; } catch(_){}
+    throw new Error(detail);
+  }
+  const d = await r.json();
+  return d.valor;
+}
+
+// INPC_RAW eliminado — toda consulta pasa por fetchBanxicoINPC() vía /api/inpc.
+
+// Tarifa anual 2025 — art. 152 LISR (mismos valores 2024, sin actualización ese año)
+const TABLA_ISR_2025 = [
+  {li:0.01,      ls:8952.49,     cf:0,          tasa:0.0192},
+  {li:8952.50,   ls:75984.55,    cf:171.88,     tasa:0.0640},
+  {li:75984.56,  ls:133536.07,   cf:4461.94,    tasa:0.1088},
+  {li:133536.08, ls:155229.80,   cf:10723.55,   tasa:0.1600},
+  {li:155229.81, ls:185852.57,   cf:14194.54,   tasa:0.1792},
+  {li:185852.58, ls:374837.88,   cf:19682.13,   tasa:0.2136},
+  {li:374837.89, ls:590795.99,   cf:60049.40,   tasa:0.2352},
+  {li:590796.00, ls:1127926.84,  cf:110842.74,  tasa:0.3000},
+  {li:1127926.85,ls:1503902.46,  cf:271981.99,  tasa:0.3200},
+  {li:1503902.47,ls:4511707.37,  cf:392294.17,  tasa:0.3400},
+  {li:4511707.38,ls:Infinity,    cf:1417164.67, tasa:0.3500}
+];
+// Tarifa anual 2026 — Anexo 8 RMF 2026 (DOF 28/12/2025), art. 152 LISR
+// Actualizada por inflación acumulada 13.21% (INPC nov 2022 → nov 2025)
+const TABLA_ISR = [
+  {li:0.01,      ls:10135.11,    cf:0,          tasa:0.0192},
+  {li:10135.12,  ls:86022.11,    cf:194.59,     tasa:0.0640},
+  {li:86022.12,  ls:151176.19,   cf:5051.37,    tasa:0.1088},
+  {li:151176.20, ls:175735.66,   cf:12140.13,   tasa:0.1600},
+  {li:175735.67, ls:210403.69,   cf:16069.64,   tasa:0.1792},
+  {li:210403.70, ls:424353.97,   cf:22282.14,   tasa:0.2136},
+  {li:424353.98, ls:668840.14,   cf:67981.92,   tasa:0.2352},
+  {li:668840.15, ls:1276925.98,  cf:125485.07,  tasa:0.3000},
+  {li:1276925.99,ls:1702567.97,  cf:307910.81,  tasa:0.3200},
+  {li:1702567.98,ls:5107703.92,  cf:444116.23,  tasa:0.3400},
+  {li:5107703.93,ls:Infinity,    cf:1601862.46, tasa:0.3500}
+];
+// Tarifa anual 2024 — identica a la 2025 (no hubo actualizacion entre ambas;
+// la inflacion acumulada no rebaso el 10% del art. 152 hasta nov 2025).
+const TABLA_ISR_2024 = TABLA_ISR_2025;
+
+let _isrData = null;
+
+// getINPC ahora es async: consulta Banxico SIE vía /api/inpc/{anio}/{mes}.
+// Lanza un Error si Banxico no responde — el flujo de calcISR captura y bloquea.
+async function getINPC(mes, anio) {
+  return await fetchBanxicoINPC(anio, mes);
+}
+
+// REGLA NOTARIAL: el INPC de enajenación es el del MES INMEDIATO ANTERIOR a la firma.
+// Esto replica la práctica notarial mexicana (art. 124 LISR último párrafo: "hasta el mes
+// inmediato anterior a aquél en el que se efectúe la enajenación").
+async function getINPCEnajenacion(mes, anio) {
+  let mesAnt = mes - 1, anioAnt = anio;
+  if (mesAnt < 1) { mesAnt = 12; anioAnt = anio - 1; }
+  const d = await fetchBanxicoINPCDetalle(anioAnt, mesAnt);
+  // Si el INPC del mes inmediato anterior a la firma aún no se publica (el INEGI lo
+  // libera alrededor del día 9 del mes siguiente), el backend regresa el último INPC
+  // publicado. Usamos el mes/año reales para la etiqueta y el factor — nunca bloqueamos.
+  return { mes: d.mes, anio: d.anio, inpc: d.valor,
+           fallback: !!d.fallback, mesSolicitado: mesAnt, anioSolicitado: anioAnt };
+}
+
+// TABLA ANEXO 9 RMF — Factor de actualización opcional (art. 121 fr. I LISR).
+// Fuente: Anexo 9 RMF 2025, DOF 07/abr/2025. Indexada por años transcurridos
+// asumiendo VENTA EN 2025. Para ventas en otros años se escala por la inflación
+// dic 2024 → dic (año_venta−1) — réplica de cómo SAT recalcula el Anexo 9 cada año.
+// En la práctica notarial, factor usado = MAX(INPC, tabla) a favor del contribuyente.
+const TABLA_ANEXO9_VENTA2025 = [
+  1.00, 1.04, 1.09, 1.17, 1.26, 1.30, 1.34, 1.40, 1.48, 1.55,
+  1.59, 1.64, 1.71, 1.77, 1.84, 1.91, 1.99, 2.12, 2.20, 2.28,
+  2.37, 2.48, 2.58, 2.72, 2.85, 3.08, 3.42, 4.07, 4.69, 5.93,
+  9.00, 9.92, 10.66, 11.87, 14.00, 17.79, 21.79, 29.32, 81.17, 165.86,
+  275.19, 442.38, 767.06, 1611.16, 2108.40, 2694.53, 3275.37, 3854.37, 4607.30, 5932.67,
+  6646.03, 7836.91, 9711.27, 10353.81, 10808.93, 11341.81, 11931.43, 12196.47, 12361.90, 12747.26,
+  12874.06, 13389.11, 13625.13, 13959.86, 13859.38, 14606.89, 14662.76, 15010.93, 16056.63, 16166.00,
+  17824.65, 20885.37, 21339.85, 20610.95, 23989.58, 28776.18, 31744.77, 35110.76, 37863.23, 40201.40,
+  47361.95, 53394.50, 69086.78, 87055.54, 96939.58, 103894.88, 106641.00, 105302.41, 112390.07, 138269.37,
+  147487.33, 147487.33, 155888.50, 167714.53, 157350.15, 139222.25
+];
+// Devuelve el factor Anexo 9 para una operación (anioC → anioV).
+// La tabla es la del Anexo 9 2025: idx = 2025 − año_adquisición. Para ventas en
+// otro año se toma la fila del MISMO año de adquisición y se escala por inflación
+// dic 2024 → dic (año_venta − 1). (Antes se indexaba por año_venta − año_adq, lo
+// que para ventas 2026+ tomaba la fila de un año ANTERIOR — en 1987→1988 el factor
+// se triplicaba por la hiperinflación.)
+async function getFactorTablaSAT(anioC, anioV) {
+  if (anioV - anioC <= 0) return 1.00;
+  const idx = 2025 - anioC;
+  if (idx <= 0) return 1.00; // adquisición 2025+: no hay fila; manda el factor INPC
+  if (idx >= TABLA_ANEXO9_VENTA2025.length) return 1.00;
+  const factorBase = TABLA_ANEXO9_VENTA2025[idx];
+  if (anioV === 2025) return factorBase;
+  try {
+    const inpcBase2024 = await fetchBanxicoINPC(2024, 12);
+    const inpcRef = await fetchBanxicoINPC(anioV - 1, 12);
+    return factorBase * (inpcRef / inpcBase2024);
+  } catch (e) {
+    // Si falla el fetch del escalado, devuelve la tabla base — el factor INPC
+    // (calculado con Banxico exacto) probablemente lo cubrirá vía MAX(...).
+    return factorBase;
+  }
+}
+
+// AÑOS TRANSCURRIDOS — calcula años cumplidos entre adquisición y enajenación,
+// asumiendo día 15 como punto medio del mes (la UI solo captura mes/año).
+// Tope legal: 20 años (art. 120 fracc. I LISR).
+function getAnosTranscurridos(mesC, anioC, mesV, anioV) {
+  // Diferencia en meses, asumiendo día 15 en ambos
+  const mesesTotales = (anioV - anioC) * 12 + (mesV - mesC);
+  let anios = Math.floor(mesesTotales / 12);
+  if (anios < 1) anios = 1;
+  if (anios > 20) anios = 20;
+  return anios;
+}
+
+function getTablaISR(anioVenta) { if(anioVenta<=2024) return TABLA_ISR_2024; if(anioVenta===2025) return TABLA_ISR_2025; return TABLA_ISR; }
+function calcTablaProgresiva(tabla, base) {
+  if (base<=0) return 0;
+  for (const t of tabla) { if (base>=t.li && base<=t.ls) return t.cf+(base-t.li)*t.tasa; }
+  return 0;
+}
+
+function onTipoChange() {
+  const v = g('f-tipo').value;
+  const ivaN=g('iva-note'); if(ivaN) ivaN.style.display = v==='comercial'?'block':'none';
+  const stc = g('sec-terreno-const');
+  if (stc) stc.style.display = v==='terreno'?'none':'block';
+}
+
+// Sincroniza f-fecha-v ↔ f-mes-v / f-anio-v / f-dia-v (compatibilidad legado)
+function syncFechaVenta() {
+  const v = (g('f-fecha-v')||{}).value || '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    const [yy,mm,dd] = v.split('-');
+    if (g('f-anio-v')) g('f-anio-v').value = yy;
+    if (g('f-mes-v')) g('f-mes-v').value = parseInt(mm);
+    if (g('f-dia-v')) g('f-dia-v').value = parseInt(dd);
+  }
+  if (typeof onAnioChange === 'function') onAnioChange();
+}
+
+function onAnioChange() {
+  const a = parseInt(g('f-anio-c').value)||0;
+  const av = parseInt(g('f-anio-v').value)||(new Date()).getFullYear();
+  // Adquisición pre-1982: caso de avalúo histórico, calculadora no soporta
+  const alertPre = g('alert-pre1981');
+  if (alertPre) {
+    if (a>0&&a<1982) {
+      alertPre.style.display='block';
+      alertPre.innerHTML='<svg width="13" height="13" style="vertical-align:-2px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 17H2L12 3zm0 7v4m0 3h.01"/></svg> <strong>Anterior a 1982:</strong> Banxico SIE no tiene INPC para esa fecha. El notario debe usar avalúo de 1969 + factor Anexo 9 (otro flujo). Esta calculadora no aplica.';
+    } else {
+      alertPre.style.display='none';
+    }
+  }
+  if (g('alert-pre1990')) g('alert-pre1990').style.display = (a>=1982&&a<1993)?'block':'none';
+  if (g('compra-note')) g('compra-note').textContent = (a>0&&a<1982)?'Pre-1982 no soportado — consulta notario directo':'';
+  if (a>0&&av>a) {
+    const anos=av-a;
+    const depPct=Math.min(0.80,anos*0.03);
+    if (g('deprec-note')) g('deprec-note').textContent=`Depreciación construcción: ${(depPct*100).toFixed(0)}% (${anos} años × 3%, máx 80% — art. 124 LISR)`;
+  }
+}
+
+// Art. 124 LISR cuarto párrafo: en herencia, legado o donación, el costo y la
+// fecha de adquisición son los del AUTOR DE LA SUCESIÓN o del DONANTE. Si éste
+// a su vez lo recibió gratis, se encadena hasta la última adquisición ONEROSA.
+// El cálculo no cambia — cambia QUÉ costo y QUÉ fecha se capturan.
+function onFormaAdqChange() {
+  const f=(g('f-forma-adq')||{}).value||'compra';
+  const lblC=g('lbl-compra'), lblF=g('lbl-fecha-adq'), al=g('alert-adq-gratuita');
+  const icoWarn='<svg width="13" height="13" style="vertical-align:-2px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ';
+  if (f==='herencia') {
+    if(lblC)lblC.textContent='¿Cuánto pagó el autor de la sucesión (el fallecido) cuando compró? (MXN)';
+    if(lblF)lblF.textContent='Mes y año en que el AUTOR DE LA SUCESIÓN adquirió';
+    if(al){al.style.display='block';al.innerHTML=icoWarn+'<strong>Herencia (art. 124 LISR):</strong> el costo y la fecha de adquisición son los del fallecido, no los de la adjudicación de la herencia. Si el fallecido también lo recibió gratis (herencia/donación), usa el costo y fecha de quien lo COMPRÓ originalmente. Recibir la herencia fue exento (art. 93 fr. XXII) — esto solo aplica al vender.';}
+  } else if (f==='donacion') {
+    if(lblC)lblC.textContent='¿Cuánto pagó el donante cuando compró? (MXN)';
+    if(lblF)lblF.textContent='Mes y año en que el DONANTE adquirió';
+    if(al){al.style.display='block';al.innerHTML=icoWarn+'<strong>Donación (art. 124 LISR):</strong> el costo y la fecha de adquisición son los del donante, no los de la escritura de donación. Si el donante también lo recibió gratis, usa el costo y fecha de quien lo COMPRÓ originalmente. Nota: si la donación NO fue exenta y el donatario pagó ISR al recibirla, el notario puede tomar como costo el avalúo de esa donación — confírmalo con el notario.';}
+  } else {
+    if(lblC)lblC.textContent='¿Cuánto pagó el vendedor cuando compró? (MXN)';
+    if(lblF)lblF.textContent='Mes y año de adquisición';
+    if(al)al.style.display='none';
+  }
+}
+
+function onCoproChange() {
+  const c=(g('f-copro')||{}).value||'no';
+  if(g('row-pct-copro'))g('row-pct-copro').style.display=c==='si'?'':'none';
+}
+
+function onPctTerreno(el) {
+  const v=Math.max(0,Math.min(100,parseInt(el.value)||0));
+  if (g('f-pct-const')) g('f-pct-const').value=100-v;
+}
+function onPctConst(el) {
+  const v=Math.max(0,Math.min(100,parseInt(el.value)||0));
+  if (g('f-pct-terreno')) g('f-pct-terreno').value=100-v;
+}
+
+function toggleTerrenoHelp() {
+  const h = g('terreno-help');
+  if (!h) return;
+  h.style.display = (h.style.display === 'none' || !h.style.display) ? 'block' : 'none';
+}
+
+// Parser de boleta predial: usuario pega valor terreno + valor construcción,
+// calculamos el % y auto-llenamos f-pct-terreno / f-pct-const.
+function parserBoleta() {
+  const vt = getRawNum((g('f-vt-boleta')||{}).value);
+  const vc = getRawNum((g('f-vc-boleta')||{}).value);
+  const out = g('th-parser-out');
+  if (!out) return;
+  if (!vt && !vc) {
+    out.className = 'th-parser-out';
+    out.textContent = 'Pega los valores de tu boleta y calculamos los porcentajes.';
+    return;
+  }
+  const total = vt + vc;
+  if (total <= 0) {
+    out.className = 'th-parser-out';
+    out.textContent = 'Valores no válidos.';
+    return;
+  }
+  const pctT = Math.round((vt / total) * 100);
+  const pctC = 100 - pctT;
+  if (g('f-pct-terreno')) g('f-pct-terreno').value = pctT;
+  if (g('f-pct-const'))   g('f-pct-const').value   = pctC;
+  out.className = 'th-parser-out calculated';
+  out.innerHTML = `<svg width="12" height="12" style="vertical-align:-1px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg> <strong>Terreno ${pctT}%</strong> · Construcción ${pctC}% — aplicados automáticamente. Total boleta: ${fmt(total)}.`;
+  if (typeof onAnioChange === 'function') onAnioChange();
+}
+
+async function calcISR() {
+  const calcBtn = g('calc-btn');
+  const tipo=g('f-tipo').value;
+  let venta=getRawNum(g('f-venta').value);
+  let compra=getRawNum(g('f-compra').value);
+  const mesC=parseInt(g('f-mes-c').value);
+  const anioC=parseInt(g('f-anio-c').value)||0;
+  // Fecha de venta: prioriza f-fecha-v (date picker). Fallback a f-mes-v/f-anio-v (prefill legado).
+  let mesV, anioV, diaV, fechaVentaISO;
+  const fechaVStr = (g('f-fecha-v')||{}).value || '';
+  if (fechaVStr && /^\d{4}-\d{2}-\d{2}$/.test(fechaVStr)) {
+    const [yy,mm,dd] = fechaVStr.split('-').map(Number);
+    anioV = yy; mesV = mm; diaV = dd; fechaVentaISO = fechaVStr;
+  } else {
+    mesV = parseInt(g('f-mes-v').value) || 0;
+    anioV = parseInt(g('f-anio-v').value) || 0;
+    diaV = parseInt((g('f-dia-v')||{}).value) || 15;
+    if (mesV && anioV) fechaVentaISO = `${anioV}-${String(mesV).padStart(2,'0')}-${String(diaV).padStart(2,'0')}`;
+  }
+  let mej=getRawNum(g('f-mej').value);
+  let com=getRawNum(g('f-com').value);
+  let esc=getRawNum(g('f-esc').value);
+
+  if (!venta||!compra){alert('Ingresa el precio de venta y el costo de adquisición.');return;}
+
+  // ── Forma de adquisición (art. 124: herencia/donación → costo y fecha del autor/donante) ──
+  const formaAdq=(g('f-forma-adq')||{}).value||'compra';
+
+  // ── Copropiedad (art. 92 LISR): cada copropietario calcula sobre su proporción.
+  // Se escalan venta y TODAS las deducciones; la exención de 700K UDIS queda
+  // COMPLETA para este copropietario (aplica por persona, no por inmueble).
+  let pctCopro=100;
+  if ((g('f-copro')||{}).value==='si') {
+    pctCopro=Math.max(1,Math.min(99,parseInt((g('f-pct-copro')||{}).value)||50));
+    const p=pctCopro/100;
+    venta=venta*p; compra=compra*p; mej=mej*p; com=com*p; esc=esc*p;
+  }
+  if (!anioC||anioC<1950||anioC>2030){alert('Ingresa un año de adquisición válido.');return;}
+  if (!mesC) {alert('Selecciona el mes y año en que el vendedor adquirió el inmueble.');return;}
+  if (!fechaVentaISO || !mesV || !anioV) {alert('Selecciona la fecha de firma de la escritura.');return;}
+  // Banxico SIE serie SP74625 sólo tiene datos desde enero 1982. Para adquisiciones
+  // anteriores la práctica notarial usa avalúo de 1969 + factor Anexo 9 (otro flujo).
+  if (anioC < 1982) {
+    alert('Para inmuebles adquiridos antes de 1982 el notario debe usar avalúo histórico + factor Anexo 9 RMF. Esta calculadora orientativa no soporta ese caso. Consulta directamente al notario.');
+    return;
+  }
+
+  const mN=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const preAnio1981=false; // pre-1982 se bloquea arriba — preservado para PDF legacy
+
+  // ── Banxico SIE: INPC adquisición + INPC mes anterior a firma + UDIS del día firma ──
+  const originalBtnHTML = calcBtn.innerHTML;
+  calcBtn.disabled = true;
+  calcBtn.innerHTML = '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9" stroke-dasharray="40 60"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.9s" repeatCount="indefinite"/></circle></svg> Consultando Banxico SIE…';
+
+  let inpcAdq, inpcVenta, mesEnajINPC, anioEnajINPC, valorUDIS = null;
+  let inpcVentaFallback = false, inpcVentaMesSolicitado = null, inpcVentaAnioSolicitado = null;
+  try {
+    inpcAdq = await getINPC(mesC, anioC);
+    const enajData = await getINPCEnajenacion(mesV, anioV);
+    inpcVenta = enajData.inpc;
+    mesEnajINPC = enajData.mes;
+    anioEnajINPC = enajData.anio;
+    inpcVentaFallback = enajData.fallback;
+    inpcVentaMesSolicitado = enajData.mesSolicitado;
+    inpcVentaAnioSolicitado = enajData.anioSolicitado;
+    // UDIS sólo si tipo casa habitación (única que usa exención 700K UDIS)
+    if (tipo === 'casa') {
+      valorUDIS = await fetchBanxicoUDIS(fechaVentaISO);
+    }
+  } catch (e) {
+    calcBtn.disabled = false;
+    calcBtn.innerHTML = originalBtnHTML;
+    alert(`No se pudo consultar Banxico SIE para obtener los valores oficiales del INPC/UDIS.\n\nDetalle: ${e.message}\n\nIntenta de nuevo en un momento. Si persiste, verifica tu conexión.`);
+    return;
+  }
+  calcBtn.disabled = false;
+  calcBtn.innerHTML = originalBtnHTML;
+
+  // Factor INPC truncado a 4 decimales (art. 17-A CFF / práctica notarial estándar).
+  // TRUNCAR (Math.floor) — no redondear: la práctica fiscal mexicana descarta los decimales sobrantes.
+  const factorINPC=Math.floor((inpcVenta/inpcAdq)*10000)/10000;
+
+  // Años transcurridos (cumplidos, tope 20)
+  const anios=getAnosTranscurridos(mesC,anioC,mesV,anioV);
+
+  // Factor Anexo 9 (opción art. 121 fr. I LISR). En la práctica notarial,
+  // se compara contra el factor INPC y se usa el MAYOR (a favor del contribuyente).
+  const factorTabla=await getFactorTablaSAT(anioC, anioV);
+  const factor=Math.max(factorINPC,factorTabla);
+  const factorUsado=factor===factorTabla&&factorTabla>factorINPC?'tabla':'inpc';
+
+  // Reconversión monetaria: antes del 1/ene/1993 los montos están en viejos pesos.
+  const reconversion = anioC<1993 && !!(g('f-viejos-pesos')||{}).checked;
+  const compraCapturada = compra;
+  if (reconversion) compra = compra/1000;
+
+  // Art. 124 LISR: depreciación 3% por CADA año transcurrido (sin el tope de 20 años
+  // del art. 120, que sólo aplica para dividir la ganancia); residual mínimo 20% → tope 80%.
+  const mesesTenencia=(anioV-anioC)*12+(mesV-mesC);
+  const aniosDeprec=Math.max(1,Math.floor(mesesTenencia/12));
+  const depPct=Math.min(0.80,aniosDeprec*0.03);
+
+  let costoAct=0, debugTerreno=null;
+  if (tipo==='terreno') {
+    costoAct=compra*factor;
+  } else {
+    const pctT=(parseInt((g('f-pct-terreno')||{}).value)||20)/100;
+    const pctC=1-pctT;
+    const valT=compra*pctT, valC=compra*pctC;
+    const anosConst=aniosDeprec;
+    const valCDep=valC*(1-depPct);
+    const terrenoAct=valT*factor, constAct=valCDep*factor;
+    costoAct=terrenoAct+constAct;
+    debugTerreno={pctT,pctC,valT,valC,anosConst,depPct,valCDep,terrenoAct,constAct};
+  }
+
+  // Piso del costo — art. 124 LISR primer párrafo: el COSTO DE ADQUISICIÓN será
+  // cuando menos el 10% del monto de la enajenación. El piso aplica al costo
+  // (no a las deducciones totales) y se toma en pesos de hoy, sin actualizar.
+  const pisoCosto=venta*0.10;
+  const pisoAplicado=costoAct<pisoCosto;
+  const costoFinal=Math.max(costoAct,pisoCosto);
+
+  // Mejoras — art. 124 LISR: las construcciones, mejoras y ampliaciones se
+  // deprecian 3% anual (residual mínimo 20%) igual que la construcción, y se
+  // actualizan. La UI no captura la fecha de cada mejora, así que se asume
+  // hecha en la adquisición (mismo factor y misma depreciación — conservador).
+  const mejA=mej*(1-depPct)*factor;
+
+  const deducTotal=costoFinal+mejA+com+esc;
+  const deducFinal=deducTotal;
+  const ganTotal=venta-deducFinal;
+
+  // LIMITE_EX dinámico: UDIS del día de firma × 700,000 (art. 93 fr. XIX LISR).
+  // Si no se consultó UDIS (tipo ≠ casa), no hay exención aplicable y queda 0.
+  const LIMITE_EX = (tipo === 'casa' && valorUDIS) ? (700000 * valorUDIS) : 0;
+  let baseGrav=0,isrTotal=0,exenta=false,exentaParcial=false;
+  let ganAcum=0,isrAcum=0,tasaEfec=0,nota='';
+
+  if (ganTotal<=0) {
+    nota='Pérdida fiscal — sin ISR. Deducible en declaración anual (art. 121 LISR).';
+  } else if (tipo==='casa') {
+    const pri=g('f-pri').value, exp=g('f-exp').value;
+    if (pri==='si'&&exp==='no') {
+      if (ganTotal<=LIMITE_EX){exenta=true;nota='Exención total — ganancia dentro de 700,000 UDIS ('+fmt(LIMITE_EX)+'). Art. 93 fr. XIX LISR.';}
+      else{exentaParcial=true;baseGrav=ganTotal-LIMITE_EX;nota='Exención parcial: primeros '+fmt(LIMITE_EX)+' libres. Solo grava el excedente.';}
+    } else if (exp==='si'){baseGrav=ganTotal;nota='Exención no aplicable: ya utilizada en los últimos 3 años (art. 93 fr. XIX LISR).';}
+    else{baseGrav=ganTotal;nota=exp==='nose'?'No confirmada exención — verificar historial con el vendedor.':'No califica como casa habitación principal.';}
+  } else { baseGrav=ganTotal; }
+
+  if (baseGrav>0) {
+    const tabla=getTablaISR(anioV);
+    ganAcum=baseGrav/anios;
+    isrAcum=calcTablaProgresiva(tabla,ganAcum);
+    tasaEfec=ganAcum>0?isrAcum/ganAcum:0;
+    isrTotal=isrAcum*anios;
+  }
+
+  // Art. 127 LISR: el pago a la entidad es el 5% de la ganancia, SIN exceder
+  // el pago provisional del art. 126. Se acredita contra el federal.
+  const isrEstatal=baseGrav>0?Math.min(baseGrav*0.05,isrTotal):0;
+  const isrFederal=Math.max(0,isrTotal-isrEstatal);
+  const tasaEfecPct=baseGrav>0?(isrTotal/baseGrav)*100:0;
+
+  // IVA — solo inmueble comercial (art. 9 fr. I y II LIVA)
+  // Terreno: exento siempre. Casa habitación: exenta siempre.
+  // Comercial: 16% sobre la parte de construcción del precio de venta.
+  let ivaBase=0, ivaMonto=0;
+  if (tipo==='comercial') {
+    const pctCIva=(parseInt((g('f-pct-const')||{}).value)||80)/100;
+    ivaBase=venta*pctCIva;
+    ivaMonto=ivaBase*0.16;
+  }
+
+  _isrData={tipo,formaAdq,pctCopro,venta,compra,compraCapturada,reconversion,aniosDeprec,costoAct,costoFinal,pisoAplicado,depPct,mej,mejA,com,esc,deducTotal,deducFinal,ganTotal,factor,factorINPC,factorTabla,factorUsado,inpcAdq,inpcVenta,mesC,anioC,mesV,anioV,mesEnajINPC,anioEnajINPC,inpcVentaFallback,inpcVentaMesSolicitado,inpcVentaAnioSolicitado,mN,baseGrav,ganAcum,isrAcum,isrTotal,isrFederal,isrEstatal,anios,tasaEfec,tasaEfecPct,exenta,exentaParcial,nota,preAnio1981,LIMITE_EX,debugTerreno,ivaBase,ivaMonto};
+  renderResult(_isrData);
+}
+
+function renderResult(d) {
+  const inpcRow=g('res-inpc-row');
+  if (inpcRow) {
+    if (d.ganTotal>0){inpcRow.style.display='flex';if(g('res-inpc-adq'))g('res-inpc-adq').textContent=d.inpcAdq.toFixed(4);if(g('res-inpc-venta'))g('res-inpc-venta').textContent=d.inpcVenta.toFixed(4);if(g('res-factor'))g('res-factor').textContent=d.factor.toFixed(4);}
+    else{inpcRow.style.display='none';}
+  }
+  const tipos={casa:'Casa habitación / Depto.',terreno:'Terreno',comercial:'Inmueble comercial'};
+  if(g('res-tipo'))g('res-tipo').textContent=tipos[d.tipo]||'';
+
+  let cards='';
+  if(d.exenta){
+    cards=`<div class="rc gn"><div class="rc-l">ISR a pagar</div><div class="rc-v">$0</div><div class="rc-n">Exento — art. 93 fr. XIX</div></div><div class="rc"><div class="rc-l">Ganancia libre de impuesto</div><div class="rc-v">${fmt(d.ganTotal)}</div><div class="rc-n">No gravable</div></div>`;
+  } else if(d.ganTotal<=0){
+    cards=`<div class="rc gn"><div class="rc-l">ISR a pagar</div><div class="rc-v">$0</div><div class="rc-n">Pérdida fiscal</div></div><div class="rc"><div class="rc-l">Pérdida deducible</div><div class="rc-v">${fmt(Math.abs(d.ganTotal))}</div><div class="rc-n">Declaración anual</div></div>`;
+  } else {
+    cards=`<div class="rc dk"><div class="rc-l">ISR total a pagar</div><div class="rc-v">${fmt(d.isrTotal)}</div><div class="rc-n">Tasa efectiva: ${pct(d.tasaEfecPct)}</div></div><div class="rc"><div class="rc-l">ISR Entidad Federativa</div><div class="rc-v">${fmt(d.isrEstatal)}</div><div class="rc-n">5% ganancia — art. 127</div></div><div class="rc"><div class="rc-l">ISR Federación</div><div class="rc-v">${fmt(d.isrFederal)}</div><div class="rc-n">ISR total − retención estatal</div></div>`;
+  }
+  // Card IVA (solo comercial)
+  if(d.ivaMonto>0){
+    cards+=`<div class="rc" style="border-color:rgba(0,85,204,0.3);background:rgba(0,85,204,0.06)"><div class="rc-l" style="color:var(--forest-2)">IVA 16% estimado</div><div class="rc-v" style="color:var(--forest)">${fmt(d.ivaMonto)}</div><div class="rc-n">Sobre construcción (art. 9 LIVA) — retiene el notario</div></div>`;
+  }
+  if(g('res-cards'))g('res-cards').innerHTML=cards;
+
+  const adqLbl=d.preAnio1981?`INPC adq. base ene-1981: ${d.inpcAdq.toFixed(6)}`:`INPC ${d.mN[d.mesC]} ${d.anioC}: ${d.inpcAdq.toFixed(6)}`;
+  const vtaLbl=`INPC ${d.mN[d.mesEnajINPC]} ${d.anioEnajINPC} (${d.inpcVentaFallback?'último publicado':'mes anterior a firma'}): ${d.inpcVenta.toFixed(6)}`;
+
+  let bd='';
+  if(d.pctCopro<100) bd+=`<div class="br" style="border-color:rgba(0,85,204,0.25)"><span class="bl" style="color:var(--forest)">Copropiedad ${d.pctCopro}% (art. 92 LISR) — todos los montos son la parte proporcional de este copropietario</span><span class="bv"></span></div>`;
+  if(d.formaAdq==='herencia') bd+=`<div class="br sub"><span class="bl">Adquisición por herencia — costo y fecha del autor de la sucesión (art. 124 LISR)</span><span class="bv"></span></div>`;
+  if(d.formaAdq==='donacion') bd+=`<div class="br sub"><span class="bl">Adquisición por donación — costo y fecha del donante (art. 124 LISR)</span><span class="bv"></span></div>`;
+  bd+=`<div class="br"><span class="bl">Precio de venta${d.pctCopro<100?` (${d.pctCopro}%)`:''}</span><span class="bv">${fmt(d.venta)}</span></div><div class="br sub"><span class="bl">${adqLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">${vtaLbl}</span><span class="bv"></span></div><div class="br sub"><span class="bl">Factor INPC (truncado a 4 decimales)</span><span class="bv">${d.factorINPC.toFixed(4)}</span></div><div class="br sub"><span class="bl">Factor Tabla SAT (Anexo 9, adquisición ${d.anioC})</span><span class="bv">${d.factorTabla.toFixed(4)}</span></div><div class="br sub"><span class="bl">Factor utilizado (mayor — art. 121 fr. I)</span><span class="bv" style="font-weight:600">${d.factor.toFixed(4)}</span></div>`;
+
+  if(d.reconversion){
+    bd+=`<div class="br sub"><span class="bl">Costo en escritura (viejos pesos): ${fmt(d.compraCapturada)} ÷ 1,000 — reconversión 1993</span><span class="bv">${fmt(d.compra)}</span></div>`;
+  }
+  if(d.debugTerreno){
+    const dt=d.debugTerreno;
+    bd+=`<div class="br sub"><span class="bl">Terreno (${(dt.pctT*100).toFixed(0)}%): ${fmt(dt.valT)} × factor</span><span class="bv">${fmt(dt.terrenoAct)}</span></div>`;
+    bd+=`<div class="br sub"><span class="bl">Construcción (${(dt.pctC*100).toFixed(0)}%): ${fmt(dt.valC)}</span><span class="bv"></span></div>`;
+    bd+=`<div class="br sub"><span class="bl">Deprec. ${dt.anosConst} años × 3% = ${(dt.depPct*100).toFixed(0)}%${dt.anosConst*0.03>0.80?' (tope art. 124)':''} → ${fmt(dt.valCDep)}</span><span class="bv"></span></div>`;
+    bd+=`<div class="br sub"><span class="bl">Construcción dep. × factor</span><span class="bv">${fmt(dt.constAct)}</span></div>`;
+  }
+
+  if(d.pisoAplicado){
+    bd+=`<div class="br sub"><span class="bl">Costo actualizado ${fmt(d.costoAct)} &lt; piso 10% de la venta</span><span class="bv"></span></div>`;
+    bd+=`<div class="br"><span class="bl">Costo adquisición — piso 10% (art. 124 LISR)</span><span class="bv">− ${fmt(d.costoFinal)}</span></div>`;
+  } else {
+    bd+=`<div class="br"><span class="bl">Costo adquisición actualizado</span><span class="bv">− ${fmt(d.costoAct)}</span></div>`;
+  }
+  if(d.mej) bd+=`<div class="br"><span class="bl">Mejoras dep. ${(d.depPct*100).toFixed(0)}% y actualizadas (arts. 121 fr. II, 124)</span><span class="bv">− ${fmt(d.mejA)}</span></div>`;
+  if(d.com) bd+=`<div class="br"><span class="bl">Comisión del agente</span><span class="bv">− ${fmt(d.com)}</span></div>`;
+  if(d.esc) bd+=`<div class="br"><span class="bl">Gastos de escrituración</span><span class="bv">− ${fmt(d.esc)}</span></div>`;
+  bd+=`<div class="br tot"><span class="bl">${d.ganTotal>=0?'Ganancia total':'Pérdida fiscal'}</span><span class="bv">${fmt(Math.abs(d.ganTotal))}</span></div>`;
+
+  if(!d.exenta&&d.ganTotal>0&&d.exentaParcial){
+    bd+=`<div class="br sub"><span class="bl">Exención 700,000 UDIS</span><span class="bv">− ${fmt(d.LIMITE_EX)}</span></div>`;
+    bd+=`<div class="br tot"><span class="bl">Base gravable</span><span class="bv">${fmt(d.baseGrav)}</span></div>`;
+  }
+  if(!d.exenta&&d.baseGrav>0){
+    bd+=`<div class="br"><span class="bl">Años de tenencia (art. 120)</span><span class="bv">${d.anios}</span></div>`;
+    bd+=`<div class="br sub"><span class="bl">Ganancia acumulable (÷ ${d.anios} años)</span><span class="bv">${fmt(d.ganAcum)}</span></div>`;
+    bd+=`<div class="br sub"><span class="bl">ISR s/ ganancia acumulable (art. 126 LISR)</span><span class="bv">${fmt(d.isrAcum)}</span></div>`;
+    bd+=`<div class="br sub"><span class="bl">Tasa efectiva</span><span class="bv">${(d.tasaEfec*100).toFixed(4)}%</span></div>`;
+    bd+=`<div class="br tot"><span class="bl">ISR total (ISR acumulable × ${d.anios} años)</span><span class="bv">${fmt(d.isrTotal)}</span></div>`;
+    bd+=`<div class="br"><span class="bl">ISR Entidad Federativa 5% (art. 127)</span><span class="bv">${fmt(d.isrEstatal)}</span></div>`;
+    bd+=`<div class="br"><span class="bl">ISR Federación (ISR total − ISR estatal)</span><span class="bv">${fmt(d.isrFederal)}</span></div>`;
+  }
+  if(d.ivaMonto>0){
+    bd+=`<div class="br" style="border-color:rgba(0,85,204,0.25)"><span class="bl" style="color:var(--forest)">IVA 16% s/ construcción (${fmt(d.ivaBase)}) — art. 9 LIVA</span><span class="bv" style="color:var(--forest)">${fmt(d.ivaMonto)}</span></div>`;
+  }
+  if(g('res-bkdn'))g('res-bkdn').innerHTML=bd;
+
+  const comp=[];
+  const adqDesdeAbr2014 = d.anioC>2014 || (d.anioC===2014 && d.mesC>=4);
+  comp.push(adqDesdeAbr2014
+    ? 'CFDI de la adquisición emitido por el notario en la compra (obligatorio para operaciones desde el 1 de abril de 2014 — la escritura sola no basta como comprobante fiscal del costo)'
+    : 'Escritura de adquisición (al ser anterior al 1 de abril de 2014, la escritura sí funge como comprobante del costo — regla 2.7.1.22 RMF)');
+  if(d.mej)comp.push('Facturas / CFDI de mejoras y ampliaciones');
+  if(d.com)comp.push('CFDI de comisión del agente inmobiliario');
+  if(d.esc)comp.push('Comprobante de gastos de escrituración');
+  if(d.preAnio1981)comp.push('Avalúo vigente (adquisición anterior a 1981)');
+  if(d.formaAdq==='herencia'){comp.push('Escritura de adjudicación de la herencia');comp.push('Escritura de la compra ORIGINAL del autor de la sucesión (de ahí salen costo y fecha)');}
+  if(d.formaAdq==='donacion'){comp.push('Escritura de donación');comp.push('Escritura de la compra ORIGINAL del donante (de ahí salen costo y fecha)');}
+  if(d.pctCopro<100)comp.push('Escritura donde conste el porcentaje de copropiedad de cada propietario');
+  const compH=comp.length?'<ul style="margin:6px 0 0 16px">'+comp.map(c=>`<li>${c}</li>`).join('')+'</ul>':'';
+  const notaEl=g('res-nota');
+  if(notaEl){
+    notaEl.style.display='block';
+    // ── 7 notas educativas para el agente (sobre todo el novato) ──
+    const eduNotes = [
+      {
+        warn: true,
+        title: 'Si el vendedor es ASALARIADO',
+        body: `La <em>ganancia acumulable</em> (${fmt(d.ganAcum)}) se sumará a su sueldo y demás ingresos en la declaración anual de abril — su tasa real de ISR puede subir vs. el cálculo aquí. El ISR mostrado es lo que retiene el notario; el saldo final se ajusta al declarar.`
+      },
+      {
+        warn: true,
+        title: 'Si el vendedor es PERSONA MORAL o tiene actividad empresarial',
+        body: 'Cuando el inmueble es parte del activo fijo de una empresa o de una actividad empresarial de persona física, el notario <strong>no retiene</strong> — el contribuyente declara directamente con las reglas de su régimen (depreciación contable, art. 19 LISR). Confírmalo antes de cerrar.'
+      },
+      {
+        title: 'Co-propiedad o sociedad conyugal',
+        body: 'Si el inmueble es de varios propietarios, cada uno calcula su ISR sobre <strong>su parte proporcional</strong>. Si es casa habitación, la <strong>exención de 700,000 UDIS aplica a cada propietario por separado</strong> — duplica o multiplica el beneficio.'
+      },
+      {
+        title: 'Inmueble adquirido por HERENCIA',
+        body: 'El costo y la fecha de adquisición que se usan son los del <strong>autor de la sucesión</strong> (el fallecido), <em>no</em> los del heredero. Si el causante compró en 1985, esa es la fecha que va en el cálculo. Pide a la familia el documento original de adquisición.'
+      },
+      {
+        title: 'Inmueble comprado con CRÉDITO (INFONAVIT, FOVISSSTE, banco)',
+        body: 'El costo de adquisición es el <strong>valor total escriturado</strong> (precio del inmueble), <em>no</em> solo el enganche o lo desembolsado. El crédito ya está pagado por escritura.'
+      },
+      {
+        warn: adqDesdeAbr2014,
+        title: 'El costo de adquisición se comprueba con CFDI, no con la escritura',
+        body: adqDesdeAbr2014
+          ? 'Como la adquisición fue <strong>a partir del 1 de abril de 2014</strong>, el comprobante fiscal del costo es el <strong>CFDI que emitió el notario cuando el vendedor compró</strong> (complemento de notarios públicos). Si el cliente no lo tiene, pídelo al notario de aquella operación o recupéralo del SAT con su RFC — sin ese CFDI el notario de la venta puede rechazar la deducción del costo completo. También avisa al comprador de HOY: el CFDI de esta escrituración será su comprobante de costo cuando revenda — que lo guarde.'
+          : 'Como la adquisición fue <strong>antes del 1 de abril de 2014</strong>, la escritura sí funge como comprobante del costo (regla 2.7.1.22 RMF). Pero avisa al comprador de HOY: desde 2014 el notario emite <strong>CFDI de la operación</strong> y ese será su comprobante de costo cuando revenda — que lo guarde junto con la escritura.'
+      },
+      {
+        title: 'Mejoras y comisión SIN CFDI',
+        body: 'Sin factura/CFDI a nombre del vendedor, el notario <strong>no las deducirá</strong>. Si las capturaste arriba pero el cliente no tiene comprobantes, retira el monto antes de comprometer el resultado.'
+      },
+      {
+        title: 'Plazo para enterar el 5% estatal',
+        body: 'El notario tiene <strong>15 días</strong> tras la firma para enterar el 5% a la entidad federativa (art. 127 LISR). Es pago provisional acreditable contra el ISR federal del año.'
+      }
+    ];
+    const eduHTML = `<div class="edu-notes-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>Antes de cerrar la operación — verifica con el cliente:</div>` +
+      eduNotes.map(n => `<div class="edu-note${n.warn?' warn':''}"><strong>${n.title}.</strong> ${n.body}</div>`).join('');
+
+    const exencionLeyenda = (d.tipo === 'casa')
+      ? `<br><strong>¿Casa habitación o departamento?</strong> Tu cliente podría ser candidato para <strong>exentar el ISR</strong> (total o parcialmente) si esta es su casa habitación principal y no usó la exención en los últimos 3 años. <a href="blog.html?art=exencion-isr-casa-habitacion" style="color:var(--forest-2);font-weight:600">Lee cómo funciona la exención →</a><br>`
+      : '';
+    const inpcFallbackNota = d.inpcVentaFallback
+      ? `<br><br><strong>Nota sobre el INPC de enajenación:</strong> el INPC de ${d.mN[d.inpcVentaMesSolicitado]} ${d.inpcVentaAnioSolicitado} aún no lo publica el INEGI (se libera alrededor del día 9 del mes siguiente). Se usó el último INPC publicado, el de ${d.mN[d.mesEnajINPC]} ${d.anioEnajINPC}. Al firmar la escritura, el notario aplicará el INPC oficial del mes que corresponda.`
+      : '';
+    notaEl.innerHTML =
+      `<strong><svg width="13" height="13" style="vertical-align:-2px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 17H2L12 3zm0 7v4m0 3h.01"/></svg> Cálculo orientativo</strong> — metodología notarial arts. 121, 124, 120, 126 y 127 LISR. INPC y UDIS consultados en tiempo real a Banxico SIE. El notario realiza el cálculo definitivo con los datos exactos de la operación.` +
+      inpcFallbackNota +
+      (comp.length ? `<br><br>Documentos que deberá presentar el vendedor:${compH}` : '') +
+      (d.nota ? `<br><br><strong>Nota:</strong> ${d.nota}` : '') +
+      `<br>` + exencionLeyenda +
+      `<br>` + eduHTML;
+  }
+  if(g('res'))g('res').style.display='block';
+  if(g('isr-form'))g('isr-form').style.display='none';
+  setTimeout(()=>{if(g('res'))g('res').scrollIntoView({behavior:'smooth',block:'start'});},80);
+  fetchAnalysis(d);
+}
+
+async function fetchAnalysis(d) {
+  if(g('ai-box'))g('ai-box').style.display='block';
+  if(g('ai-txt'))g('ai-txt').innerHTML='<span style="opacity:0.5">Cecil está analizando la operación…</span>';
+  const ivaLine=d.ivaMonto>0?`\n- IVA estimado (16% s/ construcción): ${fmt(d.ivaMonto)}`:'';
+  const prompt=`Operación enajenación inmueble en México:\n- Tipo: ${d.tipo}, Venta: ${fmt(d.venta)}, Compra: ${fmt(d.compra)} (${d.mN[d.mesC]} ${d.anioC})\n- Factor INPC: ${d.factor.toFixed(4)}, Ganancia total: ${fmt(d.ganTotal)}, Base gravable: ${fmt(d.baseGrav)}\n- Ganancia acumulable: ${fmt(d.ganAcum)}, ISR acumulable: ${fmt(d.isrAcum)}, Tasa efectiva: ${(d.tasaEfec*100).toFixed(2)}%\n- ISR total: ${fmt(d.isrTotal)}, ISR estatal 5%: ${fmt(d.isrEstatal)}, ISR federal: ${fmt(d.isrFederal)}${ivaLine}\n- Exenta: ${d.exenta}, Exenta parcial: ${d.exentaParcial}\nEn 3 oraciones en español: 1) valida si el resultado es razonable, 2) la consideración fiscal más importante, 3) recomendación práctica para el agente.`;
+  try {
+    const r=await fetch('https://brokr-main-staging.up.railway.app/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:280,temperature:0.5,messages:[{role:'system',content:'Eres Cecil, asistente experto de Cecil en fiscalidad inmobiliaria mexicana. Responde en español, breve y práctico.'},{role:'user',content:prompt}]})});
+    const data=await r.json();
+    const reply=data.choices?.[0]?.message?.content||'';
+    if(g('ai-txt'))g('ai-txt').innerHTML=reply.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  } catch(e){if(g('ai-box'))g('ai-box').style.display='none';}
+}
+
+function resetISR() {
+  if(g('res-inpc-row'))g('res-inpc-row').style.display='none';
+  if(g('res'))g('res').style.display='none';
+  if(g('isr-form'))g('isr-form').style.display='block';
+  _isrData=null;
+  ['f-venta','f-compra','f-anio-c','f-mej','f-com','f-esc'].forEach(id=>{const el=g(id);if(el)el.value='';});
+  // Resetea fecha de venta al día de hoy
+  const hoy = new Date().toISOString().slice(0,10);
+  if(g('f-fecha-v')) g('f-fecha-v').value = hoy;
+  syncFechaVenta();
+  if(g('f-pct-terreno'))g('f-pct-terreno').value='20';
+  if(g('f-pct-const'))g('f-pct-const').value='80';
+  if(g('deprec-note'))g('deprec-note').textContent='';
+  if(g('compra-note'))g('compra-note').textContent='';
+  if(g('alert-pre1981'))g('alert-pre1981').style.display='none';
+  if(g('alert-pre1990'))g('alert-pre1990').style.display='none';
+  if(g('f-viejos-pesos'))g('f-viejos-pesos').checked=true;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+let _isrPdfBusy = false;
+// ── Tokens del sistema de diseño para el PDF ──
+// Este documento lo renderiza Playwright aislado, sin cargar
+// brokr-theme.css. Antes los tokens vivían copiados a mano aquí, y se
+// quedaron dos ediciones atrás sin que nadie lo notara. Ahora se leen
+// del theme que esta página YA tiene cargado: una sola fuente de verdad.
+// El respaldo solo entra si el theme no cargó (fallo de red): un PDF con
+// el color de ayer es mejor que un PDF sin colores.
+/* ═══ AUDIT-EXEMPT: respaldo de tokens del PDF ═══
+   Estos hex son deliberados y no son un bypass del sistema: son el
+   espejo de brokr-theme.css que se usa SOLO si el theme no cargó por
+   un fallo de red. Sin ellos, ese PDF saldría sin colores. La ruta
+   normal (_isrTokens) lee el theme; esto es la red de seguridad.
+   Si cambias la paleta del theme, actualiza también este espejo. ── */
+const _ISR_TOKENS_FALLBACK = {
+  '--paper':'#FFFFFF', '--paper-2':'#EDF2FB', '--bone':'#FFFFFF',
+  '--ink':'#00143B', '--ink-2':'#1B2C4F', '--ink-3':'#4A5875',
+  '--mute':'#4A5875', '--mute-2':'#8592AB',
+  '--line':'#E6ECF6', '--line-2':'#D8E1EF',
+  '--forest':'#1240A0', '--forest-2':'#0B2E78',
+  '--forest-soft':'rgba(18,64,160,0.10)',
+  '--sky-navy':'#00143B',
+  '--danger':'#C62839', '--danger-soft':'rgba(198,40,57,0.10)',
+  '--success':'#0C7A5E',
+  '--font-sans':"'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif"
+};
+/* ═══ /AUDIT-EXEMPT ═══ */
+function _isrTokens(){
+  const cs = getComputedStyle(document.documentElement);
+  return Object.keys(_ISR_TOKENS_FALLBACK).map(n => {
+    const v = (cs.getPropertyValue(n) || '').trim();
+    return n + ':' + (v || _ISR_TOKENS_FALLBACK[n]);
+  }).join('; ');
+}
+
+async function descargarPDF() {
+  const d=_isrData;
+  if(!d){alert('Primero realiza un cálculo.');return;}
+  if(_isrPdfBusy) return;
+  const meses=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const tipos={casa:'Casa habitación / Departamento',terreno:'Terreno',comercial:'Inmueble comercial'};
+  const bkdn=(g('res-bkdn')||{}).innerHTML||'';
+  const nota=(g('res-nota')||{}).innerHTML||'';
+
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/>
+<title>Cecil · ${meses[d.mesV]} ${d.anioV}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ═══ AUDIT-EXEMPT: documento PDF autocontenido ═══
+     Los tokens se inyectan desde brokr-theme.css vía _isrTokens(): este
+     bloque ya no los duplica. Solo quedan los overrides propios del
+     impreso. Mismo sistema que Estimación de valor y Ficha técnica. ── */
+  :root{
+    ${_isrTokens()};
+    /* Overrides del documento: el papel es blanco, no el canvas de la app */
+    --paper:#FFFFFF;
+    --fs-h1:32px; --fs-h3:20px; --fs-sm:14px; --fs-xs:12px; --fs-caption:11px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  @page{size:A4;margin:14mm 18mm 12mm 18mm}
+  html{height:100%}
+  body{height:100%;overflow:hidden}
+  body{
+    font-family:var(--font-sans);
+    font-size:var(--fs-xs);color:var(--ink);background:var(--paper);
+    -webkit-font-smoothing:antialiased;letter-spacing:-0.005em;
+    line-height:1.5;
+  }
+  /* ── HEADER ── */
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:12px;border-bottom:1.5px solid var(--sky-navy)}
+  .hdr-left h1{font-family:var(--font-sans);font-size:var(--fs-h1);font-weight:700;letter-spacing:-0.02em;color:var(--sky-navy);line-height:1.1;margin-bottom:5px}
+  .hdr-left .meta{font-size:var(--fs-caption);color:var(--mute);letter-spacing:0.01em}
+  .hdr-right{text-align:right}
+  .tipo-badge{font-size:var(--fs-caption);font-weight:700;letter-spacing:0.01em;color:var(--forest);background:var(--forest-soft);padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:6px}
+  .fecha{font-size:var(--fs-caption);color:var(--mute)}
+  /* ── SECTION LABEL ── */
+  .sec-lbl{font-size:var(--fs-caption);font-weight:700;letter-spacing:0.02em;color:var(--mute);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+  /* ── INPC ROW ── */
+  .inpc-row{display:grid;grid-template-columns:1fr 20px 1fr 20px 1fr;gap:0;border:1px solid var(--line);margin-bottom:12px;border-radius:8px;overflow:hidden}
+  .inpc-cell{padding:12px 14px;text-align:center;border-right:1px solid var(--line)}
+  .inpc-cell:last-child{border-right:none}
+  .inpc-cell.hl{background:var(--forest-soft)}
+  .inpc-arrow{display:flex;align-items:center;justify-content:center;color:var(--mute-2);font-size:var(--fs-sm);border-right:none!important;padding:0}
+  .inpc-lbl{font-size:var(--fs-caption);font-weight:600;letter-spacing:0.01em;color:var(--mute);margin-bottom:5px}
+  .inpc-val{font-family:var(--font-sans);font-weight:500;font-size:var(--fs-sm);letter-spacing:-0.005em;color:var(--ink)}
+  .inpc-cell.hl .inpc-val{color:var(--forest);font-weight:700}
+  /* ── CARDS ── */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:12px}
+  .card{padding:14px 16px;border-right:1px solid var(--line)}
+  .card:last-child{border-right:none}
+  .card-l{font-size:var(--fs-caption);font-weight:600;letter-spacing:0.01em;color:var(--mute);margin-bottom:6px}
+  .card-v{font-family:var(--font-sans);font-size:var(--fs-h3);font-weight:700;letter-spacing:-0.01em;color:var(--ink);margin-bottom:2px}
+  .card-n{font-size:var(--fs-caption);color:var(--mute)}
+  .card.total{background:var(--danger-soft)}
+  .card.total .card-v{color:var(--danger)}
+  .card.iva .card-v{color:var(--forest-2)}
+  /* ── DESGLOSE ── */
+  .br{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font-size:var(--fs-xs)}
+  .br:last-child{border-bottom:none}
+  .br.sub{padding-left:16px;color:var(--mute);font-size:var(--fs-caption)}
+  .br.tot{font-size:var(--fs-xs);padding:10px 0;border-bottom:1.5px solid var(--sky-navy);border-top:1px solid var(--line);margin-top:2px}
+  .bl{color:var(--ink-3);flex:1;padding-right:12px}
+  .bv{font-family:var(--font-sans);font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:var(--fs-xs);color:var(--ink)}
+  .br.tot .bl,.br.tot .bv{font-family:var(--font-sans);font-weight:700;color:var(--sky-navy);font-size:var(--fs-sm)}
+  /* ── NOTA ── */
+  .nota{border-left:2px solid var(--forest);padding:10px 14px;font-size:var(--fs-caption);margin-top:16px;line-height:1.65;color:var(--ink-3);background:var(--paper-2)}
+  .nota strong{font-weight:700;color:var(--ink)}
+  .nota ul{margin:4px 0 0 14px}
+  .nota li{margin-bottom:2px}
+  /* ── FOOTER ── */
+  .footer{margin-top:18px;padding-top:8px;border-top:1px solid var(--line);text-align:center}
+  .footer-brand{font-family:var(--font-sans);font-size:var(--fs-caption);font-weight:700;color:var(--mute);letter-spacing:0.01em}
+/* ═══ /AUDIT-EXEMPT ═══ */
+</style>
+</head>
+<body>
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>Cálculo ISR<br>por enajenación</h1>
+      <div class="meta">Operación: ${meses[d.mesV]} ${d.anioV} &nbsp;·&nbsp; Adquisición: ${meses[d.mesC]} ${d.anioC}</div>
+    </div>
+    <div class="hdr-right">
+      <div class="tipo-badge">${tipos[d.tipo]||d.tipo}</div>
+      <div class="fecha">Generado el ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})}</div>
+    </div>
+  </div>
+
+  <div class="sec-lbl">Factor de actualización INPC</div>
+  <div class="inpc-row">
+    <div class="inpc-cell">
+      <div class="inpc-lbl">INPC Adquisición · ${meses[d.mesC]} ${d.anioC}</div>
+      <div class="inpc-val">${d.inpcAdq.toFixed(6)}</div>
+    </div>
+    <div class="inpc-arrow">→</div>
+    <div class="inpc-cell">
+      <div class="inpc-lbl">INPC Enajenación · ${meses[d.mesEnajINPC]} ${d.anioEnajINPC}</div>
+      <div class="inpc-val">${d.inpcVenta.toFixed(6)}</div>
+    </div>
+    <div class="inpc-arrow">=</div>
+    <div class="inpc-cell hl">
+      <div class="inpc-lbl">Factor utilizado</div>
+      <div class="inpc-val">${d.factor.toFixed(4)}</div>
+    </div>
+  </div>
+
+  ${d.ganTotal>0&&!d.exenta?`
+  <div class="sec-lbl">Resumen fiscal</div>
+  <div class="cards">
+    <div class="card total">
+      <div class="card-l">ISR total a pagar</div>
+      <div class="card-v">${fmt(d.isrTotal)}</div>
+      <div class="card-n">Tasa efectiva ${pct(d.tasaEfecPct)}</div>
+    </div>
+    <div class="card">
+      <div class="card-l">ISR entidad federativa</div>
+      <div class="card-v">${fmt(d.isrEstatal)}</div>
+      <div class="card-n">5% sobre ganancia · art. 127</div>
+    </div>
+    <div class="card">
+      <div class="card-l">ISR federación</div>
+      <div class="card-v">${fmt(d.isrFederal)}</div>
+      <div class="card-n">ISR total − retención estatal</div>
+    </div>
+    ${d.ivaMonto>0?`<div class="card iva" style="grid-column:1/-1;border-top:1px solid var(--line);grid-template-columns:auto">
+      <div class="card-l">IVA 16% estimado — art. 9 LIVA</div>
+      <div class="card-v">${fmt(d.ivaMonto)}</div>
+      <div class="card-n">Sobre valor de construcción (${fmt(d.ivaBase)}) · retiene el notario</div>
+    </div>`:''}
+  </div>`:
+  d.exenta?`<div class="sec-lbl">Resumen fiscal</div>
+  <div class="cards"><div class="card" style="grid-column:1/-1">
+    <div class="card-l">ISR a pagar</div>
+    <div class="card-v" style="color:var(--success)">$0</div>
+    <div class="card-n">Exento — art. 93 fr. XIX LISR · Ganancia libre de impuesto: ${fmt(d.ganTotal)}</div>
+  </div></div>`:''}
+
+  <div class="sec-lbl">Desglose del cálculo</div>
+  ${bkdn}
+  ${nota?`<div class="nota">${nota}</div>`:''}
+
+  <div class="footer">
+    <div class="footer-brand">Powered by Cecil</div>
+  </div>
+</body></html>`;
+
+  // Descarga directa al dispositivo (mismo patrón que estimación de valor):
+  // 1) POST /isr-pdf con el HTML → token
+  // 2) GET /isr-pdf/{token} → blob
+  // 3) <a download> sin menús intermedios
+  _isrPdfBusy = true;
+  const API = (typeof window !== 'undefined' && window.API_BASE) ? window.API_BASE : 'https://brokr-main-staging.up.railway.app';
+  const filename = `ISR_${meses[d.mesV]}_${d.anioV}.pdf`.replace(/\s+/g, '_');
+  let _isrTok = null;
+  try { _isrTok = window.brokrSb && window.brokrSb.ensureToken ? await window.brokrSb.ensureToken() : null; } catch(e){}
+  if (!_isrTok) { try { _isrTok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token'); } catch(e){} }
+  try {
+    const r = await fetch(`${API}/isr-pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(_isrTok ? { 'Authorization': 'Bearer ' + _isrTok } : {}) },
+      body: JSON.stringify({ html, filename })
+    });
+    const data = await r.json();
+    if(!r.ok) throw new Error(data.detail || 'Error generando PDF');
+
+    const pdfResp = await fetch(`${API}/isr-pdf/${data.token}`);
+    if(!pdfResp.ok) throw new Error('No se pudo obtener el PDF');
+    const blob = await pdfResp.blob();
+    const nombreFinal = data.filename || filename;
+
+    // Modo asistente: este documento corre en un iframe oculto fuera de
+    // pantalla (ver calcularISRDirecto en app-shell.js) — cualquier
+    // descarga/hoja de compartir disparada aquí es invisible o la bloquea
+    // el navegador. Se manda el blob a la ventana visible y ES ELLA quien
+    // entrega el archivo y confirma el resultado real al usuario.
+    const enAsistente = new URLSearchParams(location.search).get('asistente') === '1'
+      && window.parent && window.parent !== window;
+    if (enAsistente) {
+      window.parent.postMessage({ tipo: 'asistente_isr_blob', blob, filename: nombreFinal }, '*');
+    } else if (window.broquerDeliverBlob) {
+      await window.broquerDeliverBlob(blob, nombreFinal, { type: 'application/pdf', title: 'Cálculo ISR listo', text: 'Cálculo ISR generado por Cecil' });
+    } else {
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }
+  } catch (e) {
+    if (new URLSearchParams(location.search).get('asistente') === '1') throw e; // que finish() lo reporte
+    alert('Error al generar PDF: ' + (e.message || e));
+  } finally {
+    _isrPdfBusy = false;
+  }
+}
+
+/* ── MES/AÑO PICKER ── */
+const MP_MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MP_MESES_FULL = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+const mpState = {
+  v: { year: 2026, month: null },
+  c: { year: 2005, month: null }
+};
+
+function mpRenderMonths(id) {
+  const grid = g('mp-months-' + id);
+  const sel = mpState[id].month;
+  grid.innerHTML = MP_MESES.map((m, i) => {
+    const isSelected = sel === (i + 1);
+    return `<div class="mp-month${isSelected ? ' selected' : ''}" onclick="mpSelectMonth('${id}', ${i+1})">${m}</div>`;
+  }).join('');
+}
+
+function mpToggle(id) {
+  const drop = g('mp-dropdown-' + id);
+  const trigger = g('mp-trigger-' + id);
+  const other = id === 'v' ? 'c' : 'v';
+  // Close other picker
+  g('mp-dropdown-' + other)?.classList.remove('open', 'open-up');
+  g('mp-trigger-' + other)?.classList.remove('open');
+  const otherCard = g('mp-trigger-' + other)?.closest('.card');
+  if (otherCard) otherCard.style.zIndex = '';
+
+  const isOpen = drop.classList.contains('open');
+  if (!isOpen) {
+    g('mp-year-' + id).textContent = mpState[id].year;
+    mpRenderMonths(id);
+    drop.classList.add('open');
+    trigger.classList.add('open');
+    // Elevate card
+    const card = trigger.closest('.card');
+    if (card) card.style.zIndex = '200';
+    // Detect if dropdown overflows viewport bottom → open upward
+    requestAnimationFrame(() => {
+      const rect = drop.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      if (spaceBelow < 0) {
+        drop.classList.add('open-up');
+      } else {
+        drop.classList.remove('open-up');
+      }
+    });
+  } else {
+    drop.classList.remove('open', 'open-up');
+    trigger.classList.remove('open');
+    const card = trigger.closest('.card');
+    if (card) card.style.zIndex = '';
+  }
+}
+
+function mpPrevYear(id) {
+  mpState[id].year--;
+  g('mp-year-' + id).textContent = mpState[id].year;
+  mpRenderMonths(id);
+}
+function mpNextYear(id) {
+  mpState[id].year++;
+  g('mp-year-' + id).textContent = mpState[id].year;
+  mpRenderMonths(id);
+}
+
+function mpSelectMonth(id, month) {
+  mpState[id].month = month;
+  const year = mpState[id].year;
+  g('f-mes-' + id).value = String(month).padStart(2, '0');
+  g('f-anio-' + id).value = year;
+  g('mp-display-' + id).innerHTML = `<strong>${MP_MESES_FULL[month-1]}</strong> ${year}`;
+  g('mp-dropdown-' + id).classList.remove('open', 'open-up');
+  g('mp-trigger-' + id).classList.remove('open');
+  const card = g('mp-trigger-' + id)?.closest('.card');
+  if (card) card.style.zIndex = '';
+  if (id === 'c') onAnioChange();
+}
+
+document.addEventListener('click', function(e) {
+  ['v','c'].forEach(id => {
+    const wrap = g('mp-trigger-' + id)?.closest('.mp-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      g('mp-dropdown-' + id)?.classList.remove('open', 'open-up');
+      g('mp-trigger-' + id)?.classList.remove('open');
+      const card = g('mp-trigger-' + id)?.closest('.card');
+      if (card) card.style.zIndex = '';
+    }
+  });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Picker mes/año sólo para adquisición (compra)
+  mpRenderMonths('c');
+
+  // Date picker venta: default hoy + listener de sincronización
+  const fechaV = g('f-fecha-v');
+  if (fechaV) {
+    if (!fechaV.value) fechaV.value = new Date().toISOString().slice(0,10);
+    fechaV.addEventListener('change', syncFechaVenta);
+    syncFechaVenta();
+  }
+
+  // ── Integración con Cecil Asistente ──────────────────────────
+  // 1) Si llegan datos pre-llenados en sessionStorage (acción `llenar_isr` o
+  //    `calcular_isr_directo` del chat), los aplicamos al formulario.
+  // 2) Si además la URL trae `?asistente=1`, ejecutamos calcISR()+descargarPDF()
+  //    automáticamente y notificamos al iframe padre cuando termine.
+  try {
+    const raw = sessionStorage.getItem('shaark_isr');
+    if (raw) {
+      const d = JSON.parse(raw);
+      sessionStorage.removeItem('shaark_isr');
+      const setVal = (id, v) => { const el = g(id); if (el && v !== undefined && v !== null && v !== '') el.value = v; };
+      // Tipo de inmueble
+      if (d.inmueble) setVal('f-tipo', d.inmueble);
+      // Precios (con formato si el campo lo aplica)
+      if (d.precio_venta) {
+        const ev = g('f-venta'); if (ev) { ev.value = Number(d.precio_venta).toLocaleString('en-US'); if (typeof fmtVenta === 'function') fmtVenta(ev); }
+      }
+      if (d.precio_compra) {
+        const ec = g('f-compra'); if (ec) { ec.value = Number(d.precio_compra).toLocaleString('en-US'); if (typeof fmtCompra === 'function') fmtCompra(ec); }
+      }
+      if (d.mejoras)        setVal('f-mej', Number(d.mejoras).toLocaleString('en-US'));
+      if (d.comision)       setVal('f-com', Number(d.comision).toLocaleString('en-US'));
+      if (d.escrituracion)  setVal('f-esc', Number(d.escrituracion).toLocaleString('en-US'));
+      // Fecha de compra (mes/año) usando picker existente
+      if (d.mes_compra && d.anio_compra) {
+        mpState.c.year = parseInt(d.anio_compra) || mpState.c.year;
+        mpState.c.month = parseInt(d.mes_compra) || null;
+        if (g('f-mes-c')) g('f-mes-c').value = mpState.c.month || '';
+        if (g('f-anio-c')) g('f-anio-c').value = mpState.c.year;
+        mpRenderMonths('c');
+        if (typeof mpUpdateLabel === 'function') mpUpdateLabel('c');
+      }
+      // Fecha de venta — soporta tanto dia/mes/año como solo mes/año (legacy)
+      if (d.fecha_venta && /^\d{4}-\d{2}-\d{2}$/.test(d.fecha_venta)) {
+        if (g('f-fecha-v')) g('f-fecha-v').value = d.fecha_venta;
+      } else if (d.mes_venta && d.anio_venta) {
+        const yy = parseInt(d.anio_venta);
+        const mm = parseInt(d.mes_venta);
+        const dd = parseInt(d.dia_venta) || 15;
+        const iso = `${yy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+        if (g('f-fecha-v')) g('f-fecha-v').value = iso;
+      }
+      syncFechaVenta();
+      // Casa habitación: principal / exención previa
+      if (d.exencion === 'parcial' || d.exencion === 'si') { setVal('f-pri', 'si'); setVal('f-exp', 'no'); }
+      else if (d.exencion === 'no') { setVal('f-pri', 'no'); }
+      if (typeof onTipoChange === 'function') onTipoChange();
+      if (typeof onAnioChange === 'function') onAnioChange();
+    }
+  } catch (e) { console.warn('shaark_isr prefill error', e); }
+
+  // Modo asistente: calcula + descarga PDF + notifica al iframe padre
+  const url = new URL(location.href);
+  const esAsistente = url.searchParams.get('asistente') === '1'
+                    || sessionStorage.getItem('shaark_isr_auto') === '1';
+  if (esAsistente) {
+    sessionStorage.removeItem('shaark_isr_auto');
+    const finish = (ok, error) => {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ tipo: 'asistente_isr_done', ok: !!ok, error: error || '' }, '*');
+        }
+      } catch (_) {}
+    };
+    // Espera un tick para que el render del formulario aplique los valores
+    setTimeout(async () => {
+      try {
+        if (typeof calcISR === 'function') await calcISR();
+        if (!_isrData) { finish(false, 'No se pudo calcular el ISR con los datos enviados.'); return; }
+        // Pequeño delay para que el DOM termine de renderizar el resultado
+        await new Promise(r => setTimeout(r, 250));
+        if (typeof descargarPDF === 'function') await descargarPDF();
+        finish(true);
+      } catch (e) {
+        finish(false, (e && e.message) || String(e));
+      }
+    }, 350);
+  }
+});
+
+</script>
+<script src="app-shell.js" defer></script>
+</body>
+</html>

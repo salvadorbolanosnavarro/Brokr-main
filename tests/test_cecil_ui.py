@@ -33,17 +33,10 @@ class PilotTests(unittest.TestCase):
     def test_no_session_rejected(self):
         r=self.client.get('/ui/cecil');self.assertEqual(r.status_code,401)
 
-    def test_build_preserves_real_endpoints_and_excludes_demo(self):
+    def test_production_builder_refuses_staging_preview_branch(self):
+        # This branch intentionally adds staging-only code/assets beyond the
+        # original #217 pilot. The production constructor must fail closed.
         with tempfile.TemporaryDirectory() as d:
-            output=Path(d)/'cecil';build(output)
-            self.assertFalse((output/'demo-runtime.js').exists())
-            self.assertFalse(list(output.rglob('*.py')))
-            self.assertFalse(list(output.rglob('*.sql')))
-            shell=(output/'app-shell.js').read_text()
-            self.assertIn("rollout.src='/ui/cecil-rollout.js'",shell)
-            self.assertIn('https://api.broquer.app',shell)
-            self.assertNotIn('broquer-demo.invalid',shell)
-            for page in output.glob('*.html'):
-                self.assertNotIn('src="demo-runtime.js"',page.read_text())
-            self.assertIn('Cecil', (output/'index.html').read_text())
-            with self.assertRaises(ValueError):build(output)
+            output=Path(d)/'cecil'
+            with self.assertRaises(ValueError): build(output)
+            self.assertFalse(output.exists())

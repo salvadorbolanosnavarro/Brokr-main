@@ -1,0 +1,3 @@
+/*
+  X-Robots-Tag: noindex, nofollow
+  Content-Security-Policy: connect-src 'self' https://brokr-main-staging.up.railway.app https://tymhlvawnqadqgwnpruk.supabase.co wss://tymhlvawnqadqgwnpruk.supabase.co; object-src 'none'; base-uri 'self'

@@ -1,0 +1,2184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
+<link rel="apple-touch-icon" href="/cecil/brand/cecil-icon.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>Contactos · Cecil</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<link rel="stylesheet" href="crm-plus.css"/>
+<style>
+html, body { background: var(--paper); }
+
+
+/* Top bar */
+.page-head {
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  padding: 18px 36px 0;
+  position: sticky; top: 0; z-index: 12;
+}
+@media (max-width: 720px) { .page-head { padding: 12px 16px 0; } }
+
+.page-head__crumbs {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label-3); letter-spacing: 0.02em;
+   color: var(--mute);
+  margin-bottom: 12px;
+}
+.page-head__crumbs a { color: var(--mute); }
+.page-head__crumbs a:hover { color: var(--ink); }
+
+.page-head__row {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.page-head h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-display); font-weight: 700;
+  letter-spacing: -0.03em; flex: 1;
+}
+@media (max-width: 720px) { .page-head h1 { font-size: var(--fs-h2); } }
+.page-head__count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs); color: var(--mute);
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 4px 10px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.head-search {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 0 16px; height: var(--ui-control);
+  margin-bottom: 14px;
+  max-width: 520px;
+}
+.head-search input { flex: 1; outline: none; color: var(--ink); }
+.head-search input::placeholder { color: var(--mute-2); }
+
+.filters-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px; flex-wrap: wrap;
+}
+.filtro-select {
+  color: var(--ink-2);
+  outline: none; cursor: pointer;
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.tabs {
+  display: flex; gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.ftab {
+  flex-shrink: 0;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.ftab.active { border-bottom-color: var(--ink); }
+
+/* Chip de estatus (etapa del pipeline de Clientes) — mismo lenguaje que
+   los badges de inmuebles. Un contacto de Directorio que ya es potencial
+   muestra aquí su etapa, aunque el tablero completo viva en Clientes. */
+.est-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: var(--fs-label-3); font-weight: 600;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  background: var(--paper-2);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.est-chip .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+/* List */
+.list { padding: 16px 36px 120px; display: flex; flex-direction: column; gap: 0; }
+@media (max-width: 720px) { .list { padding: 8px 16px 120px; } }
+
+.contact-card {
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  margin-bottom: 8px;
+}
+.contact-card:hover { border-color: var(--line-2); transform: translateY(-1px); }
+.contact-card:active { transform: scale(.99); }
+.contact-card.picker-mode { border-color: var(--forest-soft); }
+.contact-card.picker-mode:hover { border-color: var(--forest); background: var(--forest-soft); }
+.contact-check {
+  flex: 0 0 auto; width: 22px; height: 22px; margin-right: 4px;
+  border: 1.5px solid var(--line-2); border-radius: var(--r-sm);
+  background: var(--paper); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .12s ease, border-color .12s ease;
+}
+.contact-check:hover { border-color: var(--ink); }
+.contact-check svg { width: 13px; height: 13px; color: white; opacity: 0; transition: opacity .12s ease; }
+.contact-card.is-selected { border-color: var(--ink); background: var(--paper-2); }
+.contact-card.is-selected .contact-check { background: var(--ink); border-color: var(--ink); }
+.contact-card.is-selected .contact-check svg { opacity: 1; }
+
+.contacts-select-all {
+  display: none; align-items: center; gap: 8px; cursor: pointer;
+  padding: 7px 12px; border: 1px solid var(--line); border-radius: var(--r-pill);
+  font-size: var(--fs-sm); color: var(--ink); background: var(--paper); white-space: nowrap;
+}
+.contacts-select-all.is-shown { display: flex; }
+.contacts-select-all:hover { border-color: var(--ink); }
+.contacts-select-all .check-box {
+  width: 17px; height: 17px; border: 1.5px solid var(--line-2);
+  border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center;
+}
+.contacts-select-all .check-box svg { width: 11px; height: 11px; color: white; opacity: 0; }
+.contacts-select-all.is-active .check-box { background: var(--ink); border-color: var(--ink); }
+.contacts-select-all.is-active .check-box svg { opacity: 1; }
+
+.cbulk-bar {
+  /* Escondida se va del todo (140% dejaba asomar un filo por abajo) y
+     deja de recibir clics. El z-index es el de un flotante sobre el
+     contenido, no el de un modal: antes se dibujaba encima de la ficha. */
+  position: fixed; bottom: 26px; left: 50%; z-index: var(--z-fab);
+  transform: translateX(-50%) translateY(200%);
+  visibility: hidden;
+  transition: transform .22s var(--ease), visibility .22s var(--ease);
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 12px 10px 20px; border-radius: var(--r-pill);
+  background: var(--ink); color: white; box-shadow: var(--shadow-xl);
+  font-size: var(--fs-sm); font-family: var(--font);
+}
+.cbulk-bar.is-visible { transform: translateX(-50%) translateY(0); visibility: visible; }
+.cbulk-bar__sep { width: 1px; height: 18px; background: rgba(255,255,255,.2); }
+.cbulk-bar__btn {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+}
+
+.cdel-overlay {
+  position: fixed; inset: 0; background: rgba(20,28,48,.55); z-index: 9999;
+  display: none; align-items: center; justify-content: center;
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+}
+.cdel-overlay.is-open { display: flex; }
+.cdel-box {
+  background: var(--bone); border-radius: var(--r-lg);
+  width: min(400px, 92vw); padding: 26px 24px 20px;
+  box-shadow: var(--shadow-xl); text-align: center; font-family: var(--font);
+}
+.cdel-title { font-size: var(--fs-h3); font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.cdel-msg { font-size: var(--fs-sm); color: var(--mute); line-height: 1.6; margin-bottom: 20px; }
+.cdel-actions { display: flex; gap: 10px; justify-content: center; }
+.cdel-btn { cursor: pointer;
+}
+.cdel-btn:disabled { opacity: .6; cursor: default; }
+
+.avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--fs-sm); font-weight: 600;
+  color: var(--paper);
+  flex-shrink: 0;
+  letter-spacing: -0.01em;
+}
+/* Paleta de avatar restringida a la familia navy+azul+gris (hermanos). */
+.av-1 { background: var(--sky-navy); }
+.av-2 { background: var(--forest); }
+.av-3 { background: var(--ink-3); }
+.av-4 { background: var(--sky-navy-mid); }
+.av-5 { background: var(--mute); }
+.av-6 { background: var(--forest-2); }
+.av-7 { background: var(--ink-2); }
+.av-8 { background: var(--ink); }
+
+.contact-info { flex: 1; min-width: 0; }
+.contact-name {
+  font-size: var(--fs-sm); font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.contact-meta {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+.role-badge {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label-3); font-weight: 500;
+   letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+  background: var(--paper-2);
+  color: var(--ink-2);
+}
+.contact-sub { font-size: var(--fs-xs); color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+
+/* Roles: familia navy+azul+neutro (sin arcoíris). Azul = parte transaccional,
+   navy = contraparte/profesional formal, gris = resto. */
+.rb-arrendador { background: var(--forest-soft); color: var(--forest); }
+.rb-arrendatario { background: var(--navy-soft); color: var(--sky-navy); }
+.rb-comprador { background: var(--forest-soft); color: var(--forest); }
+.rb-vendedor { background: var(--forest-soft); color: var(--forest); }
+.rb-obligado_solidario { background: var(--paper-2); color: var(--ink-2); }
+.rb-colega { background: var(--paper-2); color: var(--ink-2); }
+.rb-notario { background: var(--navy-soft); color: var(--sky-navy); }
+.rb-otro { background: var(--paper-2); color: var(--ink-2); }
+
+.tag-chip {
+  font-size: var(--fs-caption); font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--paper-2);
+  color: var(--ink-3);
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.quick-acts { display: flex; gap: 6px; flex-shrink: 0; }
+.qa {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--ink-2);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  text-decoration: none;
+  font-size: var(--fs-sm);
+}
+.qa:hover { border-color: var(--forest); color: var(--forest); }
+.qa-wa:hover { border-color: var(--brand-whatsapp); background: var(--brand-whatsapp-soft); }
+
+/* Empty */
+.empty { text-align: center; padding: 64px 24px; color: var(--mute); }
+.empty svg { margin-bottom: 16px; opacity: .25; }
+.empty strong { display: block; font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700; color: var(--ink); margin-bottom: 8px; letter-spacing: -0.02em; }
+.empty p { font-size: var(--fs-sm); line-height: 1.55; max-width: 320px; margin: 0 auto; }
+
+/* Picker banner */
+.picker-banner {
+  display: none;
+  background: var(--ink); color: var(--paper);
+  padding: 10px 20px;
+  text-align: center;
+  font-size: var(--fs-xs); font-weight: 500;
+  letter-spacing: -0.005em;
+  position: sticky; top: 0; z-index: 30;
+}
+.picker-banner.show { display: block; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 90px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: var(--paper);
+  padding: 10px 18px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-sm); font-weight: 500;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  z-index: 999;
+  white-space: nowrap;
+  pointer-events: none;
+  letter-spacing: -0.005em;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Overlay sheets */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(33, 30, 28, .5);
+  z-index: 100;
+  display: none;
+  align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(6px);
+}
+.overlay.open { display: flex; }
+.sheet {
+  background: var(--paper);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  width: 100%;
+  max-width: 720px;
+  /* --vvh (app-shell.js): alto real visible sin el teclado de iOS tapándolo. */
+  max-height: calc(var(--vvh, 100vh) * 0.92);
+  display: flex; flex-direction: column;
+  animation: slideUp .3s var(--ease);
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@media (min-width: 640px) {
+  .overlay { align-items: center; padding: 24px; }
+  .sheet { border-radius: var(--r-xl); max-height: calc(var(--vvh, 100vh) * 0.86); }
+  @keyframes slideUp { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
+}
+.handle {
+  width: 40px; height: 4px;
+  background: var(--line-2);
+  border-radius: var(--r-xs);
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+@media (min-width: 640px) { .handle { display: none; } }
+.sheet-header {
+  display: flex; align-items: center;
+  padding: 18px 24px 16px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.sheet-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3); font-weight: 700;
+  letter-spacing: -0.025em;
+  flex: 1;
+}
+.close-btn {
+  width: var(--ui-control-small);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.sheet-body { flex: 1; overflow-y: auto; padding: 22px 24px; }
+
+/* Form */
+.sec-lbl {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label-3);
+  font-weight: 500;
+  
+  letter-spacing: 0.02em;
+  color: var(--mute);
+  margin: 22px 0 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.sec-lbl:first-child { margin-top: 0; }
+
+.potencial-check {
+  display: flex; align-items: flex-start; gap: 10px;
+  cursor: pointer;
+  padding: 12px 14px;
+  background: var(--paper-2);
+  border-radius: var(--r);
+  width: 100%;
+}
+.potencial-check input[type="checkbox"] {
+  width: 18px; height: 18px; margin-top: 1px; flex-shrink: 0;
+  accent-color: var(--forest);
+  cursor: pointer;
+}
+.potencial-check span { font-size: var(--fs-sm); color: var(--ink); line-height: 1.4; }
+
+.pot-dot { color: var(--warn); font-size: 0.85em; }
+
+.sec-lbl::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+.f { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.f label {
+  font-size: var(--fs-xs); font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: -0.005em;
+}
+.f input, .f select, .f textarea {
+  color: var(--ink);
+  outline: none;
+  width: 100%;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.f textarea { resize: vertical; }
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.frow.three { grid-template-columns: 1fr 1fr 1fr; }
+.col-2 { grid-column: 1 / 3; }
+
+.sexo-row { display: flex; gap: 6px; margin-top: 2px; }
+.sexo-opt {
+  flex: 1;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+  text-align: center;
+}
+
+.btn-primary, .btn-del {
+  cursor: pointer;
+  transition: opacity var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.btn-primary { flex: 1; }
+.btn-primary:hover { opacity: .9; }
+
+/* Buscador de propiedades para vincular — reemplaza el <select> gigante
+   (hasta 500 propiedades en orden alfabético/fecha, sin filtro) por un
+   campo de texto con sugerencias en vivo por título, colonia o ciudad. */
+.prop-buscador { position: relative; flex: 1; min-width: 160px; }
+.prop-buscador input {
+  width: 100%;
+  color: var(--ink);
+  outline: none;
+}
+.prop-buscador input:disabled { color: var(--mute); cursor: not-allowed; }
+.prop-sugerencias {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
+  max-height: 260px; overflow-y: auto;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-md);
+}
+.prop-sugerencia {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  border-bottom: 1px solid var(--line);
+}
+.prop-sugerencia:last-child { border-bottom: none; }
+.prop-sugerencia__n { display: block; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
+.prop-sugerencia__d { display: block; font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; }
+.prop-sugerencia--vacio { color: var(--mute); cursor: default; }
+.prop-sugerencia--vacio:hover { background: none; }
+
+
+/* Bottom nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bone);
+  border-top: 1px solid var(--line);
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+  display: flex;
+  justify-content: space-around;
+}
+.bn-item {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 4px;
+  font-size: var(--fs-caption);
+  color: var(--mute);
+  text-decoration: none;
+  font-weight: 500;
+}
+.bn-item.is-active { color: var(--ink); }
+
+/* Floating "new" button */
+.fab { display:none; }
+.fab:hover { transform: scale(1.05); }
+@media (min-width: 880px) { .fab { display: none; } }
+
+.add-btn {
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+}
+.add-btn:hover { opacity: .9; }
+
+/* Import dropdown — built into the Importar button */
+.import-btn {
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  position: relative;
+}
+@media (max-width: 720px) { }
+
+
+/* Progress sheet */
+.import-progress-wrap { padding: 20px 24px; }
+
+/* Selector de migracion */
+.mig-opts { display: flex; flex-direction: column; gap: 10px; }
+.mig-opt {
+  display: flex; align-items: flex-start; gap: 14px; width: 100%;
+  padding: 16px; border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--paper); cursor: pointer; text-align: left;
+  font-family: inherit; transition: border-color .15s, background .15s;
+}
+.mig-opt:hover { border-color: var(--line-2); background: var(--paper-2); }
+.mig-opt-ico {
+  flex: 0 0 auto; width: 38px; height: 38px; border-radius: var(--r-md);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-soft); color: var(--accent);
+}
+.mig-opt-tit { font-weight: 600; font-size: var(--fs-md); color: var(--ink); margin: 0 0 3px; }
+.mig-opt-des { font-size: var(--fs-sm); color: var(--mute); line-height: 1.45; margin: 0; }
+.progress-bar-wrap {
+  height: 5px; border-radius: var(--r-xs);
+  background: var(--bone); margin: 10px 0 5px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; border-radius: var(--r-xs);
+  background: var(--forest); transition: width .3s ease; width: 0%;
+}
+.import-log {
+  font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--mute);
+  max-height: 160px; overflow-y: auto; margin-top: 10px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.import-log-line.ok { color: var(--forest); }
+.import-log-line.skip { color: var(--mute); }
+.import-log-line.err { color: var(--danger); }
+
+</style>
+
+<style id="sidebar-composition-normalization">
+/* Sidebar composition normalization: shared product skeleton only. */
+.page-head {
+  position: static !important;
+  top: auto !important;
+  max-width: var(--page-max) !important;
+  margin: 0 auto !important;
+  padding: var(--sp-7) var(--pad-x) 0 !important;
+}
+.page-head h1 {
+  font-size: var(--fs-h2) !important;
+  line-height: var(--lh-tight) !important;
+  letter-spacing: -0.02em !important;
+}
+.head-search { max-width:none !important; }
+.list { max-width:var(--page-max) !important; margin:0 auto !important; }
+@media (max-width:720px) {
+  .page-head { padding:var(--sp-4) var(--pad-x) 0 !important; }
+  .page-head h1 { font-size:var(--fs-h3) !important; }
+}
+</style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
+<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
+</head>
+<body data-app="contactos">
+
+
+<div class="picker-banner" id="picker-banner">
+  Seleccionando contacto · toca el que quieres usar
+</div>
+
+<header class="page-head">
+  <div class="page-head__row">
+    <h1>Tu directorio.</h1>
+    <span class="page-head__count" id="count-badge" style="display:none">0</span>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:100%">
+      <button class="import-btn" id="btn-import-eb" onclick="abrirMigracion()">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+        Migrar de EasyBroker
+      </button>
+      <button class="add-btn" id="add-btn-top" onclick="abrirModal()">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+        <span id="add-btn-top-label">Nuevo contacto</span>
+      </button>
+    </div>
+  </div>
+  <div class="filters-row" id="directorio-filters">
+    <div class="head-search" style="margin-bottom:0;flex:1">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--mute);"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+      <input type="search" id="search-input" placeholder="Buscar por nombre, teléfono o correo…" oninput="busquedaDebounced()"/>
+    </div>
+    <select class="filtro-select" id="c-filtro-fecha" data-rango-fecha onchange="renderActual()">
+      <option value="">Fecha: todas</option>
+      <option value="hoy">Hoy</option>
+      <option value="semana">Esta semana</option>
+      <option value="mes">Este mes</option>
+      <option value="anio">Este año</option>
+    </select>
+    <select class="filtro-select" id="c-filtro-fuente" onchange="renderActual()">
+      <option value="">Fuente: todas</option>
+    </select>
+    <div class="prop-buscador">
+      <input type="text" class="filtro-select" id="c-filtro-interes-buscar" placeholder="Propiedad de interés…" autocomplete="off" oninput="cBuscarInteresInput()" onkeydown="cBuscarInteresKeydown(event)" style="width:100%"/>
+      <input type="hidden" id="c-filtro-interes-sel"/>
+      <div class="prop-sugerencias" id="c-filtro-interes-sug" hidden></div>
+    </div>
+    <div class="contacts-select-all" id="c-select-all" onclick="cToggleSelectAll()">
+      <div class="check-box">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <span id="c-select-all-label">Seleccionar todo</span>
+    </div>
+  </div>
+  <div class="tabs" id="directorio-ftabs">
+    <button class="ftab active" onclick="setFiltro('todos',this)">Todos</button>
+    <button class="ftab" onclick="setFiltro('arrendador',this)">Propietarios</button>
+    <button class="ftab" onclick="setFiltro('arrendatario',this)">Inquilinos</button>
+    <button class="ftab" onclick="setFiltro('comprador',this)">Compradores</button>
+    <button class="ftab" onclick="setFiltro('vendedor',this)">Vendedores</button>
+    <button class="ftab" onclick="setFiltro('colega',this)">Colegas</button>
+    <button class="ftab" onclick="setFiltro('notario',this)">Notarios</button>
+    <button class="ftab" onclick="setFiltro('otro',this)">Otros</button>
+    <select class="filtro-select" id="c-filtro-agente" style="display:none" onchange="cCambioFiltroAgente(this.value)"></select>
+  </div>
+</header>
+
+<div class="list" id="lista"></div>
+
+<!-- ── Barra flotante de selección múltiple ─────────────────── -->
+<div class="cbulk-bar" id="c-bulk-bar">
+  <span id="c-bulk-count">0 seleccionados</span>
+  <span class="cbulk-bar__sep"></span>
+  <button class="cbulk-bar__btn cbulk-bar__btn--danger" onclick="cConfirmarBorrar()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg>
+    Eliminar
+  </button>
+  <button class="cbulk-bar__btn cbulk-bar__btn--ghost" onclick="cDeseleccionarTodo()">Cancelar</button>
+</div>
+
+<!-- ── Confirmación de borrado ──────────────────────────────── -->
+<div class="cdel-overlay" id="c-del-overlay" onclick="if(event.target===this)cCerrarConfirm()">
+  <div class="cdel-box">
+    <div class="cdel-title" id="c-del-title">¿Eliminar contactos?</div>
+    <div class="cdel-msg" id="c-del-msg"></div>
+    <div class="cdel-actions">
+      <button class="cdel-btn cdel-btn--cancel" onclick="cCerrarConfirm()">Cancelar</button>
+      <button class="cdel-btn cdel-btn--del" id="c-del-btn" onclick="cBorrarSeleccionados()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<button class="fab" id="fab-nuevo" onclick="abrirModal()" aria-label="Nuevo contacto">
+  <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<!-- MIGRACION: selector -->
+<div class="overlay" id="mig-ov" onclick="if(event.target===this)cerrarMigracion()">
+  <div class="sheet" data-ui-modal>
+    <div class="handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title">Migrar de EasyBroker</div>
+    </div>
+    <div class="sheet-body">
+      <div class="mig-opts">
+        <button class="mig-opt" onclick="migracionCompleta()">
+          <span class="mig-opt-ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></span>
+          <span>
+            <p class="mig-opt-tit">Migración completa</p>
+            <p class="mig-opt-des">Trae de una vez tus propiedades con su código, tus contactos con notas y etiquetas, y el historial de leads ligado a cada inmueble. Usa tu API key de EasyBroker.</p>
+          </span>
+        </button>
+        <button class="mig-opt" onclick="document.getElementById('mig-file').click()">
+          <span class="mig-opt-ico"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 9l5-5 5 5M12 4v12"/></svg></span>
+          <span>
+            <p class="mig-opt-tit">Subir archivo exportado</p>
+            <p class="mig-opt-des">Sube el Excel o CSV que exportaste de la sección Contactos de EasyBroker. Detecta las columnas solas, conserva las fechas reales y liga los códigos de propiedad.</p>
+          </span>
+        </button>
+      </div>
+      <input type="file" id="mig-file" accept=".csv,.xlsx,.xls" style="display:none" onchange="subirArchivoContactos(this)">
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="import-ov" onclick="if(event.target===this&&document.getElementById('import-close').style.display!=='none')cerrarImport()">
+  <div class="sheet" data-ui-modal>
+    <div class="handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title" id="import-title">Importar de EasyBroker</div>
+    </div>
+    <div class="sheet-body">
+      <div class="import-progress-wrap">
+        <p id="import-msg" style="color:var(--mute);font-size:var(--fs-sm);line-height:1.5;margin:0 0 6px"></p>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="import-fill"></div></div>
+        <div id="import-summary" style="display:none;flex-direction:column;gap:4px;font-size:var(--fs-sm);margin-top:14px"></div>
+        <button class="btn-primary" id="import-close" onclick="cerrarImport()" style="display:none;margin-top:16px">Entendido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-ov" onclick="if(event.target===this)cerrarModal()">
+  <div class="sheet" data-ui-modal>
+    <div class="handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-title" id="modal-title">Nuevo contacto</div>
+      <button class="close-btn" onclick="cerrarModal()" aria-label="Cerrar"><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg></button>
+    </div>
+    <div class="sheet-body">
+
+      <div class="sec-lbl">Información básica</div>
+      <div class="f">
+        <label>Nombre completo *</label>
+        <input id="m-nombre" type="text" placeholder="Ej. Juan Bosco Navarro Arias"/>
+      </div>
+      <div class="frow">
+        <div class="f"><label>Teléfono *</label><input id="m-tel" type="tel" placeholder="5555123456"/></div>
+        <div class="f"><label>WhatsApp</label><input id="m-wa" type="tel" placeholder="Si es distinto"/></div>
+      </div>
+      <div class="f"><label>Correo electrónico</label><input id="m-email" type="email" placeholder="correo@ejemplo.com"/></div>
+      <div class="frow">
+        <div class="f">
+          <label>Rol / Tipo</label>
+          <select id="m-tipo">
+            <option value="arrendador">Propietario / Arrendador</option>
+            <option value="arrendatario">Inquilino / Arrendatario</option>
+            <option value="comprador">Comprador</option>
+            <option value="vendedor">Vendedor</option>
+            <option value="obligado_solidario">Obligado solidario</option>
+            <option value="colega">Colega / Agente</option>
+            <option value="notario">Notario</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="f">
+          <label>Sexo</label>
+          <div class="sexo-row">
+            <button class="sexo-opt active" data-s="M" onclick="setSexo('M',this)">Masculino</button>
+            <button class="sexo-opt" data-s="F" onclick="setSexo('F',this)">Femenino</button>
+          </div>
+        </div>
+      </div>
+      <div class="f"><label>Empresa / Inmobiliaria</label><input id="m-empresa" type="text" placeholder="Ej. Casas del Bajío"/></div>
+
+      <div class="sec-lbl">Seguimiento</div>
+      <div class="frow">
+        <div class="f">
+          <label>Fuente de captación</label>
+          <input id="m-fuente" type="text" list="fuentes-dl" placeholder="Ej. Facebook, Referido…"/>
+          <datalist id="fuentes-dl">
+            <option value="Facebook"></option>
+            <option value="Instagram"></option>
+            <option value="WhatsApp"></option>
+            <option value="Referido"></option>
+            <option value="Portal inmobiliario"></option>
+            <option value="Sitio web"></option>
+            <option value="Llamada directa"></option>
+          </datalist>
+        </div>
+        <div class="f">
+          <label>Etiquetas <span style="color:var(--mute);font-weight:400">(separadas por coma)</span></label>
+          <input id="m-etiquetas" type="text" placeholder="vip, urgente, crédito"/>
+        </div>
+      </div>
+      <div class="frow">
+        <label class="potencial-check">
+          <input type="checkbox" id="m-potencial"/>
+          <span>Marcar como potencial <span style="color:var(--mute);font-weight:400">(aparece en Clientes)</span></span>
+        </label>
+      </div>
+
+      <div class="sec-lbl">Domicilio</div>
+      <div class="frow three">
+        <div class="f col-2"><label>Calle</label><input id="m-calle" type="text" placeholder="AV. INSURGENTES" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="f"><label>Núm. ext.</label><input id="m-numext" type="text" placeholder="123" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="f"><label>Núm. int.</label><input id="m-numint" type="text" placeholder="4-A" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="f"><label>C.P.</label><input id="m-cp" type="text" placeholder="02123" maxlength="5" oninput="this.value=this.value.replace(/\D/g,'')"/></div>
+      </div>
+      <div class="frow">
+        <div class="f"><label>Colonia</label><input id="m-colonia" type="text" placeholder="SANTA ANITA" oninput="this.value=this.value.toUpperCase()"/></div>
+        <div class="f"><label>Municipio / Estado</label><input id="m-mpio" type="text" placeholder="GUADALAJARA, JALISCO" oninput="this.value=this.value.toUpperCase()"/></div>
+      </div>
+
+      <div class="sec-lbl">Notas</div>
+      <div class="f"><label>Observaciones</label><textarea id="m-notas" rows="3" placeholder="Prefiere WhatsApp. Calificado. Responde rápido…"></textarea></div>
+      <div class="f"><label>Descripción privada</label><textarea id="m-descripcion-privada" rows="3" placeholder="Se llena sola con lo que califica la IA de WhatsApp (score, presupuesto, etc.); también puedes editarla a mano."></textarea></div>
+
+      </div><div class="ui-modal-foot">
+        <button class="btn-del" id="btn-del" onclick="confirmarEliminar()" style="display:none">Eliminar</button>
+        <button class="btn-primary" onclick="guardarContacto()">Guardar contacto</button>
+      </div>
+  </div>
+</div>
+
+<!-- FICHA DEL CONTACTO -->
+<div class="bk-ficha-ov" id="detail-ov" onclick="if(event.target===this)cerrarDetalle()">
+  <div class="bk-ficha">
+
+    <div class="bk-ficha__head">
+      <div class="bk-ficha__bar">
+        <button class="bk-volver" onclick="cerrarDetalle()">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          <span>Directorio</span>
+        </button>
+        <button class="bk-icon-btn bk-icon-btn--sm" id="f-mas" data-bk-menu aria-haspopup="menu" aria-expanded="false"
+                onclick="ctMenuMas(this)" title="Más acciones" aria-label="Más acciones">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+        </button>
+      </div>
+
+      <div class="bk-ficha__id">
+        <div class="bk-ficha__av" id="f-av"></div>
+        <div class="bk-ficha__quien">
+          <h2 class="bk-ficha__nombre" id="f-nombre"></h2>
+          <div class="bk-ficha__linea">
+            <span id="f-rol"></span>
+            <span class="bk-ficha__meta" id="f-meta" hidden></span>
+          </div>
+          <div class="bk-asignado" id="f-asignado" hidden>
+            <span>Asignado a</span>
+            <select id="f-asignado-sel" onchange="cAsignarAgente(detContacto &amp;&amp; detContacto.id, this.value)"></select>
+            <span id="f-asignado-txt"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bk-ficha__estado">
+        <button class="bk-pill ct-pot" id="f-potencial" onclick="toggleDetPotencial()"></button>
+        <button class="bk-pill" id="f-etapa-btn" data-bk-menu aria-haspopup="menu" aria-expanded="false"
+                onclick="ctMenuEtapa(this)" title="Cambiar de etapa" hidden></button>
+        <button class="bk-pill" id="f-prob-btn" data-bk-menu aria-haspopup="menu" aria-expanded="false"
+                onclick="ctMenuProb(this)" title="Qué tan probable es que cierre" hidden></button>
+        <div class="bk-ficha__contacto">
+          <a class="bk-icon-btn" id="f-wa" href="#" target="_blank" rel="noopener" title="Escribir por WhatsApp" aria-label="Escribir por WhatsApp">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm0 2a8 8 0 016.4 12.8l-.3.4.6 2.2-2.3-.6-.4.2A8 8 0 1112 4zm4.2 10.6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.6.1l-.7.9c-.1.2-.3.2-.5.1a6.5 6.5 0 01-3.2-2.8c-.1-.2 0-.4.1-.5l.4-.5c.1-.2.1-.3 0-.5l-.7-1.6c-.2-.4-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.8.8-.9 1.8-.6 2.9.5 1.6 1.6 3 3.1 4 1.9 1.2 3.3 1.4 4.1 1.2.6-.1 1.4-.7 1.6-1.3.2-.5.2-1 .1-1.1l-.2-.1z"/></svg>
+          </a>
+          <a class="bk-icon-btn" id="f-tel" href="#" title="Llamar" aria-label="Llamar">
+            <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.28 6.72 15 15 15h1.5a2.25 2.25 0 002.25-2.25v-1.37a1.5 1.5 0 00-1.06-1.44l-4.02-1.15a1.5 1.5 0 00-1.51.39l-1.41 1.41a11.25 11.25 0 01-6.34-6.34l1.41-1.41a1.5 1.5 0 00.39-1.51L7.31 3.31a1.5 1.5 0 00-1.44-1.06H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+          </a>
+          <a class="bk-icon-btn" id="f-mail" href="#" title="Mandar correo" aria-label="Mandar correo">
+            <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.24a2.25 2.25 0 01-1.07 1.92l-7.5 4.62a2.25 2.25 0 01-2.36 0L3.32 8.91A2.25 2.25 0 012.25 6.99v-.24"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="bk-tabs bk-tabs--ficha" role="tablist">
+        <button class="bk-tab is-active" id="f-tab-info" role="tab" aria-selected="true" aria-controls="f-pane-info" onclick="setDetTab('info')">Resumen</button>
+        <button class="bk-tab" id="f-tab-bitacora" role="tab" aria-selected="false" aria-controls="f-pane-bitacora" onclick="setDetTab('bitacora')">
+          Bitácora <span class="bk-tab__n" id="f-n-bitacora" hidden></span>
+        </button>
+        <button class="bk-tab" id="f-tab-props" role="tab" aria-selected="false" aria-controls="f-pane-props" onclick="setDetTab('props')">
+          Propiedades <span class="bk-tab__n" id="f-n-props" hidden></span>
+        </button>
+        <button class="bk-tab" id="f-tab-tareas" role="tab" aria-selected="false" aria-controls="f-pane-tareas" onclick="setDetTab('tareas')">
+          Tareas <span class="bk-tab__n" id="f-n-tareas" hidden></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="bk-ficha__body">
+
+      <div id="f-pane-info" role="tabpanel" aria-labelledby="f-tab-info"></div>
+
+      <div id="f-pane-bitacora" role="tabpanel" aria-labelledby="f-tab-bitacora" hidden>
+        <div class="bk-acciones">
+          <h3 class="bk-acciones__t">Todo queda anotado con su fecha y hora</h3>
+          <button class="bk-btn bk-btn--sm" onclick="ctAbrirNota()">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+            Nota
+          </button>
+          <input type="file" id="f-archivo-suelto" multiple hidden
+                 accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
+                 onchange="ctArchivosSueltos(this.files);this.value=''"/>
+          <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="document.getElementById('f-archivo-suelto').click()">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17.5 8.5l-7.1 7.1a2.5 2.5 0 003.5 3.5l7.1-7.1a4.5 4.5 0 00-6.4-6.4l-7.1 7.1a6.5 6.5 0 009.2 9.2"/></svg>
+            Archivo, foto o video
+          </button>
+        </div>
+
+        <div class="bk-composer" id="f-composer" hidden>
+          <textarea id="f-nota-texto" rows="3" placeholder="¿Qué pasó? La llamada, la visita, lo que te pidió…"></textarea>
+          <div class="ha-preview" id="f-nota-preview"></div>
+          <div class="tke-chips" id="f-nota-cat-chips" style="margin:6px 0;"></div>
+          <div class="bk-field-row" style="margin-bottom:6px;">
+            <select class="bk-select" id="f-nota-cat-sel"><option value="">Agregar categoría…</option></select>
+            <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="ctNuevaCategoriaNota()">+ Nueva</button>
+          </div>
+          <div class="bk-field-row" style="margin-bottom:6px;">
+            <div class="prop-buscador">
+              <input type="text" class="bk-input" id="f-nota-prop-buscar" placeholder="Adjuntar un inmueble…" autocomplete="off" oninput="ctBuscarPropNotaInput()" onkeydown="ctBuscarPropNotaKeydown(event)"/>
+              <input type="hidden" id="f-nota-prop-sel"/>
+              <div class="prop-sugerencias" id="f-nota-prop-sug" hidden></div>
+            </div>
+            <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="ctQuitarPropNota()">Quitar</button>
+          </div>
+          <div class="bk-composer__pie">
+            <input type="file" id="f-nota-adjuntos" multiple hidden
+                   accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.txt"
+                   onchange="haAgregarArchivos(this.files,'f-nota-preview');this.value=''"/>
+            <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="document.getElementById('f-nota-adjuntos').click()">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17.5 8.5l-7.1 7.1a2.5 2.5 0 003.5 3.5l7.1-7.1a4.5 4.5 0 00-6.4-6.4l-7.1 7.1a6.5 6.5 0 009.2 9.2"/></svg>
+              Adjuntar
+            </button>
+            <div class="bk-composer__der">
+              <button class="bk-btn bk-btn--quiet bk-btn--sm" onclick="ctCancelarNota()">Cancelar</button>
+              <button class="bk-btn bk-btn--sm" id="f-nota-guardar" onclick="ctGuardarNota()">Guardar nota</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ha-preview" id="f-suelto-preview"></div>
+        <div id="f-bitacora-feed"></div>
+      </div>
+
+      <div id="f-pane-props" role="tabpanel" aria-labelledby="f-tab-props" hidden>
+        <div class="bk-forma">
+          <div class="prop-buscador">
+            <input type="text" id="vinculo-prop-buscar" placeholder="Busca por título, colonia o ciudad…" autocomplete="off"
+                   oninput="buscarPropInput()" onfocus="buscarPropInput()" onkeydown="propBuscarKeydown(event)"/>
+            <input type="hidden" id="vinculo-prop"/>
+            <div class="prop-sugerencias" id="vinculo-prop-sugerencias" hidden></div>
+          </div>
+          <select id="vinculo-rel" aria-label="Relación con la propiedad">
+            <option value="interes">Le interesa</option>
+            <option value="propietario">Es su propietario</option>
+            <option value="relacionado">Relacionado</option>
+          </select>
+          <button class="bk-btn bk-btn--sm" onclick="agregarVinculo()">Vincular</button>
+        </div>
+        <div id="props-feed"></div>
+      </div>
+
+      <div id="f-pane-tareas" role="tabpanel" aria-labelledby="f-tab-tareas" hidden>
+        <div class="bk-forma">
+          <input type="text" id="tarea-nueva-titulo" placeholder="¿Cuál es el siguiente paso con este contacto?" onkeydown="if(event.key==='Enter')crearTareaVinculada()"/>
+          <input type="date" id="tarea-nueva-fecha" aria-label="Fecha límite"/>
+          <input type="time" id="tarea-nueva-hora" aria-label="Hora"/>
+          <button class="bk-btn bk-btn--sm" onclick="crearTareaVinculada()">Crear</button>
+        </div>
+        <div class="bk-forma">
+          <select id="vinculo-tarea" aria-label="Vincular una tarea existente" onchange="vincularTareaExistente(this.value)"></select>
+        </div>
+        <div id="tareas-feed"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="historial-adjuntos.js" defer></script>
+<script src="ficha-comun.js" defer></script>
+<script src="categorias.js" defer></script>
+<script src="contactos-ficha.js" defer></script>
+<script src="filtro-fecha.js" defer></script>
+<script src="app-shell.js" defer></script>
+<script src="inmuebles-catalogo.js" defer></script>
+<script src="bk-api.js" defer></script>
+<script src="ficha-requerimiento.js" defer></script>
+<script src="crm-plus.js" defer></script>
+
+<script>
+let sexoActual = 'M';
+let editandoId = null;
+let detContacto = null;
+let filtroActual = 'todos';
+let detTabActual = 'info';
+
+const params = new URLSearchParams(location.search);
+const IS_PICKER = params.get('picker') === '1';
+const PICKER_TIPO = params.get('tipo') || '';
+
+if (IS_PICKER) {
+  document.getElementById('picker-banner').classList.add('show');
+  document.getElementById('add-btn-top').style.display = 'none';
+  if (PICKER_TIPO) {
+    const tabMap = {arrendador:'Propietarios',arrendatario:'Inquilinos',comprador:'Compradores',vendedor:'Vendedores',colega:'Colegas',notario:'Notarios'};
+    filtroActual = PICKER_TIPO;
+    document.querySelectorAll('.ftab').forEach(b => {
+      b.classList.toggle('active', b.textContent === (tabMap[PICKER_TIPO]||'Todos'));
+    });
+  }
+}
+
+function gv(id) { return (document.getElementById(id)?.value || '').trim(); }
+function sv(id, v) { const el = document.getElementById(id); if (el) el.value = v || ''; }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/* ── Conexión a Supabase ─────────────────────────────────────────
+   Usamos el helper window.brokrSb expuesto por app-shell.js.
+   Ese helper renueva el token automáticamente si está por expirar. */
+// Copia por cuenta (sb_user.id): nunca mostrar la lista de otra cuenta del mismo navegador.
+const LS_CACHE = (() => { try { localStorage.removeItem('brokr_contactos_cache'); const u = JSON.parse(localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'); if (u && u.id) return 'brokr_contactos_cache:' + u.id; } catch (e) {} return 'brokr_contactos_cache:' + Math.random(); })();   // solo cache offline, NO fuente de verdad
+let _contactosMem = [];
+let _userIdCache = null;
+
+/* Espera a que app-shell.js termine de cargar y exponga window.brokrSb */
+function _sb() {
+  if (!window.brokrSb) throw new Error('La app aún se está cargando. Intenta de nuevo en un segundo.');
+  return window.brokrSb;
+}
+async function _userId() {
+  if (_userIdCache) return _userIdCache;
+  const sb = _sb();
+  const tok = await sb.ensureToken();
+  if (!tok) return null;
+  try {
+    const r = await fetch(sb.url + '/auth/v1/user', {
+      headers: { apikey: sb.key, Authorization: 'Bearer ' + tok }
+    });
+    if (!r.ok) return null;
+    const u = await r.json();
+    _userIdCache = u?.id || null;
+    return _userIdCache;
+  } catch { return null; }
+}
+
+/* Trae todos los contactos del usuario logueado, ordenados por updated_at desc */
+async function cargarRemoto() {
+  const r = await _sb().fetch('rest/v1/contactos?select=*&order=updated_at.desc');
+  if (!r.ok) throw new Error('No se pudieron cargar los contactos (' + r.status + ')');
+  const data = await r.json();
+  _contactosMem = Array.isArray(data) ? data : [];
+  try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
+  return _contactosMem;
+}
+
+/* Versión sincrónica: devuelve la copia en memoria (para el render rápido) */
+function cargar() { return _contactosMem; }
+
+/* Inserta o actualiza un contacto (ficha-comun.js: bkGuardarContacto) */
+async function upsertRemoto(contacto) {
+  return bkGuardarContacto(contacto, _contactosMem.some(c => c.id === contacto.id));
+}
+
+/* Elimina un contacto del servidor */
+async function eliminarRemoto(id) {
+  const r = await _sb().fetch('rest/v1/contactos?id=eq.' + encodeURIComponent(id), {
+    method: 'DELETE',
+  });
+  if (!r.ok && r.status !== 204) {
+    const txt = await r.text().catch(()=> '');
+    throw new Error('Supabase: ' + r.status + ' ' + txt);
+  }
+}
+
+/* ── Helpers genéricos REST para las tablas del CRM ─────────────── */
+async function restGet(path) {
+  const r = await _sb().fetch('rest/v1/' + path);
+  if (!r.ok) throw new Error('Supabase: ' + r.status);
+  return r.json();
+}
+async function restPost(tabla, payload) {
+  const uid = await _userId();
+  if (!uid) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+  const body = Array.isArray(payload)
+    ? payload.map(p => Object.assign({}, p, { user_id: uid }))
+    : Object.assign({}, payload, { user_id: uid });
+  const r = await _sb().fetch('rest/v1/' + tabla, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const txt = await r.text().catch(()=> '');
+    throw new Error('Supabase: ' + r.status + ' ' + txt);
+  }
+  return r.json();
+}
+async function restPatch(tabla, id, cambios) {
+  const r = await _sb().fetch('rest/v1/' + tabla + '?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+    body: JSON.stringify(cambios),
+  });
+  if (!r.ok && r.status !== 204) throw new Error('Supabase: ' + r.status);
+}
+async function restDelete(tabla, id) {
+  const r = await _sb().fetch('rest/v1/' + tabla + '?id=eq.' + encodeURIComponent(id), {
+    method: 'DELETE',
+  });
+  if (!r.ok && r.status !== 204) throw new Error('Supabase: ' + r.status);
+}
+
+const ROLES = {
+  arrendador:         { lbl:'Propietario', cls:'rb-arrendador' },
+  arrendatario:       { lbl:'Inquilino', cls:'rb-arrendatario' },
+  comprador:          { lbl:'Comprador', cls:'rb-comprador' },
+  vendedor:           { lbl:'Vendedor', cls:'rb-vendedor' },
+  obligado_solidario: { lbl:'Oblig. solidario', cls:'rb-obligado_solidario' },
+  colega:             { lbl:'Colega', cls:'rb-colega' },
+  notario:            { lbl:'Notario', cls:'rb-notario' },
+  otro:               { lbl:'Otro', cls:'rb-otro' },
+};
+
+function rolBadge(tipo) {
+  const r = ROLES[tipo] || ROLES.otro;
+  return `<span class="role-badge ${r.cls}">${r.lbl}</span>`;
+}
+
+function avColor(nombre) {
+  let h = 0;
+  for (let i = 0; i < nombre.length; i++) h = (h * 31 + nombre.charCodeAt(i)) | 0;
+  return `av-${(Math.abs(h) % 8) + 1}`;
+}
+
+function initials(nombre) {
+  const p = nombre.trim().split(/\s+/);
+  return p.length >= 2 ? (p[0][0] + p[1][0]).toUpperCase() : nombre.slice(0,2).toUpperCase();
+}
+
+function domicilio(c) {
+  const parts = [];
+  if (c.calle) parts.push(c.calle + (c.num_ext ? ' No. ' + c.num_ext : '') + (c.num_int ? ' Int. ' + c.num_int : ''));
+  if (c.colonia) parts.push('Col. ' + c.colonia);
+  if (c.cp) parts.push('C.P. ' + c.cp);
+  if (c.mpio) parts.push(c.mpio);
+  return parts.join(', ');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function fechaCorta(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' });
+  } catch { return ''; }
+}
+
+/* ── Filtro de la lista ───────────────────────────────────────────── */
+// "Propiedad de interés": relación contactos_propiedades con relacion=interes.
+// Se carga una sola vez para toda la lista (no por ficha) para poder filtrar.
+let CT_INTERES = {}; // { contactoId: [propiedadId, ...] }
+async function cCargarInteresFiltro() {
+  try {
+    const rows = await restGet('contactos_propiedades?select=contacto_id,propiedad_id&relacion=eq.interes&limit=5000');
+    CT_INTERES = {};
+    (Array.isArray(rows) ? rows : []).forEach(r => {
+      (CT_INTERES[r.contacto_id] = CT_INTERES[r.contacto_id] || []).push(String(r.propiedad_id));
+    });
+  } catch { CT_INTERES = {}; }
+}
+
+// Buscador inteligente para el filtro (perezoso: ver nota en tareas.html
+// sobre por qué no se puede instanciar arriba, a secas).
+let _buscCInteres;
+function _asegurarBuscadorInteres() {
+  if (_buscCInteres) return;
+  _buscCInteres = bkBuscadorPropiedades('c-filtro-interes-buscar', 'c-filtro-interes-sel', 'c-filtro-interes-sug', 'No hay inmuebles todavía');
+  document.addEventListener('click', (ev) => {
+    if (_buscCInteres.manejarClick(ev.target)) { renderActual(); return; }
+    _buscCInteres.cerrarSiClickAfuera(ev.target);
+  });
+}
+async function cBuscarInteresInput() {
+  _asegurarBuscadorInteres();
+  const props = await cargarPropsMin();
+  _buscCInteres.onInput(props);
+}
+function cBuscarInteresKeydown(ev) { _asegurarBuscadorInteres(); _buscCInteres.onKeydown(ev); }
+
+function cPoblarFiltroFuente(lista) {
+  const sel = document.getElementById('c-filtro-fuente');
+  const actual = sel.value;
+  const fuentes = Array.from(new Set(lista.map(c => (c.fuente || '').trim()).filter(Boolean))).sort();
+  sel.innerHTML = '<option value="">Fuente: todas</option>' +
+    fuentes.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
+  if (fuentes.includes(actual)) sel.value = actual;
+}
+
+function cFechaEnRango(iso, preset) {
+  if (!preset) return true;
+  if (!iso) return false;
+  const d = new Date(iso);
+  const ahora = new Date();
+  if (preset === 'hoy') {
+    return d.toDateString() === ahora.toDateString();
+  }
+  if (preset === 'semana') {
+    const inicio = new Date(ahora); inicio.setDate(ahora.getDate() - ahora.getDay()); inicio.setHours(0,0,0,0);
+    return d >= inicio;
+  }
+  if (preset === 'mes') {
+    return d.getFullYear() === ahora.getFullYear() && d.getMonth() === ahora.getMonth();
+  }
+  if (preset === 'anio') {
+    return d.getFullYear() === ahora.getFullYear();
+  }
+  if (preset === 'rango') return bkRangoFecha.contiene('c-filtro-fecha', iso);
+  return true;
+}
+
+function contactosFiltrados() {
+  const todos = cargar();
+  const q = gv('search-input').toLowerCase();
+  const fuente = document.getElementById('c-filtro-fuente').value;
+  const fechaPreset = document.getElementById('c-filtro-fecha').value;
+  const interesId = document.getElementById('c-filtro-interes-sel').value;
+  return todos.filter(c => {
+    const okTipo = filtroActual === 'todos' || c.tipo === filtroActual;
+    const okQ = !q || [c.nombre, c.telefono, c.email, c.empresa].some(v => (v||'').toLowerCase().includes(q));
+    const okAgente = cFiltroAgente === 'todos'
+      || (cFiltroAgente === 'nadie' ? !c.asignado_a : c.asignado_a === cFiltroAgente);
+    const okFuente = !fuente || (c.fuente || '') === fuente;
+    const okFecha = cFechaEnRango(c.created_at, fechaPreset);
+    const okInteres = !interesId || (CT_INTERES[c.id] || []).includes(String(interesId));
+    return okTipo && okQ && okAgente && okFuente && okFecha && okInteres;
+  });
+}
+
+let _busqT = null;
+function busquedaDebounced() {
+  clearTimeout(_busqT);
+  _busqT = setTimeout(renderActual, 200);
+}
+
+function renderActual() {
+  const todos = cargar();
+  cPoblarFiltroFuente(todos);
+  // Soltar de la selección lo que ya no existe (borrados, filtros)
+  const vivos = new Set(todos.map(c => String(c.id)));
+  for (const id of Array.from(cSel)) if (!vivos.has(id)) cSel.delete(id);
+  renderLista();
+  cActualizarBarra();
+}
+
+
+/* ── Selección múltiple y borrado ────────────────────────────────── */
+const C_API = 'https://brokr-main-staging.up.railway.app';
+let cSel = new Set();          // ids de contactos seleccionados
+let cPuedeEliminar = false;    // arranca en false: si la consulta falla, no se muestra nada
+
+let cEsEmpresa = false;      // la cuenta es Cecil para Empresas
+let cEsAdminOrg = false;     // quien navega es owner/admin de la empresa
+let cMiembros = [];          // [{user_id, nombre, email, activo}] del equipo
+let cOrgId = null;           // toda cuenta tiene una org, incluso las individuales
+let cCategorias = [];        // [{id, nombre}] catálogo de categorías de la cuenta
+function cNombreAgente(uid) {
+  if (!uid) return '';
+  const m = cMiembros.find(x => x.user_id === uid);
+  return m ? (m.nombre || m.email || 'Agente') : 'Agente';
+}
+async function cCargarPermiso() {
+  try {
+    const tok = await _sb().ensureToken();
+    if (!tok) return;
+    const r = await fetch(C_API + '/org', { headers: { Authorization: 'Bearer ' + tok } });
+    if (!r.ok) return;
+    const org = await r.json();
+    cEsEmpresa = org.es_empresa === true;
+    cEsAdminOrg = org.es_admin === true;
+    cOrgId = org.org_id || null;
+    cPuedeEliminar = !org.es_empresa || org.es_admin === true;
+    if (cOrgId) cCategorias = await catCargar(cOrgId);
+    // En empresas, cargamos el equipo para el selector y filtro de agente
+    if (cEsEmpresa) {
+      try {
+        const rm = await fetch(C_API + '/org/miembros', { headers: { Authorization: 'Bearer ' + tok } });
+        if (rm.ok) {
+          const d = await rm.json();
+          cMiembros = (d.miembros || []).filter(m => m.activo);
+          cPintarFiltroAgente();
+          // Nota: NO se repinta aquí — quien llama a cCargarPermiso() ya
+          // repinta después de que esta función termina. Repintar aquí
+          // además causaba un tercer render en cada carga (cache → datos
+          // reales sin permisos resueltos → esto), y ese tercer render sí
+          // se veía: la lista "parpadeaba" justo después de cargar.
+        }
+      } catch {}
+    }
+  } catch (e) {
+    cPuedeEliminar = false;
+  }
+  const ctrl = document.getElementById('c-select-all');
+  if (ctrl) ctrl.classList.toggle('is-shown', cPuedeEliminar && !IS_PICKER);
+}
+
+/* ── Asignación de agente (Cecil para Empresas) ─────────────────── */
+let cFiltroAgente = 'todos';
+function cPintarFiltroAgente() {
+  const sel = document.getElementById('c-filtro-agente');
+  if (!sel || !cMiembros.length) return;
+  sel.innerHTML = '<option value="todos">Todos los agentes</option>' +
+    '<option value="nadie">Sin asignar</option>' +
+    cMiembros.map(m => `<option value="${esc(m.user_id)}">${esc(m.nombre || m.email)}</option>`).join('');
+  sel.style.display = '';
+}
+function cCambioFiltroAgente(v) { cFiltroAgente = v; renderActual(); }
+async function cAsignarAgente(contactoId, agenteId) {
+  try {
+    const tok = await _sb().ensureToken();
+    const r = await fetch(C_API + '/org/asignar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+      body: JSON.stringify({ tabla: 'contactos', ids: [contactoId], agente_user_id: agenteId || null })
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || 'Error');
+    const c = _contactosMem.find(x => String(x.id) === String(contactoId));
+    if (c) {
+      c.asignado_a = agenteId || null;
+      try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
+    }
+    renderActual();
+    showToast(agenteId ? 'Asignado a ' + cNombreAgente(agenteId) : 'Asignación quitada');
+  } catch (e) {
+    alert('No se pudo asignar.\n\n' + (e.message || e));
+  }
+}
+
+function cCardClick(id) {
+  if (!cPuedeEliminar || IS_PICKER) { abrirDetalle(id); return; }
+  if (cSel.size > 0) cToggleSel(id);
+  else abrirDetalle(id);
+}
+
+function cToggleSel(id) {
+  if (!cPuedeEliminar) return;
+  if (cSel.has(id)) cSel.delete(id);
+  else cSel.add(id);
+  renderLista();
+  cActualizarBarra();
+}
+
+function cToggleSelectAll() {
+  if (!cPuedeEliminar) return;
+  const ids = contactosFiltrados().map(c => String(c.id));
+  const todosMarcados = ids.length > 0 && ids.every(id => cSel.has(id));
+  if (todosMarcados) ids.forEach(id => cSel.delete(id));
+  else ids.forEach(id => cSel.add(id));
+  renderLista();
+  cActualizarBarra();
+}
+
+function cDeseleccionarTodo() {
+  cSel.clear();
+  renderLista();
+  cActualizarBarra();
+}
+
+function cActualizarBarra() {
+  const bar = document.getElementById('c-bulk-bar');
+  const cnt = document.getElementById('c-bulk-count');
+  if (bar && cnt) {
+    cnt.textContent = cSel.size + (cSel.size === 1 ? ' seleccionado' : ' seleccionados');
+    bar.classList.toggle('is-visible', cSel.size > 0);
+  }
+  const ctrl = document.getElementById('c-select-all');
+  const lbl = document.getElementById('c-select-all-label');
+  if (ctrl && lbl) {
+    const ids = contactosFiltrados().map(c => String(c.id));
+    const todosMarcados = ids.length > 0 && ids.every(id => cSel.has(id));
+    ctrl.classList.toggle('is-active', todosMarcados);
+    lbl.textContent = todosMarcados ? 'Quitar selección' : 'Seleccionar todo';
+  }
+}
+
+function cConfirmarBorrar() {
+  if (!cPuedeEliminar || cSel.size === 0) return;
+  const n = cSel.size;
+  document.getElementById('c-del-title').textContent =
+    '¿Eliminar ' + n + (n === 1 ? ' contacto?' : ' contactos?');
+  document.getElementById('c-del-msg').innerHTML =
+    'Esta acción no se puede deshacer. Se perderán sus notas, etiquetas y todo su historial dentro de Cecil.<br><br><strong>Eliminar de Cecil no elimina de EasyBroker.</strong>';
+  document.getElementById('c-del-btn').textContent = 'Eliminar ' + n;
+  document.getElementById('c-del-overlay').classList.add('is-open');
+}
+
+function cCerrarConfirm() {
+  document.getElementById('c-del-overlay').classList.remove('is-open');
+}
+
+async function cBorrarSeleccionados() {
+  const ids = Array.from(cSel);
+  if (!ids.length) return;
+  const btn = document.getElementById('c-del-btn');
+  const etiqueta = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Eliminando…';
+  try {
+    const tok = await _sb().ensureToken();
+    if (!tok) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+    const r = await fetch(C_API + '/contactos/eliminar-masivo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+      body: JSON.stringify({ ids: ids })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'No se pudo eliminar');
+    const borrados = d.eliminados != null ? d.eliminados : ids.length;
+    cSel.clear();
+    cCerrarConfirm();
+    await cargarRemoto();
+    renderActual();
+    cActualizarBarra();
+    showToast(borrados < ids.length
+      ? borrados + ' de ' + ids.length + ' eliminados. El resto no era tuyo.'
+      : borrados + (borrados === 1 ? ' contacto eliminado' : ' contactos eliminados'));
+  } catch (e) {
+    alert(e.message || 'No se pudo eliminar');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = etiqueta;
+  }
+}
+
+// Tecla Escape: cerrar el modal o cancelar la selección
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const ov = document.getElementById('c-del-overlay');
+  if (ov && ov.classList.contains('is-open')) cCerrarConfirm();
+  else if (cSel.size > 0) cDeseleccionarTodo();
+});
+
+/* ── Vista Lista ─────────────────────────────────────────────────── */
+function renderLista() {
+  const filtrados = contactosFiltrados();
+  cPintarConteo(filtrados.length, cargar().length);
+  const lista = document.getElementById('lista');
+  const q = gv('search-input');
+  if (!filtrados.length) {
+    lista.innerHTML = `<div class="empty">
+      <svg width="56" height="56" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      <strong>${(q || filtroActual !== 'todos') ? 'Sin resultados' : 'Aún no hay contactos'}</strong>
+      <p>${(q || filtroActual !== 'todos') ? 'Prueba con otros términos o cambia el filtro.' : 'Agrega tu primer contacto con el botón Nuevo.'}</p>
+    </div>`;
+    return;
+  }
+  lista.innerHTML = filtrados.map(c => {
+    const sub = c.telefono || c.email || c.empresa || '';
+    const pickerCls = IS_PICKER ? ' picker-mode' : '';
+    const selCls = cSel.has(String(c.id)) ? ' is-selected' : '';
+    const clickFn = IS_PICKER ? 'seleccionarContacto(this.dataset.id)' : 'cCardClick(this.dataset.id)';
+    const check = (cPuedeEliminar && !IS_PICKER)
+      ? `<div class="contact-check" onclick="event.stopPropagation();cToggleSel('${esc(c.id)}')">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>` : '';
+    return `<div class="contact-card${pickerCls}${selCls}" data-id="${esc(c.id)}" onclick="${clickFn}">
+      ${check}
+      <div class="avatar ${avColor(c.nombre||'')}">${esc(initials(c.nombre||'??'))}</div>
+      <div class="contact-info">
+        <div class="contact-name">${esc(c.nombre)}${c.es_potencial ? ' <span class="pot-dot" title="Potencial"><svg width="11" height="11" style="vertical-align:-1px" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2l-6.1 3.4 1.4-6.8L2.2 9.1l6.9-.8L12 2z"/></svg></span>' : ''}</div>
+        <div class="contact-meta">${rolBadge(c.tipo)}${c.es_potencial ? estatusChip(c.estatus) : ''}<span class="contact-sub">${esc(sub)}</span>${(cEsEmpresa && c.asignado_a) ? `<span class="contact-sub" style="color:var(--accent)">· ${esc(cNombreAgente(c.asignado_a))}</span>` : ''}</div>
+      </div>
+      ${!IS_PICKER ? `<div class="quick-acts" onclick="event.stopPropagation()">
+        ${(c.telefono||c.wa) ? `<a class="qa qa-wa" href="#" onclick="return abrirWA(event,'${esc(c.wa||c.telefono)}')" title="WhatsApp"><svg width="16" height="16" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="var(--brand-whatsapp)" d="M16 0C7.163 0 0 7.163 0 16c0 2.823.736 5.474 2.029 7.776L0 32l8.42-2.207A15.9 15.9 0 0016 32c8.837 0 16-7.163 16-16S24.837 0 16 0z"/><path fill="#FFF" d="M23.45 19.2c-.39-.196-2.31-1.142-2.668-1.273-.358-.13-.618-.196-.878.196-.26.39-1.008 1.272-1.236 1.532-.228.26-.456.293-.846.098-.39-.196-1.65-.61-3.143-1.94-1.162-1.037-1.948-2.318-2.176-2.708-.228-.39-.024-.6.171-.795.176-.175.39-.456.586-.683.196-.228.26-.39.39-.65.13-.26.065-.488-.033-.683-.098-.196-.878-2.117-1.203-2.9-.317-.762-.64-.66-.879-.672-.227-.012-.487-.014-.747-.014-.26 0-.683.098-1.04.488-.358.39-1.366 1.336-1.366 3.257 0 1.92 1.398 3.778 1.594 4.038.195.26 2.752 4.203 6.667 5.893.93.402 1.657.642 2.223.821.934.297 1.785.255 2.457.155.75-.112 2.31-.945 2.636-1.857.325-.911.325-1.692.228-1.857-.098-.165-.358-.26-.748-.456z"/></svg></a>` : ''}
+        ${c.telefono ? `<a class="qa" href="tel:${esc(c.telefono)}" title="Llamar"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg></a>` : ''}
+      </div>` : '<div style="color:var(--forest);font-size: var(--fs-xs);font-weight:600;font-family:var(--font-mono);letter-spacing:.06em">SELECCIONAR →</div>'}
+    </div>`;
+  }).join('');
+}
+
+function seleccionarContacto(id) {
+  const c = cargar().find(x => x.id === id);
+  if (!c) return;
+  window.parent.postMessage({ tipo: 'brokr_contacto_seleccionado', contacto: c }, '*');
+  if (window.opener) window.opener.postMessage({ tipo: 'brokr_contacto_seleccionado', contacto: c }, '*');
+}
+
+function setFiltro(tipo, btn) {
+  filtroActual = tipo;
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderActual();
+}
+
+function setSexo(s, btn) {
+  sexoActual = s;
+  document.querySelectorAll('.sexo-opt').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+// Evita perder cambios sin guardar por un clic accidental fuera del modal.
+let contactFormDirty = false;
+function abrirModal(id = null) {
+  clearTimeout(_busqT);
+  editandoId = id;
+  contactFormDirty = false;
+  const modalBox = document.querySelector('#modal-ov .sheet') || document.getElementById('modal-ov');
+  if (modalBox && !modalBox.dataset.dirtyBound) {
+    modalBox.addEventListener('input', () => { contactFormDirty = true; });
+    modalBox.addEventListener('change', () => { contactFormDirty = true; });
+    modalBox.dataset.dirtyBound = '1';
+  }
+  if (id) {
+    const c = cargar().find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('modal-title').textContent = 'Editar contacto';
+    sv('m-nombre', c.nombre); sv('m-tel', c.telefono); sv('m-wa', c.wa || c.whatsapp);
+    sv('m-email', c.email); sv('m-empresa', c.empresa);
+    sv('m-calle', c.calle); sv('m-numext', c.num_ext); sv('m-numint', c.num_int);
+    sv('m-colonia', c.colonia); sv('m-cp', c.cp); sv('m-mpio', c.mpio);
+    sv('m-notas', c.notas);
+    sv('m-descripcion-privada', c.descripcion_privada);
+    sv('m-fuente', c.fuente);
+    sv('m-etiquetas', Array.isArray(c.etiquetas) ? c.etiquetas.join(', ') : '');
+    document.getElementById('m-tipo').value = c.tipo || 'arrendador';
+    document.getElementById('m-potencial').checked = !!c.es_potencial;
+    const sx = c.sexo || 'M';
+    sexoActual = sx;
+    document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === sx));
+    // En Cecil para Empresas solo el dueño o un administrador borra.
+    document.getElementById('btn-del').style.display = cPuedeEliminar ? 'block' : 'none';
+  } else {
+    document.getElementById('modal-title').textContent = 'Nuevo contacto';
+    ['m-nombre','m-tel','m-wa','m-email','m-empresa','m-calle','m-numext','m-numint','m-colonia','m-cp','m-notas','m-descripcion-privada','m-fuente','m-etiquetas'].forEach(i => sv(i,''));
+    sv('m-mpio','');
+    document.getElementById('m-tipo').value = 'arrendador';
+    document.getElementById('m-potencial').checked = false;
+    sexoActual = 'M';
+    document.querySelectorAll('.sexo-opt').forEach(b => b.classList.toggle('active', b.dataset.s === 'M'));
+    document.getElementById('btn-del').style.display = 'none';
+  }
+  document.getElementById('modal-ov').classList.add('open');
+  // En celular no: abre el teclado y encoge la ventana (Android).
+  if (!matchMedia('(pointer: coarse)').matches) setTimeout(() => document.getElementById('m-nombre').focus(), 100);
+}
+
+function cerrarModal() {
+  if (contactFormDirty && !confirm('Tienes cambios sin guardar. ¿Descartarlos?')) return;
+  contactFormDirty = false;
+  document.getElementById('modal-ov').classList.remove('open');
+  editandoId = null;
+}
+
+function abrirMigracion() {
+  document.getElementById('mig-ov').classList.add('open');
+}
+function cerrarMigracion() {
+  document.getElementById('mig-ov').classList.remove('open');
+}
+
+/* Fetch que reintenta cuando la conexión se cae a medio camino
+   (Failed to fetch): el servidor puede estar reiniciándose por un deploy
+   o por la carga de la copia de fotos. Los imports deduplican, así que
+   reintentar es seguro. Espera 6 s entre intentos. */
+async function _fetchReintento(url, opts, intentos) {
+  intentos = intentos || 3;
+  for (let i = 0; i < intentos; i++) {
+    try {
+      return await fetch(url, opts);
+    } catch (e) {
+      if (i === intentos - 1) throw new Error('No hubo conexión con el servidor tras varios intentos. Revisa tu internet y vuelve a intentar: lo ya importado no se pierde ni se duplica.');
+      await new Promise(res => setTimeout(res, 6000));
+    }
+  }
+}
+
+/* Prepara y muestra el overlay de progreso. Regresa los elementos. */
+function _prepProgreso(titulo, mensaje) {
+  cerrarMigracion();
+  const ov      = document.getElementById('import-ov');
+  const titleEl = document.getElementById('import-title');
+  const msgEl   = document.getElementById('import-msg');
+  const fillEl  = document.getElementById('import-fill');
+  const sumEl   = document.getElementById('import-summary');
+  const btnEl   = document.getElementById('import-close');
+  titleEl.textContent = titulo;
+  msgEl.textContent   = mensaje;
+  fillEl.style.width = '5%';
+  fillEl.style.background = '';
+  sumEl.style.display = 'none';
+  sumEl.innerHTML = '';
+  btnEl.style.display = 'none';
+  ov.classList.add('open');
+  return { titleEl, msgEl, fillEl, sumEl, btnEl };
+}
+
+function _errorProgreso(el, e) {
+  el.fillEl.style.width = '100%';
+  el.fillEl.style.background = 'var(--danger)';
+  el.titleEl.textContent = 'No se pudo completar';
+  el.msgEl.textContent   = e.message || 'Error desconocido';
+  el.btnEl.style.display = 'inline-block';
+}
+
+/* Migración completa: propiedades → contactos → historial de leads.
+   Encadena los tres endpoints que ya existen, en el orden correcto para
+   que el historial encuentre las propiedades por su código EB. */
+async function migracionCompleta() {
+  let token;
+  try { token = await _sb().ensureToken(); }
+  catch (e) { alert('La app aún se está cargando. Intenta de nuevo en un segundo.'); return; }
+  if (!token) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+
+  const el = _prepProgreso('Migración completa',
+    'Arrancando la migración en el servidor.');
+  const auth = { Authorization: 'Bearer ' + token };
+
+  /* El trabajo corre en el SERVIDOR: aquí solo se consulta el avance cada
+     3 segundos. Aguanta cortes de internet e incluso recargar la página
+     (al volver a abrir Migración completa retoma el avance en curso). */
+  el.sumEl.style.display = 'flex';
+  const puestas = {};
+  const linea = (clave, html) => {
+    if (puestas[clave]) return;
+    puestas[clave] = true;
+    el.sumEl.innerHTML += '<div>' + html + '</div>';
+  };
+  const MENSAJES = {
+    1: 'Paso 1 de 3 — Importando tus propiedades con su código de EasyBroker. Puede tardar varios minutos si tienes muchas.',
+    2: 'Paso 2 de 3 — Importando tus contactos con teléfonos, correos, etiquetas, fuente y notas.',
+    3: 'Paso 3 de 3 — Reconstruyendo el historial de leads y ligándolo a cada propiedad por su código.'
+  };
+
+  let p = 4;
+  const tick = setInterval(() => { p = Math.min(96, p + 0.6); el.fillEl.style.width = p + '%'; }, 900);
+
+  try {
+    let r0 = await _fetchReintento('https://brokr-main-staging.up.railway.app/easybroker/migracion/iniciar', { method: 'POST', headers: auth });
+    if (r0.status === 401) {
+      /* Token vencido tras un rato sin usar la pestaña: refrescar y reintentar. */
+      token = (await _sb().refreshNow().catch(() => null)) || token;
+      auth.Authorization = 'Bearer ' + token;
+      r0 = await _fetchReintento('https://brokr-main-staging.up.railway.app/easybroker/migracion/iniciar', { method: 'POST', headers: auth });
+    }
+    const d0 = await r0.json();
+    if (!r0.ok) throw new Error(d0.detail || ('Error ' + r0.status + ' al iniciar la migración'));
+    if (d0.en_curso) el.msgEl.textContent = 'Ya había una migración corriendo en el servidor: retomando su avance.';
+
+    let fallosSeguidos = 0;
+    let est = null;
+    for (;;) {
+      await new Promise(res => setTimeout(res, 3000));
+      let r;
+      try {
+        r = await fetch('https://brokr-main-staging.up.railway.app/easybroker/migracion/estado', { headers: auth });
+      } catch (e) {
+        if (++fallosSeguidos > 60) throw new Error('Se perdió la conexión con el servidor. La migración sigue corriendo allá: vuelve a abrir Migración completa para retomar el avance.');
+        continue;
+      }
+      if (r.status === 401) {
+        /* La sesión caduca a la hora: refrescar el token y seguir sondeando.
+           La migración en el servidor no depende de esta sesión. */
+        token = (await _sb().refreshNow().catch(() => null)) || token;
+        auth.Authorization = 'Bearer ' + token;
+        if (++fallosSeguidos > 60) throw new Error('Tu sesión no se pudo refrescar. La migración sigue corriendo en el servidor: recarga la página, inicia sesión y vuelve a abrir Migración completa para retomar el avance.');
+        continue;
+      }
+      if (!r.ok) {
+        if (++fallosSeguidos > 60) throw new Error('El servidor no respondió el avance. La migración sigue corriendo allá: vuelve a abrir Migración completa para retomar el avance.');
+        continue;
+      }
+      fallosSeguidos = 0;
+      est = await r.json();
+      if (!est.existe) { el.msgEl.textContent = 'Arrancando la migración en el servidor.'; continue; }
+
+      if (!est.terminado) {
+        el.msgEl.textContent = (MENSAJES[est.paso] || 'Migrando.')
+          + (est.detalle ? ' (' + est.detalle + ')' : '');
+      }
+      const d1 = est.propiedades, d2 = est.contactos, d3 = est.historial;
+      if (d1) {
+        linea('p', 'Propiedades: <b>' + (d1.importadas || 0) + '</b> nuevas, <b>' + (d1.actualizadas || 0) + '</b> ya estaban y se actualizaron.');
+        p = Math.max(p, 34);
+      }
+      if (d2) {
+        linea('c', 'Contactos: <b>' + (d2.importados || 0) + '</b> nuevos, <b>' + (d2.actualizados || 0) + '</b> ya estaban y se completaron.');
+        p = Math.max(p, 67);
+      }
+      if (d3) {
+        linea('h', 'Historial: <b>' + (d3.creados || 0) + '</b> leads nuevos, <b>' + ((d3.ya_estaban || 0) + (d3.marcados || 0)) + '</b> ya estaban, <b>' + (d3.vinculos || 0) + '</b> intereses ligados a propiedades.');
+      }
+      if (est.terminado) break;
+    }
+
+    clearInterval(tick);
+    if (est.error) throw new Error(est.error);
+
+    el.fillEl.style.width = '100%';
+    const d1 = est.propiedades || {}, d2 = est.contactos || {}, d3 = est.historial || {};
+    const nada = !((d1.importadas || 0) || (d2.importados || 0) || (d3.creados || 0));
+    el.titleEl.textContent = 'Migración lista';
+    el.msgEl.textContent   = nada
+      ? 'Todo lo de EasyBroker ya estaba en Cecil: no había nada nuevo que traer.'
+      : 'Tu operación de EasyBroker ya vive en Cecil.';
+    el.btnEl.style.display = 'inline-block';
+
+    if ((d1.importadas || 0) || (d1.actualizadas || 0)) {
+      linea('f', '<span style="color:var(--mute)">Las fotos se están copiando a Cecil en segundo plano.</span>');
+      _copiarFotosEnTandas(token);
+    }
+
+    await cargarRemoto();
+    renderActual();
+  } catch (e) {
+    clearInterval(tick);
+    _errorProgreso(el, e);
+    if (el.sumEl.innerHTML) el.sumEl.style.display = 'flex';
+  }
+}
+
+/* Copia las fotos a Cecil en tandas con cursor, en segundo plano.
+   Si una tanda falla, espera y reintenta; termina cuando ya no quedan. */
+async function _copiarFotosEnTandas(token) {
+  let cursor = null;
+  for (let tanda = 0; tanda < 300; tanda++) {
+    try {
+      const r = await fetch('https://brokr-main-staging.up.railway.app/easybroker/migrar-fotos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify(cursor ? { cursor: cursor } : {})
+      });
+      if (!r.ok) { await new Promise(res => setTimeout(res, 8000)); continue; }
+      const d = await r.json();
+      if (!d || !d.hay_mas) break;
+      cursor = d.cursor || cursor;
+      await new Promise(res => setTimeout(res, 1200));
+    } catch (e) {
+      await new Promise(res => setTimeout(res, 8000));
+    }
+  }
+}
+
+/* Sube el Excel o CSV exportado de la sección Contactos de EasyBroker. */
+async function subirArchivoContactos(input) {
+  const archivo = input.files && input.files[0];
+  input.value = '';
+  if (!archivo) return;
+
+  let token;
+  try { token = await _sb().ensureToken(); }
+  catch (e) { alert('La app aún se está cargando. Intenta de nuevo en un segundo.'); return; }
+  if (!token) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+
+  const el = _prepProgreso('Importando tu archivo',
+    'Leyendo ' + archivo.name + '. Detecta las columnas solas, conserva las fechas reales y liga los códigos de propiedad. No cierres esta ventana.');
+  let p = 10;
+  const tick = setInterval(() => { p = Math.min(90, p + 3); el.fillEl.style.width = p + '%'; }, 700);
+
+  try {
+    const fd = new FormData();
+    fd.append('file', archivo);
+    const r = await fetch('https://brokr-main-staging.up.railway.app/contactos/importar-archivo', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+      body: fd
+    });
+    const d = await r.json();
+    clearInterval(tick);
+    if (!r.ok) throw new Error(d.detail || ('Error ' + r.status));
+
+    el.fillEl.style.width = '100%';
+    el.titleEl.textContent = 'Archivo importado';
+    el.msgEl.textContent   = 'Tus contactos del archivo ya están en Cecil.';
+    el.sumEl.style.display = 'flex';
+    el.sumEl.innerHTML =
+      '<div><b>' + (d.importados || 0) + '</b> nuevos</div>' +
+      '<div><b>' + (d.actualizados || 0) + '</b> actualizados</div>' +
+      '<div><b>' + (d.vinculos || 0) + '</b> intereses ligados a propiedades por su código</div>' +
+      '<div><b>' + (d.filas || 0) + '</b> filas leídas del archivo</div>' +
+      ((d.errores || 0) > 0 ? '<div style="color:var(--danger)"><b>' + d.errores + '</b> con error</div>' : '');
+    el.btnEl.style.display = 'inline-block';
+
+    await cargarRemoto();
+    renderActual();
+  } catch (e) {
+    clearInterval(tick);
+    _errorProgreso(el, e);
+  }
+}
+
+async function importarContactosEB() {
+  let token;
+  try { token = await _sb().ensureToken(); }
+  catch (e) { alert('La app aún se está cargando. Intenta de nuevo en un segundo.'); return; }
+  if (!token) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+
+  const ov      = document.getElementById('import-ov');
+  const titleEl = document.getElementById('import-title');
+  const msgEl   = document.getElementById('import-msg');
+  const fillEl  = document.getElementById('import-fill');
+  const sumEl   = document.getElementById('import-summary');
+  const btnEl   = document.getElementById('import-close');
+
+  titleEl.textContent = 'Importando de EasyBroker';
+  msgEl.textContent   = 'Trayendo tus contactos con teléfonos, correos, empresa, etiquetas, fuente y probabilidad. Puede tardar un poco si tienes muchos. No cierres esta ventana.';
+  fillEl.style.width = '15%';
+  fillEl.style.background = '';
+  sumEl.style.display = 'none';
+  btnEl.style.display = 'none';
+  ov.classList.add('open');
+
+  // Avance suave hacia 90% mientras esperamos la respuesta.
+  let p = 15;
+  const tick = setInterval(() => { p = Math.min(90, p + 3); fillEl.style.width = p + '%'; }, 700);
+
+  try {
+    const r = await fetch('https://brokr-main-staging.up.railway.app/contactos/importar-eb', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const d = await r.json();
+    clearInterval(tick);
+    if (!r.ok) throw new Error(d.detail || ('Error ' + r.status));
+
+    fillEl.style.width = '100%';
+    titleEl.textContent = 'Importación lista';
+    msgEl.textContent   = 'Tus contactos ya están en Cecil.';
+    sumEl.style.display = 'flex';
+    sumEl.innerHTML =
+      '<div><b>' + (d.importados || 0) + '</b> nuevos</div>' +
+      '<div><b>' + (d.actualizados || 0) + '</b> actualizados</div>' +
+      '<div><b>' + (d.total || 0) + '</b> encontrados en EasyBroker</div>' +
+      ((d.errores || 0) > 0 ? '<div style="color:var(--danger)"><b>' + d.errores + '</b> con error</div>' : '');
+    btnEl.style.display = 'inline-block';
+
+    await cargarRemoto();
+    renderActual();
+  } catch (e) {
+    clearInterval(tick);
+    fillEl.style.width = '100%';
+    fillEl.style.background = 'var(--danger)';
+    titleEl.textContent = 'No se pudo importar';
+    msgEl.textContent   = e.message || 'Error desconocido';
+    btnEl.style.display = 'inline-block';
+  }
+}
+
+function cerrarImport() {
+  document.getElementById('import-ov').classList.remove('open');
+  setTimeout(() => {
+    const f = document.getElementById('import-fill');
+    if (f) { f.style.width = '0%'; f.style.background = ''; }
+  }, 300);
+}
+
+async function guardarContacto() {
+  const nombre = gv('m-nombre');
+  const tel    = gv('m-tel');
+  if (!nombre) { alert('El nombre es obligatorio.'); document.getElementById('m-nombre').focus(); return; }
+  if (!tel)    { alert('El teléfono es obligatorio.'); document.getElementById('m-tel').focus(); return; }
+
+  const ahora = new Date().toISOString();
+  const etiquetas = gv('m-etiquetas').split(',').map(s => s.trim()).filter(Boolean);
+  const datos = {
+    nombre: nombre.toUpperCase(),
+    telefono: tel,
+    wa: gv('m-wa'),
+    email: gv('m-email').toLowerCase(),
+    tipo: document.getElementById('m-tipo').value,
+    sexo: sexoActual,
+    empresa: gv('m-empresa'),
+    calle: gv('m-calle'),
+    num_ext: gv('m-numext'),
+    num_int: gv('m-numint'),
+    colonia: gv('m-colonia'),
+    cp: gv('m-cp'),
+    mpio: gv('m-mpio'),
+    notas: gv('m-notas'),
+    descripcion_privada: gv('m-descripcion-privada'),
+    es_potencial: document.getElementById('m-potencial').checked,
+    fuente: gv('m-fuente') || null,
+    etiquetas: etiquetas,
+    updated_at: ahora,
+  };
+
+  if (editandoId) {
+    datos.id = editandoId;
+    // Conservar operaciones existentes
+    const previo = _contactosMem.find(c => c.id === editandoId);
+    if (previo && previo.operaciones) datos.operaciones = previo.operaciones;
+  } else {
+    datos.id = 'c_' + Date.now();
+    datos.created_at = ahora;
+    datos.operaciones = [];
+  }
+
+  // Bloquear botón mientras guarda
+  const btn = document.querySelector('#modal-ov .btn-primary');
+  const prevTxt = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+
+  try {
+    await upsertRemoto(datos);
+    await cargarRemoto();
+    contactFormDirty = false; // ya se guardó — cerrar no debe pedir confirmación
+    cerrarModal();
+    renderActual();
+    showToast(editandoId ? 'Contacto actualizado' : 'Contacto guardado');
+  } catch (e) {
+    alert('No se pudo guardar el contacto.\n\n' + (e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = prevTxt; }
+  }
+}
+
+async function confirmarEliminar() {
+  if (!editandoId || !cPuedeEliminar) return;
+  if (!confirm('¿Eliminar este contacto? Esta acción no se puede deshacer.')) return;
+  try {
+    await eliminarRemoto(editandoId);
+    await cargarRemoto();
+    cerrarModal();
+    cerrarDetalle();
+    renderActual();
+    showToast('Contacto eliminado');
+  } catch (e) {
+    alert('No se pudo eliminar el contacto.\n\n' + (e.message || e));
+  }
+}
+
+/* ── Detalle con tabs ────────────────────────────────────────────── */
+/* ── Etapas del pipeline ─────────────────────────────────────────
+   Si el usuario no tiene etapas personalizadas en pipeline_etapas, se
+   usan estas por defecto. El valor guardado en contactos.estatus es la
+   clave (nombre en minúsculas).
+   OJO: este pipeline vivía antes en un módulo aparte (Leads) que leía y
+   escribía la columna "estatus". Las pills de aquí escribían, por un
+   bug, una columna distinta ("etapa") que nadie más leía — así que
+   cambiar la etapa de un contacto aquí nunca se reflejaba en el
+   pipeline. Ya unificado: todo lee y escribe "estatus". */
+const ETAPAS_DEFAULT = [
+  { clave:'futuro',     nombre:'Futuro',     color:'var(--etapa-futuro)'     },
+  { clave:'nuevo',      nombre:'Nuevo',      color:'var(--etapa-nuevo)'      },
+  { clave:'activo',     nombre:'Activo',     color:'var(--etapa-activo)'     },
+  { clave:'contactado', nombre:'Contactado', color:'var(--etapa-contactado)' },
+  { clave:'cerrado',    nombre:'Cerrado',    color:'var(--etapa-cerrado)'    },
+  { clave:'descartado', nombre:'Descartado', color:'var(--etapa-descartado)' },
+];
+let ETAPAS = ETAPAS_DEFAULT.slice();
+
+async function cargarEtapas() {
+  try {
+    const rows = await restGet('pipeline_etapas?select=nombre,orden,color&order=orden.asc');
+    if (Array.isArray(rows) && rows.length) {
+      ETAPAS = rows.map(r => ({
+        clave: String(r.nombre || '').toLowerCase().trim(),
+        nombre: r.nombre,
+        color: r.color || 'var(--etapa-activo)',
+      })).filter(e => e.clave);
+    }
+  } catch { /* si falla, se quedan las default */ }
+}
+
+function etapaInfo(clave) {
+  const k = String(clave || 'nuevo').toLowerCase();
+  return ETAPAS.find(e => e.clave === k) || { clave:k, nombre:k.charAt(0).toUpperCase()+k.slice(1), color:'var(--mute)' };
+}
+
+function estatusChip(clave) {
+  const e = etapaInfo(clave);
+  return `<span class="est-chip" style="color:${e.color}"><span class="dot"></span>${esc(e.nombre)}</span>`;
+}
+
+const PROBS = [
+  { v: 'baja',  l: 'Baja' },
+  { v: 'media', l: 'Media' },
+  { v: 'alta',  l: 'Alta' },
+];
+
+/* Guarda un campo del contacto en Supabase y actualiza la memoria local */
+async function patchContacto(id, fields) {
+  fields.updated_at = new Date().toISOString();
+  await bkPatchContacto(id, fields); // ficha-comun.js: confirma que sí se guardó
+  const c = _contactosMem.find(x => String(x.id) === String(id));
+  if (c) Object.assign(c, fields);
+  try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
+}
+
+/* ── Tab Propiedades ─────────────────────────────────────────────── */
+let _propsMin = null;
+async function cargarPropsMin() {
+  if (_propsMin) return _propsMin;
+  try {
+    _propsMin = await restGet('propiedades?select=id,titulo,tipo,operacion,colonia,ciudad&order=updated_at.desc&limit=500');
+  } catch { _propsMin = []; }
+  return _propsMin;
+}
+
+// Buscador de propiedades para vincular (título, colonia, ciudad o tipo).
+// _propsDisponibles: aún no vinculadas; _propSugCache: lista mostrada.
+let _propsDisponibles = [];
+let _propSugCache = [];
+let _propSugHL = -1;
+
+function propSubtitulo(p) {
+  const tipo = p.tipo ? p.tipo.charAt(0).toUpperCase() + p.tipo.slice(1) : '';
+  const op = p.operacion === 'renta' ? 'Renta' : (p.operacion === 'venta' ? 'Venta' : '');
+  const ubic = [p.colonia, p.ciudad].filter(Boolean).join(', ');
+  return [tipo, op, ubic].filter(Boolean).join(' · ') || 'Sin más datos';
+}
+
+function buscarProps(q) {
+  q = (q || '').toLowerCase().trim();
+  if (!q) return _propsDisponibles.slice(0, 8);
+  return _propsDisponibles.filter(p =>
+    ((p.titulo||'') + ' ' + (p.colonia||'') + ' ' + (p.ciudad||'') + ' ' + (p.tipo||'')).toLowerCase().includes(q)
+  ).slice(0, 8);
+}
+
+function pintarSugerenciasProp(lista) {
+  _propSugCache = lista;
+  _propSugHL = -1;
+  const caja = document.getElementById('vinculo-prop-sugerencias');
+  if (!lista.length) {
+    caja.innerHTML = '<div class="prop-sugerencia prop-sugerencia--vacio">' +
+      (_propsDisponibles.length ? 'Sin coincidencias' : 'No tienes propiedades disponibles para vincular') +
+      '</div>';
+    caja.hidden = false;
+    return;
+  }
+  caja.innerHTML = lista.map((p, i) => `<button type="button" class="prop-sugerencia" data-i="${i}">
+      <span class="prop-sugerencia__n">${esc(p.titulo || 'Sin título')}</span>
+      <span class="prop-sugerencia__d">${esc(propSubtitulo(p))}</span>
+    </button>`).join('');
+  caja.hidden = false;
+}
+
+function buscarPropInput() {
+  document.getElementById('vinculo-prop').value = '';
+  pintarSugerenciasProp(buscarProps(document.getElementById('vinculo-prop-buscar').value));
+}
+
+function elegirProp(idx) {
+  const p = _propSugCache[idx];
+  if (!p) return;
+  document.getElementById('vinculo-prop').value = p.id;
+  document.getElementById('vinculo-prop-buscar').value = p.titulo || 'Sin título';
+  document.getElementById('vinculo-prop-sugerencias').hidden = true;
+}
+
+function propBuscarKeydown(ev) {
+  const caja = document.getElementById('vinculo-prop-sugerencias');
+  if (caja.hidden) return;
+  const n = _propSugCache.length;
+  if (ev.key === 'ArrowDown' && n) {
+    ev.preventDefault();
+    _propSugHL = Math.min(_propSugHL + 1, n - 1);
+    pintarResaltadoProp(caja);
+  } else if (ev.key === 'ArrowUp' && n) {
+    ev.preventDefault();
+    _propSugHL = Math.max(_propSugHL - 1, 0);
+    pintarResaltadoProp(caja);
+  } else if (ev.key === 'Enter') {
+    ev.preventDefault();
+    elegirProp(_propSugHL >= 0 ? _propSugHL : 0);
+  } else if (ev.key === 'Escape') {
+    caja.hidden = true;
+  }
+}
+function pintarResaltadoProp(caja) {
+  Array.from(caja.querySelectorAll('.prop-sugerencia[data-i]')).forEach((el, i) => {
+    el.classList.toggle('is-hl', i === _propSugHL);
+    if (i === _propSugHL) el.scrollIntoView({ block: 'nearest' });
+  });
+}
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('.prop-sugerencia[data-i]');
+  if (btn) { elegirProp(Number(btn.dataset.i)); return; }
+  if (!ev.target.closest('.prop-buscador')) {
+    const caja = document.getElementById('vinculo-prop-sugerencias');
+    if (caja) caja.hidden = true;
+  }
+});
+
+window.addEventListener('message', async (e) => {
+  if (!e.data || e.data.tipo !== 'brokr_registrar_op') return;
+  const c = _contactosMem.find(x => x.id === e.data.contacto_id);
+  if (!c) return;
+  if (!c.operaciones) c.operaciones = [];
+  c.operaciones.unshift(e.data.op);
+  c.updated_at = new Date().toISOString();
+  try {
+    await patchContacto(c.id, { operaciones: c.operaciones }); // no reescribir la etapa con datos viejos
+    await cargarRemoto();
+    renderActual();
+  } catch (err) {
+    console.error('No se pudo registrar la operación:', err);
+  }
+});
+
+/* Carga inicial: primero pintamos cache local (si existe) para respuesta instantánea,
+   luego refrescamos desde Supabase. Si no hay cache, mostramos un placeholder.
+   Esperamos a que app-shell.js haya cargado y expuesto window.brokrSb. */
+async function _waitForShell(maxMs) {
+  const start = Date.now();
+  while (!window.brokrSb && Date.now() - start < (maxMs || 5000)) {
+    await new Promise(r => setTimeout(r, 50));
+  }
+  return !!window.brokrSb;
+}
+
+
+/* ═══ WhatsApp inteligente ══════════════════════════════════════════════
+   Si el usuario tiene un número conectado al módulo de WhatsApp de
+   Cecil, el botón abre el chat DENTRO de Cecil (whatsapp.html?tel=).
+   Si no tiene número conectado, abre WhatsApp normal (wa.me), igual que
+   antes. El estado se verifica una vez por sesión y se cachea. ═══════ */
+let _waModulo = null;   // null = aún no verificado
+async function _waVerificarModulo() {
+  try {
+    const cacheado = sessionStorage.getItem('brokr_wa_modulo');
+    if (cacheado !== null) { _waModulo = cacheado === '1'; return; }
+  } catch {}
+  try {
+    const tok = await _sb().ensureToken();
+    if (!tok) { _waModulo = false; return; }
+    const r = await fetch('https://brokr-main-staging.up.railway.app/whatsapp2/numeros', {
+      headers: { Authorization: 'Bearer ' + tok }
+    });
+    if (!r.ok) { _waModulo = false; return; }
+    const d = await r.json();
+    _waModulo = Array.isArray(d.numeros) && d.numeros.length > 0;
+  } catch { _waModulo = false; }
+  try { sessionStorage.setItem('brokr_wa_modulo', _waModulo ? '1' : '0'); } catch {}
+}
+function abrirWA(ev, tel) {
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  const digits = String(tel || '').replace(/\D/g, '');
+  if (!digits) return false;
+  if (_waModulo) {
+    location.href = 'whatsapp.html?tel=' + digits;
+  } else {
+    window.open('https://wa.me/52' + digits, '_blank');
+  }
+  return false;
+}
+
+(async function init() {
+  _waVerificarModulo();  // en segundo plano; no bloquea el arranque
+
+  // 1) Cache offline para respuesta instantánea
+  try {
+    const cache = JSON.parse(localStorage.getItem(LS_CACHE) || '[]');
+    if (Array.isArray(cache) && cache.length) {
+      _contactosMem = cache;
+      renderActual();
+    } else {
+      const cont = document.getElementById('lista');
+      if (cont) cont.innerHTML = '<div class="empty" style="flex:1"><strong>Cargando contactos…</strong></div>';
+    }
+  } catch {}
+
+  // 2) Esperar al shell
+  const ok = await _waitForShell(5000);
+  if (!ok) {
+    const cont = document.getElementById('lista');
+    if (cont && !_contactosMem.length) {
+      cont.innerHTML = '<div class="empty" style="flex:1"><strong>Error al iniciar la app</strong><p>Recarga la página.</p></div>';
+    }
+    return;
+  }
+
+  // 3) Contactos + etapas (para el chip de estatus y el selector de la
+  // ficha; el tablero del pipeline en sí vive en clientes.html)
+  try {
+    await Promise.all([cargarRemoto(), cargarEtapas(), cCargarInteresFiltro()]);
+    await cCargarPermiso();
+    renderActual();
+    const params = new URLSearchParams(window.location.search);
+    const openId = params.get('id') || params.get('contacto');
+    if (openId && _contactosMem.some(c => String(c.id) === String(openId))) abrirDetalle(openId);
+  } catch (e) {
+    const cont = document.getElementById('lista');
+    if (cont && !_contactosMem.length) {
+      cont.innerHTML = '<div class="empty" style="flex:1"><strong>No se pudieron cargar tus contactos</strong><p>' + esc(e.message || 'Revisa tu conexión.') + '</p></div>';
+    } else {
+      // Ya había algo en caché de una visita anterior y se siguió mostrando
+      // eso — pero si la carga real falló, avisar: si no, la pantalla se ve
+      // "cargada" mientras en realidad quedó congelada en datos viejos.
+      showToast('No se pudo actualizar la lista. Mostrando datos guardados.');
+    }
+  }
+})();
+</script>
+
+</body>
+</html>
