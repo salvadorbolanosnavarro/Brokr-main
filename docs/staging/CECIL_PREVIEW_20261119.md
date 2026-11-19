@@ -32,3 +32,12 @@ Validación local: 6 pruebas Cecil correctas (incluidas 2 nuevas de compilación
 | WebView iPhone | No se modifica | Requiere app/dispositivo real | Pendiente |
 
 No se interpreta una prueba local, un mock, un 401 ni una vista responsive de escritorio como certificación real de producción o iPhone.
+
+## Bloqueos observados al continuar
+
+- Login Google elegido por el usuario en Cecil staging: Supabase devolvió HTTP 400, `validation_failed`, `Unsupported provider: provider is not enabled`. No se habilitó el proveedor ni se alteraron variables.
+- Login GitHub elegido por el usuario en Cloudflare: pantalla volvió a login con `Unable to sign in. Try again or use your email and password.` No se reintentó ni cambió de método sin elección del usuario.
+- Rama/PR de preview publicado en GitHub: #220, commit 389c93adc1b9b6244d52f63618f92a8791c14f44. No hay deployment Cloudflare confirmado; por tanto no se afirma que el preview esté montado ni que Network autenticado esté verificado.
+- Para continuar se necesita acceso válido a Cloudflare y una sesión existente de Supabase staging (y una segunda cuenta para aislamiento A/B). Si exige habilitar proveedor o cambiar variables, se mantiene detenido hasta instrucciones.
+
+Captura del error Cloudflare: cloudflare-signin-blocked.jpg. Ninguna credencial aparece en la captura. #217 sigue abierto, draft y sin mergear; main permanece en dac7118c952deeda4f6b9160c05f19b0a42ca8a0.
