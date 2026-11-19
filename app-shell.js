@@ -1,16 +1,4 @@
-/* ════════════════════════════════════════════════════════════════════
-   BROQUER — App Shell compartido
-   Inyecta: sidebar desktop, topbar, mobile header, bottom nav, Broq.
-   Conserva 1:1 el flujo de Supabase / OpenAI / Railway del repo original.
-
-   Uso en cada módulo:
-     <body data-app="isr">         ← clave del módulo activo
-        … contenido del módulo …
-     <script src="app-shell.js" defer></script>
-   Claves válidas: home, props, contactos, clientes, contratos, avm, valor,
-                   ficha, ficha-manual, isr, image-cleaner, facebook-ads,
-                   guia, admin
-   ════════════════════════════════════════════════════════════════════ */
+/* Shared application shell. */
 (function () {
   if (window.__brokrShellLoaded) return;
   window.__brokrShellLoaded = true;

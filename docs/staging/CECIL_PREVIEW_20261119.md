@@ -1,43 +1,50 @@
-# Cecil staging preview — 19 noviembre 2026
+# Cecil staging: publicación y cobertura — 19 noviembre 2026
 
-PR de origen: #217 (sin merge a main). Rama exclusiva: work/cecil-staging-preview-20261119.
+Preview real: https://work-cecil-staging-preview-2.broquer-staging.pages.dev
+PR #220 sigue draft, sin merge al #217 ni main. Backend staging conserva #218. main permanece en dac7118c952deeda4f6b9160c05f19b0a42ca8a0. No se cambiaron variables ni configuración de producción.
 
-Se reutiliza el compilador del #217 y su snapshot de diseño 086fd40e. El modo staging exige la rama de preview, la API Railway staging y la BD tymhlvawnqadqgwnpruk; elimina el guard de piloto de producción porque este preview completo ya está aislado. El modo original de piloto permanece sin activar. Las variables públicas existentes de Cloudflare deben estar disponibles en Preview; si faltan, el build falla y no se cambian variables.
+## Fuga corregida en la publicación real
 
-Build existente: python scripts/build_staging.py; salida dist. Usa BROQUER_STAGING_API_URL, BROQUER_STAGING_SUPABASE_URL y BROQUER_STAGING_SUPABASE_KEY públicos existentes. No incluye runtime demo. CSP restringe conexiones a staging. 53 pantallas bajo /cecil y rutas públicas equivalentes en raíz. Release auditable: /preview-release.json.
+El proyecto Pages publica desde la raíz, no desde dist. La compilación anterior estaba validada pero no era lo que se servía: landing y acceso aún conservaban conexiones de producción. Se añadió routing avanzado _worker.js en el MISMO proyecto: solo sirve los archivos de preview-public permitidos por preview-public-manifest.json; las fuentes raíz/backend quedan fuera del routing. No hay un proyecto ni servicio nuevo ni cambios de variables. El paquete se genera con scripts/build_staging.py + scripts/package_cecil_preview.py. Quedan 53 pantallas, en raíz y /cecil, con la misma API staging y BD tymhlvawnqadqgwnpruk. Los HTML/JS y todos los demás archivos publicados se revisan byte a byte contra referencias prohibidas, incluso binarios. Se excluyen archivos Python, SQL y cachés del paquete.
 
-Validación local: 6 pruebas Cecil correctas (incluidas 2 nuevas de compilación/configuración). Se comprueban todos los HTML/JS/CSS/JSON/SVG compilados: sin API/base/llave pública de producción ni demo-runtime; rechaza main, API de producción, BD equivocada, llave secreta y modo demo. El test de navegador check_cecil_rollout.cjs no se ejecutó: falta Chromium del runner; no se cuenta como prueba pasada.
+CSP efectiva: connect-src self + API Railway staging + Supabase staging (HTTPS/WSS). El worker añade X-Cecil-Preview: staging-only. Se rechaza cualquier host ajeno al proyecto staging y todo método distinto de GET/HEAD. No se utiliza proxy hacia producción. Las solicitudes de la app usan directamente staging.
 
-## Evidencia backend
+La llamada de inicio instagram/feed está reescrita a https://brokr-main-staging.up.railway.app/instagram/feed. Se observó completada en navegador, a través de PerformanceObserver (no es una captura de DevTools Network). Para reproducir evidencia pública: /landing.html?qa=network. El panel QA solo aparece con ese parámetro y muestra origen/ruta, sin queries, credenciales, cuerpos ni cabeceras. Captura: network-staging-20261119.jpg.
 
-#218 mergeado SOLO a work/redesign-preview-20261003 en 343defd4d57efe71268be2617d5afb668e254bd5. Railway reporta deploy success. Evidencia HTTP exacta en live-safety-20261119.json: checkout devuelve 503 STAGING_STRIPE_TEST_KEY_REQUIRED / external_call_performed=false. WhatsApp devuelve 401 sin sesión; esto NO acredita la simulación de envío. Requiere iniciar sesión con cuenta staging y un número/conversación ficticios vinculados. No se envió ningún mensaje autenticado.
+## Evidencias y pruebas
 
-## Cobertura funcional — resultados reales pendientes de autenticación
+- Cloudflare bot confirma deploy de 54cff5f en https://bea9c3cb.broquer-staging.pages.dev y el alias estable de preview.
+- published-files-live-20261119.json: 342/342 archivos servidos con HTTP200, SHA256 idéntico al manifiesto, encabezado staging-only y cero referencias prohibidas. _headers es archivo de control de Cloudflare: se escanea localmente, no se sirve por HTTP.
+- Suite #220: 1,152 pruebas OK, 4 omitidas. Incluye prueba que falla si cualquier archivo publicado contiene api.broquer.app o urtgysmtnvoqaljuhntz (incluso binarios y mayúsculas).
+- 13 comprobaciones Node de routing: archivos permitidos, fuentes privadas denegadas, host no staging denegado y POST denegado. Sintaxis JS correcta.
+- ISR: seis casos coinciden con main para todos los campos numéricos y booleanos, con datos e índices sintéticos idénticos. No hubo llamadas a producción ni se afirma validación fiscal con Banxico real. Evidencia: isr-parity-20261119.json; runner tests/check_cecil_isr_parity.cjs.
+- Golden HTTP actualizado exclusivamente con GET /ui/cecil, endpoint intencional heredado del #217; ningún otro contrato cambió. El constructor de producción rechaza esta rama con cambios de preview. El inventario de deuda excluye exclusivamente directorios de salida dist/preview-public; su contenido se verifica con manifiesto y auditoría. El comentario inicial de app-shell se acortó sin cambiar instrucciones JS ni elevar límites.
+- Stripe staging ya verificado: HTTP503/STAGING_STRIPE_TEST_KEY_REQUIRED/external_call_performed=false, en live-safety-20261119.json.
+
+## Cuentas: aún NO creadas
+
+Se prepararon los formularios A y B con los correos solicitados y teléfono ficticio. Las contraseñas aleatorias están únicamente en un archivo privado fuera de git, no en este informe ni en capturas. No se enviaron registros, no hay confirmación de email pendiente y no se generaron sesiones.
+
+El formulario exige aceptar Términos, Contrato de suscripción y Aviso de Privacidad. Se detuvo antes de aceptar ese acuerdo, a la espera de confirmación específica para las dos cuentas de staging. Captura: registration-review-20261119.jpg. No se recurrió a Google ni se omitió la validación legal del formulario.
+
+## Tabla de cobertura actual
 
 | Función | Broquer actual | Cecil | OK/Falla |
 |---|---|---|---|
-| Stripe: impedir cobro con llave inválida staging | No se ejecuta cobro en producción | API staging real 503, sin llamada externa | OK |
-| WhatsApp: simular envío | No se envían mensajes en producción | Backend probado con mocks; API real 401 sin sesión | Pendiente |
-| Crear, editar y eliminar propiedad | Referencia código actual; sin escrituras prod | Pendiente cuenta staging | Pendiente |
-| Crear, editar y eliminar contacto | Referencia código actual; sin escrituras prod | Pendiente cuenta staging | Pendiente |
-| Crear, editar y eliminar lead | Referencia código actual; sin escrituras prod | Pendiente cuenta staging | Pendiente |
-| Subir y borrar fotos | Sin escrituras prod | Pendiente cuenta staging | Pendiente |
-| Generar ficha técnica | Código de referencia actual | Pendiente datos y cuenta staging | Pendiente |
-| Generar contrato | Código de referencia actual | Pendiente datos y cuenta staging | Pendiente |
-| Opinión de valor | Código de referencia actual | Pendiente datos y cuenta staging | Pendiente |
-| ISR: comparar mismos casos | Pendiente ejecutar casos comparativos | Pendiente ejecutar casos comparativos | Pendiente |
-| A no ve ni edita datos de B | Sin escrituras prod | Requiere dos cuentas staging | Pendiente |
-| API/BD exclusivamente staging | API/base de producción como referencia prohibida | Build sin referencias de producción, CSP restrictiva | OK local; Network autenticado pendiente |
-| Safari iPhone | No se modifica | Requiere dispositivo real | Pendiente |
-| WebView iPhone | No se modifica | Requiere app/dispositivo real | Pendiente |
+| Bloqueo Stripe | Sin ejecutar cobros prod | Staging real: 503, sin llamada externa | OK |
+| Inicio: Instagram | Referencia de código | Navegador observa API staging | OK |
+| Publicación sin referencias prod | Fuentes actuales no publicadas en preview | 342/342 archivos verificados por HTTP y hash | OK |
+| ISR con mismos datos | Motor de main + fixtures sintéticos | Seis casos idénticos | OK offline; UI autenticada pendiente |
+| Crear/editar/eliminar propiedad | Sin escrituras prod | Pendiente alta A/B | Pendiente |
+| Crear/editar/eliminar contacto | Sin escrituras prod | Pendiente alta A/B | Pendiente |
+| Crear/editar/eliminar lead | Sin escrituras prod | Pendiente alta A/B | Pendiente |
+| Subir/borrar fotos | Sin escrituras prod | Pendiente alta A/B | Pendiente |
+| Ficha técnica | Código actual de referencia | Pendiente prueba autenticada | Pendiente |
+| Contrato | Código actual de referencia | Pendiente prueba autenticada | Pendiente |
+| Opinión de valor | Código actual de referencia | Pendiente prueba autenticada | Pendiente |
+| A no ve/edita B | Sin escrituras prod | Pendiente dos sesiones reales | Pendiente |
+| Envío WhatsApp simulado | Sin mensajes prod | Pruebas mock; real anterior 401 sin sesión | Pendiente |
+| Network dentro de módulos autenticados | Sin acceso prod | Pendiente sesión; CSP restringe destinos | Pendiente |
+| Safari/WebView iPhone | Sin cambios | Usuario probará al final | Pendiente |
 
-No se interpreta una prueba local, un mock, un 401 ni una vista responsive de escritorio como certificación real de producción o iPhone.
-
-## Bloqueos observados al continuar
-
-- Login Google elegido por el usuario en Cecil staging: Supabase devolvió HTTP 400, `validation_failed`, `Unsupported provider: provider is not enabled`. No se habilitó el proveedor ni se alteraron variables.
-- Login GitHub elegido por el usuario en Cloudflare: pantalla volvió a login con `Unable to sign in. Try again or use your email and password.` No se reintentó ni cambió de método sin elección del usuario.
-- Rama/PR de preview publicado en GitHub: #220, commit 389c93adc1b9b6244d52f63618f92a8791c14f44. No hay deployment Cloudflare confirmado; por tanto no se afirma que el preview esté montado ni que Network autenticado esté verificado.
-- Para continuar se necesita acceso válido a Cloudflare y una sesión existente de Supabase staging (y una segunda cuenta para aislamiento A/B). Si exige habilitar proveedor o cambiar variables, se mantiene detenido hasta instrucciones.
-
-Captura del error Cloudflare: cloudflare-signin-blocked.jpg. Ninguna credencial aparece en la captura. #217 sigue abierto, draft y sin mergear; main permanece en dac7118c952deeda4f6b9160c05f19b0a42ca8a0.
+Un mock, 401, equivalencia offline o pantalla pública no se cuenta como una prueba funcional autenticada ni certificación de producción.

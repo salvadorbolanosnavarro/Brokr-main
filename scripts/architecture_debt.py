@@ -13,7 +13,7 @@ import re
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXCLUDED_PARTS = {".git", ".venv", "venv", "tests", "core", "scripts", "migrations"}
+EXCLUDED_PARTS = {".git", ".venv", "venv", "tests", "core", "scripts", "migrations", "dist", "preview-public"}
 CODE_SUFFIXES = {".py", ".js", ".html", ".css"}
 
 PATTERNS = {
