@@ -30,7 +30,11 @@ _DOMAINS = {
 
 
 def disabled() -> bool:
-    return os.getenv('SIDE_EFFECTS_DISABLED', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+    value = os.getenv('SIDE_EFFECTS_DISABLED', '').strip().lower()
+    if is_staging():
+        # Fail closed: only an explicit false can opt staging out.
+        return value != 'false'
+    return value in {'1', 'true', 'yes', 'on'}
 
 
 def is_staging() -> bool:

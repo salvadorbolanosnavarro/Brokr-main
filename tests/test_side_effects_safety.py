@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
 from core import side_effects as safety
@@ -98,7 +98,7 @@ class SideEffectsTests(unittest.TestCase):
                     self.assertFalse(r.json()['external_call_performed'])
 
     def test_staging_actual_auth_cannot_bypass_configured_test_key(self):
-        with installed({'BROQUER_ENV':'staging','STRIPE_SECRET_KEY':'sk_test_configured'}):
+        with installed({'BROQUER_ENV':'staging','STRIPE_SECRET_KEY':'sk_test_configured','SIDE_EFFECTS_DISABLED':'false'}):
             for auth in ['Bearer sk_live_bad','Bearer xxsk_test_fake','Basic !!!','', 'Bearer rk_test_bad']:
                 with httpx.Client(transport=httpx.MockTransport(lambda r:self.fail('NETWORK'))) as c:
                     with self.assertRaises(Exception) as raised:c.get('https://api.stripe.com',headers={'Authorization':auth})
@@ -212,3 +212,18 @@ class SideEffectsTests(unittest.TestCase):
             with httpx.Client(transport=httpx.MockTransport(lambda r:self.fail('NETWORK'))) as c:
                 for url,body in [('https://graph.facebook.com/v25/messages',{'to':'5551234567'}),('https://api.resend.com/emails',{'to':['owner@example.test']}),('https://api.sandbox.push.apple.com/3/device/fake',{})]:
                     with self.assertRaises(safety.SideEffectBlocked):c.post(url,json=body)
+
+
+    def test_staging_defaults_to_blocked_and_only_explicit_false_disables(self):
+        for value in [None, '', 'true', '0', 'off', 'unexpected']:
+            env={'BROQUER_ENV':'staging','STRIPE_SECRET_KEY':'sk_live_exists'}
+            if value is not None:env['SIDE_EFFECTS_DISABLED']=value
+            with self.subTest(value=value),installed(env):
+                self.assertTrue(safety.disabled())
+                with httpx.Client(transport=httpx.MockTransport(lambda r:self.fail('NETWORK'))) as c:
+                    with self.assertRaises(safety.SideEffectBlocked):c.post('https://graph.facebook.com/v25/messages')
+                    with self.assertRaises(HTTPException) as error:c.post('https://api.stripe.com/v1/checkout/sessions')
+                    self.assertEqual(error.exception.status_code,503)
+        for value in ['false',' FALSE ']:
+            with installed({'BROQUER_ENV':'staging','SIDE_EFFECTS_DISABLED':value}):self.assertFalse(safety.disabled())
+        with installed({}):self.assertFalse(safety.disabled())

@@ -1,7 +1,7 @@
 # Interruptor de llamadas externas para staging
 
-Propuesta de código: no se han cambiado variables de Railway, desplegado ni
-fusionado ramas. Base: `work/redesign-preview-20261003`, commit `086fd40e`.
+Este ajuste no necesita nuevas variables en Railway: staging queda bloqueado
+por defecto. La publicación está limitada a staging con autorización del usuario. Base: `work/redesign-preview-20261003`, commit `086fd40e`.
 
 ## Configuración para la futura activación autorizada
 
@@ -9,6 +9,10 @@ fusionado ramas. Base: `work/redesign-preview-20261003`, commit `086fd40e`.
 BROQUER_ENV=staging
 SIDE_EFFECTS_DISABLED=true
 ```
+
+**Si BROQUER_ENV=staging, la ausencia del flag, un valor vacío o inválido activa
+el bloqueo. Solo SIDE_EFFECTS_DISABLED=false lo desactiva explícitamente.**
+Fuera de staging se mantiene apagado por defecto.
 
 El interruptor se instala antes de importar los routers. Aun si existen llaves
 reales o listas de destinatarios de prueba, bloquea las llamadas HTTP síncronas
@@ -102,8 +106,8 @@ usarse en staging. Este control de aplicación no sustituye un firewall de salid
 
 ## Resultado de esta revisión
 
-- 16 pruebas nuevas correctas.
-- Suite completa: 1,169 pruebas correctas, 4 omitidas. El entorno local necesitó
+- 17 pruebas nuevas correctas.
+- Suite completa: 1,170 pruebas correctas, 4 omitidas. El entorno local necesitó
   `socksio` para el proxy de pruebas; no se modificaron dependencias de la app.
 - Compilación Python y auditorías de UI correctas.
 - El gate completo no está verde: `architecture_debt.py` falla por React DOM
