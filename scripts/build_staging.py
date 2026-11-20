@@ -62,6 +62,10 @@ def build(env=os.environ):
     for path in output.rglob('*'):
         if not path.is_file() or path.suffix not in {'.html','.js','.css','.json','.svg'}: continue
         text=path.read_text()
+        if path.name == 'propiedades.html':
+            # The redesigned modal footer is outside the form. SubmitEvent
+            # still identifies its button; preserve legacy in-form fallback.
+            text=text.replace("const btn = form.querySelector('.pf-save-btn');", "const btn = e.submitter || form.querySelector('.pf-save-btn') || document.querySelector('.pf-save-btn[form=\"prop-form\"]');")
         for old,new in [('https://api.broquer.app',api),(PROD_DB,db),(PROD_KEY,key)]: text=text.replace(old,new)
         text=text.replace('api.broquer.app',urlsplit(api).hostname).replace('urtgysmtnvoqaljuhntz.supabase.co',urlsplit(db).hostname)
         if 'api.broquer.app' in text or 'urtgysmtnvoqaljuhntz' in text or PROD_KEY in text:

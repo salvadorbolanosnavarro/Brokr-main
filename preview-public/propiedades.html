@@ -1813,7 +1813,7 @@ async function saveProp(e) {
   // Si es nuevo, asignar al usuario actual; si es edición, NO tocar user_id
   if (!id) data.user_id = userId;
 
-  const btn = form.querySelector('.pf-save-btn');
+  const btn = e.submitter || form.querySelector('.pf-save-btn') || document.querySelector('.pf-save-btn[form="prop-form"]');
   try {
     btn.innerHTML = 'Guardando…'; btn.disabled = true;
     const esNueva = !id;
