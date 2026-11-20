@@ -1,0 +1,15 @@
+{
+  "checks": [
+    {
+      "name": "generate_avm",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "response": {
+          "valor_estimado": 5530000,
+          "comparables_count": 13
+        }
+      }
+    }
+  ]
+}

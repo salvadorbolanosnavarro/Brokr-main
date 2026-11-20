@@ -1,0 +1,27 @@
+{
+  "mode": "real staging API with A2, no external messages",
+  "checks": [
+    {
+      "name": "generate_ficha",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "filename": "Ficha_Colonia_ficticia__Morelia.pdf"
+      }
+    },
+    {
+      "name": "generate_contract",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "docx_bytes": 45445
+      }
+    },
+    {
+      "name": "generate_avm",
+      "http_status": 0,
+      "passed": false,
+      "details": {}
+    }
+  ]
+}

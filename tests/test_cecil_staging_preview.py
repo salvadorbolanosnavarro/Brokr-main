@@ -23,6 +23,10 @@ class StagingPreviewTests(unittest.TestCase):
                     text=path.read_text()
                     for forbidden in ('api.broquer.app','urtgysmtnvoqaljuhntz.supabase.co',preview.PROD_KEY,'demo-runtime.js'):
                         self.assertNotIn(forbidden,text,str(path))
+            for property_page in (output/'propiedades.html',output/'cecil/propiedades.html'):
+                property_html=property_page.read_text()
+                self.assertIn('const btn = e.submitter ||',property_html)
+                self.assertNotIn("const btn = form.querySelector('.pf-save-btn');",property_html)
             shell=(output/'cecil/app-shell.js').read_text()
             self.assertIn(ENV['BROQUER_STAGING_API_URL'],shell)
             self.assertNotIn("rollout.src='/ui/cecil-rollout.js'",shell)

@@ -1,0 +1,257 @@
+{
+  "at_utc": "2026-11-20T02:11:47.336454+00:00",
+  "api": "https://brokr-main-staging.up.railway.app",
+  "database_ref": "tymhlvawnqadqgwnpruk",
+  "checks": [
+    {
+      "name": "auth_profile_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "profile": [
+          {
+            "id": "0c823902-41d1-4df2-b357-dedf8d681a38",
+            "plan": "free",
+            "nombre": "Salvador Pruebas Cecil A2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "auth_profile_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "profile": [
+          {
+            "id": "04ccf4d1-e0c8-454c-b97f-e006066db7c4",
+            "plan": "free",
+            "nombre": "Salvador Pruebas Cecil B2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "staging_openapi",
+      "http_status": 200,
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "create_properties_A",
+      "http_status": 201,
+      "passed": true,
+      "details": {
+        "id": "90f24536-bac9-41dc-a483-ba8a100af2a5"
+      }
+    },
+    {
+      "name": "create_properties_B",
+      "http_status": 201,
+      "passed": true,
+      "details": {
+        "id": "228870bb-6999-4d5c-b0be-d365cb800f98"
+      }
+    },
+    {
+      "name": "cannot_read_other_properties_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "rows": 0
+      }
+    },
+    {
+      "name": "cannot_edit_other_properties_A",
+      "http_status": 404,
+      "passed": true,
+      "details": {
+        "detail": "El cambio no se guardó: no tienes permiso sobre este registro o ya no existe. Recarga la página."
+      }
+    },
+    {
+      "name": "cannot_read_other_properties_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "rows": 0
+      }
+    },
+    {
+      "name": "cannot_edit_other_properties_B",
+      "http_status": 404,
+      "passed": true,
+      "details": {
+        "detail": "El cambio no se guardó: no tienes permiso sobre este registro o ya no existe. Recarga la página."
+      }
+    },
+    {
+      "name": "edit_properties_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {}
+    },
+    {
+      "name": "verify_edit_properties_A",
+      "http_status": 200,
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "edit_properties_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {}
+    },
+    {
+      "name": "verify_edit_properties_B",
+      "http_status": 200,
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "create_contacts_A",
+      "http_status": 201,
+      "passed": true,
+      "details": {
+        "id": "c_qa_6824039cf40d47b2"
+      }
+    },
+    {
+      "name": "create_contacts_B",
+      "http_status": 201,
+      "passed": true,
+      "details": {
+        "id": "c_qa_aa65ad6792344f9c"
+      }
+    },
+    {
+      "name": "cannot_read_other_contacts_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "rows": 0
+      }
+    },
+    {
+      "name": "cannot_edit_other_contacts_A",
+      "http_status": 403,
+      "passed": true,
+      "details": {
+        "detail": "No tienes permiso para editar este cliente."
+      }
+    },
+    {
+      "name": "cannot_read_other_contacts_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "rows": 0
+      }
+    },
+    {
+      "name": "cannot_edit_other_contacts_B",
+      "http_status": 403,
+      "passed": true,
+      "details": {
+        "detail": "No tienes permiso para editar este cliente."
+      }
+    },
+    {
+      "name": "edit_contacts_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {}
+    },
+    {
+      "name": "verify_edit_contacts_A",
+      "http_status": 200,
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "edit_contacts_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {}
+    },
+    {
+      "name": "verify_edit_contacts_B",
+      "http_status": 200,
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "create_leads_A",
+      "http_status": 201,
+      "passed": true,
+      "details": {
+        "id": "c_qa_375fc0277c0748b5"
+      }
+    },
+    {
+      "name": "create_leads_B",
+      "http_status": 201,
+      "passed": true,
+      "details": {
+        "id": "c_qa_7a427751dc064fd6"
+      }
+    },
+    {
+      "name": "cannot_read_other_leads_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "rows": 0
+      }
+    },
+    {
+      "name": "cannot_edit_other_leads_A",
+      "http_status": 403,
+      "passed": true,
+      "details": {
+        "detail": "No tienes permiso para editar este cliente."
+      }
+    },
+    {
+      "name": "cannot_read_other_leads_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "rows": 0
+      }
+    },
+    {
+      "name": "cannot_edit_other_leads_B",
+      "http_status": 403,
+      "passed": true,
+      "details": {
+        "detail": "No tienes permiso para editar este cliente."
+      }
+    },
+    {
+      "name": "edit_leads_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {}
+    },
+    {
+      "name": "verify_edit_leads_A",
+      "http_status": 200,
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "edit_leads_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {}
+    },
+    {
+      "name": "verify_edit_leads_B",
+      "http_status": 200,
+      "passed": true,
+      "details": null
+    }
+  ]
+}

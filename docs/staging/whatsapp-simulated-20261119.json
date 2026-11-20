@@ -1,0 +1,25 @@
+{
+  "api": "https://brokr-main-staging.up.railway.app",
+  "account": "A2",
+  "checks": [
+    {
+      "name": "authenticated_whatsapp_send_test",
+      "http_status": 409,
+      "passed": true,
+      "details": {
+        "ok": false,
+        "simulated": true,
+        "external_call_performed": false,
+        "code": "SIDE_EFFECTS_DISABLED",
+        "message": "Simulación: no se enviaron mensajes, cobros ni solicitudes al proveedor bloqueado.",
+        "blocked_operations": [
+          {
+            "provider": "meta",
+            "method": "POST",
+            "kind": "simulation"
+          }
+        ]
+      }
+    }
+  ]
+}
