@@ -21,24 +21,32 @@ La llamada de inicio instagram/feed está reescrita a https://brokr-main-staging
 - Golden HTTP actualizado exclusivamente con GET /ui/cecil, endpoint intencional heredado del #217; ningún otro contrato cambió. El constructor de producción rechaza esta rama con cambios de preview. El inventario de deuda excluye exclusivamente directorios de salida dist/preview-public; su contenido se verifica con manifiesto y auditoría. El comentario inicial de app-shell se acortó sin cambiar instrucciones JS ni elevar límites.
 - Stripe staging ya verificado: HTTP503/STAGING_STRIPE_TEST_KEY_REQUIRED/external_call_performed=false, en live-safety-20261119.json.
 
-## Cuentas: aún NO creadas
+## Cuentas: ambos registros aceptados, confirmación de correo pendiente
 
-Se prepararon los formularios A y B con los correos solicitados y teléfono ficticio. Las contraseñas aleatorias están únicamente en un archivo privado fuera de git, no en este informe ni en capturas. No se enviaron registros, no hay confirmación de email pendiente y no se generaron sesiones.
+El usuario autorizó explícitamente aceptar Términos, Contrato de suscripción y Aviso de Privacidad exclusivamente para A y B. Se aceptaron y se enviaron ambos registros mediante el formulario real del preview, con correo/contraseña y teléfono ficticio, sin Google.
 
-El formulario exige aceptar Términos, Contrato de suscripción y Aviso de Privacidad. Se detuvo antes de aceptar ese acuerdo, a la espera de confirmación específica para las dos cuentas de staging. Captura: registration-review-20261119.jpg. No se recurrió a Google ni se omitió la validación legal del formulario.
+- A: salvadorbolanosnavarro+cecila@gmail.com.
+- B: salvadorbolanosnavarro+cecilb@gmail.com.
+
+Para ambos, el formulario mostró que envió el correo de confirmación y que se necesita confirmarlo para entrar. Esto acredita la aceptación del registro por el flujo de la app; NO acredita que ya exista una sesión activa ni que el correo haya llegado a Gmail. El usuario debe confirmar los dos correos. No se desactivó la verificación ni se cambiaron variables.
+
+Las contraseñas se conservaron únicamente en el archivo privado fuera de git; no se incluyen en informes ni capturas (los campos aparecen enmascarados). Evidencia sanitizada: account-registration-20261119.json y account-a/account-b-confirmation-20261119.jpg. Las pruebas CRUD, medios, documentos, A/B y WhatsApp autenticados continúan pendientes de estas confirmaciones.
+
+Los controles GitHub Quality y Frontend Canon Quality del código fc4547ba terminaron en SUCCESS (runs 44641399624 y 44641399563).
 
 ## Tabla de cobertura actual
 
 | Función | Broquer actual | Cecil | OK/Falla |
 |---|---|---|---|
+| Registro correo/contraseña A/B | Flujo de referencia | Ambos registros aceptados; falta confirmar correo | OK registro; sesión pendiente |
 | Bloqueo Stripe | Sin ejecutar cobros prod | Staging real: 503, sin llamada externa | OK |
 | Inicio: Instagram | Referencia de código | Navegador observa API staging | OK |
 | Publicación sin referencias prod | Fuentes actuales no publicadas en preview | 342/342 archivos verificados por HTTP y hash | OK |
 | ISR con mismos datos | Motor de main + fixtures sintéticos | Seis casos idénticos | OK offline; UI autenticada pendiente |
-| Crear/editar/eliminar propiedad | Sin escrituras prod | Pendiente alta A/B | Pendiente |
-| Crear/editar/eliminar contacto | Sin escrituras prod | Pendiente alta A/B | Pendiente |
-| Crear/editar/eliminar lead | Sin escrituras prod | Pendiente alta A/B | Pendiente |
-| Subir/borrar fotos | Sin escrituras prod | Pendiente alta A/B | Pendiente |
+| Crear/editar/eliminar propiedad | Sin escrituras prod | Pendiente confirmar correos A/B | Pendiente |
+| Crear/editar/eliminar contacto | Sin escrituras prod | Pendiente confirmar correos A/B | Pendiente |
+| Crear/editar/eliminar lead | Sin escrituras prod | Pendiente confirmar correos A/B | Pendiente |
+| Subir/borrar fotos | Sin escrituras prod | Pendiente confirmar correos A/B | Pendiente |
 | Ficha técnica | Código actual de referencia | Pendiente prueba autenticada | Pendiente |
 | Contrato | Código actual de referencia | Pendiente prueba autenticada | Pendiente |
 | Opinión de valor | Código actual de referencia | Pendiente prueba autenticada | Pendiente |
