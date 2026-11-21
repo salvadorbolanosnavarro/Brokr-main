@@ -127,6 +127,18 @@ class Settings:
     # en la lista) o "estricto" (solo la lista). Ver core/cors.py.
     cors_modo: str = "observar"
     cors_origenes_extra: str = ""
+    # AVM Broquer v2 (paquete avm/, routers/avm_v2.py). Apagado por default:
+    # AVM_V2=true muestra la vista nueva (solo staging); AVM_V2_JOBS=true
+    # arranca ingesta/limpieza/recalibración/reentreno en ESA instancia.
+    avm_v2_enabled: bool = False
+    avm_v2_jobs: bool = False
+    # Solo staging: sin modelo entrenado, arma uno de demostración con datos
+    # sintéticos (cada respuesta lo marca datos="sinteticos").
+    avm_v2_demo: bool = False
+    avm_v2_model_dir: str = "/tmp/avm_v2_modelos"
+    avm_v2_bucket: str = "avm-modelos"
+    avm_v2_ciudades: str = "Morelia,Guadalajara"
+    groq_extract_model: str = "llama-3.3-70b-versatile"
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -219,6 +231,13 @@ class Settings:
             wa_tokens_accion=os.getenv("WA_TOKENS_ACCION", "").strip().lower(),
             cors_modo=os.getenv("CORS_MODO", "observar").strip().lower() or "observar",
             cors_origenes_extra=os.getenv("CORS_ORIGENES_EXTRA", "").strip(),
+            avm_v2_enabled=_env_bool("AVM_V2", default=False),
+            avm_v2_jobs=_env_bool("AVM_V2_JOBS", default=False),
+            avm_v2_demo=_env_bool("AVM_V2_DEMO", default=False),
+            avm_v2_model_dir=os.getenv("AVM_V2_MODEL_DIR", "/tmp/avm_v2_modelos").strip() or "/tmp/avm_v2_modelos",
+            avm_v2_bucket=os.getenv("AVM_V2_BUCKET", "avm-modelos").strip() or "avm-modelos",
+            avm_v2_ciudades=os.getenv("AVM_V2_CIUDADES", "Morelia,Guadalajara").strip(),
+            groq_extract_model=os.getenv("GROQ_EXTRACT_MODEL", "llama-3.3-70b-versatile").strip(),
             firmame_api_key=os.getenv("FIRMAME_API_KEY", "").strip(),
             firmame_base_url=os.getenv(
                 "FIRMAME_BASE_URL",
