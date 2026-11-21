@@ -1,4 +1,5 @@
 import asyncio
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,6 +18,9 @@ class PilotTests(unittest.TestCase):
     def state(self,enabled=False,ids='',user='owner'):
         with patch.object(pilot,'settings',SimpleNamespace(cecil_ui_enabled=enabled,cecil_ui_user_ids=ids)),patch.object(pilot,'require_user_id',AsyncMock(return_value=user)):
             return self.client.get('/ui/cecil')
+
+    def test_pilot_state_machine_preserves_session(self):
+        subprocess.run(['node','tests/check_cecil_pilot_state.cjs'],cwd=Path(__file__).resolve().parents[1],check=True,capture_output=True)
 
     def test_default_off_and_empty_list_fail_closed(self):
         self.assertFalse(self.state().json()['enabled'])

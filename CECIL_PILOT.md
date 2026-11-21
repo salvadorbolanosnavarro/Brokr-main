@@ -57,3 +57,37 @@ Validación local: tests de autenticación/allowlist/no-cache y constructor;
 16 comprobaciones de navegador a 1440 y 390 px para activar, volver, conservar
 preferencia, cambiar de usuario, revocar acceso y tolerar fallos del endpoint.
 Ninguna prueba hace operaciones en producción.
+
+
+## Cierre requerido antes de pedir activación (21/11/2026)
+
+Este PR sigue DRAFT, apagado y sin publicar. No fusionar #220: su worker,
+variables públicas, tablas y artefactos son exclusivamente de staging.
+
+- [ ] Completar por interfaz con A3 contactos, leads, contratos y opinión de valor; incluir salida/reingreso. La autenticación de la API no sustituye esta prueba.
+- [ ] Ensayar ida/vuelta, revocación y sesión en staging; evidencia del servidor y del navegador por separado. El cambio añade revalidación cada15s y al volver a la pestaña, sin borrar la sesión del negocio.
+- [ ] Comprobar iPhone Safari y WebView físico, teclado/campos y zoom.
+- [ ] Respaldo previo completo y restauración de ensayo, incluyendo bytes de Storage. Registrar herramienta, operador, checksum, tiempos medidos y validaciones. No existe todavía una restauración verificada ni un RTO prometido.
+- [ ] Confirmar el UUID real asociado exclusivamente a salvadorbolanosnavarro@gmail.com mediante un administrador; nunca usar UUID A3/B2 ni correo editable del cliente.
+- [ ] Revisar DSN y environment de errores de producción, enviar un error controlado sin datos personales y verificar su recepción. La evidencia de staging no certifica la configuración de producción.
+- [ ] Obtener aprobación explícita para publicar y otra para activar. Hasta entonces CECIL_UI_ENABLED=false y allowlist vacía.
+
+### Activación futura: operador autorizado, después del OK
+
+1. Verificar que main sigue en la base fijada por el constructor; si avanzó, integrar la nueva lógica y repetir staging. Nunca forzar el constructor ni suprimir su protección.
+2. Conservar hashes del backend/frontend anteriores y un respaldo restaurable. Preparar una ventana y responsables. Este documento no autoriza ejecutarla.
+3. Publicar backend y ambas vistas con flag apagado; comprobar Broquer habitual, auth y errores.
+4. Configurar CECIL_UI_USER_IDS únicamente con el UUID verificado de Salvador, mantener flag apagado y comprobar rechazo anónimo y de otra cuenta.
+5. Solo con aprobación explícita: CECIL_UI_ENABLED=true, comprobar Salvador/otra cuenta, entrar en Cecil, volver a Broquer y conservar sesión. Registrar errores y cada cambio de datos.
+6. Mantener piloto restringido. No ampliar allowlist sin nuevo OK.
+
+### Reversión futura
+
+1. Apagar CECIL_UI_ENABLED y redesplegar; al revalidar (máximo15s en pestaña visible, o al recuperar visibilidad) Cecil vuelve a Broquer. Si no puede consultar al servidor, vuelve a Broquer. No se borran tokens de sesión.
+2. Si la página está completamente bloqueada, abrir la ruta habitual de Broquer y revertir al artefacto frontend anterior comprobado.
+3. Verificar login y operaciones habituales, y que la otra cuenta sigue fuera del piloto.
+4. No restaurar toda la base por un fallo visual. Restaurar solo ante corrupción real, con ventana aprobada, control de escrituras y conciliación de operaciones posteriores. Un rollback visual no revierte mensajes ni cargos.
+
+El defecto de Guardar inmueble verificado en staging se incorpora al constructor
+para que el piloto no vuelva a introducirlo. No se incluyen credenciales ni un
+UUID de producción sin verificar. La preparación no equivale a autorizar producción.
