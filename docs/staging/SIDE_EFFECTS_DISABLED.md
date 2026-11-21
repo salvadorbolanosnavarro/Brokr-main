@@ -114,3 +114,12 @@ usarse en staging. Este control de aplicación no sustituye un firewall de salid
   vendorizado y el tamaño de `legal.html`. Se reprodujeron los mismos dos errores
   en un worktree limpio del commit base; no se tocaron esos archivos ni límites.
 - No se ha configurado Railway ni ejecutado contra servicios reales.
+
+
+## Consultas AVM de solo lectura (21/11/2026)
+
+El diagnóstico conectado confirmó409 simulado por dos GET a EasyBroker. EasyBroker sigue bloqueado, también para GET. La AVM omite candidatos de integraciones bloqueadas ANTES de HTTP/Firecrawl y valida los redirects del lector público; no intenta el envío y no agrega un evento que reemplace el resultado completo.
+
+Se permiten consultas de mercado/portales públicos con las defensas SSRF y tamaño existentes. Lista explícita de consultas: Firecrawl POST scrape/search; SerpAPI GET search; Google Places/geocode y CustomSearch GET; Banxico series GET; Groq/Anthropic/Gemini POST de generación de texto. Un POST de consulta no significa publicar/enviar un mensaje. DELETE/archivos/operaciones ajenas a esas rutas de proveedores de consulta permanecen bloqueados con el interruptor activo. No se sigue un redirect automáticamente hacia una integración bloqueada.
+
+Bloqueados para TODOS los métodos: Stripe (503 para llave no test en staging), Meta/WhatsApp, Instagram/Facebook, Resend/SMTP, APNs y EasyBroker. La regla de staging activo por defecto continúa igual; no se cambian variables ni producción.
