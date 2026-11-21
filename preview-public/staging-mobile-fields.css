@@ -1,0 +1,14 @@
+/* Prevent iOS focus auto-zoom without disabling the user's pinch zoom.
+   Applies to existing controls and fields inserted later by the shared shell. */
+@media (max-width: 767px) {
+  :root,
+  :root body,
+  :root body .bk-page {
+    touch-action: pan-y pinch-zoom !important;
+  }
+  :root body input,
+  :root body select,
+  :root body textarea {
+    font-size: max(16px, 1rem) !important;
+  }
+}

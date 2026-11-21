@@ -18,6 +18,14 @@ class StagingPreviewTests(unittest.TestCase):
             preview.build(ENV)
             output=Path(tmp)/'dist'
             self.assertGreaterEqual(len(list((output/'cecil').glob('*.html'))),52)
+            for page in output.rglob('*.html'):
+                html=page.read_text()
+                self.assertIn('href="/staging-mobile-fields.css"',html,str(page))
+                self.assertNotRegex(html,r'(?i)user-scalable\s*=\s*(no|0)|maximum-scale\s*=\s*1(?:\s*[,;"\'])')
+            self.assertIn('max(16px, 1rem)',(output/'staging-mobile-fields.css').read_text())
+            for shell_path in (output/'app-shell.js',output/'cecil/app-shell.js'):
+                self.assertNotIn("['gesturestart', 'gesturechange', 'gestureend']",shell_path.read_text())
+                self.assertNotIn('user-scalable=no',shell_path.read_text())
             for path in output.rglob('*'):
                 if path.is_file() and path.suffix in {'.html','.js','.css','.json','.svg'}:
                     text=path.read_text()

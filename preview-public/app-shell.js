@@ -4786,27 +4786,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
   }
 })();
 
-/* ── Guarda de escala en iOS ─────────────────────────────────
-   Un pellizco sobre el visor PDF de firma, sobre una grafica o sobre
-   una tabla amplia deja la vista ampliada y en la app no hay barra de
-   navegador para restaurarla. Se bloquea el gesto de escala y, si el
-   sistema alcanzo a cambiarla, se devuelve a 1 al soltar. */
-(function () {
-  /* Normalizar el viewport en TODAS las pantallas: aunque algun modulo
-     tenga una meta vieja sin user-scalable=no, aqui se corrige. */
-  var vp = document.querySelector('meta[name="viewport"]');
-  if (vp) vp.setAttribute('content',
-    'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover');
-  ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (t) {
-    document.addEventListener(t, function (ev) { ev.preventDefault(); }, { passive: false });
-  });
-  document.addEventListener('touchend', function () {
-    if (window.visualViewport && window.visualViewport.scale > 1.01) {
-      document.body.style.zoom = '';
-      window.scrollTo(window.scrollX, window.scrollY);
-    }
-  }, { passive: true });
-})();
+/* Mobile fields prevent focus auto-zoom; native pinch zoom remains enabled. */
 
 /* ── El teclado de iPhone no encoge el alto de la página (WKWebView) ──
    En Safari/el WebView de la app, cuando aparece el teclado en pantalla,

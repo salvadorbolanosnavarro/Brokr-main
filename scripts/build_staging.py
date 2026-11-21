@@ -74,6 +74,13 @@ def build(env=os.environ):
         if not path.is_file() or path.suffix not in {'.html','.js','.css','.json','.svg'}: continue
         text=path.read_text()
         if path.name == 'app-shell.js':
+            # Font sizing prevents focus auto-zoom; preserve intentional pinch.
+            text, removed = re.subn(
+                r'/\* ── Guarda de escala en iOS .*?(?=/\* ── El teclado de iPhone)',
+                '/* Mobile fields prevent focus auto-zoom; native pinch zoom remains enabled. */\n\n',
+                text, count=1, flags=re.S)
+            if removed != 1:
+                raise ValueError('Missing legacy pinch-zoom guard: review the staging transformation')
             # Do not send staging errors through the inherited production loader.
             text=re.sub(r'  \(function initSentry\(\) \{.*?  /\* ── Config', '  /* ── Config', text, count=1, flags=re.S)
             marker='    if (!profile) return; // redirected to login/landing'
@@ -88,6 +95,21 @@ def build(env=os.environ):
         if 'api.broquer.app' in text or 'urtgysmtnvoqaljuhntz' in text or PROD_KEY in text:
             raise ValueError(f'Production reference remains: {path.relative_to(output)}')
         path.write_text(re.sub(r'[ \t]+$', '', text, flags=re.M))
+    (output/'staging-mobile-fields.css').write_bytes(
+        (Path(__file__).resolve().parent/'staging_mobile_fields.css').read_bytes())
+    def mobile_meta(match):
+        tag = match.group(0)
+        def content(value):
+            parts = [part.strip() for part in value.group(2).split(',')
+                     if part.strip().split('=')[0].strip().lower()
+                     not in {'maximum-scale', 'minimum-scale', 'user-scalable'}]
+            return value.group(1) + ','.join(parts) + value.group(3)
+        return re.sub(r'(content=["\'])(.*?)(["\'])', content, tag, flags=re.I)
+    for page in output.rglob('*.html'):
+        text = re.sub(r'<meta\b[^>]*name=["\']viewport["\'][^>]*>', mobile_meta,
+                      page.read_text(), flags=re.I)
+        text = text.replace('</head>', '<link rel="stylesheet" href="/staging-mobile-fields.css"/>\n</head>', 1)
+        page.write_text(text)
     (output/'staging-pilot.js').write_bytes((Path(__file__).resolve().parent/'staging_pilot_client.js').read_bytes())
     audit_script=ROOT/'scripts/staging_network_audit.js'
     if audit_script.exists():
