@@ -19,3 +19,7 @@ No se conoce cuánto tardará producción: el único tiempo observado es4min36s 
 ## Alternativa lógica preparada, no ejecutada
 
 scripts/staging_backup_drill.sh usa pg_dump custom y pg_dumpall --roles-only --no-role-passwords con PostgreSQL17, conexiones privadas vía PGSERVICEFILE/PGPASSFILE y permisos600. pg_restore conserva ownership/ACL con roles preparados; rechaza producción y nunca restaura encima del staging activo. Esta alternativa no fue el método ensayado y no hereda su tiempo medido.
+
+## Ensayo de archivos completado
+
+Se completó copia→borrado de foto ficticia→restauración al mismo nombre→SHA256idéntico en staging,7comprobaciones OK,32.606s. Ver STORAGE_BACKUP_RUNBOOK_20261121.md y storage-restore-20261121.json. Esto sustituye el pendiente de ensayo funcional de un archivo; el respaldo integral de TODOS los buckets de producción sigue siendo obligatorio antes de activar.

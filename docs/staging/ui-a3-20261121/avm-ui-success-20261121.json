@@ -1,0 +1,20 @@
+{
+  "account": "A3",
+  "mode": "real UI after staging backend PR224",
+  "started_utc": "2026-11-21T18:30:04.714Z",
+  "result_observed_utc": "2026-11-21T18:32:28.798Z",
+  "estimated_mxn": 5530000,
+  "comparables_shown": 7,
+  "pdf_bytes": 25891,
+  "pdf_pages": 2,
+  "pdf_sha256": "a2d57083e2742464cb4d4182c0f74ea3992dd88801888ea3ad846ad0cf429f46",
+  "pdf_text_checks": {
+    "Morelia": true,
+    "Altozano": true,
+    "estimate": true
+  },
+  "limitations": [
+    "Firecrawl inactive in staging configuration",
+    "Several portal sources reported blocked; this is functional output, not independent appraisal validation"
+  ]
+}

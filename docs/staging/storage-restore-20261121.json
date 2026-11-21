@@ -1,0 +1,49 @@
+{
+  "project_ref": "tymhlvawnqadqgwnpruk",
+  "at_utc": "2026-11-21T18:26:57.968918+00:00",
+  "bucket": "fotos-propiedades",
+  "source": "bd7e565d-c0c7-46d1-9cc2-70399ed97a91/qa-storage-2101f35aa6014a32855e87ef24e838e8.jpg",
+  "backup": "bd7e565d-c0c7-46d1-9cc2-70399ed97a91/qa-storage-backup-2101f35aa6014a32855e87ef24e838e8/photo.jpg",
+  "bytes": 12665,
+  "sha256": "6ca3ae98d5dcc8692d44debd0b28cc7cbb9f2dc3d7f38bc1575ea7918fb36ffc",
+  "checks": [
+    {
+      "name": "upload_own_new_fixture",
+      "passed": true,
+      "http_status": 200
+    },
+    {
+      "name": "copy_to_backup_folder",
+      "passed": true,
+      "http_status": 200,
+      "seconds": 3.61
+    },
+    {
+      "name": "backup_sha256_verified",
+      "passed": true,
+      "http_status": 200
+    },
+    {
+      "name": "delete_only_own_fixture",
+      "passed": true,
+      "http_status": 200
+    },
+    {
+      "name": "deleted_fixture_missing",
+      "passed": true,
+      "http_status": 400
+    },
+    {
+      "name": "restore_same_original_key",
+      "passed": true,
+      "http_status": 200,
+      "seconds": 4.675
+    },
+    {
+      "name": "restored_sha256_identical",
+      "passed": true,
+      "http_status": 200
+    }
+  ],
+  "seconds": 32.606
+}

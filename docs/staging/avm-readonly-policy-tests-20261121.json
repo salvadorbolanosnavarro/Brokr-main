@@ -1,0 +1,35 @@
+{
+  "backend_pr": 224,
+  "staging_merge_commit": "e7ca1c4868d36f905f75c06d6e416873406b4a7b",
+  "railway_staging_status": "success",
+  "local_focused_tests": 40,
+  "local_full_tests": 1174,
+  "local_skipped": 4,
+  "github_unit_tests": 1172,
+  "github_quality_run": 44935766629,
+  "github_quality_remaining_failures": [
+    "issue219: React DOM existing large file",
+    "issue219: legal.html existing size ceiling"
+  ],
+  "new_failures": 0,
+  "diagnosis_before_fix": {
+    "status": 409,
+    "seconds": 118.953,
+    "code": "SIDE_EFFECTS_DISABLED",
+    "simulated": true,
+    "blocked_operations": [
+      {
+        "provider": "easybroker",
+        "method": "GET",
+        "kind": "simulation"
+      },
+      {
+        "provider": "easybroker",
+        "method": "GET",
+        "kind": "simulation"
+      }
+    ]
+  },
+  "main_modified": false,
+  "provider_settings_modified": false
+}

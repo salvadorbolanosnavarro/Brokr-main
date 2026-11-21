@@ -23,10 +23,12 @@
     "sent_to_signature": false
   },
   "avm": {
-    "ui_attempts": 2,
-    "passed": false,
-    "visible_error": "Error en el análisis",
-    "form_preserved": true
+    "ui_attempts_before_fix": 2,
+    "passed_after_fix": true,
+    "comparables": 7,
+    "estimated_mxn": 5530000,
+    "pdf_downloaded_and_verified": true,
+    "backend_pr": 224
   },
   "pilot": {
     "real_buttons_roundtrip": true,
