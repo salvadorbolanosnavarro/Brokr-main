@@ -1,6 +1,7 @@
 FROM python:3.11-slim
 
-# Dependencias de sistema para Chromium/Playwright, y ffmpeg para el
+# Dependencias de sistema para Chromium/Playwright, libgomp1 para LightGBM
+# (AVM v2), y ffmpeg para el
 # módulo de Video (routers/video.py). La imagen base no lo trae: sin esta
 # línea el render truena en producción y solo se ve en los logs.
 RUN apt-get update && apt-get install -y \
@@ -28,6 +29,7 @@ RUN apt-get update && apt-get install -y \
     poppler-utils \
     wget \
     ffmpeg \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
