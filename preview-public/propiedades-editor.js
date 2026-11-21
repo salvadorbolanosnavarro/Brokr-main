@@ -1,4 +1,4 @@
-// Cecil · Tus Inmuebles — fotos que llegan desde el Editor de imágenes.
+// Broquer · Tus Inmuebles — fotos que llegan desde el Editor de imágenes.
 // Separado de propiedades.html para no hacer crecer ese archivo (ver
 // scripts/architecture_debt.py). Usa los globales de la página: SB_URL, SB_KEY,
 // g, openPropForm, getValidToken, renderFotosPreview, mostrarToast,

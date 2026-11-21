@@ -112,7 +112,7 @@
 
     html += sec('Contenido', '<div class="msw-switches">' +
       interruptor('msw-asesor', 'Mostrar al asesor en cada inmueble', s.mostrar_asesor !== false, 'Foto, nombre y WhatsApp del agente asignado.', dis) +
-      interruptor('msw-bolsa', 'Incluir inmuebles de la Bolsa Cecil', s.incluir_bolsa, 'Suma inmuebles de otras inmobiliarias que comparten comisión.', dis) +
+      interruptor('msw-bolsa', 'Incluir inmuebles de la Bolsa Broquer', s.incluir_bolsa, 'Suma inmuebles de otras inmobiliarias que comparten comisión.', dis) +
       interruptor('msw-trad', 'Traductor de idioma', s.traductor, 'Botón para ver el sitio en inglés y otros idiomas.', dis) + '</div>' +
       '<div class="bk-field"><span class="bk-label">Acerca de nosotros</span>' + editor('msw-acerca', s.acerca_html, dis) + '</div>');
 
@@ -158,7 +158,7 @@
     var d = estado.datos;
     var est = { activo: 'Activo con candado (HTTPS)', pendiente: 'Esperando el registro DNS', sin_dominio: '' }[s.dominio_estado || 'sin_dominio'];
     var h = '';
-    if (!d.dominios_disponibles) h += '<div class="msw-aviso">La conexión automática de dominios aún no está encendida en Cecil. Puedes dejar tu dominio registrado y se activará en cuanto esté lista.</div>';
+    if (!d.dominios_disponibles) h += '<div class="msw-aviso">La conexión automática de dominios aún no está encendida en Broquer. Puedes dejar tu dominio registrado y se activará en cuanto esté lista.</div>';
     if (s.dominio) {
       h += '<div class="msw-dom"><div><b>' + esc(s.dominio) + '</b><div class="ms-hint ' + (s.dominio_estado === 'activo' ? 'is-ok' : '') + '">' + esc(est) + '</div>' +
         (s.dominio_detalle ? '<div class="ms-hint">' + esc(s.dominio_detalle) + '</div>' : '') + '</div>' +

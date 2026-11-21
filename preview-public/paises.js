@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════
-   Países donde opera Cecil — la única fuente de verdad del navegador.
+   Países donde opera Broquer — la única fuente de verdad del navegador.
 
    Cada cuenta pertenece a UN país. Se elige en el landing (o en la
    pantalla de crear cuenta) y se guarda en el perfil (usuarios.pais);
@@ -186,7 +186,7 @@
   }
 
   /* El teléfono sirve si tiene los dígitos del país (sin lada) o si trae
-     la lada de alguno de los países de Cecil. */
+     la lada de alguno de los países de Broquer. */
   function bkTelefonoValido(tel, c) {
     var dig = String(tel || '').replace(/\D/g, '');
     return dig.length === bkPaisCfg(c).digitosTel || !!bkPaisPorTelefono(tel);

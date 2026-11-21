@@ -1,4 +1,4 @@
-// Cecil · Modal "Nueva tarea" compartido (Tareas y ficha de Clientes).
+// Broquer · Modal "Nueva tarea" compartido (Tareas y ficha de Clientes).
 // Un solo formulario con TODAS las opciones de una tarea: fecha y hora,
 // notas, asignado (empresas), categorías, contactos e inmuebles vinculados
 // y archivos adjuntos. Así crear una tarea desde un cliente permite

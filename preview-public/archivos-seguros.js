@@ -1,4 +1,4 @@
-// Cecil · Archivos seguros — validación de archivos ANTES de subirlos a
+// Broquer · Archivos seguros — validación de archivos ANTES de subirlos a
 // Supabase Storage desde el navegador. Espejo de core/file_validation.py
 // (backend): mismas listas blancas por módulo, mismas extensiones prohibidas
 // y la misma regla de fondo: el tipo real lo deciden los primeros bytes del

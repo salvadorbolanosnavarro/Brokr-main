@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
-<link rel="apple-touch-icon" href="/cecil/brand/cecil-icon.png"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Ficha técnica · Cecil</title>
+<title>Broquer — Ficha Manual</title>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
@@ -51,15 +51,27 @@
   color: var(--mute);
   letter-spacing: .05em;
 }
-.f input, .f select{ color: var(--ink); width: 100%; outline: none;
+.f input, .f select{
+  height: var(--h); padding: 0 var(--sp-4);
+  background: var(--bone); border: 1px solid var(--line-2);
+  border-radius: var(--r); font-size: var(--fs-sm);
+  font-family: inherit; color: var(--ink); width: 100%; outline: none;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.f textarea{ color: var(--ink); width: 100%; outline: none;
-  resize: vertical;
+.f textarea{
+  padding: var(--sp-3) var(--sp-4); min-height: 96px;
+  background: var(--bone); border: 1px solid var(--line-2);
+  border-radius: var(--r); font-size: var(--fs-sm);
+  font-family: inherit; color: var(--ink); width: 100%; outline: none;
+  resize: vertical; line-height: var(--lh);
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.f input:focus, .f select:focus, .f textarea:focus{
+  border-color: var(--forest);
+  box-shadow: var(--focus);
 }
 .f input::placeholder, .f textarea::placeholder{ color: var(--mute-2); }
-.f textarea{ resize: vertical; }
+.f textarea{ resize: vertical; min-height: 90px; }
 
 #precio-renta-row{ display: none; }
 
@@ -113,16 +125,22 @@
   padding: 3px 8px;
   border-radius: var(--r-pill);
   letter-spacing: 0.02em;
-  
+
 }
 .photo-del{
   position: absolute;
   top: 5px; right: 5px;
-  width: var(--ui-control-small);
+  background: rgba(22,22,22,.65);
+  color: var(--bone);
+  border: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  font-size: var(--fs-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
 }
 #drag-hint{
   display: none;
@@ -138,10 +156,19 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  padding: 9px 16px;
+  background: var(--forest);
+  color: var(--bone);
+  border: none;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-label-3);
+  font-weight: 500;
+  font-family: var(--font-sans);
   cursor: pointer;
   margin-top: 10px;
   transition: background var(--dur) var(--ease);
 }
+.ai-btn:hover{ background: var(--forest-2); }
 .ai-hint{
   font-size: var(--fs-caption);
   color: var(--mute);
@@ -159,16 +186,41 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  background: var(--forest);
+  color: var(--bone);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  font-family: var(--font-sans);
+  letter-spacing: -0.005em;
   cursor: pointer;
+  white-space: nowrap;
   transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
+.ui-btn:hover{ background: var(--forest-2); }
 .ui-btn:active{ transform: scale(.98); }
+.ui-btn.forest{ background: var(--forest); }
+.ui-btn.forest:hover{ background: var(--forest-2); }
+.ui-btn.outline{
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line-2);
+}
+.ui-btn.outline:hover{ background: var(--paper-2); }
 
 /* CTA principal — hermano del gen-btn de Contratos */
 .actions .ui-btn{
   width: 100%;
+  height: auto;
+  padding: 14px;
+  font-size: var(--fs-body);
+  font-weight: 600;
   gap: 9px;
 }
+.actions .ui-btn:hover{ background: var(--ink-3); }
 
 #print-bar{
   display: none;
@@ -189,11 +241,11 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
-   FICHA TÉCNICA — plantilla editorial Cecil (edición Sky)
+   FICHA TÉCNICA — plantilla editorial Broquer (edición Sky)
    Página A4 (210×297mm). Estructura: portada con tarjeta flotante
    sobre la foto principal, franja de specs con iconografía propia,
    galería en cuadrícula, página de características agrupadas por
-   categoría, y footer de marca "Powered by Cecil" en cada hoja.
+   categoría, y footer de marca "Powered by Broquer" en cada hoja.
    ══════════════════════════════════════════════════════════════ */
 #ficha{ display: none; margin-bottom: 40px; }
 #ficha.show{ display: block; }
@@ -501,7 +553,7 @@
 }
 .amen-item svg{ width: 12px; height: 12px; color: var(--sky-blue); flex-shrink: 0; }
 
-/* ═══ FOOTER DE MARCA — "Powered by Cecil" en cada página ═══ */
+/* ═══ FOOTER DE MARCA — "Powered by Broquer" en cada página ═══ */
 .ficha-footer{
   width: 100%;
   height: 42px;
@@ -582,17 +634,6 @@
   .chars-grid{ grid-template-columns: 1fr; }
 }
 </style>
-<link rel="stylesheet" href="styles/mobile-inputs.css">
-<script defer src="mobile-inputs.js"></script>
-<link rel="stylesheet" href="ui/tokens.css">
-<link rel="stylesheet" href="ui/date-picker.css">
-<script defer src="ui/date-picker.js"></script>
-<link rel="stylesheet" href="ui/actions.css">
-<script defer src="ui/actions.js"></script>
-<link rel="stylesheet" href="ui/fields.css">
-<link rel="stylesheet" href="ui/overlays.css">
-<script defer src="ui/overlays.js"></script>
-<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
 <script src="/staging-network-audit.js" defer></script>
 </head>
 <body data-app="ficha-manual">
@@ -966,12 +1007,12 @@ async function generarDescripcion(){
   }
 }
 
-// ── FOOTER DE MARCA ("Powered by Cecil" en cada página) ──
+// ── FOOTER DE MARCA ("Powered by Broquer" en cada página) ──
 function footer(id, pageNum, totalPages){
   return `<div class="ficha-footer">
     <div class="ft-brand">
-      <img src="/cecil/brand/cecil-icon.svg" alt="Cecil" onerror="this.src='/cecil/brand/cecil-wordmark.webp'"/>
-      <span>Powered by Cecil</span>
+      <img src="isotipo-white.png" alt="Broquer" onerror="this.src='logotipo-white.png'"/>
+      <span>Powered by Broquer</span>
     </div>
     <div class="ft-meta">
       ${id ? `<span class="ft-id">${id}</span>` : ''}
@@ -1042,7 +1083,7 @@ function buildFicha(d, fotos){
   const coverContent = `
     <div class="cover-hero-wrap">
       ${heroHTML}
-      <div class="cover-brandmark"><img src="/cecil/brand/cecil-wordmark.webp" alt="Cecil" onerror="this.style.display='none'"/></div>
+      <div class="cover-brandmark"><img src="logotipo-white.png" alt="Broquer" onerror="this.style.display='none'"/></div>
       ${totalFotos ? `<div class="cover-photocount">${ICO.photo}${totalFotos} foto${totalFotos===1?'':'s'}</div>` : ''}
     </div>
     <div class="cover-card">
@@ -1230,7 +1271,7 @@ async function generarFicha(){
     if (!pdfResp.ok) throw new Error('No se pudo obtener el PDF');
     const blob = await pdfResp.blob();
     if (window.broquerDeliverBlob) {
-      await window.broquerDeliverBlob(blob, data.filename || 'Ficha.pdf', { type:'application/pdf', title:'Ficha lista', text:'Ficha técnica generada por Cecil' });
+      await window.broquerDeliverBlob(blob, data.filename || 'Ficha.pdf', { type:'application/pdf', title:'Ficha lista', text:'Ficha técnica generada por Broquer' });
     } else {
       // URL del servidor, no un blob local: sigue siendo válida aunque esta
       // pestaña se cierre justo después (ver flujo "vino de un inmueble").

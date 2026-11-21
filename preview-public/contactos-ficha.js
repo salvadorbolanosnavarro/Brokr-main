@@ -1,4 +1,4 @@
-// Cecil · Directorio — la ficha del contacto.
+// Broquer · Directorio — la ficha del contacto.
 //
 // Misma superficie que la de Clientes (ver ficha-comun.js y el bloque FICHA
 // de brokr-theme.css), con lo propio del Directorio: aquí vive TODA la
@@ -176,7 +176,7 @@ function ctMenuProb(btn) {
 function ctMenuMas(btn) {
   if (!detContacto) return;
   const items = [{ id: 'editar', etiqueta: 'Editar contacto' }];
-  // En Cecil para Empresas solo el dueño o un administrador borra.
+  // En Broquer para Empresas solo el dueño o un administrador borra.
   if (cPuedeEliminar) items.push({ id: 'eliminar', etiqueta: 'Eliminar contacto', peligro: true, separa: true });
   bkAbrirMenu(btn, items, (v) => {
     if (v === 'editar') editarDesdeDetalle();
@@ -290,7 +290,7 @@ function ctRenderResumen(c) {
     html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Notas</h3><p class="bk-prosa">${esc(c.notas)}</p></div>`;
   }
   if (c.descripcion_privada) {
-    html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Perfil que arma Cecil IA</h3>
+    html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Perfil que arma Broq</h3>
       <p class="bk-prosa bk-prosa--broq">${esc(c.descripcion_privada)}</p></div>`;
   }
 

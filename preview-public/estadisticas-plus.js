@@ -42,7 +42,7 @@
     };
   }
 
-  var CANALES = { whatsapp: 'WhatsApp', sitio: 'Sitio web', bolsa: 'Bolsa Cecil', zapier: 'Zapier', easybroker: 'EasyBroker',
+  var CANALES = { whatsapp: 'WhatsApp', sitio: 'Sitio web', bolsa: 'Bolsa Broquer', zapier: 'Zapier', easybroker: 'EasyBroker',
     telefono: 'Llamada', manual: 'Captura manual', meta: 'Meta Lead Ads', portal: 'Portal inmobiliario', correo: 'Correo' };
   async function renderBuzon(body) {
     var esc = window.bkEsc;

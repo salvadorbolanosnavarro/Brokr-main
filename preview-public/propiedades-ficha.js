@@ -1,4 +1,4 @@
-// Cecil · Inmuebles — la ficha del inmueble.
+// Broquer · Inmuebles — la ficha del inmueble.
 //
 // Misma superficie que las de Clientes y Directorio (ficha-comun.js y el
 // bloque FICHA de brokr-theme.css), con lo propio de un inmueble: fotos,

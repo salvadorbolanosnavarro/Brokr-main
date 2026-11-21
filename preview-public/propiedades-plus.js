@@ -309,7 +309,7 @@
     data.caracteristicas = claves;
     var otras = String(data.otras_caracteristicas || '').trim();
     data.otras_caracteristicas = otras || null;
-    // amenidades (texto) se sigue llenando para lo que aún la lee (PDF, Cecil IA).
+    // amenidades (texto) se sigue llenando para lo que aún la lee (PDF, Broq).
     var am = claves.map(C.caractLabel).concat(otras ? otras.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : []);
     data.amenidades = am.length ? am : null;
     if (g('px-videos')) data.videos = C.ligas(g('px-videos').value, true);

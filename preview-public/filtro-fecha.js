@@ -1,4 +1,4 @@
-// Cecil · Filtro de fecha con periodo a la medida.
+// Broquer · Filtro de fecha con periodo a la medida.
 //
 // Se engancha a cualquier <select data-rango-fecha> de filtros de fecha
 // (hoy / esta semana / este mes…) y le agrega "Elegir periodo". Al elegirlo

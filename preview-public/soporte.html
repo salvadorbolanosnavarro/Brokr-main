@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Soporte · Cecil</title>
-<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
-<link rel="apple-touch-icon" href="/cecil/brand/cecil-icon.png"/>
+<title>Soporte — Broquer</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,7 +22,7 @@ body {
 
 /* ── Header ─────────────────────────────────────────────────── */
 .hdr {
-  background: var(--ui-paper);
+  background: var(--ink);
   padding: 20px 24px;
   display: flex;
   align-items: center;
@@ -38,29 +38,29 @@ body {
   font-family: var(--font-mono);
   font-size:var(--fs-h3);
   letter-spacing: 0.02em;
-  
-  color: var(--ui-muted);
+
+  color: rgba(255,255,255,0.45);
 }
 
 /* ── Hero ────────────────────────────────────────────────────── */
 .hero {
-  background: var(--ui-paper);
+  background: var(--ink);
   padding: 48px 24px 56px;
   text-align: center;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .hero h1 {
   font-family: var(--font-display);
-  font-size: var(--ui-text-title);
-  font-weight: 600;
-  color: var(--ui-ink);
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 800;
+  color: var(--paper);
   letter-spacing: -0.03em;
   margin-bottom: 12px;
   line-height: 1.15;
 }
 .hero p {
   font-size: var(--fs-sm);
-  color: var(--ui-muted);
+  color: rgba(255,255,255,0.55);
   max-width: 480px;
   margin: 0 auto;
   line-height: 1.6;
@@ -82,7 +82,7 @@ body {
   font-size:var(--fs-h3);
   font-weight: 600;
   letter-spacing: 0.02em;
-  
+
   color: var(--mute);
   margin-bottom: 6px;
 }
@@ -127,7 +127,7 @@ body {
   font-size:var(--fs-h3);
   font-weight: 600;
   letter-spacing: 0.02em;
-  
+
   color: var(--mute);
   margin-bottom: 4px;
 }
@@ -143,7 +143,9 @@ body {
 }
 .contact-value a:hover { text-decoration: underline; }
 .contact-btn {
-  margin: 12px 0 4px; cursor: pointer;
+  margin: 12px 0 4px; padding: 10px 20px; border-radius: var(--r-pill);
+  background: var(--sky-blue); color: var(--paper); border: 1px solid var(--sky-blue);
+  font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
 }
 .contact-note {
   font-size: var(--fs-sm);
@@ -171,7 +173,7 @@ body {
   border: none;
   padding: 16px 20px;
   font-family: var(--font-sans);
-  font-size: var(--ui-text-sm);
+  font-size: var(--fs-body);
   font-weight: 600;
   color: var(--ink);
   cursor: pointer;
@@ -260,37 +262,25 @@ body {
 @media (max-width: 480px) {
   .hdr { padding: 16px 20px; }
   .hero { padding: 36px 20px 44px; }
-  .hero h1 { font-size:var(--ui-text-mobile); }
   .wrap { padding: 32px 20px 64px; }
   .contact-card { flex-direction: column; gap: 14px; }
   .modules-grid { grid-template-columns: 1fr 1fr; }
 }
 </style>
-<link rel="stylesheet" href="styles/mobile-inputs.css">
-<script defer src="mobile-inputs.js"></script>
-<link rel="stylesheet" href="ui/tokens.css">
-<link rel="stylesheet" href="ui/date-picker.css">
-<script defer src="ui/date-picker.js"></script>
-<link rel="stylesheet" href="ui/actions.css">
-<script defer src="ui/actions.js"></script>
-<link rel="stylesheet" href="ui/fields.css">
-<link rel="stylesheet" href="ui/overlays.css">
-<script defer src="ui/overlays.js"></script>
-<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
 <script src="/staging-network-audit.js" defer></script>
 </head>
 <body>
 
 <!-- Header -->
 <header class="hdr">
-  <img src="/cecil/brand/cecil-wordmark.webp" alt="Cecil"/>
+  <img src="logo-broquer-blanco.png" alt="Broquer"/>
   <span class="hdr-badge">Centro de soporte</span>
 </header>
 
 <!-- Hero -->
 <div class="hero">
   <h1>¿En qué podemos ayudarte?</h1>
-  <p>Soporte oficial de Cecil para agentes inmobiliarios. Respondemos en menos de 24 horas hábiles.</p>
+  <p>Soporte oficial de Broquer para agentes inmobiliarios. Respondemos en menos de 24 horas hábiles.</p>
 </div>
 
 <!-- Contenido -->
@@ -321,12 +311,12 @@ body {
   <!-- Módulos -->
   <div class="section">
     <div class="section-label">La plataforma</div>
-    <div class="section-title">¿Qué incluye Cecil?</div>
+    <div class="section-title">¿Qué incluye Broquer?</div>
     <div class="modules-grid">
       <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Calculadora de ISR</div></div>
       <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Finanzas</div></div>
       <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Estimación de valor (AVM)</div></div>
-      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Asistente IA Cecil IA</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Asistente IA Broq</div></div>
       <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Generación de contratos</div></div>
       <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Anuncios en Facebook</div></div>
       <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Mis Inmuebles</div></div>
@@ -352,7 +342,7 @@ body {
           ¿Cómo funciona el módulo de Finanzas?
           <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div class="faq-a">En <strong>Finanzas</strong> registras tus ingresos y gastos, los ligas a propiedades para ver la utilidad real de cada operación, y llevas tus cuentas (banco, efectivo, tarjeta). <strong>Todo es editable en cualquier momento</strong>: montos, fechas, categorías y ligas; los saldos se recalculan solos. Cecil IA puede leer la foto de un ticket y proponerte el movimiento, y cuando marcas una propiedad como vendida o rentada con su comisión, Finanzas te propone registrarla como ingreso. El informe del periodo que elijas se descarga en PDF con la identidad de Cecil, y el detalle en CSV para tu contador. El módulo es informativo: no sustituye tu contabilidad fiscal ni a tu contador.</div>
+        <div class="faq-a">En <strong>Finanzas</strong> registras tus ingresos y gastos, los ligas a propiedades para ver la utilidad real de cada operación, y llevas tus cuentas (banco, efectivo, tarjeta). <strong>Todo es editable en cualquier momento</strong>: montos, fechas, categorías y ligas; los saldos se recalculan solos. Broq puede leer la foto de un ticket y proponerte el movimiento, y cuando marcas una propiedad como vendida o rentada con su comisión, Finanzas te propone registrarla como ingreso. El informe del periodo que elijas se descarga en PDF con la identidad de Broquer, y el detalle en CSV para tu contador. El módulo es informativo: no sustituye tu contabilidad fiscal ni a tu contador.</div>
       </div>
 
       <div class="faq-item" id="pago-meta-whatsapp">
@@ -361,18 +351,18 @@ body {
           <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="faq-a">
-          Sí, pero el cobro es de <strong>Meta (el dueño de WhatsApp), no de Cecil</strong>, y no está incluido en tu suscripción. Y no te alarmes: para la mayoría de agentes son unos cuantos cientos de pesos al mes, no algo que vaya a desbalancear tu negocio. Lo urgente de verdad es la fecha del método de pago (abajo).<br><br>
-          <strong>Cómo funcionan las ventanas.</strong> Cuando un prospecto te escribe, se abre una <strong>ventana de servicio de 24 horas</strong> desde su último mensaje; dentro de ella puedes contestar lo que quieras en texto libre — eso es lo que hace Recepción, y lo que tú escribes desde la bandeja de Cecil. Hasta ahora esos mensajes eran gratis sin límite. A partir del <strong>1 de octubre de 2026</strong>, siguen gratis los primeros <strong>1,000 mensajes de servicio por número al mes</strong>; de ahí en adelante cada uno cuesta según el tarifario de Meta para tu país (en México, del orden de <strong>$0.14 MXN por mensaje</strong> — cifra de referencia, puede cambiar). Si la ventana ya se cerró y necesitas retomar el contacto, se usa una plantilla aprobada: "utilidad" para avisos transaccionales (más barata) o "marketing" para campañas (bastante más cara). Los mensajes que tú mandas a mano desde la app de WhatsApp Business de tu celular <strong>siguen siendo gratis siempre</strong>, sin ventana y sin cuota — eso no pasa por la Cloud API conectada a Cecil.<br><br>
-          <strong>Truco para pagar menos:</strong> si le vas a contestar algo tú mismo a un cliente conocido o vas a mandar un mensaje suelto que no necesita que quede en la bandeja como gestión de Recepción, hazlo desde el WhatsApp de tu celular en vez de la bandeja de Cecil — te ahorras ese mensaje del contador mensual, sin ningún costo para ti.<br><br>
-          Lo urgente: Meta exige que tu número tenga un <strong>método de pago cargado directamente en tu propio Administrador comercial de Meta</strong> a más tardar el <strong>30 de septiembre de 2026</strong>. Si no lo tienes para esa fecha, Meta puede dejar de entregar tus mensajes el 1 de octubre — sin que Cecil pueda hacer nada al respecto, porque esa cuenta de WhatsApp Business es tuya, no de Cecil.<br><br>
+          Sí, pero el cobro es de <strong>Meta (el dueño de WhatsApp), no de Broquer</strong>, y no está incluido en tu suscripción. Y no te alarmes: para la mayoría de agentes son unos cuantos cientos de pesos al mes, no algo que vaya a desbalancear tu negocio. Lo urgente de verdad es la fecha del método de pago (abajo).<br><br>
+          <strong>Cómo funcionan las ventanas.</strong> Cuando un prospecto te escribe, se abre una <strong>ventana de servicio de 24 horas</strong> desde su último mensaje; dentro de ella puedes contestar lo que quieras en texto libre — eso es lo que hace Recepción, y lo que tú escribes desde la bandeja de Broquer. Hasta ahora esos mensajes eran gratis sin límite. A partir del <strong>1 de octubre de 2026</strong>, siguen gratis los primeros <strong>1,000 mensajes de servicio por número al mes</strong>; de ahí en adelante cada uno cuesta según el tarifario de Meta para tu país (en México, del orden de <strong>$0.14 MXN por mensaje</strong> — cifra de referencia, puede cambiar). Si la ventana ya se cerró y necesitas retomar el contacto, se usa una plantilla aprobada: "utilidad" para avisos transaccionales (más barata) o "marketing" para campañas (bastante más cara). Los mensajes que tú mandas a mano desde la app de WhatsApp Business de tu celular <strong>siguen siendo gratis siempre</strong>, sin ventana y sin cuota — eso no pasa por la Cloud API conectada a Broquer.<br><br>
+          <strong>Truco para pagar menos:</strong> si le vas a contestar algo tú mismo a un cliente conocido o vas a mandar un mensaje suelto que no necesita que quede en la bandeja como gestión de Recepción, hazlo desde el WhatsApp de tu celular en vez de la bandeja de Broquer — te ahorras ese mensaje del contador mensual, sin ningún costo para ti.<br><br>
+          Lo urgente: Meta exige que tu número tenga un <strong>método de pago cargado directamente en tu propio Administrador comercial de Meta</strong> a más tardar el <strong>30 de septiembre de 2026</strong>. Si no lo tienes para esa fecha, Meta puede dejar de entregar tus mensajes el 1 de octubre — sin que Broquer pueda hacer nada al respecto, porque esa cuenta de WhatsApp Business es tuya, no de Broquer.<br><br>
           <strong>Cómo agregarlo (te toma 2 minutos):</strong>
           <ol style="margin:8px 0 0 20px;padding:0;">
-            <li style="margin-bottom:6px;">Entra a <strong>business.facebook.com</strong> (Administrador comercial) con la misma cuenta de Facebook/Meta con la que conectaste tu número a Cecil.</li>
+            <li style="margin-bottom:6px;">Entra a <strong>business.facebook.com</strong> (Administrador comercial) con la misma cuenta de Facebook/Meta con la que conectaste tu número a Broquer.</li>
             <li style="margin-bottom:6px;">Ve a <strong>Configuración del negocio → Pagos</strong> (o, dentro del <strong>Administrador de WhatsApp</strong>, entra a tu cuenta de WhatsApp Business y busca <strong>Facturación</strong>).</li>
             <li style="margin-bottom:6px;">Agrega una tarjeta de crédito o débito válida.</li>
             <li>Confirma que quede activa como método de pago de esa cuenta de WhatsApp Business antes del 30 de septiembre.</li>
           </ol><br>
-          Cecil no participa en ese cobro, no ve ni guarda los datos de tu tarjeta ahí capturados, y esa gestión es responsabilidad tuya directamente frente a Meta. Puedes leer el detalle completo, con más ejemplos en pesos y más consejos para ahorrar, en nuestro <a href="blog.html?art=whatsapp-cobro-meta-octubre-2026">artículo del blog</a>, y el texto legal en el <a href="legal.html#whatsapp">Anexo de WhatsApp</a> de los Términos y Condiciones.
+          Broquer no participa en ese cobro, no ve ni guarda los datos de tu tarjeta ahí capturados, y esa gestión es responsabilidad tuya directamente frente a Meta. Puedes leer el detalle completo, con más ejemplos en pesos y más consejos para ahorrar, en nuestro <a href="blog.html?art=whatsapp-cobro-meta-octubre-2026">artículo del blog</a>, y el texto legal en el <a href="legal.html#whatsapp">Anexo de WhatsApp</a> de los Términos y Condiciones.
         </div>
       </div>
 
@@ -389,7 +379,7 @@ body {
           Respondí un chat yo mismo y la IA dejó de contestar, ¿por qué?
           <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div class="faq-a">Es a propósito: en cuanto tú respondes a mano (desde Cecil o desde el WhatsApp de tu celular), la IA se hace a un lado en ese chat para que no contesten dos "personas" al mismo prospecto. En <strong>WhatsApp → Recepción IA</strong> eliges si se hace a un lado para siempre (hasta que la vuelvas a encender en ese chat) o solo por un rato: 30 minutos, 1 hora, 8 horas o 24 horas. También puedes desactivar ese comportamiento. Para reactivarla en un chat, abre la conversación y pon el control de IA en Auto o Encendida.</div>
+        <div class="faq-a">Es a propósito: en cuanto tú respondes a mano (desde Broquer o desde el WhatsApp de tu celular), la IA se hace a un lado en ese chat para que no contesten dos "personas" al mismo prospecto. En <strong>WhatsApp → Recepción IA</strong> eliges si se hace a un lado para siempre (hasta que la vuelvas a encender en ese chat) o solo por un rato: 30 minutos, 1 hora, 8 horas o 24 horas. También puedes desactivar ese comportamiento. Para reactivarla en un chat, abre la conversación y pon el control de IA en Auto o Encendida.</div>
       </div>
 
       <div class="faq-item">
@@ -421,7 +411,7 @@ body {
           ¿La app funciona sin conexión a internet?
           <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div class="faq-a">Cecil requiere conexión a internet para funcionar, ya que la mayoría de sus herramientas (asistente de IA, AVM, generación de documentos) dependen de procesamiento en la nube. Algunas vistas previamente cargadas pueden consultarse brevemente sin conexión.</div>
+        <div class="faq-a">Broquer requiere conexión a internet para funcionar, ya que la mayoría de sus herramientas (asistente de IA, AVM, generación de documentos) dependen de procesamiento en la nube. Algunas vistas previamente cargadas pueden consultarse brevemente sin conexión.</div>
       </div>
 
       <div class="faq-item">
@@ -437,7 +427,7 @@ body {
           ¿Mis datos y los de mis clientes están seguros?
           <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div class="faq-a">Sí. Cecil almacena toda la información en servidores con cifrado en tránsito (TLS) y en reposo. Cada cuenta está completamente aislada y nunca compartimos datos con terceros con fines comerciales. Consulta nuestro <a href="legal.html">Aviso de Privacidad</a> para más detalle.</div>
+        <div class="faq-a">Sí. Broquer almacena toda la información en servidores con cifrado en tránsito (TLS) y en reposo. Cada cuenta está completamente aislada y nunca compartimos datos con terceros con fines comerciales. Consulta nuestro <a href="legal.html">Aviso de Privacidad</a> para más detalle.</div>
       </div>
 
       <div class="faq-item">
@@ -458,7 +448,7 @@ body {
 
       <div class="faq-item">
         <button class="faq-q" onclick="toggle(this)">
-          Ya tengo cuenta en Cecil. ¿Puedo unirme al equipo de una empresa?
+          Ya tengo cuenta en Broquer. ¿Puedo unirme al equipo de una empresa?
           <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="faq-a">Sí, sin borrar ni recrear nada. El dueño de la empresa te envía una invitación desde su módulo de <strong>Equipo</strong>; abres el link, entras con tu cuenta de siempre y con un toque quedas dentro. Si aún no tienes cuenta, el mismo link te guía a crearla con el correo de la invitación y, al confirmar tu correo, regresas automáticamente a la invitación para aceptarla. Solo puedes pertenecer a una organización a la vez, y la invitación únicamente funciona con el correo al que fue enviada.</div>
@@ -485,15 +475,15 @@ body {
           ¿Qué es el sello "Certificado NOM-151" que veo en algunos documentos firmados?
           <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div class="faq-a">Es una capa adicional y opcional, no un requisito. Tu firma electrónica en Cecil (trazo + código de verificación por WhatsApp o correo + bitácora completa de IP, hora y dispositivo) ya es válida por sí misma bajo los artículos 89 a 114 del Código de Comercio, y un documento queda "completo" en cuanto todas las partes firman. Cuando además hay un Proveedor de Servicios de Certificación (PSC) acreditado por la Secretaría de Economía contratado, Cecil le manda ese mismo PDF final para que emita su propia Constancia de Conservación NOM-151 sobre él. Si esa constancia se emitió, verás el folio del PSC y el badge "Certificado NOM-151" al verificar el documento por su folio; si no aparece, el documento sigue siendo válido igual, simplemente no tiene (todavía) ese sello extra.</div>
+        <div class="faq-a">Es una capa adicional y opcional, no un requisito. Tu firma electrónica en Broquer (trazo + código de verificación por WhatsApp o correo + bitácora completa de IP, hora y dispositivo) ya es válida por sí misma bajo los artículos 89 a 114 del Código de Comercio, y un documento queda "completo" en cuanto todas las partes firman. Cuando además hay un Proveedor de Servicios de Certificación (PSC) acreditado por la Secretaría de Economía contratado, Broquer le manda ese mismo PDF final para que emita su propia Constancia de Conservación NOM-151 sobre él. Si esa constancia se emitió, verás el folio del PSC y el badge "Certificado NOM-151" al verificar el documento por su folio; si no aparece, el documento sigue siendo válido igual, simplemente no tiene (todavía) ese sello extra.</div>
       </div>
 
       <div class="faq-item">
         <button class="faq-q" onclick="toggle(this)">
-          ¿En qué países está disponible Cecil?
+          ¿En qué países está disponible Broquer?
           <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div class="faq-a">Cecil está disponible actualmente en México. Nos encontramos en proceso de expansión a otros países de América Latina. Si tienes interés desde otro país, escríbenos a <a href="mailto:hola@broquer.app">hola@broquer.app</a>.</div>
+        <div class="faq-a">Broquer está disponible actualmente en México. Nos encontramos en proceso de expansión a otros países de América Latina. Si tienes interés desde otro país, escríbenos a <a href="mailto:hola@broquer.app">hola@broquer.app</a>.</div>
       </div>
 
     </div>
@@ -504,12 +494,12 @@ body {
 <!-- Footer -->
 <footer class="footer">
   <p>
-    Cecil — Salvador Bolaños Navarro · Morelia, Michoacán, México<br/>
+    Broquer — Salvador Bolaños Navarro · Morelia, Michoacán, México<br/>
     <a href="mailto:hola@broquer.app">hola@broquer.app</a> ·
     <a href="legal.html">Aviso de privacidad</a> ·
     <a href="legal.html">Términos y condiciones</a>
   </p>
-  <p style="margin-top:6px;">© 2025 Cecil. Todos los derechos reservados.</p>
+  <p style="margin-top:6px;">© 2025 Broquer. Todos los derechos reservados.</p>
 </footer>
 
 <script>

@@ -5,7 +5,7 @@
 
    Antes cada uno tenía su propio arreglo QUOTES, sin sincronía entre
    ellos — así fue como una frase que contradice lo que el propio
-   WhatsApp de Cecil promete ("Nadie recuerda cuánto tardaste en
+   WhatsApp de Broquer promete ("Nadie recuerda cuánto tardaste en
    contestar. Todos recuerdan si contestaste.") vivió sola en el de
    Inicio sin que nadie la viera reflejada (o filtrada) en el resto de
    la app. Con un solo arreglo, revisar/editar las frases es revisar

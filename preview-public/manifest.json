@@ -1,6 +1,6 @@
 {
-  "name": "Cecil",
-  "short_name": "Cecil",
+  "name": "Broquer",
+  "short_name": "Broquer",
   "description": "El más potente aliado de IA para el agente inmobiliario de LATAM",
   "start_url": "/",
   "display": "standalone",
@@ -9,9 +9,9 @@
   "orientation": "portrait-primary",
   "lang": "es-MX",
   "icons": [
-    { "src": "/cecil/brand/cecil-icon.svg", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/cecil/brand/cecil-icon.svg", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "/cecil/brand/cecil-icon.svg", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/cecil/brand/cecil-icon.svg", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "isotipo-black.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "isotipo-black.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "isotipo-black.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "isotipo-black.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

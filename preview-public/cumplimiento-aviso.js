@@ -274,7 +274,7 @@
   }
 
   /* ══ CICLO DEL AVISO: pasos, alertas, estados y acciones ══════════
-     Cecil no puede subir el aviso ni ver la respuesta del SAT: el agente
+     Broquer no puede subir el aviso ni ver la respuesta del SAT: el agente
      lo sube al SPPLD y registra aquí cada paso. Esta parte le dice siempre
      en qué paso va cada aviso y qué sigue. */
   function host() { return window.cpHost || {}; }
@@ -357,7 +357,7 @@
     if (caja && pasos.length) {
       caja.innerHTML = '<div class="bk-card bk-card--pad">' +
         '<div class="cp-bloque__t">Cómo presentar tu aviso</div>' +
-        '<div class="cp-bloque__d">Cecil arma el archivo con el formato oficial; subirlo al portal del SAT lo haces tú con tu e.firma, porque el SAT no permite que otro sistema lo envíe.</div>' +
+        '<div class="cp-bloque__d">Broquer arma el archivo con el formato oficial; subirlo al portal del SAT lo haces tú con tu e.firma, porque el SAT no permite que otro sistema lo envíe.</div>' +
         '<ol style="margin:var(--sp-3) 0 0;padding-left:var(--sp-6);font-size:var(--fs-sm);line-height:var(--lh);">' +
         pasos.map(function (p) { return '<li style="margin-top:var(--sp-2);">' + esc(p) + '</li>'; }).join('') +
         '</ol><div class="cp-sub" style="margin-top:var(--sp-3);">Portal del SAT: ' +

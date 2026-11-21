@@ -41,10 +41,10 @@ self.addEventListener('fetch', e => {
 // ── PUSH NOTIFICATIONS ──
 self.addEventListener('push', e => {
   const data = e.data ? e.data.json() : {};
-  e.waitUntil(self.registration.showNotification(data.title || 'Cecil', {
+  e.waitUntil(self.registration.showNotification(data.title || 'Broquer', {
     body: data.body || 'Tu tarea está lista.',
-    icon: '/cecil/brand/cecil-icon.svg',
-    badge: '/cecil/brand/cecil-icon.svg',
+    icon: '/isotipo-black.png',
+    badge: '/isotipo-black.png',
     vibrate: [200, 100, 200],
     data: { url: data.url || '/' }
   }));

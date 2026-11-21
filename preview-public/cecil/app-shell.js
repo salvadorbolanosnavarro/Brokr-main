@@ -21,40 +21,6 @@
   });
 
   /* ── Sentry — errores de producción (no carga en localhost) ── */
-  (function initSentry() {
-    const h = window.location.hostname;
-    if (h !== 'broquer.app' && h !== 'www.broquer.app') return;
-    const s = document.createElement('script');
-    s.src = 'https://js.sentry-cdn.com/266e3bda223d2a0a211074bde709f4e8.min.js';
-    s.crossOrigin = 'anonymous';
-    s.onload = function () {
-      if (!window.Sentry || typeof Sentry.onLoad !== 'function') return;
-      // El Loader Script de Sentry expone de inmediato un shim chiquito
-      // (onLoad/forceLoad y poco más) mientras baja el SDK completo en
-      // segundo plano — "onload" de este <script> solo significa que ESE
-      // shim ya existe, no que setTag/setUser ya estén disponibles. Llamarlos
-      // aquí directo tiraba "Sentry.setTag is not a function" en cada carga.
-      // Sentry.onLoad() sí es parte del shim y encola el callback hasta que
-      // el SDK real termine de cargar — es el patrón que Sentry documenta
-      // para el Loader Script.
-      Sentry.onLoad(function () {
-        // Etiqueta el módulo activo (ej. "isr", "avm") para filtrar en Sentry por página
-        const mod = (document.body && document.body.dataset.app)
-          ? document.body.dataset.app
-          : (location.pathname.split('/').pop() || 'index').replace('.html', '');
-        Sentry.setTag('modulo', mod);
-        // Si el usuario ya tiene sesión, adjunta su correo al reporte
-        try {
-          const u = JSON.parse(
-            localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'
-          );
-          if (u && u.email) Sentry.setUser({ email: u.email, id: u.id || undefined });
-        } catch (_) {}
-      });
-    };
-    document.head.appendChild(s);
-  })();
-
   /* ── Config ── */
   const API_BASE = 'https://brokr-main-staging.up.railway.app';
   const SB_URL   = 'https://tymhlvawnqadqgwnpruk.supabase.co';
@@ -4255,6 +4221,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   async function boot() {
     const profile = await authInit();
     if (!profile) return; // redirected to login/landing
+    const pilot=document.createElement('script');pilot.src='/staging-pilot.js';pilot.onload=()=>window.bkCecilRollout?.({api:location.origin,token:getToken(),userId:profile.user.id});document.head.appendChild(pilot);
 
     // Un admin puede apagar módulos por cuenta desde la Consola, sin tocar
     // el rol ni la suscripción. Si el módulo de esta página está apagado

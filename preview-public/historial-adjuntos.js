@@ -1,4 +1,4 @@
-// Cecil · Adjuntos de historial — fotos, videos y archivos ligados a una
+// Broquer · Adjuntos de historial — fotos, videos y archivos ligados a una
 // nota de "actividades" (Directorio/Contactos, Clientes e Inmuebles).
 // Módulo compartido para no triplicar esta lógica en cada página (ver
 // scripts/architecture_debt.py: contactos.html y propiedades.html tienen

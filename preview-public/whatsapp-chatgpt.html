@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#081C4E" /><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
-  <title>WhatsApp de ChatGPT · Cecil</title>
+  <title>WhatsApp de ChatGPT · Broquer</title>
   <link rel="stylesheet" href="brokr-theme.css" />
   <style>
     .wac-page { min-height:100%; background:var(--paper); padding:var(--sp-4) var(--pad-x) var(--sp-10); }
@@ -17,7 +17,11 @@
     .wac-sub { color:var(--ink-2); font-size:var(--fs-body); line-height:var(--lh); max-width:850px; }
     .wac-actions,.wac-row { display:flex; gap:var(--sp-2); flex-wrap:wrap; align-items:center; }
     .wac-actions { margin-top:var(--sp-5); }
-    .wac-btn { cursor:pointer; text-decoration:none; transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease); }
+    .wac-btn { min-height:var(--h-sm); border:1px solid var(--line-2); background:var(--paper); color:var(--ink); border-radius:var(--r-sm); padding:0 var(--sp-4); font:700 var(--fs-sm)/1 var(--font-sans); cursor:pointer; text-decoration:none; transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease); }
+    .wac-btn:hover { background:var(--paper-2); border-color:var(--sky-blue-lift); }
+    .wac-btn.primary { background:var(--sky-blue); border-color:var(--sky-blue); color:var(--paper); }
+    .wac-btn.primary:hover { background:var(--sky-blue-press); border-color:var(--sky-blue-press); }
+    .wac-btn.green { background:var(--success); border-color:var(--success); color:var(--paper); }
     .wac-btn:disabled { opacity:.5; cursor:not-allowed; }
     .wac-status { padding:var(--sp-5); display:grid; gap:var(--sp-4); }
     .wac-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-2); }
@@ -28,7 +32,7 @@
     .wac-head { padding:var(--sp-4); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
     .wac-head h2 { font-size:var(--fs-sm); margin:0; }
     .wac-body { padding:var(--sp-4); }
-    .wac-number { width:100%; border:1px solid var(--line); background:var(--paper); border-radius:var(--ui-radius); padding:var(--sp-3); text-align:left; margin-bottom:var(--sp-2); cursor:pointer; display:flex; gap:var(--sp-3); align-items:center; font-family:var(--font-sans); }
+    .wac-number { width:100%; border:1px solid var(--line); background:var(--paper); border-radius:var(--r); padding:var(--sp-3); text-align:left; margin-bottom:var(--sp-2); cursor:pointer; display:flex; gap:var(--sp-3); align-items:center; font-family:var(--font-sans); }
     .wac-number:hover { background:var(--paper-2); }
     .wac-number.is-active { background:var(--sky-canvas); border-color:var(--sky-blue); }
     .wac-avatar { width:40px; height:40px; border-radius:var(--r-sm); background:var(--sky-navy); color:var(--paper); display:grid; place-items:center; font-weight:800; }
@@ -63,17 +67,6 @@
     @media (max-width:1100px) { .wac-hero,.wac-grid { grid-template-columns:1fr; } .wac-feed { max-height:none; } }
     @media (max-width:720px) { .wac-page { padding:var(--sp-3) var(--sp-3) var(--sp-20); } .wac-kpis { grid-template-columns:1fr; } .wac-msg { max-width:92%; } .wac-title{font-size:var(--fs-h1);line-height:var(--lh-h1);} }
   </style>
-<link rel="stylesheet" href="styles/mobile-inputs.css">
-<script defer src="mobile-inputs.js"></script>
-<link rel="stylesheet" href="ui/tokens.css">
-<link rel="stylesheet" href="ui/date-picker.css">
-<script defer src="ui/date-picker.js"></script>
-<link rel="stylesheet" href="ui/actions.css">
-<script defer src="ui/actions.js"></script>
-<link rel="stylesheet" href="ui/fields.css">
-<link rel="stylesheet" href="ui/overlays.css">
-<script defer src="ui/overlays.js"></script>
-<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
 <script src="/staging-network-audit.js" defer></script>
 </head>
 <body data-app="whatsapp-chatgpt">
@@ -82,8 +75,8 @@
       <section class="wac-hero">
         <article class="wac-card wac-intro">
           <span class="wac-eyebrow">URL-only · conexión real</span>
-          <h1 class="wac-title">WhatsApp de ChatGPT para Cecil.</h1>
-          <p class="wac-sub">Conecta uno o varios números con Meta Embedded Signup, centraliza chats por número o todos a la vez y activa a Cecil para responder, calificar, anotar, buscar inmuebles y agendar citas.</p>
+          <h1 class="wac-title">WhatsApp de ChatGPT para Broquer.</h1>
+          <p class="wac-sub">Conecta uno o varios números con Meta Embedded Signup, centraliza chats por número o todos a la vez y activa a Broquer para responder, calificar, anotar, buscar inmuebles y agendar citas.</p>
           <div class="wac-actions">
             <button class="wac-btn primary" id="connectBtn">Conectar mi número ahora</button>
             <button class="wac-btn" id="reloadBtn">Actualizar conexión</button>
@@ -124,7 +117,7 @@
               <button class="wac-btn" id="simulateBtn">Simular</button>
             </div>
             <div id="leadCard" class="wac-note"></div>
-            <div class="wac-note"><b>Inmuebles sugeridos</b><p id="propertyMatches">Conecta el número y Cecil podrá usar el inventario para proponer fichas según la búsqueda del prospecto.</p></div>
+            <div class="wac-note"><b>Inmuebles sugeridos</b><p id="propertyMatches">Conecta el número y Broquer podrá usar el inventario para proponer fichas según la búsqueda del prospecto.</p></div>
             <button class="wac-btn primary" id="scheduleBtn">Agendar cita</button>
           </div>
         </aside>
@@ -138,7 +131,7 @@
       <label>Número destino con lada</label>
       <input id="testTo" class="wac-input" placeholder="5215512345678" />
       <label>Mensaje</label>
-      <textarea id="testBody" class="wac-area">Hola, soy Cecil. Tu número quedó conectado correctamente a WhatsApp de ChatGPT.</textarea>
+      <textarea id="testBody" class="wac-area">Hola, soy Broquer. Tu número quedó conectado correctamente a WhatsApp de ChatGPT.</textarea>
       <div class="wac-row" style="margin-top:var(--sp-3)">
         <button class="wac-btn primary" id="sendTestBtn">Enviar por WhatsApp</button>
         <button class="wac-btn" id="closeTestBtn">Cerrar</button>
@@ -185,12 +178,12 @@
             alertBox($('#setupAlert'), 'Backend casi listo. Faltan variables: ' + cfg.missing.join(', ') + '. Configúralas y vuelve a cargar.', 'bad');
             $('#connectBtn').disabled = true;
           } else {
-            alertBox($('#setupAlert'), 'Listo para conectar. Se abrirá Meta Embedded Signup y al terminar guardaremos el número en Cecil.', 'ok');
+            alertBox($('#setupAlert'), 'Listo para conectar. Se abrirá Meta Embedded Signup y al terminar guardaremos el número en Broquer.', 'ok');
           }
           await loadNumbers();
           loadSdk();
         } catch (e) {
-          alertBox($('#setupAlert'), e.message.includes('Inicia sesión') ? 'Inicia sesión en Cecil antes de conectar WhatsApp.' : e.message, 'bad');
+          alertBox($('#setupAlert'), e.message.includes('Inicia sesión') ? 'Inicia sesión en Broquer antes de conectar WhatsApp.' : e.message, 'bad');
           $('#connectBtn').disabled = true;
           renderNumbers();
           renderFeed();
@@ -232,10 +225,10 @@
       function renderFeed() {
         const list = chats();
         $('#feed').innerHTML = numbers.length
-          ? list.map((c) => `<div class="wac-msg in">${esc(c.in)}<small>${esc(c.name)} · ${esc(c.need)} · score ${c.score}</small></div><div class="wac-msg out">${esc(c.out)}<small>Cecil · ${c.handoff ? 'requiere handoff' : 'respuesta automática'}</small></div>`).join('')
+          ? list.map((c) => `<div class="wac-msg in">${esc(c.in)}<small>${esc(c.name)} · ${esc(c.need)} · score ${c.score}</small></div><div class="wac-msg out">${esc(c.out)}<small>Broquer · ${c.handoff ? 'requiere handoff' : 'respuesta automática'}</small></div>`).join('')
           : '<div class="wac-note"><b>Conecta tu número ahora</b><p>Cuando Meta confirme el número, aquí verás conversaciones reales. Esta pantalla ya está conectada al backend nuevo para guardar varios números y enviar pruebas.</p></div>';
         const c = list[0] || sampleChats[0];
-        $('#leadCard').innerHTML = '<b>Prospecto seleccionado</b><p>' + esc(c.name) + ' · score ' + c.score + ' · ' + (c.handoff ? 'pasar al usuario' : 'Cecil puede continuar') + '</p>';
+        $('#leadCard').innerHTML = '<b>Prospecto seleccionado</b><p>' + esc(c.name) + ' · score ' + c.score + ' · ' + (c.handoff ? 'pasar al usuario' : 'Broquer puede continuar') + '</p>';
       }
       function connect() {
         if (!window.FB) {
@@ -267,8 +260,8 @@
         if (e.target.id === 'openTestBtn') $('#testModal').classList.add('is-open');
         if (e.target.id === 'closeTestBtn') $('#testModal').classList.remove('is-open');
         if (e.target.id === 'saveIdentity') { localStorage.setItem('broquer_wac_identity', $('#identity').value); alertBox($('#setupAlert'), 'Entrenamiento guardado localmente.', 'ok'); }
-        if (e.target.id === 'simulateBtn') alertBox($('#setupAlert'), 'Simulación: Cecil respondería con tu tono y pediría presupuesto/zona si falta.', 'ok');
-        if (e.target.id === 'scheduleBtn') alertBox($('#setupAlert'), 'Agenda: Cecil propondrá horarios y escalará cuando el prospecto acepte una cita.', 'ok');
+        if (e.target.id === 'simulateBtn') alertBox($('#setupAlert'), 'Simulación: Broquer respondería con tu tono y pediría presupuesto/zona si falta.', 'ok');
+        if (e.target.id === 'scheduleBtn') alertBox($('#setupAlert'), 'Agenda: Broquer propondrá horarios y escalará cuando el prospecto acepte una cita.', 'ok');
         if (e.target.id === 'sendTestBtn') sendTest();
       });
       async function sendTest() {

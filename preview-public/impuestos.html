@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Impuestos por venta · Cecil</title>
-<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
+<title>Broquer — Impuestos por venta</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
@@ -35,15 +35,6 @@
     .imp-grid { grid-template-columns: minmax(0, 1fr); }
   }
 </style>
-<link rel="stylesheet" href="ui/tokens.css">
-<link rel="stylesheet" href="ui/date-picker.css">
-<link rel="stylesheet" href="ui/actions.css">
-<link rel="stylesheet" href="ui/fields.css">
-<link rel="stylesheet" href="ui/overlays.css">
-<script defer src="ui/date-picker.js"></script>
-<script defer src="ui/actions.js"></script>
-<script defer src="ui/overlays.js"></script>
-<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
 <script src="/staging-network-audit.js" defer></script>
 </head>
 <body data-app="impuestos">
@@ -187,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (p.uvt && !g('imp-uvt').value) g('imp-uvt').value = p.uvt.toLocaleString(cfg.locale);
     if (p.uit && !g('imp-uit').value) g('imp-uit').value = p.uit.toLocaleString(cfg.locale);
     if (!g('imp-fventa').value) g('imp-fventa').value = new Date().toISOString().slice(0, 10);
-    // Lo que pidió Cecil IA (mismo canal que isr.html: "llenar_isr").
+    // Lo que pidió Broq (mismo canal que isr.html: "llenar_isr").
     try {
       var d = JSON.parse(sessionStorage.getItem('shaark_isr') || 'null');
       if (d) {
@@ -237,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function () {
   g('imp-calc').addEventListener('click', calcular);
   g('imp-copiar').addEventListener('click', function () {
     if (!ultimo) return;
-    var txt = [bkPaisCfg().impuesto.nombre + ' — estimación Cecil']
+    var txt = [bkPaisCfg().impuesto.nombre + ' — estimación Broquer']
       .concat(ultimo.lineas.map(function (l) { return l.l + ': ' + fmt(l.v); }))
       .concat(ultimo.avisos.map(function (a) { return '• ' + a; }))
       .join('\n');

@@ -91,13 +91,13 @@ function slugDesdeUrl() {
 
 /* ── Estados especiales ────────────────────────────────────────────────── */
 function renderNoEncontrado() {
-  document.title = 'Página no encontrada · Cecil';
+  document.title = 'Página no encontrada · Broquer';
   document.getElementById('sitio-root').innerHTML = `
     <div class="nf-wrap">
       <div class="nf-box">
         <h1>Este sitio no existe</h1>
-        <p>El link que buscas no está activo o no existe. Si eres el dueño de este sitio, revisa que esté activado en tu panel de Cecil.</p>
-        <a class="nf-link" href="https://broquer.app">Ir a Cecil →</a>
+        <p>El link que buscas no está activo o no existe. Si eres el dueño de este sitio, revisa que esté activado en tu panel de Broquer.</p>
+        <a class="nf-link" href="https://broquer.app">Ir a Broquer →</a>
       </div>
     </div>
   `;
@@ -318,7 +318,7 @@ function render(perfil, testimonios) {
       </div>
       <div class="st-footer__bar">
         <span>© ${new Date().getFullYear()} ${esc(perfil.nombre_publico || '')}</span>
-        <a href="https://broquer.app" class="st-credito">Hecho con Cecil</a>
+        <a href="https://broquer.app" class="st-credito">Hecho con Broquer</a>
       </div>
     </footer>
   `;
@@ -562,7 +562,7 @@ function enviarContacto(ev) {
   const mensaje = document.getElementById('cf-mensaje').value.trim();
   const hp = (document.getElementById('cf-sitio-web') || {}).value || '';
 
-  // Registro del lead en Cecil (no bloqueante; keepalive sobrevive a la navegación)
+  // Registro del lead en Broquer (no bloqueante; keepalive sobrevive a la navegación)
   const slug = slugDesdeUrl();
   if (slug && nombre) {
     try {

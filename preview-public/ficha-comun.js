@@ -1,4 +1,4 @@
-// Cecil · Ficha — las piezas que comparten Clientes, Directorio e Inmuebles.
+// Broquer · Ficha — las piezas que comparten Clientes, Directorio e Inmuebles.
 //
 // Los tres módulos abren el mismo tipo de pantalla de detalle, y hasta ahora
 // cada uno traía su propia copia del menú de estado y del feed de historial,
@@ -181,7 +181,7 @@ function bkRenderBitacora(entradas, titulos) {
 // automático de lo que pasó, no algo que tenga sentido "corregir".
 const BK_TIPOS_EDITABLES = ['nota', 'archivo'];
 
-// En Cecil para Empresas solo el dueño o un administrador borra notas.
+// En Broquer para Empresas solo el dueño o un administrador borra notas.
 // Cada página resuelve el permiso con /org: cPuedeEliminar (contactos y
 // clientes) o puedeEliminar (propiedades). Sin permiso resuelto, no se borra.
 function bkPuedeBorrar() {

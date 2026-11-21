@@ -105,7 +105,7 @@
     textos('.card-title', 'Arrendador (propietario)', v.arrendador + ' (propietario)');
     textos('.card-title', 'Arrendatario (inquilino)', v.arrendatario + ' (inquilino)');
     textos('.card-title', 'Datos de escritura pública del vendedor', 'Título de propiedad del vendedor');
-    textos('.doc-menu-sub', 'Formato estándar de Cecil', 'Formato de Cecil para ' + cfg.nombre);
+    textos('.doc-menu-sub', 'Formato estándar de Broquer', 'Formato de Broquer para ' + cfg.nombre);
     selectorMoneda(cfg);
     aplicarMoneda(document.getElementById('ct-moneda') ? document.getElementById('ct-moneda').value : cfg.monedas[0]);
   }

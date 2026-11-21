@@ -1,4 +1,4 @@
-// capacitor-bridge.js — puente nativo iOS para Cecil.
+// capacitor-bridge.js — puente nativo iOS para Broquer.
 // No-op cuando se carga desde un navegador web normal.
 // Solo se activa cuando window.Capacitor.isNativePlatform() === true (iOS app).
 //
@@ -141,7 +141,7 @@
       }
 
       // El permiso se pide una sola vez. Si el agente dijo que no, iOS ya no
-      // vuelve a preguntar: tiene que ir a Ajustes > Cecil > Notificaciones.
+      // vuelve a preguntar: tiene que ir a Ajustes > Broquer > Notificaciones.
       let perm = await PushNotifications.checkPermissions();
       if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
         perm = await PushNotifications.requestPermissions();

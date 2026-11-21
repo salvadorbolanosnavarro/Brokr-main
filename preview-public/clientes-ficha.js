@@ -1,4 +1,4 @@
-// Cecil · Clientes — la ficha del cliente.
+// Broquer · Clientes — la ficha del cliente.
 //
 // Vive fuera de clientes.html por dos razones: ese archivo ya rozaba el techo
 // de bytes de scripts/architecture_debt.py, y la ficha es una superficie con
@@ -83,7 +83,7 @@ function clDescartarBorrador() {
   clQuitarPropNota();
 }
 
-/* Asignación de agente (solo cuentas Cecil para Empresas). */
+/* Asignación de agente (solo cuentas Broquer para Empresas). */
 function clRenderAsignacion(c) {
   const wrap = document.getElementById('f-asignado');
   if (!cEsEmpresa || !cMiembros.length) { wrap.hidden = true; return; }
@@ -146,7 +146,7 @@ function clMenuProb(btn) {
 function clMenuMas(btn) {
   if (!detContacto) return;
   const items = [{ id: 'editar', etiqueta: 'Editar cliente' }];
-  // En Cecil para Empresas solo el dueño o un administrador borra.
+  // En Broquer para Empresas solo el dueño o un administrador borra.
   if (cPuedeEliminar) items.push({ id: 'eliminar', etiqueta: 'Eliminar cliente', peligro: true, separa: true });
   bkAbrirMenu(btn, items, (v) => {
     if (v === 'editar') editarDesdeDetalle();
@@ -275,7 +275,7 @@ function clRenderResumen(c) {
     html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Notas</h3><p class="bk-prosa">${esc(c.notas)}</p></div>`;
   }
   if (c.descripcion_privada) {
-    html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Perfil que arma Cecil IA</h3>
+    html += `<div class="bk-bloque"><h3 class="bk-bloque__t">Perfil que arma Broq</h3>
       <p class="bk-prosa bk-prosa--broq">${esc(c.descripcion_privada)}</p></div>`;
   }
 

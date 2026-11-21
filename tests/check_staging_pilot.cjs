@@ -1,0 +1,25 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+(async()=>{
+ const source=fs.readFileSync('scripts/staging_pilot_worker.js','utf8');
+ const {pilotRequest}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+ const a='bd7e565d-c0c7-46d1-9cc2-70399ed97a91',b='04ccf4d1-e0c8-454c-b97f-e006066db7c4';let enabled=true,calls=[];
+ const upstream=async(url,opts={})=>{calls.push({url,opts});
+  if(url.endsWith('/auth/v1/user'))return Response.json({id:opts.headers.Authorization==='Bearer A'?a:b});
+  if(url.includes('/rest/v1/cecil_staging_pilot'))return Response.json(opts.headers.Authorization==='Bearer A'?[{user_id:a,enabled}]:[]);
+  if(url.includes('.ingest.us.sentry.io/'))return Response.json({id:'accepted'});
+  if(url.endsWith('/rest/v1/cecil_staging_error_receipts'))return new Response(null,{status:201});
+  throw Error('Unexpected host or route');
+ };
+ const make=(path,token='A',body)=>new Request('https://work-cecil-staging-preview-2.broquer-staging.pages.dev'+path,{method:body?'POST':'GET',headers:token?{Authorization:'Bearer '+token,'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+ assert.equal((await pilotRequest(make('/ui/cecil',''),upstream)).status,401);
+ let r=await pilotRequest(make('/ui/cecil'),upstream);assert.equal((await r.json()).enabled,true);assert.match(r.headers.get('Set-Cookie'),/HttpOnly/);assert.match(r.headers.get('Cache-Control'),/private/);
+ r=await pilotRequest(make('/ui/cecil','B'),upstream);assert.equal((await r.json()).enabled,false);
+ enabled=false;r=await pilotRequest(make('/ui/cecil'),upstream);assert.equal((await r.json()).enabled,false);enabled=true;
+ r=await pilotRequest(make('/__staging/error-probe','B',{probe:'controlled-error-v1'}),upstream);assert.equal(r.status,403);assert.equal(calls.filter(c=>c.url.includes('.ingest.')).length,0);
+ r=await pilotRequest(make('/__staging/error-probe','A',{probe:'controlled-error-v1',secret:'never accept'}),upstream);assert.equal(r.status,422);
+ r=await pilotRequest(make('/__staging/error-probe','A',{probe:'controlled-error-v1'}),upstream);assert.equal(r.status,200);const receipt=await r.json();assert.equal(receipt.sentry_accepted,true);assert.equal(receipt.receipt_saved,true);
+ const sent=calls.find(c=>c.url.includes('.ingest.'));assert.ok(sent);assert.ok(sent.opts.body.includes('"environment":"staging"'));assert.ok(!sent.opts.body.includes('Bearer A'));assert.ok(!sent.opts.body.includes(a));assert.ok(!sent.opts.body.includes('gmail'));
+ r=await pilotRequest(make('/ui/cecil'),async()=>{throw Error('Down')});assert.equal(r.status,503);assert.equal((await r.json()).enabled,false);
+ assert.equal(await pilotRequest(make('/unrelated'),upstream),null);
+ console.log('Staging pilot: authentication, own flag, B denial, revocation, fail-closed and sanitized error receipt passed.');
+})();

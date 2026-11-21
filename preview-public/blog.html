@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
-<link rel="apple-touch-icon" href="/cecil/brand/cecil-icon.png"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Blog · Cecil</title>
+<title>Blog — Broquer</title>
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -27,12 +27,15 @@
 .bl-search__input:focus { border-color: var(--ink); }
 .bl-search__input::placeholder { color: var(--mute-2); }
 .bl-search__icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--mute-2); pointer-events: none; }
-.bl-search__clear { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; display: none; }
+.bl-search__clear { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--mute); display: none; padding: 4px; }
 .bl-search__clear.is-on { display: block; }
+.bl-search__clear:hover { color: var(--ink); }
 
 /* ── Tags filter ────────────────────────────── */
 .bl-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-.bl-tag { cursor: pointer; transition: all var(--dur) var(--ease); }
+.bl-tag { height: 28px; padding: 0 12px; border-radius: var(--r-pill); border: 1px solid var(--line-2); background: var(--bone); font-size:var(--fs-xs); font-weight: 500; color: var(--mute); cursor: pointer; transition: all var(--dur) var(--ease); white-space: nowrap; }
+.bl-tag:hover { border-color: var(--ink); color: var(--ink); }
+.bl-tag.is-active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
 /* ── Article list ───────────────────────────── */
 .bl-list { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
@@ -66,7 +69,8 @@
 .bl-list-view.is-off { display: none; }
 
 /* Back button */
-.bl-back { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 24px; transition: background var(--dur) var(--ease); }
+.bl-back { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r-pill); font-size:var(--fs-xs); font-weight: 500; color: var(--ink); cursor: pointer; margin-bottom: 24px; transition: background var(--dur) var(--ease); }
+.bl-back:hover { background: var(--paper-2); }
 
 /* Article header */
 .bl-art-head { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
@@ -128,24 +132,13 @@
 .bl-sources a { color: var(--info); text-decoration: underline; }
 .bl-sources a:hover { color: var(--ink); }
 </style>
-<link rel="stylesheet" href="styles/mobile-inputs.css">
-<script defer src="mobile-inputs.js"></script>
-<link rel="stylesheet" href="ui/tokens.css">
-<link rel="stylesheet" href="ui/date-picker.css">
-<script defer src="ui/date-picker.js"></script>
-<link rel="stylesheet" href="ui/actions.css">
-<script defer src="ui/actions.js"></script>
-<link rel="stylesheet" href="ui/fields.css">
-<link rel="stylesheet" href="ui/overlays.css">
-<script defer src="ui/overlays.js"></script>
-<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
 <script src="/staging-network-audit.js" defer></script>
 </head>
 <body data-app="blog">
 
 <div style="display:none" hidden>
   <aside class="app-sidebar">
-    <div class="app-sidebar__brand">Cecil<span class="dot">.</span></div>
+    <div class="app-sidebar__brand">Broquer<span class="dot">.</span></div>
     <a class="app-nav-link" href="index.html">Inicio</a>
     <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
     <a class="app-nav-link" href="contactos.html">Contactos</a>
@@ -200,14 +193,14 @@ const ARTICULOS = [
   {
     id: 'whatsapp-cobro-meta-octubre-2026',
     titulo: 'Meta empieza a cobrar tus mensajes de WhatsApp el 1 de octubre: qué cambia y cómo evitar que se corte tu Recepción',
-    subtitulo: 'A partir del 1 de octubre de 2026, Meta cobra los mensajes que se envían dentro de la ventana de 24 horas de una conversación de WhatsApp Business. Si tu número no tiene un método de pago cargado en tu Administrador comercial antes del 30 de septiembre, Meta puede dejar de entregar tus mensajes. Esto no lo cobra Cecil: es un cambio de Meta, y el trámite lo haces tú, en tu propia cuenta.',
+    subtitulo: 'A partir del 1 de octubre de 2026, Meta cobra los mensajes que se envían dentro de la ventana de 24 horas de una conversación de WhatsApp Business. Si tu número no tiene un método de pago cargado en tu Administrador comercial antes del 30 de septiembre, Meta puede dejar de entregar tus mensajes. Esto no lo cobra Broquer: es un cambio de Meta, y el trámite lo haces tú, en tu propia cuenta.',
     categoria: 'Legal / Cumplimiento',
     catKey: 'legal',
     tags: ['WhatsApp', 'Meta', 'Cobro', 'Facturación', 'Cloud API', 'Business Manager', 'Coexistencia', 'Precios'],
-    autor: 'Cecil Research',
+    autor: 'Broquer Research',
     fecha: '8 de septiembre de 2026',
     lectura: '10 min',
-    resumen: 'Meta anunció que, desde el 1 de octubre de 2026, deja de dar gratis los mensajes de servicio y las plantillas de utilidad que se envían dentro de la ventana de 24 horas de una conversación en la WhatsApp Business Platform (Cloud API). Además, exige un método de pago vigente en cada cuenta de WhatsApp Business a más tardar el 30 de septiembre, o Meta deja de entregar mensajes desde el 1 de octubre. Aquí explicamos las cuatro categorías de mensajes y sus ventanas, cuánto cuesta cada una en México con ejemplos en pesos, consejos para pagar menos (incluido cuándo conviene contestar desde tu celular en vez de la bandeja de Cecil), y el paso a paso para agregar tu tarjeta antes de la fecha límite.',
+    resumen: 'Meta anunció que, desde el 1 de octubre de 2026, deja de dar gratis los mensajes de servicio y las plantillas de utilidad que se envían dentro de la ventana de 24 horas de una conversación en la WhatsApp Business Platform (Cloud API). Además, exige un método de pago vigente en cada cuenta de WhatsApp Business a más tardar el 30 de septiembre, o Meta deja de entregar mensajes desde el 1 de octubre. Aquí explicamos las cuatro categorías de mensajes y sus ventanas, cuánto cuesta cada una en México con ejemplos en pesos, consejos para pagar menos (incluido cuándo conviene contestar desde tu celular en vez de la bandeja de Broquer), y el paso a paso para agregar tu tarjeta antes de la fecha límite.',
     fuentes: [
       { texto: 'Meta for Developers — Pricing on the WhatsApp Business Platform (documentación oficial)', url: 'https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing' },
       { texto: 'Meta for Developers — Upcoming pricing updates for Meta Business Agent, service and utility messages', url: 'https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing/non-template-messages' },
@@ -219,9 +212,9 @@ const ARTICULOS = [
 <div class="bl-art-head">
   <div class="bl-art-head__cat">Legal / Cumplimiento</div>
   <h1>Meta empieza a cobrar tus mensajes de WhatsApp el 1 de octubre: qué cambia y cómo evitar que se corte tu Recepción</h1>
-  <p class="bl-art-head__sub">A partir del 1 de octubre de 2026, Meta cobra los mensajes que se envían dentro de la ventana de 24 horas de una conversación de WhatsApp Business. Si tu número no tiene un método de pago cargado en tu Administrador comercial antes del 30 de septiembre, Meta puede dejar de entregar tus mensajes. Esto no lo cobra Cecil: es un cambio de Meta, y el trámite lo haces tú, en tu propia cuenta.</p>
+  <p class="bl-art-head__sub">A partir del 1 de octubre de 2026, Meta cobra los mensajes que se envían dentro de la ventana de 24 horas de una conversación de WhatsApp Business. Si tu número no tiene un método de pago cargado en tu Administrador comercial antes del 30 de septiembre, Meta puede dejar de entregar tus mensajes. Esto no lo cobra Broquer: es un cambio de Meta, y el trámite lo haces tú, en tu propia cuenta.</p>
   <div class="bl-art-head__meta">
-    <span>Cecil Research</span>
+    <span>Broquer Research</span>
     <span class="dot"></span>
     <span>8 de septiembre de 2026</span>
     <span class="dot"></span>
@@ -233,21 +226,21 @@ const ARTICULOS = [
 
 <div class="bl-callout danger">
   <div class="bl-callout__label">Fecha límite</div>
-  <p>Si tu número de WhatsApp está conectado a Cecil, tienes hasta el <strong>30 de septiembre de 2026</strong> para cargar un método de pago en tu propio Administrador comercial de Meta. Sin él, Meta puede dejar de entregar tus mensajes desde el <strong>1 de octubre</strong>. El trámite toma un par de minutos; abajo está el paso a paso.</p>
+  <p>Si tu número de WhatsApp está conectado a Broquer, tienes hasta el <strong>30 de septiembre de 2026</strong> para cargar un método de pago en tu propio Administrador comercial de Meta. Sin él, Meta puede dejar de entregar tus mensajes desde el <strong>1 de octubre</strong>. El trámite toma un par de minutos; abajo está el paso a paso.</p>
 </div>
 
 <h2>Primero, entiende las ventanas: así clasifica Meta cada mensaje</h2>
 <p>Para que el cambio del 1 de octubre tenga sentido, hay que entender cómo divide Meta los mensajes de la Cloud API. No es "un precio por mensaje" parejo: son <strong>cuatro categorías</strong>, y cada una se dispara distinto.</p>
 <ul>
-  <li><strong>Servicio (ventana de 24 horas).</strong> Se abre en automático en cuanto un prospecto te escribe por primera vez, y se renueva cada vez que él vuelve a escribir — dura 24 horas desde <em>su</em> último mensaje, no desde el tuyo. Mientras está abierta, puedes contestar lo que quieras, en texto libre, sin plantilla: son las respuestas normales de una conversación, ya sea que las escriba Recepción o tú desde la bandeja de Cecil.</li>
+  <li><strong>Servicio (ventana de 24 horas).</strong> Se abre en automático en cuanto un prospecto te escribe por primera vez, y se renueva cada vez que él vuelve a escribir — dura 24 horas desde <em>su</em> último mensaje, no desde el tuyo. Mientras está abierta, puedes contestar lo que quieras, en texto libre, sin plantilla: son las respuestas normales de una conversación, ya sea que las escriba Recepción o tú desde la bandeja de Broquer.</li>
   <li><strong>Utilidad (utility).</strong> Si la ventana de 24 horas ya se cerró (el prospecto no te ha vuelto a escribir) y necesitas retomar el contacto por un motivo transaccional y puntual —confirmar una cita, avisar que un documento está listo—, Meta exige una <strong>plantilla previamente aprobada</strong> de esta categoría. Es la más barata de las plantillas.</li>
-  <li><strong>Marketing.</strong> Misma lógica que utilidad —plantilla aprobada, fuera de la ventana— pero para contenido promocional: justo lo que manda el módulo de <strong>Campañas</strong> de Cecil. Es la categoría más cara con diferencia.</li>
-  <li><strong>Autenticación.</strong> Códigos de un solo uso (OTP). Cecil no la usa hoy; la mencionamos para que la reconozcas si la ves en tu tarifario de Meta.</li>
+  <li><strong>Marketing.</strong> Misma lógica que utilidad —plantilla aprobada, fuera de la ventana— pero para contenido promocional: justo lo que manda el módulo de <strong>Campañas</strong> de Broquer. Es la categoría más cara con diferencia.</li>
+  <li><strong>Autenticación.</strong> Códigos de un solo uso (OTP). Broquer no la usa hoy; la mencionamos para que la reconozcas si la ves en tu tarifario de Meta.</li>
 </ul>
 <p>El punto que más conviene recordar: <strong>la ventana de servicio la abre el prospecto, no tú.</strong> Si tú le escribes primero y él nunca te ha contactado, o si ya pasaron 24 horas desde su último mensaje, eso no es "servicio" — es una plantilla de utilidad o de marketing, con su propio costo, así la ventana esté cerrada por un minuto o por un mes.</p>
 
 <h2>Qué cambia el 1 de octubre</h2>
-<p>Meta documenta el cambio en su página oficial de precios de la WhatsApp Business Platform (la Cloud API, que es por donde Cecil conecta tu número). Hasta ahora, los mensajes de <strong>servicio</strong> dentro de la ventana de 24 horas eran gratuitos sin límite. A partir del <strong>1 de octubre de 2026</strong>, dejan de serlo por completo: siguen gratis los primeros <strong>1,000 mensajes de servicio por número al mes</strong> —una cifra que reportan de manera consistente varias coberturas especializadas de la documentación de Meta—, y de ahí en adelante cada mensaje de servicio adicional se cobra a la misma tarifa que una plantilla de utilidad en ese país. Esto aplica igual a las respuestas que da Recepción y a las que tú escribas a través de la Cloud API (bandeja de Cecil).</p>
+<p>Meta documenta el cambio en su página oficial de precios de la WhatsApp Business Platform (la Cloud API, que es por donde Broquer conecta tu número). Hasta ahora, los mensajes de <strong>servicio</strong> dentro de la ventana de 24 horas eran gratuitos sin límite. A partir del <strong>1 de octubre de 2026</strong>, dejan de serlo por completo: siguen gratis los primeros <strong>1,000 mensajes de servicio por número al mes</strong> —una cifra que reportan de manera consistente varias coberturas especializadas de la documentación de Meta—, y de ahí en adelante cada mensaje de servicio adicional se cobra a la misma tarifa que una plantilla de utilidad en ese país. Esto aplica igual a las respuestas que da Recepción y a las que tú escribas a través de la Cloud API (bandeja de Broquer).</p>
 
 <div class="bl-table-wrap">
   <table class="bl-table">
@@ -256,7 +249,7 @@ const ARTICULOS = [
       <tr><td>Servicio, dentro de tu 1,000 gratis/mes</td><td>Recepción o tú contestando dentro de la ventana de 24h</td><td class="num">$0.00</td><td class="num">$0.00</td></tr>
       <tr><td>Servicio, pasado ese primer 1,000</td><td>Mismo caso, ya agotada la cuota gratuita del mes</td><td class="num">~$0.0085</td><td class="num">~$0.14</td></tr>
       <tr><td>Utilidad (fuera de ventana)</td><td>Recordatorio o confirmación transaccional</td><td class="num">~$0.0080</td><td class="num">~$0.14</td></tr>
-      <tr><td>Autenticación</td><td>Código de un solo uso (Cecil no la usa)</td><td class="num">~$0.0207</td><td class="num">~$0.35</td></tr>
+      <tr><td>Autenticación</td><td>Código de un solo uso (Broquer no la usa)</td><td class="num">~$0.0207</td><td class="num">~$0.35</td></tr>
       <tr><td>Marketing (fuera de ventana)</td><td>Campaña promocional — módulo Campañas</td><td class="num">~$0.0436</td><td class="num">~$0.74</td></tr>
     </tbody>
   </table>
@@ -265,7 +258,7 @@ const ARTICULOS = [
 
 <div class="bl-callout info">
   <div class="bl-callout__label">Lo que sigue gratis, siempre</div>
-  <p>Esto <strong>no aplica</strong> a los mensajes que tú mandas a mano desde la aplicación de WhatsApp Business de tu celular. Por la forma en que Cecil conecta tu número —la modalidad que Meta llama "coexistencia"— esos mensajes siguen siendo gratuitos, sin ventana y sin cuota mensual. El cambio afecta únicamente a los mensajes que pasan por la Cloud API: los que contesta Recepción, y los que tú envíes desde la bandeja de Cecil.</p>
+  <p>Esto <strong>no aplica</strong> a los mensajes que tú mandas a mano desde la aplicación de WhatsApp Business de tu celular. Por la forma en que Broquer conecta tu número —la modalidad que Meta llama "coexistencia"— esos mensajes siguen siendo gratuitos, sin ventana y sin cuota mensual. El cambio afecta únicamente a los mensajes que pasan por la Cloud API: los que contesta Recepción, y los que tú envíes desde la bandeja de Broquer.</p>
 </div>
 
 <h2>Cuánto es esto en pesos, con ejemplos reales</h2>
@@ -279,28 +272,28 @@ const ARTICULOS = [
 
 <h2>El requisito que no puedes dejar pasar: método de pago antes del 30 de septiembre</h2>
 <p>Para poder cobrar, Meta exige que cada cuenta de WhatsApp Business (WABA) tenga un <strong>método de pago vigente</strong> registrado directamente en el Administrador comercial de Meta. La fecha límite es el <strong>30 de septiembre de 2026</strong>. Si tu cuenta llega a esa fecha sin una tarjeta cargada, Meta puede <strong>dejar de entregar tus mensajes de servicio a partir del 1 de octubre</strong>: seguirías recibiendo lo que te escriban tus prospectos, pero tus respuestas —las de Recepción y las tuyas— podrían no llegarles.</p>
-<p>Esta cuenta de WhatsApp Business es tuya, no de Cecil: se creó con tu propio Facebook/Meta Business al conectar tu número, en los términos que ya aceptaste en el Anexo de WhatsApp de nuestros <a href="legal.html#whatsapp">Términos y Condiciones</a>. Por eso el trámite —y la responsabilidad de completarlo a tiempo— es tuyo.</p>
+<p>Esta cuenta de WhatsApp Business es tuya, no de Broquer: se creó con tu propio Facebook/Meta Business al conectar tu número, en los términos que ya aceptaste en el Anexo de WhatsApp de nuestros <a href="legal.html#whatsapp">Términos y Condiciones</a>. Por eso el trámite —y la responsabilidad de completarlo a tiempo— es tuyo.</p>
 
 <h2>Paso a paso: cómo agregar tu método de pago</h2>
 <ol>
-  <li><strong>Entra a business.facebook.com</strong> (el Administrador comercial de Meta) con la misma cuenta de Facebook o Meta Business con la que conectaste tu número a Cecil.</li>
+  <li><strong>Entra a business.facebook.com</strong> (el Administrador comercial de Meta) con la misma cuenta de Facebook o Meta Business con la que conectaste tu número a Broquer.</li>
   <li><strong>Ve a Configuración del negocio → Pagos</strong>, o bien entra al <strong>Administrador de WhatsApp</strong> (WhatsApp Manager), selecciona tu cuenta de WhatsApp Business y busca la sección de <strong>Facturación</strong>.</li>
   <li><strong>Agrega una tarjeta de crédito o débito válida</strong> como método de pago de esa cuenta.</li>
-  <li><strong>Confirma que quede activa</strong> antes del 30 de septiembre de 2026. Si administras varios números en Cecil, revisa que cada WABA involucrada tenga su propio método de pago vigente.</li>
+  <li><strong>Confirma que quede activa</strong> antes del 30 de septiembre de 2026. Si administras varios números en Broquer, revisa que cada WABA involucrada tenga su propio método de pago vigente.</li>
 </ol>
-<p>El trámite es directamente con Meta: Cecil no interviene en él, no ve ni almacena los datos de la tarjeta que captures ahí, y no puede completarlo por ti.</p>
+<p>El trámite es directamente con Meta: Broquer no interviene en él, no ve ni almacena los datos de la tarjeta que captures ahí, y no puede completarlo por ti.</p>
 
 <h2>Consejos para ahorrar sin complicarte la operación</h2>
 <ul>
-  <li><strong>Para un mensaje suelto y manual, usa tu celular, no la bandeja de Cecil.</strong> Si le vas a contestar algo tú mismo a un cliente conocido, mandar un "gracias" o resolver algo puntual, hazlo desde la app de WhatsApp Business de tu teléfono. Por la coexistencia, eso es y seguirá siendo gratis siempre, sin ventana y sin cuota — mientras que ese mismo mensaje escrito desde la bandeja de Cecil sí pasa por la Cloud API y cuenta contra tu 1,000 gratis del mes. Deja que la bandeja y Recepción se usen para lo que de verdad justifica el costo: calificar prospectos nuevos de forma automática.</li>
+  <li><strong>Para un mensaje suelto y manual, usa tu celular, no la bandeja de Broquer.</strong> Si le vas a contestar algo tú mismo a un cliente conocido, mandar un "gracias" o resolver algo puntual, hazlo desde la app de WhatsApp Business de tu teléfono. Por la coexistencia, eso es y seguirá siendo gratis siempre, sin ventana y sin cuota — mientras que ese mismo mensaje escrito desde la bandeja de Broquer sí pasa por la Cloud API y cuenta contra tu 1,000 gratis del mes. Deja que la bandeja y Recepción se usen para lo que de verdad justifica el costo: calificar prospectos nuevos de forma automática.</li>
   <li><strong>Contesta dentro de la ventana de 24 horas en vez de reabrir después con una plantilla.</strong> Un mensaje de servicio dentro de la ventana siempre sale más barato que una plantilla de utilidad o marketing fuera de ella. Si sabes que vas a necesitar dar seguimiento, hazlo mientras el prospecto sigue "activo" en esas 24 horas.</li>
   <li><strong>Usa la categoría de plantilla correcta.</strong> Una confirmación de cita es "utilidad" (barata); no la mandes por error como "marketing" (varias veces más cara) — como se ve en el ejemplo de la campaña de reactivación de arriba, la diferencia es de más de 5 a 1.</li>
   <li><strong>Revisa tu entrenamiento de Recepción para que no mande mensajes de más</strong> — confirmaciones redundantes, "¿sigues ahí?" repetidos. Cada mensaje de servicio de más, una vez agotada tu cuota gratuita mensual, se suma a la cuenta.</li>
   <li><strong>Los primeros meses después del cambio, revisa el resumen de facturación en el Administrador de WhatsApp de vez en cuando.</strong> Te deja ver tu volumen real de mensajes de servicio antes de que te sorprenda un cargo, y ajustar cualquiera de los puntos de arriba con datos, no con supuestos.</li>
 </ul>
 
-<h2>Esto no lo cobra Cecil</h2>
-<p>Vale la pena decirlo sin rodeos: <strong>este cobro es de Meta, no de Cecil</strong>, y no está incluido en tu suscripción, de la misma forma en que nunca lo ha estado el costo de mensajería de la Cloud API. Tu número de WhatsApp Business le pertenece a tu propia cuenta empresarial de Meta —Cecil no provee números ni revende líneas—, así que la relación de cobro por estos mensajes es directamente entre tú y Meta. Cecil seguirá conectando y operando tu Recepción exactamente igual; lo único que cambia es que, del lado de Meta, algunos de esos mensajes empiezan a tener costo y necesitan una tarjeta vigente para seguir entregándose.</p>
+<h2>Esto no lo cobra Broquer</h2>
+<p>Vale la pena decirlo sin rodeos: <strong>este cobro es de Meta, no de Broquer</strong>, y no está incluido en tu suscripción, de la misma forma en que nunca lo ha estado el costo de mensajería de la Cloud API. Tu número de WhatsApp Business le pertenece a tu propia cuenta empresarial de Meta —Broquer no provee números ni revende líneas—, así que la relación de cobro por estos mensajes es directamente entre tú y Meta. Broquer seguirá conectando y operando tu Recepción exactamente igual; lo único que cambia es que, del lado de Meta, algunos de esos mensajes empiezan a tener costo y necesitan una tarjeta vigente para seguir entregándose.</p>
 
 <div class="bl-callout success">
   <div class="bl-callout__label">Qué hacer hoy</div>
@@ -317,7 +310,7 @@ const ARTICULOS = [
     categoria: 'PLD / Compliance',
     catKey: 'pld',
     tags: ['PLD', 'LFPIORPI', 'SAT', 'SPPLD', 'Alta', 'Padr\u00f3n', 'e.firma', 'Antilavado', 'UIF'],
-    autor: 'Cecil Research',
+    autor: 'Broquer Research',
     fecha: '1 de agosto de 2026',
     lectura: '8 min',
     resumen: 'Si intermedias compraventas de inmuebles de forma habitual, la LFPIORPI te considera actividad vulnerable y el primer deber formal es darte de alta en el padr\u00f3n del SAT a trav\u00e9s del portal SPPLD. Aqu\u00ed est\u00e1 el tr\u00e1mite completo: requisitos, pasos, bajo qu\u00e9 fracci\u00f3n te registras, qu\u00e9 pasa despu\u00e9s del alta y qu\u00e9 cambi\u00f3 con la reforma de julio de 2025. Todo con fuentes oficiales al pie.',
@@ -335,7 +328,7 @@ const ARTICULOS = [
   <h1>C\u00f3mo darte de alta ante el SAT como actividad vulnerable: la gu\u00eda que el portal oficial no te da en una sola p\u00e1gina</h1>
   <p class="bl-art-head__sub">El registro en el padr\u00f3n del SPPLD es gratuito, se hace en l\u00ednea con tu e.firma y toma menos de una hora. No hacerlo es la infracci\u00f3n m\u00e1s f\u00e1cil de detectar de toda la ley antilavado.</p>
   <div class="bl-art-head__meta">
-    <span>Cecil Research</span>
+    <span>Broquer Research</span>
     <span class="dot"></span>
     <span>1 de agosto de 2026</span>
     <span class="dot"></span>
@@ -394,8 +387,8 @@ const ARTICULOS = [
 <p>Omitir el registro, no integrar expedientes o no presentar avisos se sanciona con <strong>multa administrativa</strong>, calculada en UMA y escalable seg\u00fan la infracci\u00f3n y la reincidencia. Y hay un detalle que conviene interiorizar: de todas las obligaciones de la ley, <strong>el registro es la m\u00e1s barata de cumplir y la m\u00e1s f\u00e1cil de fiscalizar</strong>. No requiere criterio, ni interpretaci\u00f3n, ni un solo peso. Solo requiere hacerse.</p>
 
 <div class="bl-callout success">
-  <div class="bl-callout__label">D\u00f3nde entra Cecil</div>
-  <p>El alta en el padr\u00f3n la haces t\u00fa, una sola vez, con tu e.firma. Todo lo que viene despu\u00e9s \u2014expediente de identificaci\u00f3n por cliente, control de umbrales y acumulaci\u00f3n a seis meses, alertas de plazo y generaci\u00f3n del XML para el aviso en el SPPLD\u2014 es exactamente lo que el m\u00f3dulo de Cumplimiento de Cecil lleva por ti.</p>
+  <div class="bl-callout__label">D\u00f3nde entra Broquer</div>
+  <p>El alta en el padr\u00f3n la haces t\u00fa, una sola vez, con tu e.firma. Todo lo que viene despu\u00e9s \u2014expediente de identificaci\u00f3n por cliente, control de umbrales y acumulaci\u00f3n a seis meses, alertas de plazo y generaci\u00f3n del XML para el aviso en el SPPLD\u2014 es exactamente lo que el m\u00f3dulo de Cumplimiento de Broquer lleva por ti.</p>
 </div>
 
 </div>
@@ -408,7 +401,7 @@ const ARTICULOS = [
     categoria: 'Tecnología / Operación',
     catKey: 'tecnica',
     tags: ['WhatsApp', 'Leads', 'Recepción', 'IA', 'Meta', 'Coexistencia', 'LFPDPPP', 'Speed to lead'],
-    autor: 'Cecil Research',
+    autor: 'Broquer Research',
     fecha: '16 de julio de 2026',
     lectura: '11 min',
     resumen: 'Dos estudios clásicos de gestión de leads (MIT 2007 y Harvard Business Review 2011) miden algo incómodo: la probabilidad de calificar a un prospecto se desploma en los primeros minutos, y la empresa promedio tarda 42 horas en contestar. En México, donde la mensajería instantánea es la aplicación más usada del país según el INEGI, ese hueco se paga en comisiones. Este artículo explica qué resuelve una recepción automática en WhatsApp, qué es la coexistencia, cuál es la letra chica de Meta y qué te exige a ti la LFPDPPP cuando una IA califica a tus prospectos.',
@@ -426,7 +419,7 @@ const ARTICULOS = [
   <h1>El primero que contesta se lleva el trato: qué hace realmente un WhatsApp con recepción automática</h1>
   <p class="bl-art-head__sub">El 90.6% de los mexicanos con smartphone usa mensajería instantánea. Tu prospecto ya está en WhatsApp. El problema no es el canal: es que tú duermes y él no espera.</p>
   <div class="bl-art-head__meta">
-    <span>Cecil Research</span>
+    <span>Broquer Research</span>
     <span class="dot"></span>
     <span>16 de julio de 2026</span>
     <span class="dot"></span>
@@ -475,7 +468,7 @@ const ARTICULOS = [
 <p>Un agente solo, por bueno que sea, no puede sostener una ventana de cinco minutos las 24 horas. Y su competencia tampoco, lo cual es exactamente donde está la oportunidad: <strong>el estándar del mercado es tan bajo que contestar en treinta segundos, siempre, es una ventaja desproporcionada.</strong></p>
 
 <h2>Qué hace exactamente una recepción automática</h2>
-<p>Un servicio de recepción sobre WhatsApp, como el módulo de Recepción de Cecil, hace cuatro cosas concretas. Ni más, ni menos:</p>
+<p>Un servicio de recepción sobre WhatsApp, como el módulo de Recepción de Broquer, hace cuatro cosas concretas. Ni más, ni menos:</p>
 <ol>
   <li><strong>Contesta en segundos, siempre.</strong> A las tres de la mañana, en domingo, mientras enseñas una casa. El prospecto obtiene una respuesta humana en tono, inmediata en tiempo.</li>
   <li><strong>Califica sin sonar a interrogatorio.</strong> Averigua qué busca, con cuánto cuenta, si es crédito o contado y para cuándo lo necesita. Es la misma conversación que tendrías tú, en el mismo orden.</li>
@@ -549,7 +542,7 @@ const ARTICULOS = [
 <p>Lo que sí es tuyo y de nadie más: informar en tu aviso de privacidad que hay un perfilamiento automatizado, tener el opt-in de tu gente, respetar la oposición del artículo 26 fracción II, dejar siempre una salida hacia un humano y no pedir identificaciones ni datos bancarios por chat.</p>
 <p>Si conectas tu número hoy, la guía paso a paso está en <a href="guia-agente.html#whatsapp">Ayuda</a>, y el detalle legal completo en <a href="legal.html#whatsapp">WhatsApp y Datos</a>.</p>
 
-<p style="margin-top:24px;color:var(--mute);font-size:var(--fs-xs);font-style:italic">Este artículo es informativo para el agente inmobiliario y no constituye asesoría legal. Las políticas de Meta cambian de forma unilateral y sin aviso; verifica siempre la documentación oficial vigente. Para el diseño de tu aviso de privacidad y tus flujos de consentimiento, consulta con un abogado especializado en protección de datos.</p>
+<p style="margin-top:24px;color:var(--mute-2);font-size:var(--fs-xs);font-style:italic">Este artículo es informativo para el agente inmobiliario y no constituye asesoría legal. Las políticas de Meta cambian de forma unilateral y sin aviso; verifica siempre la documentación oficial vigente. Para el diseño de tu aviso de privacidad y tus flujos de consentimiento, consulta con un abogado especializado en protección de datos.</p>
 
 </div>
 `,
@@ -561,7 +554,7 @@ const ARTICULOS = [
     categoria: 'ISR / Fiscal',
     catKey: 'isr',
     tags: ['ISR', 'Exención', 'Casa habitación', 'UDIS', 'LISR', 'SAT', 'Notario'],
-    autor: 'Cecil Research',
+    autor: 'Broquer Research',
     fecha: '20 de mayo de 2026',
     lectura: '7 min',
     resumen: 'La Ley del ISR (art. 93 fr. XIX) permite a una persona física exentar el ISR sobre la ganancia obtenida en la venta de su casa habitación principal, siempre que la ganancia no exceda 700,000 UDIS y que NO se haya aplicado la misma exención en los 3 años previos. Es una de las herramientas fiscales más poderosas del agente inmobiliario — y la más subutilizada.',
@@ -578,7 +571,7 @@ const ARTICULOS = [
   <h1>Exención del ISR en venta de casa habitación: cómo aprovecharla cada 3 años</h1>
   <p class="bl-art-head__sub">Tu cliente puede vender su casa sin pagar ISR sobre los primeros 700,000 UDIS de ganancia. Te explicamos exactamente cómo funciona y qué pedirle.</p>
   <div class="bl-art-head__meta">
-    <span>Cecil Research</span>
+    <span>Broquer Research</span>
     <span class="dot"></span>
     <span>20 de mayo de 2026</span>
     <span class="dot"></span>
@@ -618,7 +611,7 @@ const ARTICULOS = [
   <li>Límite exento (700,000 UDIS × $8.10): <strong>~$5,670,000</strong></li>
   <li>Base gravable: <strong>$330,000</strong> → sobre eso aplica la tarifa anual del art. 152 LISR.</li>
 </ul>
-<p>El notario actualiza el costo con el INPC del INEGI, descuenta deducciones (mejoras, escrituración, comisiones) y aplica la tarifa progresiva federal + 5% estatal. Cecil estima esto en segundos en el módulo <a href="isr.html">ISR</a>.</p>
+<p>El notario actualiza el costo con el INPC del INEGI, descuenta deducciones (mejoras, escrituración, comisiones) y aplica la tarifa progresiva federal + 5% estatal. Broquer estima esto en segundos en el módulo <a href="isr.html">ISR</a>.</p>
 
 <h2>Casos donde NO aplica la exención</h2>
 <ul>
@@ -637,9 +630,9 @@ const ARTICULOS = [
 </ol>
 
 <h2>Resumen para el agente</h2>
-<p>La exención del ISR por casa habitación es <strong>la diferencia entre cerrar y no cerrar</strong> una operación grande. Si manejas el timing y los documentos correctamente, puedes ahorrar a tu cliente <strong>cientos de miles de pesos</strong> y, de paso, ganarte su confianza para siempre. Usa el módulo de <a href="isr.html">ISR de Cecil</a> para estimar la retención antes de firmar el contrato — así llegas al cierre sin sorpresas.</p>
+<p>La exención del ISR por casa habitación es <strong>la diferencia entre cerrar y no cerrar</strong> una operación grande. Si manejas el timing y los documentos correctamente, puedes ahorrar a tu cliente <strong>cientos de miles de pesos</strong> y, de paso, ganarte su confianza para siempre. Usa el módulo de <a href="isr.html">ISR de Broquer</a> para estimar la retención antes de firmar el contrato — así llegas al cierre sin sorpresas.</p>
 
-<p style="margin-top:24px;color:var(--mute);font-size:var(--fs-xs);font-style:italic">Este artículo es de uso informativo para el agente inmobiliario. El cálculo y retención definitivos los realiza el notario público. Para casos atípicos (persona moral, copropiedad, herencia, donación previa) consulta con un contador fiscal certificado.</p>
+<p style="margin-top:24px;color:var(--mute-2);font-size:var(--fs-xs);font-style:italic">Este artículo es de uso informativo para el agente inmobiliario. El cálculo y retención definitivos los realiza el notario público. Para casos atípicos (persona moral, copropiedad, herencia, donación previa) consulta con un contador fiscal certificado.</p>
 
 </div>
 `,
@@ -651,7 +644,7 @@ const ARTICULOS = [
     categoria: 'PLD / Compliance',
     catKey: 'pld',
     tags: ['PLD', 'LFPIORPI', 'Legal', 'SAT', 'Expediente', 'Antilavado'],
-    autor: 'Cecil Research',
+    autor: 'Broquer Research',
     fecha: '16 de mayo de 2026',
     lectura: '9 min',
     resumen: 'Como intermediario inmobiliario eres sujeto obligado bajo la LFPIORPI. Esto significa que la ley te exige identificar a cada cliente, integrar un expediente completo y — en operaciones grandes — reportar al SAT. Te explicamos exactamente qué pedir, cuándo y qué pasa si no lo haces.',
@@ -668,7 +661,7 @@ const ARTICULOS = [
   <h1>El expediente único: tu blindaje legal como agente inmobiliario</h1>
   <p class="bl-art-head__sub">Todo lo que debes saber sobre la LFPIORPI, qué documentos pedir a tus clientes y qué pasa si no cumples</p>
   <div class="bl-art-head__meta">
-    <span>Cecil Research</span>
+    <span>Broquer Research</span>
     <span class="dot"></span>
     <span>16 de mayo de 2026</span>
     <span class="dot"></span>
@@ -846,7 +839,7 @@ const ARTICULOS = [
 
 <p>El expediente único no es burocracia — es tu protección. Si alguna de tus operaciones es investigada por la UIF y no tienes el expediente completo, eres vulnerable a sanciones independientemente de si la operación era legítima. Con el expediente en regla, tienes evidencia documentada de que realizaste la diligencia debida.</p>
 
-<p>Digitaliza tus expedientes desde el primer día: escanea todos los documentos, guárdalos en una carpeta organizada por cliente y fecha, y haz respaldo en la nube. El módulo de Verificador de Documentos de Cecil puede ayudarte a revisar la validez de los documentos antes de archivarlos.</p>
+<p>Digitaliza tus expedientes desde el primer día: escanea todos los documentos, guárdalos en una carpeta organizada por cliente y fecha, y haz respaldo en la nube. El módulo de Verificador de Documentos de Broquer puede ayudarte a revisar la validez de los documentos antes de archivarlos.</p>
 
 <div class="bl-callout success">
   <div class="bl-callout__label">Próximo paso</div>

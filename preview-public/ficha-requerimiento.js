@@ -5,7 +5,7 @@
 //   1. Lo que busca: operaciones, tipos, zonas, presupuesto con moneda,
 //      mínimos, superficies, características y financiamiento, "sólo con
 //      comisión compartida" (routers/alertas.py).
-//   2. Coincidencias en tu inventario, el de tu equipo y la Bolsa Cecil,
+//   2. Coincidencias en tu inventario, el de tu equipo y la Bolsa Broquer,
 //      con envío al cliente por WhatsApp o correo (queda en la bitácora).
 //   3. Encontrado en internet (el Buscador de propiedades de siempre).
 // ─────────────────────────────────────────────────────────────────────────
@@ -27,7 +27,7 @@
   function html() {
     var tipos = [];
     (C() ? C().data.tipos : []).forEach(function (g) { g.items.forEach(function (t) { tipos.push(t); }); });
-    return '<p class="bk-prosa">Lo que busca este contacto. Cecil lo cruza primero con tu inventario, el de tu equipo y la Bolsa, te avisa cuando entra algo nuevo y, aparte, el Buscador lo revisa en internet una vez al día.</p>' +
+    return '<p class="bk-prosa">Lo que busca este contacto. Broquer lo cruza primero con tu inventario, el de tu equipo y la Bolsa, te avisa cuando entra algo nuevo y, aparte, el Buscador lo revisa en internet una vez al día.</p>' +
       '<form id="frq-form" onsubmit="return false">' +
       campo('Operación', chips('frq-op', C() ? C().data.operaciones : [])) +
       campo('Tipos de inmueble', '<div class="frq-scroll">' + chips('frq-tipo', tipos) + '</div>') +
@@ -157,7 +157,7 @@
     var d = await window.bkApi('/alertas/coincidencias/' + encodeURIComponent(cid));
     COINC = d.coincidencias || [];
     if (typeof bkContador === 'function') bkContador('f-n-requerimiento', COINC.length);
-    var ORIGEN = { propio: 'Tuyo', equipo: 'De tu equipo', bolsa: 'Bolsa Cecil' };
+    var ORIGEN = { propio: 'Tuyo', equipo: 'De tu equipo', bolsa: 'Bolsa Broquer' };
     cont.innerHTML = COINC.length ? COINC.map(function (p) {
       var op = (p.operaciones || [])[0];
       var precio = op && C() ? C().opLabel(op.tipo) + ' · ' + C().precioTexto(op) : '';
@@ -182,8 +182,8 @@
     ov.className = 'bk-overlay bk-overlay--sheet crm-modal';
     ov.innerHTML = '<div class="bk-modal" role="dialog" aria-modal="true"><div class="bk-modal__head"><div class="bk-modal__title">Enviar ' + ids.length + ' inmueble(s)</div></div>' +
       '<div class="bk-modal__body"><textarea class="bk-input" id="frq-msg" rows="9">' + esc(prep.mensaje) + '</textarea>' +
-      '<p class="crm-sub">' + (prep.conversacion_id && prep.ventana_24h ? 'Se manda por el WhatsApp de Cecil (la conversación sigue abierta).' :
-        prep.conversacion_id ? 'Pasaron más de 24 h desde su último mensaje: se abre tu WhatsApp con el texto listo (o manda una plantilla aprobada desde WhatsApp de Cecil).' :
+      '<p class="crm-sub">' + (prep.conversacion_id && prep.ventana_24h ? 'Se manda por el WhatsApp de Broquer (la conversación sigue abierta).' :
+        prep.conversacion_id ? 'Pasaron más de 24 h desde su último mensaje: se abre tu WhatsApp con el texto listo (o manda una plantilla aprobada desde WhatsApp de Broquer).' :
         'Se abre tu WhatsApp con el texto listo.') + '</p></div>' +
       '<div class="bk-modal__foot"><button class="bk-btn bk-btn--ghost" data-x>Cancelar</button>' +
       (prep.email ? '<button class="bk-btn" data-correo>Por correo</button>' : '') +

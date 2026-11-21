@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Finanzas · Cecil</title>
-<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
+<title>Broquer — Finanzas</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
@@ -72,17 +72,6 @@
     text-align: center; color: var(--mute); font-size: var(--fs-sm); cursor: pointer; }
   .fin-drop:hover { background: var(--paper-2); }
 </style>
-<link rel="stylesheet" href="styles/mobile-inputs.css">
-<script defer src="mobile-inputs.js"></script>
-<link rel="stylesheet" href="ui/tokens.css">
-<link rel="stylesheet" href="ui/date-picker.css">
-<script defer src="ui/date-picker.js"></script>
-<link rel="stylesheet" href="ui/actions.css">
-<script defer src="ui/actions.js"></script>
-<link rel="stylesheet" href="ui/fields.css">
-<link rel="stylesheet" href="ui/overlays.css">
-<script defer src="ui/overlays.js"></script>
-<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
 <script src="/staging-network-audit.js" defer></script>
 </head>
 <body data-app="finanzas">
@@ -100,7 +89,7 @@
     </button>
     <button class="bk-btn bk-btn--ghost" id="fin-btn-ticket">
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/></svg>
-      Cecil IA lee tu ticket
+      Broq lee tu ticket
     </button>
     <button class="bk-btn bk-btn--ghost" id="fin-btn-reporte">
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
@@ -111,10 +100,10 @@
 
   <!-- Periodo -->
   <div class="fin-periodo">
-    <button type="button" class="bk-chip" data-per="mes">Este mes</button>
-    <button type="button" class="bk-chip" data-per="mes-pasado">Mes pasado</button>
-    <button type="button" class="bk-chip" data-per="trimestre">Trimestre</button>
-    <button type="button" class="bk-chip" data-per="ano">Este año</button>
+    <span class="bk-chip" data-per="mes">Este mes</span>
+    <span class="bk-chip" data-per="mes-pasado">Mes pasado</span>
+    <span class="bk-chip" data-per="trimestre">Trimestre</span>
+    <span class="bk-chip" data-per="ano">Este año</span>
     <input class="bk-input" type="date" id="fin-desde" aria-label="Desde"/>
     <input class="bk-input" type="date" id="fin-hasta" aria-label="Hasta"/>
     <button class="bk-btn bk-btn--quiet bk-btn--sm" id="fin-aplicar">Aplicar</button>
@@ -195,7 +184,7 @@
         <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
       </div>
       <div class="bk-empty__title">Todavía no hay movimientos</div>
-      <div class="bk-empty__text">Registra tu primer ingreso o gasto, o deja que Cecil IA lea un ticket por ti.</div>
+      <div class="bk-empty__text">Registra tu primer ingreso o gasto, o deja que Broq lea un ticket por ti.</div>
       <button class="bk-btn bk-btn--forest bk-empty__action" id="fin-vacio-crear">Registrar movimiento</button>
     </div>
   </div>
@@ -309,11 +298,11 @@
   </div>
 </div>
 
-<!-- ══ Modal: ticket con Cecil IA ══ -->
+<!-- ══ Modal: ticket con Broq ══ -->
 <div class="bk-overlay" id="fin-ov-ticket">
   <div class="bk-modal" role="dialog" aria-modal="true" aria-labelledby="fin-tk-titulo">
     <div class="bk-modal__head">
-      <div class="bk-modal__title" id="fin-tk-titulo">Cecil IA lee tu ticket</div>
+      <div class="bk-modal__title" id="fin-tk-titulo">Broq lee tu ticket</div>
       <button class="bk-icon-btn" data-cerrar aria-label="Cerrar">
         <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
       </button>
@@ -321,7 +310,7 @@
     <div class="bk-modal__body">
       <div class="fin-drop" id="fin-tk-drop" role="button" tabindex="0">
         Toma una foto del ticket o factura, o arrástrala aquí.<br/>
-        Cecil IA extrae el monto, la fecha y el concepto; tú confirmas y puedes editar todo.
+        Broq extrae el monto, la fecha y el concepto; tú confirmas y puedes editar todo.
       </div>
       <div id="fin-tk-estado" class="bk-hint" style="margin-top:var(--sp-3);" hidden></div>
     </div>
@@ -375,7 +364,7 @@
 <script src="finanzas-plus.js" defer></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════
-   Finanzas · Cecil
+   Finanzas · Broquer
    Regla del módulo: TODAS las cifras se calculan en el backend
    (routers/finanzas.py). Aquí solo se pintan y se editan. Los saldos
    nunca se guardan: editar cualquier movimiento recalcula todo.
@@ -531,7 +520,7 @@
         '" height="' + Math.max(hOut, 2) + '" rx="4" fill="var(--data-3)"><title>' +
         esc(mesBonito(m.mes)) + ' · Gastos ' + esc(pesos(m.gasto)) + '</title></rect>');
       out.push('<text x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle" ' +
-        'font-size="12" fill="var(--mute)" font-family="inherit">' + esc(mesBonito(m.mes)) + '</text>');
+        'font-size="11" fill="var(--mute)" font-family="inherit">' + esc(mesBonito(m.mes)) + '</text>');
     });
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
     svg.innerHTML = '<line x1="' + PAD + '" y1="' + BASE + '" x2="' + (W - PAD) +
@@ -855,7 +844,7 @@
     } catch (e) { toast(e.message, 'error'); }
   });
 
-  /* ── Ticket con Cecil IA ─────────────────────────────────────────── */
+  /* ── Ticket con Broq ─────────────────────────────────────────── */
   g('fin-btn-ticket').addEventListener('click', function () {
     g('fin-tk-estado').hidden = true;
     abrirOverlay('fin-ov-ticket');
@@ -864,7 +853,7 @@
   async function procesarTicket(f) {
     var est = g('fin-tk-estado');
     est.hidden = false;
-    est.textContent = 'Cecil IA está leyendo el ticket…';
+    est.textContent = 'Broq está leyendo el ticket…';
     var fd = new FormData();
     fd.append('archivo', f);
     try {
@@ -874,12 +863,12 @@
         { method: 'POST', headers: { Authorization: 'Bearer ' + tok }, body: fd });
       var data = null;
       try { data = await r.json(); } catch (e) { data = null; }
-      if (!r.ok) throw new Error((data && data.detail) || 'Cecil IA no pudo leer el ticket.');
+      if (!r.ok) throw new Error((data && data.detail) || 'Broq no pudo leer el ticket.');
       cerrarOverlay('fin-ov-ticket');
       var b = data.borrador || {};
       abrirMov({ tipo: b.tipo, monto: b.monto, fecha: b.fecha, concepto: b.concepto,
                  categoria_id: b.categoria_id, origen: 'ticket' });
-      if (b.confianza === 'baja') toast('Cecil IA no está seguro de lo que leyó. Revisa los datos.', 'error');
+      if (b.confianza === 'baja') toast('Broq no está seguro de lo que leyó. Revisa los datos.', 'error');
       else toast('Listo. Revisa y confirma; todo es editable.', 'success');
     } catch (e) {
       est.textContent = e.message;

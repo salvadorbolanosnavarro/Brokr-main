@@ -89,7 +89,7 @@
     token().then(function (t) {
       if (!t) {
         body.innerHTML =
-          '<p class="bks-sub">Para mandarnos un mensaje desde aquí, inicia sesión en tu cuenta de Cecil. ' +
+          '<p class="bks-sub">Para mandarnos un mensaje desde aquí, inicia sesión en tu cuenta de Broquer. ' +
           'También puedes escribirnos directo a <a href="mailto:' + EMAIL + '">' + EMAIL + '</a>.</p>' +
           '<div class="bks-acts"><button type="button" class="bks-btn" data-c>Cerrar</button>' +
           '<a class="bks-btn pri" href="login.html" style="text-decoration:none">Iniciar sesión</a></div>';

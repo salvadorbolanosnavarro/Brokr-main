@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
-<link rel="apple-touch-icon" href="/cecil/brand/cecil-icon.png"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Bandeja · Cecil</title>
+<title>Bandeja · Broquer</title>
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -14,7 +14,7 @@
    BANDEJA — no es un clon de WhatsApp: es el escritorio donde el
    agente trabaja los leads que Recepción ya calificó.
    Tres carriles: lista · conversación · expediente.
-   El expediente reusa la superficie navy de Cecil (misma ADN que
+   El expediente reusa la superficie navy de Broquer (misma ADN que
    los PDF y que el módulo de WhatsApp): score protagonista y
    rejilla de datos de apoyo.
    ═══════════════════════════════════════════════════════════════ */
@@ -45,17 +45,24 @@ body[data-app="bandeja"] .bk-page{
 .bx-search{position:relative;margin-top:var(--sp-4)}
 .bx-search svg{position:absolute;left:var(--sp-3);top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--mute);pointer-events:none}
 .bx-search input{
-  width:100%;color:var(--ink);
+  width:100%;height:var(--h-sm);padding:0 var(--sp-3) 0 var(--sp-8);
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--r-pill);
+  font-family:var(--font-sans);font-size:var(--fs-xs);color:var(--ink);
 }
-.bx-search input:focus{outline:none}
+.bx-search input:focus{outline:none;border-color:var(--sky-blue);box-shadow:var(--focus)}
 .bx-search input::placeholder{color:var(--mute-2)}
 
 .bx-filters{display:flex;gap:2px;padding:3px;margin-top:var(--sp-3);background:var(--paper-2);border-radius:var(--r-pill)}
 .bx-filter{
-  flex:1;cursor:pointer;
+  flex:1;border:0;background:transparent;cursor:pointer;
+  padding:var(--sp-2) var(--sp-1);border-radius:var(--r-pill);
+  font-family:var(--font-sans);font-size:var(--fs-caption);font-weight:700;color:var(--mute);
   transition:background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  white-space:nowrap;
 }
-.bx-filter:focus-visible{outline:none}
+.bx-filter:hover{color:var(--ink-2)}
+.bx-filter.is-active{background:var(--bone);color:var(--ink);box-shadow:var(--shadow-xs)}
+.bx-filter:focus-visible{outline:none;box-shadow:var(--focus)}
 
 .bx-convs{flex:1;overflow-y:auto;overscroll-behavior:contain}
 .bx-conv{
@@ -108,9 +115,11 @@ body[data-app="bandeja"] .bk-page{
 }
 .bx-avisos span{flex:1;min-width:0;font-size:var(--fs-caption);color:var(--ink-2);line-height:var(--lh-snug)}
 .bx-avisos__ok{
-  flex:none;cursor:pointer;
+  flex:none;border:0;cursor:pointer;background:var(--sky-blue);color:#fff;
+  border-radius:var(--r-pill);padding:5px var(--sp-3);
+  font-family:inherit;font-size:var(--fs-caption);font-weight:700;
 }
-.bx-avisos__no{flex:none;cursor:pointer}
+.bx-avisos__no{flex:none;border:0;background:transparent;cursor:pointer;color:var(--mute);font-size:var(--fs-xs);padding:2px 4px}
 
 .bx-list__empty{padding:var(--sp-8) var(--sp-5);text-align:center}
 .bx-list__empty p{font-size:var(--fs-xs);color:var(--mute);line-height:var(--lh);margin:0}
@@ -150,9 +159,11 @@ body[data-app="bandeja"] .bk-page{
   padding:var(--sp-3) var(--sp-5);border-bottom:1px solid var(--line);background:var(--bone);
 }
 .bx-back{
-  display:none;flex:none;width:var(--ui-control-small);cursor:pointer;
+  display:none;flex:none;width:36px;height:36px;border:0;background:transparent;
+  border-radius:50%;cursor:pointer;color:var(--ink);
   align-items:center;justify-content:center;
 }
+.bx-back:hover{background:var(--paper-2)}
 .bx-th-id{flex:1;min-width:0}
 .bx-th-id h2{font-family:var(--font-display);font-size:var(--fs-body);font-weight:700;letter-spacing:-.015em;margin:0;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bx-th-id span{display:block;font-size:var(--fs-caption);color:var(--mute);margin-top:1px;font-variant-numeric:tabular-nums}
@@ -160,14 +171,15 @@ body[data-app="bandeja"] .bk-page{
 .bx-ai{display:flex;align-items:center;gap:var(--sp-2);flex:none}
 .bx-ai__label{font-size:var(--fs-caption);font-weight:700;color:var(--mute);white-space:nowrap}
 .bx-switch{position:relative;width:40px;height:23px;flex:none;cursor:pointer}
-.bx-switch input{position:absolute;opacity:0;width:0}
+.bx-switch input{position:absolute;opacity:0;width:0;height:0}
 .bx-switch__track{position:absolute;inset:0;background:var(--line-2);border-radius:var(--r-pill);transition:background var(--dur) var(--ease)}
 .bx-switch input:checked + .bx-switch__track{background:var(--brand-whatsapp)}
 .bx-switch input:focus-visible + .bx-switch__track{box-shadow:var(--focus)}
 .bx-switch__thumb{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:transform var(--dur) var(--ease);pointer-events:none;box-shadow:var(--shadow-xs)}
 .bx-switch input:checked ~ .bx-switch__thumb{transform:translateX(17px)}
 
-.bx-dossier-btn{display:none;flex:none;width:var(--ui-control-small);cursor:pointer;align-items:center;justify-content:center}
+.bx-dossier-btn{display:none;flex:none;width:36px;height:36px;border:1px solid var(--line-2);background:var(--bone);border-radius:50%;cursor:pointer;color:var(--ink);align-items:center;justify-content:center}
+.bx-dossier-btn:hover{background:var(--paper-2)}
 
 /* ─── Mensajes ─── */
 .bx-msgs{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:var(--sp-6) var(--sp-6);display:flex;flex-direction:column;gap:var(--sp-2)}
@@ -178,8 +190,7 @@ body[data-app="bandeja"] .bk-page{
 
 .bx-row{display:flex;flex-direction:column;max-width:70%}
 .bx-row.lead{align-self:flex-start;align-items:flex-start}
-.bx-row.ai{align-self:flex-end;align-items:flex-end}
-.bx-row.agent{align-self:flex-end;align-items:flex-end}
+.bx-row.ai,.bx-row.agent{align-self:flex-end;align-items:flex-end}
 
 .bx-bub{padding:var(--sp-3) var(--sp-4);font-size:var(--fs-sm);line-height:var(--lh);white-space:pre-wrap;word-break:break-word}
 .bx-row.lead .bx-bub{
@@ -213,15 +224,21 @@ body[data-app="bandeja"] .bk-page{
   border-top:1px solid var(--line);background:var(--bone);
 }
 .bx-composer textarea{
-  flex:1;resize:none;max-height:132px;color:var(--ink);
+  flex:1;resize:none;min-height:var(--h);max-height:132px;
+  padding:var(--sp-3) var(--sp-4);
+  border:1px solid var(--line-2);border-radius:var(--r);
+  font-family:var(--font-sans);font-size:var(--fs-sm);line-height:var(--lh);
+  background:var(--paper);color:var(--ink);
 }
-.bx-composer textarea:focus{outline:none}
+.bx-composer textarea:focus{outline:none;border-color:var(--sky-blue);box-shadow:var(--focus)}
 .bx-composer textarea::placeholder{color:var(--mute-2)}
 .bx-send{
-  flex:none;width:var(--h);
+  flex:none;width:var(--h);height:var(--h);border-radius:50%;
+  border:1px solid var(--sky-blue);background:var(--sky-blue);color:#fff;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   transition:background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
+.bx-send:hover{background:var(--sky-blue-press)}
 .bx-send:active{transform:scale(.94)}
 .bx-send:disabled{opacity:.4;cursor:default;transform:none}
 
@@ -299,17 +316,6 @@ body[data-app="bandeja"] .bk-page{
   .bx-th-head{gap:var(--sp-2);padding:var(--sp-3) var(--sp-4)}
 }
 </style>
-<link rel="stylesheet" href="styles/mobile-inputs.css">
-<script defer src="mobile-inputs.js"></script>
-<link rel="stylesheet" href="ui/tokens.css">
-<link rel="stylesheet" href="ui/date-picker.css">
-<script defer src="ui/date-picker.js"></script>
-<link rel="stylesheet" href="ui/actions.css">
-<script defer src="ui/actions.js"></script>
-<link rel="stylesheet" href="ui/fields.css">
-<link rel="stylesheet" href="ui/overlays.css">
-<script defer src="ui/overlays.js"></script>
-<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
 <script src="/staging-network-audit.js" defer></script>
 </head>
 <body data-app="bandeja">

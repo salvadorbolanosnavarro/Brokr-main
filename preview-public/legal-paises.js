@@ -65,7 +65,7 @@
         'Los datos se alojan en servidores fuera de ' + n + ' (principalmente en los Estados Unidos de América). Al aceptar este Aviso, el titular autoriza esa transferencia internacional, que se realiza con proveedores que ofrecen niveles adecuados de protección.',
       ],
       whatsapp: [
-        'Si la cuenta del Usuario está registrada en ' + n + ', el Usuario es el responsable de los datos de las personas que escriban a su número en los términos de ' + a.datos + ', y Cecil actúa como encargado del tratamiento por cuenta del Usuario.',
+        'Si la cuenta del Usuario está registrada en ' + n + ', el Usuario es el responsable de los datos de las personas que escriban a su número en los términos de ' + a.datos + ', y Broquer actúa como encargado del tratamiento por cuenta del Usuario.',
         'Las obligaciones de este Anexo que remiten a la LFPDPPP (aviso de privacidad propio, atención de derechos y plazos) se cumplen conforme a la ley de ' + n + ', ante ' + a.autoridad + '.',
       ],
     };

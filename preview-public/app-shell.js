@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════════════
    BROQUER — App Shell compartido
-   Inyecta: sidebar desktop, topbar, mobile header, bottom nav, Cecil IA.
+   Inyecta: sidebar desktop, topbar, mobile header, bottom nav, Broq.
    Conserva 1:1 el flujo de Supabase / OpenAI / Railway del repo original.
 
    Uso en cada módulo:
@@ -21,40 +21,6 @@
   });
 
   /* ── Sentry — errores de producción (no carga en localhost) ── */
-  (function initSentry() {
-    const h = window.location.hostname;
-    if (h !== 'broquer.app' && h !== 'www.broquer.app') return;
-    const s = document.createElement('script');
-    s.src = 'https://js.sentry-cdn.com/266e3bda223d2a0a211074bde709f4e8.min.js';
-    s.crossOrigin = 'anonymous';
-    s.onload = function () {
-      if (!window.Sentry || typeof Sentry.onLoad !== 'function') return;
-      // El Loader Script de Sentry expone de inmediato un shim chiquito
-      // (onLoad/forceLoad y poco más) mientras baja el SDK completo en
-      // segundo plano — "onload" de este <script> solo significa que ESE
-      // shim ya existe, no que setTag/setUser ya estén disponibles. Llamarlos
-      // aquí directo tiraba "Sentry.setTag is not a function" en cada carga.
-      // Sentry.onLoad() sí es parte del shim y encola el callback hasta que
-      // el SDK real termine de cargar — es el patrón que Sentry documenta
-      // para el Loader Script.
-      Sentry.onLoad(function () {
-        // Etiqueta el módulo activo (ej. "isr", "avm") para filtrar en Sentry por página
-        const mod = (document.body && document.body.dataset.app)
-          ? document.body.dataset.app
-          : (location.pathname.split('/').pop() || 'index').replace('.html', '');
-        Sentry.setTag('modulo', mod);
-        // Si el usuario ya tiene sesión, adjunta su correo al reporte
-        try {
-          const u = JSON.parse(
-            localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}'
-          );
-          if (u && u.email) Sentry.setUser({ email: u.email, id: u.id || undefined });
-        } catch (_) {}
-      });
-    };
-    document.head.appendChild(s);
-  })();
-
   /* ── Config ── */
   const API_BASE = 'https://brokr-main-staging.up.railway.app';
   const SB_URL   = 'https://tymhlvawnqadqgwnpruk.supabase.co';
@@ -328,7 +294,7 @@
     'equipo':       'Equipo — miembros de la cuenta, roles y permisos',
     'tareas':       'Tareas — pendientes y actividad del CRM',
     'estadisticas': 'Estadísticas — captación, pipeline e inmuebles con más interés',
-    'bolsa':        'Bolsa inmobiliaria — propiedades compartidas entre agentes Cecil con comisión compartida; publicar inmuebles propios y contactar al agente captador',
+    'bolsa':        'Bolsa inmobiliaria — propiedades compartidas entre agentes Broquer con comisión compartida; publicar inmuebles propios y contactar al agente captador',
     'mi-sitio':     'Mi sitio — perfil público, plantilla y sitio web del agente',
     'buscador':     'Buscador de propiedades — enlaces de portales que calzan con el requerimiento de cada cliente, actualizados a diario',
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
@@ -355,7 +321,7 @@
     'equipo':        { title:'Equipo',                 sub:'Quién trabaja en tu cuenta y qué puede ver cada quien.' },
     'alertas':       { title:'Alertas de búsqueda',    sub:'Lo que busca cada cliente del equipo y los inmuebles nuevos que le coinciden.' },
     'crm-ajustes':   { title:'Ajustes de CRM',         sub:'Etapas del pipeline, tipos de contacto, fuentes, etiquetas y categorías de tu cuenta.' },
-    'bolsa':         { title:'Bolsa inmobiliaria',     sub:'Comparte inventario con otros agentes Cecil y cierra en equipo con comisión compartida.' },
+    'bolsa':         { title:'Bolsa inmobiliaria',     sub:'Comparte inventario con otros agentes Broquer y cierra en equipo con comisión compartida.' },
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
     'cumplimiento':  { title:'Cumplimiento',           sub:'El expediente de identificación de cada cliente, el control de umbrales y los avisos a la UIF, en un solo lugar.' },
     'firmas':        { title:'Firma electrónica',      sub:'Manda el contrato, cada parte firma desde su celular y te regresa con constancia.' },
@@ -363,7 +329,7 @@
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
     'impuestos':     { title:'Impuestos por venta',    sub:'Lo que paga quien vende un inmueble, con las reglas de tu país.' },
-    'finanzas':      { title:'Tu dinero, en orden.', sub:'Ingresos, gastos y saldos de tus cuentas.' },
+    'finanzas':      { title:'Finanzas',              sub:'Tus ingresos, gastos y cuentas. La rentabilidad real de cada operación.' },
     'image-cleaner': { title:'Editor de imágenes',     sub:'Limpia y mejora las fotos de tus propiedades con IA.' },
     'facebook-ads':  { title:'Facebook Ads',           sub:'Crea, activa y mide anuncios de Facebook e Instagram.' },
     'whatsapp':      { title:'WhatsApp',                sub:'Varios números, un solo lugar. La IA califica, agenda y te pasa al prospecto cuando toca.' },
@@ -371,13 +337,13 @@
     'blog':          { title:'Blog',                   sub:'Recursos profesionales sobre PLD, legal y mercado.' },
     'mi-sitio':      { title:'Mi sitio',               sub:'El sitio web público que tus clientes ven cuando les compartes tu link.' },
     'video':         { title:'Video',                   sub:'Tus fotos se vuelven un recorrido listo para reels, stories y WhatsApp.' },
-    'correo':        { title:'Correo',                  sub:'Tu bandeja de entrada conectada a Cecil: lee, responde y redacta sin salir.' },
+    'correo':        { title:'Correo',                  sub:'Tu bandeja de entrada conectada a Broquer: lee, responde y redacta sin salir.' },
   };
   const ICONS = {
     inbox:      '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859M2.25 13.5V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.5M2.25 13.5l2.4-7.2A2.25 2.25 0 016.79 4.5h10.42a2.25 2.25 0 012.14 1.8l2.4 7.2"/>',
     mail:       '<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>',
     home:       '<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>',
-    nums123:    '<text x="12" y="16.5" text-anchor="middle" font-size="12" font-weight="800" fill="currentColor" stroke="none" font-family="inherit">123</text>',
+    nums123:    '<text x="12" y="16.5" text-anchor="middle" font-size="11.5" font-weight="800" fill="currentColor" stroke="none" font-family="inherit">123</text>',
     building:   '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/>',
     users:      '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>',
     document:   '<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>',
@@ -421,7 +387,7 @@
   const svg = (name, size = 18, sw = 1.6, cls = '') =>
     `<svg${cls ? ` class="${cls}"` : ''} width="${size}" height="${size}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="${sw}">${ICONS[name] || ''}</svg>`;
 
-  /* Helper local para SVGs dentro de chips de Cecil IA (14×14, stroke 1.7) */
+  /* Helper local para SVGs dentro de chips de Broq (14×14, stroke 1.7) */
   const _CICO = (name) =>
     `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0;vertical-align:-2px;margin-right:6px">${ICONS[name] || ''}</svg>`;
 
@@ -530,7 +496,7 @@
    electrónica", "Estimación de valor") — nunca empuja al ícono ni se
    sale de su columna. */
 .bk-sb-ico__label {
-  font-size:var(--ui-text-xs); font-weight: 700; letter-spacing: 0.01em; line-height: 1.15;
+  font-size: 8.5px; font-weight: 700; letter-spacing: 0.01em; line-height: 1.15;
   text-align: center; color: inherit; opacity: 0.75;
   max-width: 100%; overflow-wrap: anywhere;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
@@ -591,7 +557,7 @@
 .bk-flyout.is-open { display: flex; animation: bk-fly-in 0.16s var(--ease-out); }
 @keyframes bk-fly-in { from { opacity: 0; transform: translateX(-6px); } }
 .bk-flyout__title {
-  font-size:var(--ui-text-xs); font-weight: 800; letter-spacing: 0.06em;
+  font-size: 12px; font-weight: 800; letter-spacing: 0.06em;
   color: rgba(255,255,255,0.62);
   padding: 2px 10px 6px;
 }
@@ -624,21 +590,21 @@
 .bk-cmdk__in svg { color: var(--mute); flex: 0 0 auto; }
 .bk-cmdk__in input {
   flex: 1; border: none; outline: none; background: transparent;
-  font-size:var(--ui-text-sm); font-family: inherit; color: var(--ink);
+  font-size: 15px; font-family: inherit; color: var(--ink);
 }
 .bk-cmdk__esc {
-  font-size:var(--ui-text-xs); font-weight: 600; color: var(--mute);
+  font-size: 11px; font-weight: 600; color: var(--mute);
   border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px;
 }
 .bk-cmdk__list { max-height: 50vh; overflow-y: auto; padding: 8px; }
 .bk-cmdk__g {
-  font-size:var(--ui-text-xs); font-weight: 700; color: var(--mute);
+  font-size: 11px; font-weight: 700; color: var(--mute);
   padding: 10px 12px 4px; letter-spacing: 0.02em;
 }
 .bk-cmdk__item {
   display: flex; align-items: center; gap: 12px;
   padding: 9px 12px; border-radius: var(--r-sm);
-  font-size:var(--ui-text-sm); font-weight: 500; cursor: pointer; color: var(--ink);
+  font-size: 14px; font-weight: 500; cursor: pointer; color: var(--ink);
 }
 .bk-cmdk__item .ci {
   flex: 0 0 auto; width: 30px; height: 30px; border-radius: var(--r-xs);
@@ -646,16 +612,16 @@
   display: inline-flex; align-items: center; justify-content: center;
 }
 .bk-cmdk__item .ci svg { width: 15px; height: 15px; }
-.bk-cmdk__item .grp { margin-left: auto; font-size:var(--ui-text-xs); color: var(--mute); font-weight: 600; }
-.bk-cmdk__item:hover { background: var(--paper-2); }
-.bk-cmdk__empty { padding: 26px; text-align: center; color: var(--mute); font-size:var(--ui-text-sm); }
+.bk-cmdk__item .grp { margin-left: auto; font-size: 11.5px; color: var(--mute); font-weight: 600; }
+.bk-cmdk__item.is-sel, .bk-cmdk__item:hover { background: var(--paper-2); }
+.bk-cmdk__empty { padding: 26px; text-align: center; color: var(--mute); font-size: 14px; }
 
 .bk-sb-link {
   position: relative;
   display: flex !important; align-items: center; gap: 12px;
   height: 44px; padding: 0 12px;
   border-radius: var(--r);
-  font-size:var(--ui-text-sm); color: #FFFFFF !important;
+  font-size: 14px; color: #FFFFFF !important;
   cursor: pointer;
   transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
   font-weight: 700; letter-spacing: -0.01em;
@@ -712,7 +678,7 @@
 }
 .bk-back-home {
   display: inline-flex; align-items: center; gap: 6px;
-  font-size:var(--ui-text-xs); font-weight: 600;
+  font-size: 13px; font-weight: 600;
   color: var(--sky-blue); opacity: 0.85;
   text-decoration: none;
   transition: opacity var(--dur) var(--ease);
@@ -736,7 +702,7 @@
 .bk-mobile-head__avatar {
   width: 29px; height: 29px; border-radius: 50%;
   background: var(--ink); color: var(--paper);
-  font-weight: 600; font-size:var(--ui-text-xs);
+  font-weight: 600; font-size: 11px;
   display: flex; align-items: center; justify-content: center;
 }
 
@@ -758,7 +724,7 @@
   min-width: 0;
   text-align: center;
   font-family: var(--font-display);
-  font-size:var(--ui-text-sm);
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--sky-blue-press);
@@ -782,7 +748,7 @@
   color: var(--mute);
   font-family: var(--font-sans);
   font-weight: 500;
-  font-size:var(--ui-text-xs);
+  font-size: 12px;
   margin-left: 8px;
   /* El autor puede romper si el span entero no cabe en la línea */
   display: inline;
@@ -817,24 +783,32 @@
 .bk-topbar__search-expand-inner svg { color: var(--mute); flex-shrink: 0; }
 .bk-topbar__search-expand-inner input {
   flex: 1; background: none; border: none; outline: none;
-  font-size:var(--ui-text-sm); letter-spacing: -0.005em;
+  font-size: 15px; letter-spacing: -0.005em;
   font-family: inherit;
   color: var(--ink);
 }
 .bk-topbar__search-expand-inner input::placeholder { color: var(--mute-2); }
-.bk-topbar__search-close { cursor: pointer;
+.bk-topbar__search-close {
+  background: transparent; border: none; cursor: pointer;
+  color: var(--mute); padding: 6px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
+.bk-topbar__search-close:hover { color: var(--ink); }
 
 .bk-topbar__actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
 .bk-icon-btn {
-  width: var(--ui-control-small);
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
+  color: var(--ink-2);
   position: relative;
   transition: background var(--dur) var(--ease);
 }
+.bk-icon-btn:hover { background: var(--paper-2); }
 .bk-icon-btn .dot {
   position: absolute; top: 8px; right: 8px;
   width: 7px; height: 7px; border-radius: 50%;
@@ -866,7 +840,7 @@
 }
 .bk-ph__title {
   font-family: var(--font-display);
-  font-size:var(--ui-text-mobile);
+  font-size: 30px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.05;
@@ -875,7 +849,7 @@
   margin: 0;
 }
 .bk-ph__sub {
-  font-size:var(--ui-text-sm);
+  font-size: 15px;
   color: var(--mute);
   margin: 6px 0 0;
   line-height: 1.5;
@@ -883,7 +857,7 @@
 }
 @media (max-width: 720px) {
   .bk-ph { padding: 16px var(--pad-x, 16px) 4px; }
-  .bk-ph__title { font-size:var(--ui-text-section); }
+  .bk-ph__title { font-size: 24px; }
 }
 
 /* Heros de solo-título reemplazados por el encabezado canónico */
@@ -915,7 +889,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   flex: 1;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   padding: 6px 4px;
-  font-size:var(--ui-text-xs);
+  font-size: 10px;
   color: var(--mute);
   text-decoration: none;
   font-weight: 600;
@@ -942,7 +916,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   min-width: 17px; height: 17px; padding: 0 4px;
   border-radius: 9px;
   background: var(--danger); color: #FFFFFF;
-  font-size:var(--ui-text-xs); font-weight: 800; line-height: 17px; text-align: center;
+  font-size: 10px; font-weight: 800; line-height: 17px; text-align: center;
   border: 2px solid rgba(255,255,255,0.9);
   display: none;
   font-variant-numeric: tabular-nums;
@@ -974,7 +948,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-sheet.is-open { transform: none; }
 .bk-sheet__grip { width: 38px; height: 4px; border-radius: 2px; background: var(--line-2); margin: 6px auto 12px; }
 .bk-sheet__eyebrow {
-  font-size:var(--ui-text-xs); font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
   color: var(--mute); margin: 14px 4px 8px;
 }
 .bk-sheet__eyebrow:first-of-type { margin-top: 2px; }
@@ -984,7 +958,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   padding: 13px 12px; border-radius: 14px;
   background: var(--paper); border: 1px solid var(--line);
   color: var(--ink); text-decoration: none;
-  font-size:var(--ui-text-xs); font-weight: 700; font-family: inherit; text-align: left;
+  font-size: 13px; font-weight: 700; font-family: inherit; text-align: left;
   cursor: pointer; -webkit-tap-highlight-color: transparent;
   transition: background var(--dur) var(--ease);
 }
@@ -996,9 +970,37 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-sheet__item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (min-width: 881px) { .bk-sheet, .bk-sheet-back { display: none; } }
 
+/* Broq FAB (desktop only — mobile uses bottom-nav center) */
+.bk-shaark-fab {
+  position: fixed; right: 28px; bottom: 28px; z-index: 80;
+  width: 60px; height: 60px; border-radius: 50%;
+  background: var(--bone); color: var(--ink);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 14px 32px rgba(8,28,78,.16), 0 4px 10px rgba(8,28,78,.08);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  padding: 0; overflow: hidden;
+}
+.bk-shaark-fab:hover { transform: translateY(-2px); box-shadow: 0 18px 36px rgba(8,28,78,.20), 0 6px 12px rgba(8,28,78,.12); }
+.bk-shaark-fab img { height: 62%; width: auto; object-fit: contain; }
+.bk-shaark-fab__pulse {
+  position: absolute; inset: -4px; border-radius: 50%;
+  border: 1.5px solid var(--ink); opacity: 0;
+  animation: bkPulse 2.4s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes bkPulse { 0% { transform: scale(.95); opacity: .35; } 100% { transform: scale(1.25); opacity: 0; } }
+.bk-wake-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 10px; height: 10px; background: var(--success);
+  border-radius: 50%; border: 2px solid var(--bone);
+  display: none;
+}
+.bk-shaark-fab.wake-on .bk-wake-dot { display: block; }
+@media (max-width: 880px) { .bk-shaark-fab { display: none; } }
 
-/* Cecil IA: header and mobile navigation are the only entry points. */
-/* Cecil IA popup */
+/* Broq popup */
 .bk-shaark-popup {
   display: none;
   position: fixed; right: 28px; bottom: 100px; z-index: 90;
@@ -1017,14 +1019,14 @@ body[data-app="verificador"] .top-header { display: none !important; }
   .bk-shaark-popup { right: 12px; left: 12px; bottom: 84px; width: auto; }
 }
 /* Cabecera del chat — mismo azul del sidebar, con el destello superior.
-   Separa visualmente la identidad de Cecil IA de la zona de conversación. */
+   Separa visualmente la identidad de Broq de la zona de conversación. */
 .bk-shk-head {
   display: flex; align-items: center; gap: 12px;
-  padding: 16px 16px 15px;
-
-
+  padding: 16px 16px 15px; border-bottom: none;
+  background: var(--sb-bg);
+  background-image: radial-gradient(120% 90% at 100% 0%, rgba(255,255,255,0.20), rgba(255,255,255,0) 62%);
   position: relative; flex-shrink: 0;
- background: var(--ui-paper); background-image: none; border-bottom: 1px solid var(--ui-border);}
+}
 .bk-shk-head::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
   background: rgba(255,255,255,0.14); pointer-events: none;
@@ -1037,9 +1039,9 @@ body[data-app="verificador"] .top-header { display: none !important; }
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   overflow: hidden;
 }
-.bk-shk-mark { font:700 var(--ui-text-mobile)/1 var(--ui-font); color:var(--ui-ink); letter-spacing:-.06em; }
-.bk-shk-name { font-family: var(--font-display);  font-weight: 600; letter-spacing: -0.01em;  line-height: 1.25;  color: var(--ui-ink); font-size: var(--ui-text-base);}
-.bk-shk-status { display: flex; align-items: center; gap: 7px;   font-family: inherit; letter-spacing: 0; font-weight: 500; margin-top: 1px;  color: var(--ui-muted); font-size: var(--ui-text-xs);}
+.bk-shk-avatar img { height: 62%; width: auto; object-fit: contain; }
+.bk-shk-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: rgba(255,255,255,1); line-height: 1.25; }
+.bk-shk-status { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: rgba(255,255,255,0.72); font-family: inherit; letter-spacing: 0; font-weight: 500; margin-top: 1px; }
 /* Punto "en línea": núcleo verde con halo suave que respira */
 .bk-shk-status::before {
   content: ''; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
@@ -1056,25 +1058,28 @@ body[data-app="verificador"] .top-header { display: none !important; }
   background: none; border: 1px solid var(--line-2);
   border-radius: var(--r-pill);
   padding: 5px 10px;
-  font-size:var(--ui-text-xs); font-weight: 600; color: var(--mute);
+  font-size: 11px; font-weight: 600; color: var(--mute);
   cursor: pointer; display: flex; align-items: center; gap: 4px;
   font-family: inherit; transition: color var(--dur), border-color var(--dur);
 }
 .bk-shk-wake:hover { color: var(--ink); }
 .bk-shk-wake.is-on { color: var(--forest); border-color: var(--forest); }
-.bk-shk-close { cursor: pointer;
-
+.bk-shk-close {
+  width: 30px; height: 30px;
+  background: rgba(255,255,255,0.10); border: none; cursor: pointer;
+  border-radius: 9px; color: rgba(255,255,255,0.75);
   display: flex; align-items: center; justify-content: center;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
- width: var(--ui-control-small);}
+}
+.bk-shk-close:hover { background: rgba(255,255,255,0.20); color: rgba(255,255,255,1); }
 .bk-shk-msgs { flex: 1; overflow-y: auto; padding: 16px 16px; display: flex; flex-direction: column; gap: 10px; background: var(--paper); }
 .bk-shk-msgs::-webkit-scrollbar { width: 4px; } .bk-shk-msgs::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
-.bk-shk-bubble { max-width: 88%; padding: 11px 14px;   line-height: 1.55; letter-spacing: -0.005em; white-space: pre-wrap;  font-size: var(--ui-text-sm); border-radius: var(--ui-radius);}
+.bk-shk-bubble { max-width: 88%; padding: 11px 14px; border-radius: 16px; font-size: 13.5px; line-height: 1.55; letter-spacing: -0.005em; white-space: pre-wrap; }
 .bk-shk-bubble.bot { background: var(--paper-2); color: var(--ink); border: 1px solid var(--line); border-bottom-left-radius: 6px; align-self: flex-start; }
-.bk-shk-bubble.user {   border-bottom-right-radius: 6px; align-self: flex-end;   background: var(--ui-sky); color: var(--ui-ink); box-shadow: none;} /* AUDIT-EXEMPT-LINE */
-.bk-shk-bubble.toast { background: transparent; border: none; color: var(--mute); font-size:var(--ui-text-xs); padding: 4px 10px; align-self: center; }
+.bk-shk-bubble.user { background: var(--sky-blue); color: #FFFFFF; border-bottom-right-radius: 6px; align-self: flex-end; box-shadow: 0 2px 8px rgba(18,64,160,0.22); } /* AUDIT-EXEMPT-LINE */
+.bk-shk-bubble.toast { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 4px 10px; align-self: center; }
 /* Pasos del agente — "lo que está haciendo" en vivo */
-.bk-shk-bubble.step { background: transparent; border: none; color: var(--mute); font-size:var(--ui-text-xs); padding: 3px 8px 3px 22px; align-self: flex-start; position: relative; opacity: 0.95; }
+.bk-shk-bubble.step { background: transparent; border: none; color: var(--mute); font-size: 12px; padding: 3px 8px 3px 22px; align-self: flex-start; position: relative; opacity: 0.95; }
 .bk-shk-bubble.step::before { content: ""; position: absolute; left: 6px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; border: 1.6px solid var(--ink-2); border-right-color: transparent; border-radius: 50%; animation: bkSpin 0.7s linear infinite; }
 .bk-shk-bubble.step.done { opacity: 0.6; }
 .bk-shk-bubble.step.done::before { content: ""; border: none; width: 10px; height: 10px; margin-top: -5px; animation: none; background: no-repeat center/contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230C7A5E' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>"); }
@@ -1090,65 +1095,68 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-shk-chip {
   background: var(--paper); border: 1px solid var(--line-2);
   border-radius: var(--r-pill); padding: 7px 12px;
-  font-size:var(--ui-text-xs); color: var(--ink-2); cursor: pointer; font-weight: 500;
+  font-size: 12px; color: var(--ink-2); cursor: pointer; font-weight: 500;
   font-family: inherit;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .bk-shk-chip:hover { background: var(--paper-2); border-color: var(--ink); }
 .bk-shk-input-row { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--line); align-items: center; background: var(--paper); }
-.bk-shk-input { flex: 1; min-width: 0; background: var(--paper-2); border: 1px solid var(--line-2); border-radius: var(--r-pill); padding: 11px 15px; font-size: var(--ui-text-base); min-height: var(--ui-control); outline: none; font-family: inherit; color: var(--ink); transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease); }
+.bk-shk-input { flex: 1; min-width: 0; background: var(--paper-2); border: 1px solid var(--line-2); border-radius: var(--r-pill); padding: 11px 15px; font-size: 14px; outline: none; font-family: inherit; color: var(--ink); transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease); }
 .bk-shk-input:focus { border-color: var(--sky-blue); background: var(--paper); box-shadow: 0 0 0 3px rgba(18,64,160,0.12); }
 .bk-shk-mic, .bk-shk-send {
-  width: var(--ui-control-small); height: var(--ui-control-small);
+  width: 40px; height: 40px; border-radius: 50%;
   border: none; cursor: pointer; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
- background: var(--ui-action); color: var(--ui-ink); box-shadow: none; border-radius: var(--ui-radius);}
+}
 .bk-shk-mic { background: var(--paper-2); color: var(--ink-2); border: 1px solid var(--line); }
 .bk-shk-mic:hover { background: var(--ink); color: var(--paper); }
 .bk-shk-mic.listening { background: var(--danger); color: white; border-color: var(--danger); animation: bkMicPulse 1.2s ease-in-out infinite; }
 @keyframes bkMicPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(198,40,57,.5); } 50% { box-shadow: 0 0 0 8px rgba(198,40,57,0); } }
-.bk-shk-send {    transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);  background: var(--ui-action); color: var(--ui-ink); box-shadow: none; border-radius: var(--ui-radius);} /* AUDIT-EXEMPT-LINE */
-.bk-shk-send:hover {    background: var(--ui-action-hover); box-shadow: none;}
+.bk-shk-send { background: var(--sky-blue); color: #FFFFFF; box-shadow: 0 3px 10px rgba(18,64,160,0.30); transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease); } /* AUDIT-EXEMPT-LINE */
+.bk-shk-send:hover { background: var(--sky-blue-press); box-shadow: 0 5px 14px rgba(18,64,160,0.38); }
 @media (hover: hover) and (pointer: fine) { .bk-shk-mic { display: none; } }
 
 /* ── Profile Drawer ─────────────────────────────────────────── */
 .bk-profile-overlay {
   position: fixed; inset: 0; z-index: 200;
-
+  background: rgba(8,28,78,0.55);
   backdrop-filter: blur(2px);
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity .18s ease, visibility .18s ease;
- background: var(--ui-overlay);}
+}
 .bk-profile-overlay.is-open { opacity: 1; visibility: visible; pointer-events: auto; }
 .bk-profile-drawer {
   position: fixed; top: 0; right: 0; bottom: 0; z-index: 201;
-   max-width: 100vw;
+  width: 384px; max-width: 100vw;
   background: var(--paper); border-left: 1px solid var(--line);
-
+  box-shadow: -24px 0 48px rgba(8,28,78,0.10);
   display: flex; flex-direction: column;
   transform: translate3d(100%,0,0);
   transition: transform .28s cubic-bezier(.16,1,.3,1);
   overflow: hidden;
   contain: layout paint style;
   will-change: transform;
- width: var(--ui-panel); box-shadow: var(--ui-shadow);}
+}
 .bk-profile-drawer.is-open { transform: translate3d(0,0,0); }
 
 /* Header: fondo navy de marca, avatar en degradé de acción */
 .bk-pd-head {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 12px;
-
-
-
+  padding: 26px 22px 22px;
+  background: var(--sky-navy);
+  background-image: radial-gradient(120% 140% at 100% 0%, rgba(18,64,160,.45), transparent 55%);
   flex-shrink: 0;
   position: relative;
- background: var(--ui-paper); background-image: none; padding: var(--ui-space-6); border-bottom: 1px solid var(--ui-border);}
-.bk-pd-close { cursor: pointer;
+}
+.bk-pd-close {
+  width: 30px; height: 30px; border-radius: 8px;
+  background: rgba(255,255,255,0.08); border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-   flex-shrink: 0;
+  color: rgba(255,255,255,0.7); flex-shrink: 0;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
- width: var(--ui-control-small);}
+}
+.bk-pd-close:hover { background: rgba(255,255,255,0.16); color: #FFFFFF; }
 .bk-pd-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
 .bk-pd-body::-webkit-scrollbar { width: 0; }
 .bk-pd-avatar-row {
@@ -1156,22 +1164,22 @@ body[data-app="verificador"] .top-header { display: none !important; }
 }
 .bk-pd-avatar {
   width: 56px; height: 56px; border-radius: 50%;
-
-
+  background: linear-gradient(135deg, var(--sky-blue), var(--sky-blue-press));
+  color: #FFFFFF;
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700;  letter-spacing: -0.02em;
+  font-weight: 700; font-size: 19px; letter-spacing: -0.02em;
   flex-shrink: 0;
-
- background: var(--ui-sky); color: var(--ui-ink); box-shadow: none; font-size: var(--ui-text-lg);}
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.14), 0 4px 14px rgba(18,64,160,0.40);
+}
 .bk-pd-avatar-info { flex: 1; min-width: 0; }
-.bk-pd-name { font-family: var(--font-display);  font-weight: 600;  letter-spacing: -0.01em;  color: var(--ui-ink); font-size: var(--ui-text-base);}
-.bk-pd-email {   margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;  color: var(--ui-muted); font-size: var(--ui-text-xs);}
+.bk-pd-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: #FFFFFF; letter-spacing: -0.01em; }
+.bk-pd-email { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bk-pd-role-badge {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: var(--fs-label-3); font-weight: 600; letter-spacing: 0.02em;
   padding: 3px 9px; border-radius: var(--r-pill); margin-top: 7px;
-
- background: var(--ui-sky); color: var(--ui-ink);}
+  background: rgba(255,255,255,0.14); color: #FFFFFF;
+}
 .bk-pd-role-badge.admin { background: var(--danger); color: #FFFFFF; }
 .bk-pd-section-label {
   font-family: var(--font-sans); font-size: var(--fs-label-3); font-weight: 600;
@@ -1186,30 +1194,33 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-pd-field:last-child { margin-bottom: 0; }
 .bk-pd-field label { display: block; font-size: var(--fs-label-3); font-weight: 600; color: var(--mute); margin-bottom: 5px; letter-spacing: 0.02em; }
 .bk-pd-field input {
-  width: 100%;  border: 1px solid var(--line-2);
+  width: 100%; background: var(--paper-2); border: 1px solid var(--line-2);
   border-radius: var(--r-sm); padding: 10px 12px;
-   font-family: inherit; color: var(--ink); outline: none;
+  font-size: 13px; font-family: inherit; color: var(--ink); outline: none;
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
- height: var(--ui-control); font-size: var(--ui-text-base); background: var(--ui-paper);}
+}
 .bk-pd-field input:focus { border-color: var(--sky-blue); box-shadow: var(--focus); background: var(--bone); }
 .bk-pd-field input[readonly] { color: var(--mute); cursor: default; }
 .bk-pd-btn {
-  width: 100%;
-  cursor: pointer; transition: opacity .2s, transform .15s;
-  display: flex; align-items: center; justify-content: center; gap: 7px;}
+  width: 100%; padding: 11px; border-radius: var(--r-pill);
+  font-size: 13px; font-weight: 700; font-family: inherit;
+  cursor: pointer; border: none; transition: opacity .2s, transform .15s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
 .bk-pd-btn:hover { opacity: .9; }
 .bk-pd-btn:active { transform: scale(.98); }
-.bk-pd-btn-outline { margin-top: 8px; }
-.bk-pd-btn-danger  { margin-top: 8px; }
+.bk-pd-btn-primary { background: var(--sky-navy); color: #FFFFFF; }
+.bk-pd-btn-outline { background: var(--bone); border: 1px solid var(--line-2); color: var(--ink-2); margin-top: 8px; }
+.bk-pd-btn-danger  { background: var(--bone); border: 1px solid rgba(198,40,57,.3); color: var(--danger); margin-top: 8px; }
 .bk-pd-status {
   display: flex; align-items: center; gap: 6px;
-  font-size:var(--ui-text-xs); color: var(--mute); margin-top: 8px;
+  font-size: 12px; color: var(--mute); margin-top: 8px;
 }
 .bk-pd-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mute-3); flex-shrink: 0; }
 .bk-pd-status .dot.ok { background: var(--success); }
 .bk-pd-status .dot.warn { background: var(--warn); }
 .bk-pd-toast {
-  padding: 9px 12px; border-radius: var(--r-sm); font-size:var(--ui-text-xs); font-weight: 500;
+  padding: 9px 12px; border-radius: var(--r-sm); font-size: 12px; font-weight: 500;
   margin-top: 8px; display: none;
 }
 .bk-pd-toast.ok   { background: var(--success-soft); color: var(--success); display: block; }
@@ -1225,7 +1236,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 .bk-pd-menu-trigger {
   width: 100%; display: flex; align-items: center; justify-content: space-between;
   padding: 10px; background: none; border: none; cursor: pointer;
-  font-family: inherit; font-size:var(--ui-text-sm); font-weight: 600; color: var(--ink);
+  font-family: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink);
   text-align: left; border-radius: var(--r);
   transition: background var(--dur) var(--ease);
 }
@@ -1267,14 +1278,54 @@ body[data-app="verificador"] .top-header { display: none !important; }
   background: var(--forest-soft); color: var(--forest);
 }
 .bk-pd-sub-badge.inactive { background: var(--bone); color: var(--mute); }
-.bk-pd-sub-info { font-size:var(--ui-text-xs); color: var(--mute); margin: 8px 0 14px; line-height: 1.5; }
+.bk-pd-sub-info { font-size: 12px; color: var(--mute); margin: 8px 0 14px; line-height: 1.5; }
 
+
+/* ── Módulos legacy: unificación visual Broquer sin cambiar lógica ── */
+body[data-app]{background:var(--paper)!important;color:var(--ink)!important;font-family:var(--font-sans)!important;letter-spacing:-.01em!important}
+body[data-app] main,body[data-app] .app-main,body[data-app] .screen,body[data-app] .container,body[data-app] .wrap{background:transparent!important}
+body[data-app] .card,body[data-app] .ui-card,body[data-app] .panel,body[data-app] .box,body[data-app] .module,body[data-app] .section,body[data-app] .pf-card,body[data-app] .res-card,body[data-app] .form-card,body[data-app] .calc-card,body[data-app] .result-card{background:var(--bone)!important;border:1px solid var(--line)!important;border-radius:var(--r-lg)!important;box-shadow:var(--shadow-xs)!important;color:var(--ink)!important}
+body[data-app] h1,body[data-app] h2,body[data-app] h3,body[data-app] .title,body[data-app] .card-title,body[data-app] .section-title{font-family:var(--font-display)!important;color:var(--ink)!important;letter-spacing:-.02em!important;font-weight:700!important}
+/* Excepción: dentro de superficies azules (tarjetas de acción, hero,
+   App Store) los títulos vuelven a blanco. Sin esto, la regla genérica
+   de arriba los pinta de tinta oscura sobre azul. */
+body[data-app] .ai-card h1,body[data-app] .ai-card h2,body[data-app] .ai-card h3,body[data-app] .ai-card .title,body[data-app] .appstore-card h1,body[data-app] .appstore-card h2,body[data-app] .appstore-card h3,body[data-app] .appstore-card .title,body[data-app] .appstore-card__title,body[data-app] .sky-hero h1,body[data-app] .sky-hero h2,body[data-app] .sky-hero h3,body[data-app] .sky-hero .title{color:var(--bone)!important}
+body[data-app] label,body[data-app] .label,body[data-app] .field-label,body[data-app] .sec-lbl{color:var(--mute)!important;font-size:11px!important;font-weight:700!important;letter-spacing:.01em!important}
+body[data-app] input,body[data-app] select,body[data-app] textarea{background:var(--bone)!important;border:1px solid var(--line-2)!important;border-radius:var(--r)!important;color:var(--ink)!important;box-shadow:none!important;min-height:44px}
+body[data-app] input:focus,body[data-app] select:focus,body[data-app] textarea:focus{border-color:var(--sky-blue)!important;box-shadow:var(--focus)!important;outline:none!important}
+body[data-app] button,body[data-app] .btn,body[data-app] .ui-btn,body[data-app] .btn-pdf,body[data-app] .isr-calc-btn{border-radius:var(--r-pill)!important;font-family:var(--font-sans)!important;font-weight:700!important;letter-spacing:-.005em!important}
+body[data-app] .btn-primary,body[data-app] .ui-btn.forest,body[data-app] .isr-calc-btn,body[data-app] .btn-pdf,body[data-app] #gen-btn,body[data-app] #pdf-btn{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important;box-shadow:0 1px 2px rgba(18,64,160,.18)!important}
+body[data-app] .btn-primary:hover,body[data-app] .ui-btn.forest:hover,body[data-app] .isr-calc-btn:hover,body[data-app] .btn-pdf:hover,body[data-app] #gen-btn:hover,body[data-app] #pdf-btn:hover{background:var(--sky-blue-press)!important;border-color:var(--sky-blue-press)!important}
+body[data-app] table{border-collapse:separate!important;border-spacing:0!important;background:var(--bone)!important;border:1px solid var(--line)!important;border-radius:var(--r)!important;overflow:hidden!important}
+body[data-app] th{background:var(--paper-2)!important;color:var(--mute)!important;font-size:11px!important;letter-spacing:.01em!important}
+body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
+/* ── Unificación del BOTÓN DE ACCIÓN PRIMARIA: azul en TODOS los módulos ──
+   El sistema tenía primarios en negro/gris/navy/azul según el módulo. Aquí se
+   fuerza el azul de acción en el botón principal de cada uno. Se dejan intactos
+   los secundarios/ghost/cancelar/eliminar y las superficies de MARCA externa
+   (verde de conectar WhatsApp, azul de conectar Facebook). Los futuros módulos
+   deben usar .btn-primary o .bk-btn--forest para heredar esto. */
+body[data-app] .btn-new-tarea,body[data-app] .tk-composer .go,body[data-app] .fa-btn-primary,body[data-app] .btn-new-prop,body[data-app] .eb-import-btn,body[data-app] .pf-save-btn,body[data-app] #ai-btn,body[data-app] #calc-btn,body[data-app] #btn-analizar-ia,body[data-app] #btn-clean,body[data-app] #fa-ai-btn,body[data-app] #fa-submit-btn,body[data-app] #tpl-submit-btn{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important;box-shadow:0 1px 2px rgba(18,64,160,.18)!important}
+body[data-app] .btn-new-tarea:hover,body[data-app] .tk-composer .go:hover,body[data-app] .fa-btn-primary:hover,body[data-app] .btn-new-prop:hover,body[data-app] .eb-import-btn:hover,body[data-app] .pf-save-btn:hover,body[data-app] #ai-btn:hover,body[data-app] #calc-btn:hover,body[data-app] #btn-analizar-ia:hover,body[data-app] #btn-clean:hover,body[data-app] #fa-ai-btn:hover,body[data-app] #fa-submit-btn:hover,body[data-app] #tpl-submit-btn:hover{background:var(--sky-blue-press)!important;border-color:var(--sky-blue-press)!important}
+/* ── Unificación de TAMAÑO/FORMA de botones de acción (misma altura 44px,
+   padding, tipo y radio píldora en todos los módulos). Se excluyen a propósito
+   tiles de selección (.tipo-btn), toggles/segmented, chips de filtro y botones
+   de icono, que tienen su propia geometría. */
+body[data-app] .btn,body[data-app] .btn-primary,body[data-app] .ui-btn,body[data-app] .fa-btn,body[data-app] .wa-btn,body[data-app] .doc-btn,body[data-app] .gen-btn,body[data-app] .add-btn,body[data-app] .import-btn,body[data-app] .btn-new-tarea,body[data-app] .tk-composer .go,body[data-app] .btn-new-prop,body[data-app] .eb-import-btn,body[data-app] .pf-save-btn,body[data-app] .isr-calc-btn,body[data-app] .btn-pdf{min-height:44px!important;padding:0 18px!important;font-size:var(--fs-sm)!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;line-height:1!important}
+/* ── Unificación del TÍTULO DE PÁGINA: mismo tamaño que el header canónico
+   (.bk-ph=30px) en los módulos que pintan su propio título ── */
+body[data-app] .props-head__title h1,body[data-app] .page-head h1,body[data-app] .tk-head__title h1,body[data-app] .ms-head h1,body[data-app] .guide-title,body[data-app] .bx-list__title h1,body[data-app] .es-hero__brand{font-size:30px!important;font-weight:700!important;letter-spacing:-.02em!important;line-height:1.1!important}
+/* ── Alineación título↔cuerpo: el header canónico respeta el ancho del módulo ── */
+body[data-app] .bk-ph{max-width:var(--page-max,1180px)!important}
+body[data-app="isr"],body[data-app="ficha-manual"],body[data-app="avm"],body[data-app="contratos"],body[data-app="mi-sitio"],body[data-app="image-cleaner"]{--page-max:var(--form-max,760px)}
+body[data-app="blog"]{--page-max:960px}
+body[data-app="facebook-ads"]{--page-max:980px}
 
 /* ── Visor/entrega inmediata de archivos generados ── */
 .bk-file-overlay{position:fixed;inset:0;z-index:2147483647;background:rgba(8,28,78,.46);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:18px}
 .bk-file-sheet{width:min(920px,100%);height:min(86vh,820px);background:var(--paper);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow-xl);display:flex;flex-direction:column;overflow:hidden}
 .bk-file-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);color:var(--ink);background:var(--paper)}
-.bk-file-head strong{display:block;font-size:var(--ui-text-sm)}.bk-file-head span{display:block;font-size:var(--ui-text-xs);color:var(--mute);margin-top:2px}.bk-file-frame{flex:1;width:100%;border:0;background:white}.bk-file-placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:var(--mute);background:var(--bone)}.bk-file-actions{display:flex;gap:10px;padding:12px;border-top:1px solid var(--line);background:var(--paper-2)}.bk-file-primary,.bk-file-secondary{flex:1;text-align:center;border-radius:var(--r-pill)!important;padding:12px 14px!important;font-weight:700!important;text-decoration:none!important;font-family:var(--font-sans)!important}.bk-file-primary{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important}.bk-file-secondary{background:#fff!important;color:var(--ink)!important;border:1px solid var(--line-2)!important}
+.bk-file-head strong{display:block;font-size:15px}.bk-file-head span{display:block;font-size:12px;color:var(--mute);margin-top:2px}.bk-file-close{border:0!important;background:transparent!important;color:var(--ink)!important;font-size:28px!important;line-height:1!important;padding:4px 8px!important;box-shadow:none!important}.bk-file-frame{flex:1;width:100%;border:0;background:white}.bk-file-placeholder{flex:1;display:flex;align-items:center;justify-content:center;color:var(--mute);background:var(--bone)}.bk-file-actions{display:flex;gap:10px;padding:12px;border-top:1px solid var(--line);background:var(--paper-2)}.bk-file-primary,.bk-file-secondary{flex:1;text-align:center;border-radius:var(--r-pill)!important;padding:12px 14px!important;font-weight:700!important;text-decoration:none!important;font-family:var(--font-sans)!important}.bk-file-primary{background:var(--sky-blue)!important;color:#fff!important;border:1px solid var(--sky-blue)!important}.bk-file-secondary{background:#fff!important;color:var(--ink)!important;border:1px solid var(--line-2)!important}
 @media(max-width:700px){.bk-file-overlay{padding:0;align-items:stretch}.bk-file-sheet{width:100%;height:100%;border-radius:0}.bk-file-actions{padding-bottom:calc(12px + env(safe-area-inset-bottom));}}
 
 `;
@@ -1365,7 +1416,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   }
 
   /* Destino cuando NO hay sesión: en web mandamos a la página comercial
-     (landing.html) para que el visitante conozca Cecil antes de entrar;
+     (landing.html) para que el visitante conozca Broquer antes de entrar;
      en la app nativa de iOS no existe página comercial, va directo a login. */
   function bkAuthRedirectTarget() {
     // Si la URL trae parámetros de autenticación de Supabase (enlace de
@@ -1548,7 +1599,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     shell.innerHTML = `
       <aside class="bk-sidebar" id="bk-sidebar">
         <div class="bk-sidebar__brand">
-          <a href="index.html" aria-label="Ir al inicio Cecil"><img src="/cecil/brand/cecil-icon.svg" alt="Cecil"/></a>
+          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="isotipo-black.png" alt="Broquer"/></a>
         </div>
         <div class="bk-sb-cols">
           <nav class="bk-rail" id="bk-rail" aria-label="Módulos">
@@ -1560,7 +1611,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 
       <main class="bk-content">
         <div class="bk-mobile-head">
-          <a href="index.html" aria-label="Ir al inicio Cecil"><img src="/cecil/brand/cecil-wordmark.webp" alt="Cecil"/></a>
+          <a href="index.html" aria-label="Ir al inicio Broquer"><img src="logo-broquer.png" alt="Broquer"/></a>
         </div>
 
         <div class="bk-topbar">
@@ -1578,30 +1629,6 @@ body[data-app="verificador"] .top-header { display: none !important; }
         </div>
       </main>
     `;
-    const designHeader = document.createElement('header');
-    designHeader.className = 'bk-design-header';
-    designHeader.innerHTML = `<div class="bk-design-header__inner">
-      <a class="bk-design-brand" href="index.html" aria-label="Cecil, inicio"><picture class="cf-brand-picture"><source media="(max-width:720px)" srcset="/cecil/brand/cecil-wordmark.webp"><img src="/cecil/brand/cecil-wordmark.webp" alt="Cecil"></picture></a>
-      <nav class="bk-design-nav" aria-label="Navegación principal">
-        <a href="index.html" ${activeKey === 'home' ? 'aria-current="page"' : ''}>Inicio</a>
-        <a href="facebook-ads.html" ${modulosOff.has('facebook-ads') ? 'hidden' : ''} ${activeKey === 'facebook-ads' ? 'aria-current="page"' : ''}>Campañas</a>
-        <a href="tareas.html" ${modulosOff.has('tareas') ? 'hidden' : ''} ${activeKey === 'tareas' ? 'aria-current="page"' : ''}>Agenda</a>
-        <details class="bk-tools-menu"><summary>Herramientas</summary><div class="bk-tools-menu__list">${MODS.filter(visible).map(m => `<a href="${m.href}">${svg(m.icon,18)}${m.label}${['buzon','clientes'].includes(m.key) ? `<i class="bk-badge" id="bk-design-${m.key}-badge"></i>` : ''}</a>`).join('')}</div></details>
-      </nav>
-      <div class="bk-design-utilities">
-        <button class="bk-design-assistant" type="button" aria-label="Abrir Cecil IA">${svg('mic',18)}<span>Cecil IA</span></button>
-        <a class="bk-design-chats" href="whatsapp.html#chats" aria-label="Chats de WhatsApp" ${modulosOff.has('whatsapp') ? 'hidden' : ''}>${svg('whatsapp',18)}<span>Chats</span><i class="bk-badge" id="bk-design-chats-badge"></i></a>
-      </div>
-      <button class="bk-design-account" type="button">Mi cuenta <span aria-hidden="true"></span></button>
-    </div>`;
-    designHeader.querySelector('.bk-design-assistant').addEventListener('click', () => toggleShaarkPopup());
-    designHeader.querySelector('.bk-design-account span').textContent = initials(profile.fullName || '');
-    designHeader.querySelector('.bk-design-account').addEventListener('click', () => window.openProfileDrawer?.());
-    document.body.appendChild(designHeader);
-    designHeader.querySelectorAll('details').forEach(menu => {
-      document.addEventListener('click', e => { if (!menu.contains(e.target)) menu.open = false; });
-      menu.addEventListener('keydown', e => { if (e.key === 'Escape') { menu.open = false; menu.querySelector('summary').focus(); } });
-    });
     document.body.appendChild(shell);
 
     // Rail: el menú completo. Clic en un grupo abre el flyout con sus
@@ -1747,7 +1774,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     shell.querySelector('.bk-content').appendChild(pageWrap);
 
     // Bottom nav
-    // PWA bottom nav (liquid glass): Inicio · Cecil (isotipo) · Perfil
+    // PWA bottom nav (liquid glass): Inicio · Broquer (isotipo) · Perfil
     // El botón "Menú" se marca activo cuando estás dentro de cualquier módulo
     // agrupado, no solo del CRM.
     const grupoKeys = new Set(GRUPOS.map(g => g.key));
@@ -1758,8 +1785,8 @@ body[data-app="verificador"] .top-header { display: none !important; }
     bnav.innerHTML =
       // Menú (hamburguesa): abre la hoja con CRM + herramientas + Mi perfil.
       `<button class="bk-bnav__item${crmActive ? ' is-active' : ''}" id="bk-bnav-crm" type="button" aria-label="Menú">${svg('homeList', 24)} <span>Menú</span></button>` +
-      `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Cecil IA">
-         <span class="bk-shk-mark" aria-hidden="true"><img src="/cecil/brand/cecil-icon.svg" alt=""></span> <span>Cecil IA</span>
+      `<button class="bk-bnav__item bk-bnav__broquer" id="bk-bnav-shaark" type="button" aria-label="Abrir Broq">
+         <img src="broq-icon.png" alt=""/> <span>Broq</span>
        </button>` +
       // El acceso del pulgar entra directo a la pestaña de chats, no a la de
       // ajustes: el agente aprieta esto para leer, no para configurar.
@@ -1823,26 +1850,33 @@ body[data-app="verificador"] .top-header { display: none !important; }
     sheetBack.addEventListener('click', () => toggleSheet(false));
     document.addEventListener('keydown', e => { if (e.key === 'Escape') toggleSheet(false); });
 
-    // Cecil IA FAB + popup
-    // Cecil IA opens from the header or mobile navigation, without a duplicate FAB.
+    // Broq FAB + popup
+    const fab = document.createElement('button');
+    fab.className = 'bk-shaark-fab';
+    fab.id = 'bk-shaark-fab';
+    fab.setAttribute('aria-label', 'Abrir Broq');
+    fab.innerHTML = `<span class="bk-shaark-fab__pulse"></span><span class="bk-wake-dot" id="bk-wake-dot"></span><img src="broq-icon.png" alt="Broq"/>`;
+    fab.addEventListener('click', () => toggleShaarkPopup());
+    document.body.appendChild(fab);
+
     document.getElementById('bk-bnav-shaark').addEventListener('click', () => toggleShaarkPopup());
 
     const pop = document.createElement('div');
     pop.className = 'bk-shaark-popup';
     pop.id = 'bk-shaark-popup';
     pop.setAttribute('role', 'dialog');
-    pop.setAttribute('aria-label', 'Cecil IA — asistente');
+    pop.setAttribute('aria-label', 'Broq — asistente');
     pop.innerHTML = `
       <div class="bk-shk-head">
-        <div class="bk-shk-avatar"><span class="bk-shk-mark" aria-hidden="true"><img src="/cecil/brand/cecil-icon.svg" alt=""></span></div>
+        <div class="bk-shk-avatar"><img src="broq-icon.png" alt=""/></div>
         <div style="flex:1;min-width:0">
-          <div class="bk-shk-name"><img class="cecil-assistant-logo" src="/cecil/brand/cecil-assistant.webp" alt="Cecil IA"></div>
+          <div class="bk-shk-name">Broq</div>
           <div class="bk-shk-status">En línea</div>
         </div>
         <button class="bk-shk-close" type="button" aria-label="Cerrar">${svg('close', 14, 2)}</button>
       </div>
       <div class="bk-shk-msgs" id="bk-shk-msgs">
-        <div class="bk-shk-bubble bot" id="bk-welcome-msg">¡Hola! Soy Cecil IA, tu asistente inteligente. ¿Qué puedo hacer por ti?</div>
+        <div class="bk-shk-bubble bot" id="bk-welcome-msg">¡Hola! Soy Broq, tu asistente inteligente. ¿Qué puedo hacer por ti?</div>
       </div>
       <div class="bk-shk-input-row">
         <button class="bk-shk-mic" id="bk-shk-mic" type="button" aria-label="Hablar">${svg('mic', 16, 1.8)}</button>
@@ -1862,7 +1896,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   }
 
   /* ════════════════════════════════════════════════════════════════
-     Cecil IA — popup, fetch, voice, wake word
+     Broq — popup, fetch, voice, wake word
      ════════════════════════════════════════════════════════════════ */
   let shaarkOpen = false;
   let shaarkMsgs = [];
@@ -1959,7 +1993,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
       const r = await fetch(API_BASE + '/agent', {
         method: 'POST',
         // Se manda la sesión para que el backend sepa quién pregunta. Sin esto,
-        // Cecil IA quedaba abierto a cualquiera en internet con nuestra cuenta.
+        // Broq quedaba abierto a cualquiera en internet con nuestra cuenta.
         headers: Object.assign({ 'Content-Type': 'application/json' },
                                _tokAgente ? { Authorization: 'Bearer ' + _tokAgente } : {}),
         body: JSON.stringify({
@@ -2101,7 +2135,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
      disponible, muestra un visor inmediato con botones de compartir/abrir. */
   async function deliverGeneratedFile(blob, filename, opts = {}) {
     const type = opts.type || blob.type || 'application/octet-stream';
-    const title = opts.title || filename || 'Archivo Cecil';
+    const title = opts.title || filename || 'Archivo Broquer';
     const safeName = filename || (title.replace(/\s+/g, '_') + (type.includes('pdf') ? '.pdf' : ''));
 
     // Escritorio: descarga directa. En móvil el <a download> de abajo no
@@ -2124,7 +2158,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 
     if (file && navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
       try {
-        await navigator.share({ title, text: opts.text || 'Archivo generado por Cecil', files: [file] });
+        await navigator.share({ title, text: opts.text || 'Archivo generado por Broquer', files: [file] });
         return { method: 'share' };
       } catch (e) {
         if (e && e.name === 'AbortError') return { method: 'share-cancelled' };
@@ -2152,7 +2186,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     overlay.querySelector('.bk-file-close')?.addEventListener('click', close);
     overlay.querySelector('.bk-file-primary')?.addEventListener('click', async () => {
       if (file && navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-        try { await navigator.share({ title, text: opts.text || 'Archivo generado por Cecil', files: [file] }); return; } catch (_) {}
+        try { await navigator.share({ title, text: opts.text || 'Archivo generado por Broquer', files: [file] }); return; } catch (_) {}
       }
       window.open(url, '_blank', 'noopener');
     });
@@ -2270,7 +2304,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
       const userRaw = localStorage.getItem('sb_user') || sessionStorage.getItem('sb_user') || '{}';
       const user = JSON.parse(userRaw);
       if (!tok || !user.id) { _addAssistantBubble('No pude crear el inmueble: tu sesión expiró.'); return; }
-      if (!window.brokrSb || !window.brokrSb.rest) { _addAssistantBubble('No pude crear el inmueble: la conexión con Cecil aún no está lista. Intenta otra vez en un segundo.'); return; }
+      if (!window.brokrSb || !window.brokrSb.rest) { _addAssistantBubble('No pude crear el inmueble: la conexión con Broquer aún no está lista. Intenta otra vez en un segundo.'); return; }
 
       const num = (v) => {
         if (v === undefined || v === null || v === '') return null;
@@ -2349,7 +2383,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
       await deliverGeneratedFile(blob, filename, {
         type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         title: 'Contrato listo',
-        text: 'Contrato generado por Cecil'
+        text: 'Contrato generado por Broquer'
       });
       _addAssistantBubble(`✓ <strong>Contrato listo.</strong> Se abrió en pantalla para compartirlo o guardarlo.`);
     } catch (e) {
@@ -2466,7 +2500,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
       const r2 = await fetch(API + '/avm-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resultado, agente: 'Agente Cecil®' }),
+        body: JSON.stringify({ resultado, agente: 'Agente Broquer®' }),
       });
       const tokData = await r2.json();
       if (!r2.ok) {
@@ -2481,7 +2515,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
       }
       const blob = await pdfResp.blob();
       const filename = tokData.filename || ('Estimacion_Valor_' + (body.colonia || 'inmueble') + '.pdf');
-      await deliverGeneratedFile(blob, filename, { type: 'application/pdf', title: 'Estimación de valor lista', text: 'Estimación de valor generada por Cecil' });
+      await deliverGeneratedFile(blob, filename, { type: 'application/pdf', title: 'Estimación de valor lista', text: 'Estimación de valor generada por Broquer' });
       bubble.innerHTML += '<br>✓ <strong>PDF listo.</strong> Se abrió en pantalla para compartirlo o guardarlo.';
     } catch (e) {
       bubble.textContent = 'No pude completar la estimación: ' + (e.message || e);
@@ -2527,7 +2561,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.setTextColor(95, 95, 95);
-      doc.text(['Cecil · Cecil IA', periodo ? 'Periodo: ' + periodo : '', 'Generado: ' + fecha].filter(Boolean).join('  ·  '), margin, y);
+      doc.text(['Broquer · Broq', periodo ? 'Periodo: ' + periodo : '', 'Generado: ' + fecha].filter(Boolean).join('  ·  '), margin, y);
       y += 28;
       doc.setDrawColor(210, 210, 210);
       doc.line(margin, y, width - margin, y);
@@ -2560,7 +2594,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
       await deliverGeneratedFile(blob, 'Reporte_Estadisticas' + safePeriodo + '.pdf', {
         type: 'application/pdf',
         title: 'Reporte de estadísticas listo',
-        text: 'Reporte generado por Cecil'
+        text: 'Reporte generado por Broquer'
       });
       bubble.innerHTML = '✓ <strong>Reporte listo.</strong> Se abrió en pantalla para compartirlo o guardarlo.';
     } catch (e) {
@@ -2569,7 +2603,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   }
 
   function getCurrentContext() {
-    return CONTEXT_LABELS[activeKey] || 'Cecil';
+    return CONTEXT_LABELS[activeKey] || 'Broquer';
   }
   window.getCurrentContext = getCurrentContext;
 
@@ -2598,10 +2632,10 @@ body[data-app="verificador"] .top-header { display: none !important; }
   function _normalizarVoz(t) {
     if (!t) return t;
     // Corregir transcripciones de voz comunes
-    t = t.replace(/\bbroker\b/gi, 'Cecil IA');
-    t = t.replace(/\bbroquer\b/gi, 'Cecil IA');
-    t = t.replace(/\bshaark\b/gi, 'Cecil IA');
-    t = t.replace(/\bshark\b/gi, 'Cecil IA');
+    t = t.replace(/\bbroker\b/gi, 'Broq');
+    t = t.replace(/\bbroquer\b/gi, 'Broq');
+    t = t.replace(/\bshaark\b/gi, 'Broq');
+    t = t.replace(/\bshark\b/gi, 'Broq');
     return t;
   }
 
@@ -2870,7 +2904,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   let _wakeRec = null, _wakeActive = false, _wakePaused = false, _wakeRestartT = null;
   let _wakeEnabled = localStorage.getItem('shaark_wake') === '1';
   let _wakeSuppressUntil = 0;
-  const WAKE = ['cecil ia','cecil','oye cecil ia','oye cecil','oye broq','broq','oye broquer','oye broker','broquer','broker','oye shaark','oye shark','shaark','oie shaark','hey shaark','hey shark'];
+  const WAKE = ['oye broq','broq','oye broquer','oye broker','broquer','broker','oye shaark','oye shark','shaark','oie shaark','hey shaark','hey shark'];
 
   function toggleWakeWord() {
     if (_wakeEnabled) {
@@ -2946,7 +2980,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     const fab = document.getElementById('bk-shaark-fab');
     if (btn) {
       btn.classList.toggle('is-on', _wakeEnabled);
-      btn.title = _wakeEnabled ? 'Siempre escuchando: ON — toca para desactivar' : 'Activar "Oye Cecil IA"';
+      btn.title = _wakeEnabled ? 'Siempre escuchando: ON — toca para desactivar' : 'Activar "Oye Broq"';
     }
     if (fab) fab.classList.toggle('wake-on', _wakeEnabled);
   }
@@ -3007,11 +3041,11 @@ body[data-app="verificador"] .top-header { display: none !important; }
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
               <span style="font-size:14px;font-weight:600;color:var(--ink);">Notificaciones</span>
             </div>
-            <button onclick="toggleNotifPanel(false)" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:16px;line-height:1;padding:2px 6px;">\u2715</button>
+            <button onclick="toggleNotifPanel(false)" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:18px;line-height:1;padding:2px 6px;">\u2715</button>
           </div>
           <div style="padding:32px 18px;text-align:center;">
             <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.25;margin:0 auto 12px;display:block;"><path d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
-            <p style="font-size:12px;color:var(--ink-3);margin:0;">Sin notificaciones por ahora</p>
+            <p style="font-size:13px;color:var(--ink-3);margin:0;">Sin notificaciones por ahora</p>
           </div>
         `;
         panel.style.cssText = "position:fixed;top:64px;right:16px;z-index:300;width:min(340px, calc(100vw - 32px));background:var(--paper);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 12px 40px rgba(22,22,22,.14),0 3px 8px rgba(22,22,22,.08);animation:bkNotifIn .18s var(--ease) both;";
@@ -3149,7 +3183,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
                     <input type="password" id="pd-pass-new2" placeholder="Repite la nueva contraseña" autocomplete="new-password"/>
                   </div>
                   <button class="bk-pd-btn bk-pd-btn-primary" id="pd-pass-btn" onclick="changePasswordFromProfile()">Actualizar contraseña</button>
-                  <div style="font-size:12px;color:var(--mute);margin-top:8px;line-height:1.4">Al actualizarla, cerraremos tu sesión en todos los demás dispositivos por seguridad. Esta sesión seguirá activa.</div>
+                  <div style="font-size:11px;color:var(--mute);margin-top:8px;line-height:1.4">Al actualizarla, cerraremos tu sesión en todos los demás dispositivos por seguridad. Esta sesión seguirá activa.</div>
                   <div class="bk-pd-toast" id="pd-toast-pass"></div>
                 </div>
               </div>
@@ -3178,7 +3212,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
                   <div class="bk-pd-field" style="margin-top:12px">
                     <label>API Key de EasyBroker</label>
                     <input type="text" id="pd-input-ebkey" placeholder="Pega tu API key aquí" autocomplete="off" autocorrect="off" spellcheck="false"/>
-                    <div style="font-size:12px;color:var(--mute);margin-top:5px;line-height:1.4">Encuéntrala en EasyBroker → Configuración → API.</div>
+                    <div style="font-size:11px;color:var(--mute);margin-top:5px;line-height:1.4">Encuéntrala en EasyBroker → Configuración → API.</div>
                   </div>
                   <button class="bk-pd-btn bk-pd-btn-primary" onclick="saveEbKey()">Conectar EasyBroker</button>
                   <button class="bk-pd-btn bk-pd-btn-outline" id="pd-eb-disconnect-btn" onclick="disconnectEbKey()" style="margin-top:8px;display:none">Desconectar EasyBroker</button>
@@ -3235,10 +3269,10 @@ body[data-app="verificador"] .top-header { display: none !important; }
               <div class="bk-pd-menu-panel-inner">
                 <div class="bk-pd-card">
                   <div id="pd-sub-badge-wrap"><span class="bk-pd-sub-badge inactive" id="pd-sub-badge">Sin plan activo</span></div>
-                  <div class="bk-pd-sub-info" id="pd-sub-info">Activa tu suscripción para acceder a todas las funciones de Cecil.</div>
-                  <button class="bk-pd-btn bk-pd-btn-primary" id="pd-sub-btn" onclick="startCheckout()">Activar Cecil Max</button>
+                  <div class="bk-pd-sub-info" id="pd-sub-info">Activa tu suscripción para acceder a todas las funciones de Broquer.</div>
+                  <button class="bk-pd-btn bk-pd-btn-primary" id="pd-sub-btn" onclick="startCheckout()">Activar Broquer Max</button>
                   <button class="bk-pd-btn bk-pd-btn-outline" id="pd-sub-cancel-btn" onclick="cancelSubscription()" style="display:none">Cancelar suscripción</button>
-                  <a href="empresas.html" style="display:block;margin-top:12px;font-size:var(--fs-label-3);color:var(--mute);text-decoration:underline;line-height:1.5">¿Tienes equipo? Conoce Cecil para Empresas</a>
+                  <a href="empresas.html" style="display:block;margin-top:12px;font-size:var(--fs-label-3);color:var(--mute);text-decoration:underline;line-height:1.5">¿Tienes equipo? Conoce Broquer para Empresas</a>
                   <div class="bk-pd-toast" id="pd-toast-sub"></div>
                 </div>
               </div>
@@ -3283,7 +3317,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
             <div class="bk-pd-menu-panel">
               <div class="bk-pd-menu-panel-inner">
                 <div class="bk-pd-card">
-                  <p style="font-size:12px;color:var(--mute);line-height:1.5;margin-bottom:12px">Esta acción elimina de forma permanente tu cuenta y todos tus datos (propiedades, contactos, contratos e integraciones). No se puede deshacer.</p>
+                  <p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:12px">Esta acción elimina de forma permanente tu cuenta y todos tus datos (propiedades, contactos, contratos e integraciones). No se puede deshacer.</p>
                   <div class="bk-pd-field">
                     <label>Para confirmar, escribe tu correo</label>
                     <input type="email" id="pd-del-input" placeholder="tu@correo.com" autocomplete="off" autocorrect="off" spellcheck="false" oninput="checkDeleteMatch()"/>
@@ -3311,7 +3345,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
             <div class="bk-pd-menu-panel">
               <div class="bk-pd-menu-panel-inner">
                 <div class="bk-pd-card">
-                  <p style="font-size:12px;color:var(--mute);line-height:1.5;margin-bottom:12px">Quién trabaja en tu cuenta, qué puede ver cada quien e invitaciones pendientes.</p>
+                  <p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:12px">Quién trabaja en tu cuenta, qué puede ver cada quien e invitaciones pendientes.</p>
                   <a href="equipo.html" style="text-decoration:none">
                     <button class="bk-pd-btn bk-pd-btn-outline" style="width:100%">Administrar equipo</button>
                   </a>
@@ -3332,7 +3366,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
             <div class="bk-pd-menu-panel">
               <div class="bk-pd-menu-panel-inner">
                 <div class="bk-pd-card">
-                  <p style="font-size:12px;color:var(--mute);margin-bottom:12px">Tienes acceso al panel de administrador.</p>
+                  <p style="font-size:13px;color:var(--mute);margin-bottom:12px">Tienes acceso al panel de administrador.</p>
                   <a href="admin.html" style="text-decoration:none">
                     <button class="bk-pd-btn bk-pd-btn-outline" style="width:100%">Ir al panel admin</button>
                   </a>
@@ -3408,7 +3442,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
       }
     } catch(e) {
       if (toast) { toast.textContent = e.message || 'No pude conectar con el servidor de pagos. Revisa brokr-main-staging.up.railway.app, SSL y CORS.'; toast.className = 'bk-pd-toast err'; }
-      if (btn) { btn.disabled = false; btn.textContent = 'Activar Cecil Max'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Activar Broquer Max'; }
     }
   }
   window.startCheckout = startCheckout;
@@ -3572,7 +3606,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
       const cancelBtn = document.getElementById('pd-sub-cancel-btn');
       setDot('pdot-sub', active ? 'ok' : 'warn');
       if (badge2) {
-        badge2.textContent = active ? (data.sub.plan || 'Cecil Max') : 'Sin plan activo';
+        badge2.textContent = active ? (data.sub.plan || 'Broquer Max') : 'Sin plan activo';
         badge2.className = 'bk-pd-sub-badge' + (active ? '' : ' inactive');
       }
       if (info) info.textContent = active ? 'Tu suscripción está activa.' : 'Activa tu suscripción para acceder a todas las funciones.';
@@ -3913,9 +3947,9 @@ body[data-app="verificador"] .top-header { display: none !important; }
         modal.style.cssText = 'background:var(--bone);border:1px solid var(--line-2);border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(22,22,22,.18)';
         modal.innerHTML = `
           <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;letter-spacing:-.01em">Selecciona tu página</div>
-          <div style="font-size:12px;color:var(--mute);margin-bottom:18px;line-height:1.5">Tienes varias páginas de Facebook. Elige con cuál quieres usar Cecil.</div>
+          <div style="font-size:13px;color:var(--mute);margin-bottom:18px;line-height:1.5">Tienes varias páginas de Facebook. Elige con cuál quieres usar Broquer.</div>
           <div id="_fb-page-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"></div>
-          <button id="_fb-cancel-btn" style="width:100%;background:transparent;border:1px solid var(--line-2);border-radius:10px;padding:10px;font-size:12px;font-family:var(--font-sans);color:var(--mute);cursor:pointer">Cancelar</button>
+          <button id="_fb-cancel-btn" style="width:100%;background:transparent;border:1px solid var(--line-2);border-radius:10px;padding:10px;font-size:13px;font-family:var(--font-sans);color:var(--mute);cursor:pointer">Cancelar</button>
         `;
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
@@ -4073,11 +4107,11 @@ body[data-app="verificador"] .top-header { display: none !important; }
   window.rcBuy = rcBuy;
   window.rcRestore = rcRestore;
 
-  /* ── Modal Cecil Max (freemium) ──────────────────────────────────
+  /* ── Modal Broquer Max (freemium) ──────────────────────────────────
      Ya NO se reemplaza la pantalla completa. Cuando un usuario sin
      suscripción intenta ejecutar una acción premium (calcular ISR,
      estimar valor, limpiar imágenes, generar contrato/ficha, publicar
-     anuncio, hablar con Cecil IA, etc.) se abre este modal encima de la
+     anuncio, hablar con Broq, etc.) se abre este modal encima de la
      página. El usuario puede cerrarlo y seguir navegando libremente. */
   function closeBroquerMaxModal() {
     const ov = document.getElementById('bk-max-modal');
@@ -4089,22 +4123,22 @@ body[data-app="verificador"] .top-header { display: none !important; }
     if (document.getElementById('bk-max-modal')) return;
     const buyBtn = IS_IOS_NATIVE
       ? `<button id="bk-iap-buy" onclick="rcBuy()" disabled style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Cargando…</button>
-         <button id="bk-iap-restore" onclick="rcRestore()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:12px;background:transparent;color:var(--ink);font-weight:600;font-size:12px;cursor:pointer;margin-top:10px;font-family:inherit;">Restaurar compras</button>`
-      : `<button id="bk-gate-sub-btn" onclick="startSubscriptionCheckoutFromGate()" style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Suscribirme a Cecil Max</button>`;
+         <button id="bk-iap-restore" onclick="rcRestore()" style="width:100%;height:42px;border:1px solid var(--line-2);border-radius:12px;background:transparent;color:var(--ink);font-weight:600;font-size:13px;cursor:pointer;margin-top:10px;font-family:inherit;">Restaurar compras</button>`
+      : `<button id="bk-gate-sub-btn" onclick="startSubscriptionCheckoutFromGate()" style="width:100%;height:48px;border:none;border-radius:12px;background:var(--sky-blue);color:#FFFFFF;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Suscribirme a Broquer Max</button>`;
     const legal = IS_IOS_NATIVE
-      ? `<div style="margin-top:14px;font-size:12px;color:var(--mute);line-height:1.5;">Cecil Max es una suscripción mensual: el pago se cobra a tu cuenta de Apple al confirmar y se renueva automáticamente cada mes, salvo que la canceles desde Ajustes de iOS al menos 24 h antes del fin del periodo. Al continuar aceptas los <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Términos de uso</a> y el <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Aviso de Privacidad</a>.</div>`
+      ? `<div style="margin-top:14px;font-size:11px;color:var(--mute);line-height:1.5;">Broquer Max es una suscripción mensual: el pago se cobra a tu cuenta de Apple al confirmar y se renueva automáticamente cada mes, salvo que la canceles desde Ajustes de iOS al menos 24 h antes del fin del periodo. Al continuar aceptas los <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Términos de uso</a> y el <a href="legal.html" style="color:var(--mute);text-decoration:underline;">Aviso de Privacidad</a>.</div>`
       : '';
     const ov = document.createElement('div');
     ov.id = 'bk-max-modal';
     ov.style.cssText = 'position:fixed;inset:0;z-index:2147483646;background:rgba(8,28,78,.46);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:var(--font-sans);';
     ov.innerHTML = `
       <div style="width:100%;max-width:400px;background:var(--bone);border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 20px 60px rgba(5,32,60,.30);text-align:center;position:relative;">
-        <button onclick="closeBroquerMaxModal()" aria-label="Cerrar" style="position:absolute;top:12px;right:14px;border:none;background:transparent;color:var(--mute);font-size:24px;line-height:1;cursor:pointer;padding:4px 8px;font-family:inherit;">&times;</button>
-        <img src="/cecil/brand/cecil-icon.svg" alt="Cecil" style="width:52px;height:52px;object-fit:contain;margin-bottom:14px;"/>
-        <h2 style="font-family:var(--font-display);font-size:24px;line-height:1.1;margin:0 0 10px;color:var(--ink);letter-spacing:-.02em;">Cecil Max</h2>
-        <p style="color:var(--mute);font-size:14px;line-height:1.55;margin:0 0 20px;">Para hacer uso de estos módulos exclusivos de Cecil por favor suscríbete a Cecil Max.</p>
+        <button onclick="closeBroquerMaxModal()" aria-label="Cerrar" style="position:absolute;top:12px;right:14px;border:none;background:transparent;color:var(--mute);font-size:26px;line-height:1;cursor:pointer;padding:4px 8px;font-family:inherit;">&times;</button>
+        <img src="isotipo-black.png" alt="Broquer" style="width:52px;height:52px;object-fit:contain;margin-bottom:14px;"/>
+        <h2 style="font-family:var(--font-display);font-size:24px;line-height:1.1;margin:0 0 10px;color:var(--ink);letter-spacing:-.02em;">Broquer Max</h2>
+        <p style="color:var(--mute);font-size:14px;line-height:1.55;margin:0 0 20px;">Para hacer uso de estos módulos exclusivos de Broquer por favor suscríbete a Broquer Max.</p>
         ${buyBtn}
-        <button onclick="closeBroquerMaxModal()" style="width:100%;height:40px;border:none;background:transparent;color:var(--mute);font-weight:600;font-size:12px;cursor:pointer;margin-top:8px;font-family:inherit;">Ahora no</button>
+        <button onclick="closeBroquerMaxModal()" style="width:100%;height:40px;border:none;background:transparent;color:var(--mute);font-weight:600;font-size:13px;cursor:pointer;margin-top:8px;font-family:inherit;">Ahora no</button>
         <div id="bk-gate-msg" style="margin-top:8px;font-size:12px;color:var(--danger);min-height:18px;"></div>
         ${legal}
       </div>`;
@@ -4121,7 +4155,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
      El CRM (inicio, contactos, leads, tareas, propiedades, perfil) es
      de uso libre. En el resto de módulos el usuario puede entrar,
      navegar y llenar formularios; solo al EJECUTAR la acción de valor
-     aparece el modal de Cecil Max si no tiene suscripción activa. */
+     aparece el modal de Broquer Max si no tiene suscripción activa. */
   // NOTA: 'video.html' (recorrido en video + su editor de fotos embebido)
   // se deja fuera de este mapa a propósito — es decisión de producto que,
   // por ahora, quede de acceso libre sin importar el plan del usuario. No
@@ -4163,7 +4197,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   /* Chequeo de suscripción NO bloqueante (freemium).
      Devuelve true (activa / admin / fail-open), false (confirmada inactiva)
      o null (sesión expirada — ya se redirigió a login). Nunca reemplaza la
-     pantalla: el modal de Cecil Max aparece solo al ejecutar acciones
+     pantalla: el modal de Broquer Max aparece solo al ejecutar acciones
      premium. */
   async function checkSubscriptionActive(profile) {
     if (profile?.isAdmin || profile?.profile?.plan === 'admin' || profile?.profile?.rol === 'equipo' || profile?.profile?.plan === 'equipo') return true;
@@ -4243,7 +4277,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 
     if (confirmedInactive) {
       // Sin suscripción: el usuario entra igual (freemium). El modal de
-      // Cecil Max aparecerá solo cuando intente una acción premium.
+      // Broquer Max aparecerá solo cuando intente una acción premium.
       return false;
     }
 
@@ -4255,6 +4289,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   async function boot() {
     const profile = await authInit();
     if (!profile) return; // redirected to login/landing
+    const pilot=document.createElement('script');pilot.src='/staging-pilot.js';pilot.onload=()=>window.bkCecilRollout?.({api:location.origin,token:getToken(),userId:profile.user.id});document.head.appendChild(pilot);
 
     // Un admin puede apagar módulos por cuenta desde la Consola, sin tocar
     // el rol ni la suscripción. Si el módulo de esta página está apagado
@@ -4503,7 +4538,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     const _welcomeMsg = document.getElementById('bk-welcome-msg');
     if (_welcomeMsg && profile?.fullName) {
       const _firstName = profile.fullName.trim().split(' ')[0];
-      _welcomeMsg.textContent = `¡Hola, ${_firstName}! Soy Cecil IA, tu asistente inteligente. ¿En qué te ayudo?`;
+      _welcomeMsg.textContent = `¡Hola, ${_firstName}! Soy Broq, tu asistente inteligente. ¿En qué te ayudo?`;
     }
 
     // ─── "Mi sitio" en móvil / iOS ────────────────────────────────
@@ -4563,7 +4598,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     window.__brokrProfile = profile;
     if (!esMovil()) return;
     // Cualquier link a mi-sitio.html dentro de la app (dashboard, sidebar,
-    // atajos de Cecil IA) se reencamina al sitio público cuando es celular.
+    // atajos de Broq) se reencamina al sitio público cuando es celular.
     document.addEventListener('click', (ev) => {
       const a = ev.target.closest && ev.target.closest('a[href$="mi-sitio.html"]');
       if (!a) return;
@@ -4597,7 +4632,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
 
   function _pintarBadge(n) {
     const txt = n > 99 ? '99+' : String(n);
-    ['bk-bnav-badge', 'bk-sheet-badge', 'bk-design-chats-badge'].forEach(id => {
+    ['bk-bnav-badge', 'bk-sheet-badge'].forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
       el.textContent = txt;
@@ -4649,7 +4684,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
         const r = await fetch(API_BASE + ruta, { headers: { Authorization: 'Bearer ' + getToken() } });
         if (r.ok) n = Number((await r.json())[campo]) || 0;
       } catch (e) { return; }
-      [`bk-rail-${key}-badge`, `bk-sheet-${key}-badge`, `bk-design-${key}-badge`].forEach(id => {
+      [`bk-rail-${key}-badge`, `bk-sheet-${key}-badge`].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.textContent = n > 99 ? '99+' : String(n); el.classList.toggle('is-on', n > 0); }
       });
@@ -4657,7 +4692,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
       if (prev !== null && n > prev && activeKey !== key && !IS_IOS_NATIVE) {
         try {
           if ('Notification' in window && Notification.permission === 'granted') {
-            const no = new Notification('Cecil · ' + titulo, { body: cuerpo, icon: '/cecil/brand/cecil-icon.svg', tag: 'broquer-' + key });
+            const no = new Notification('Broquer · ' + titulo, { body: cuerpo, icon: 'icon-192.png', tag: 'broquer-' + key });
             no.onclick = () => { window.focus(); location.href = key + '.html'; };
           }
         } catch (e) {}
@@ -4672,10 +4707,10 @@ body[data-app="verificador"] .top-header { display: none !important; }
   function _avisoWeb(nuevos) {
     try {
       if (!('Notification' in window) || Notification.permission !== 'granted') return;
-      const n = new Notification('Cecil · WhatsApp', {
+      const n = new Notification('Broquer · WhatsApp', {
         body: nuevos === 1 ? 'Tienes un mensaje nuevo de un prospecto.'
                            : `Tienes ${nuevos} mensajes nuevos de prospectos.`,
-        icon: '/cecil/brand/cecil-icon.svg',
+        icon: 'icon-192.png',
         tag: 'broquer-wa',
       });
       n.onclick = () => { window.focus(); location.href = 'whatsapp.html#chats'; };
@@ -4724,9 +4759,9 @@ body[data-app="verificador"] .top-header { display: none !important; }
       const cuando = t.fecha_entrega
         ? new Date(t.fecha_entrega).toLocaleString('es-MX', { day:'2-digit', month:'short', hour:'numeric', minute:'2-digit' })
         : '';
-      const n = new Notification('Cecil · Nueva cita agendada', {
+      const n = new Notification('Broquer · Nueva cita agendada', {
         body: t.titulo + (cuando ? ' — ' + cuando : ''),
-        icon: '/cecil/brand/cecil-icon.svg',
+        icon: 'icon-192.png',
         tag: 'broquer-cita-' + t.id,
       });
       n.onclick = () => { window.focus(); location.href = 'tareas.html'; };

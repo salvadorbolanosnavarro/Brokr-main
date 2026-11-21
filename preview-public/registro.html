@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
-<link rel="apple-touch-icon" href="/cecil/brand/cecil-icon.png"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Completa tu perfil · Cecil</title>
+<title>Broquer — Completa tu perfil</title>
 <meta name="theme-color" content="#FFFFFF"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); pantalla clara Canon -->
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
@@ -154,6 +154,7 @@ body {
 }
 .reg-legal input {
   width: 1.15rem;
+  height: 1.15rem;
   margin-top: 2px;
   flex: 0 0 auto;
   accent-color: var(--sky-blue);
@@ -170,11 +171,21 @@ body {
 }
 .reg-submit {
   width: 100%;
+  min-height: var(--h);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: var(--sky-blue);
+  color: var(--paper);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 800;
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
   transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease);
 }
+.reg-submit:hover:not(:disabled) { background: var(--sky-blue-press); box-shadow: var(--shadow); }
 .reg-submit:active:not(:disabled) { transform: translateY(1px); }
-.reg-submit:disabled { opacity: .42; cursor: not-allowed; }
+.reg-submit:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
 .reg-msg {
   display: none;
   margin-bottom: var(--sp-4);
@@ -233,28 +244,17 @@ body {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation-duration: .01ms !important; }
 }
 </style>
-<link rel="stylesheet" href="styles/mobile-inputs.css">
-<script defer src="mobile-inputs.js"></script>
-<link rel="stylesheet" href="ui/tokens.css">
-<link rel="stylesheet" href="ui/date-picker.css">
-<script defer src="ui/date-picker.js"></script>
-<link rel="stylesheet" href="ui/actions.css">
-<script defer src="ui/actions.js"></script>
-<link rel="stylesheet" href="ui/fields.css">
-<link rel="stylesheet" href="ui/overlays.css">
-<script defer src="ui/overlays.js"></script>
-<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
 <script src="/staging-network-audit.js" defer></script>
 </head>
-<body data-design-public="registro">
+<body>
 <div class="reg-wrap">
   <main class="reg-shell">
-    <section class="reg-brand" aria-label="Cecil">
-      <span class="bk-design-brand reg-brand__logo" role="img" aria-label="Cecil"><picture class="cf-brand-picture"><source media="(max-width:720px)" srcset="/cecil/brand/cecil-wordmark.webp"><img src="/cecil/brand/cecil-wordmark.webp" alt="Cecil"></picture></span>
+    <section class="reg-brand" aria-label="Broquer">
+      <img class="reg-brand__logo" src="logo-broquer-blanco.png" alt="Broquer"/>
       <div class="reg-brand__copy">
         <div class="reg-brand__eyebrow">Tu espacio de trabajo</div>
         <h1>Todo listo para empezar.</h1>
-        <p>Completa tus datos para personalizar Cecil y entrar a tu operación inmobiliaria.</p>
+        <p>Completa tus datos para personalizar Broquer y entrar a tu operación inmobiliaria.</p>
       </div>
     </section>
 
@@ -290,10 +290,10 @@ body {
 
       <label class="reg-legal">
         <input type="checkbox" id="legal-check" onchange="toggleSaveBtn()"/>
-        <span>He leído y acepto los <a href="legal.html" target="_blank">Términos y condiciones</a>, el <a href="legal.html" target="_blank">Contrato de suscripción</a> y el <a href="legal.html" target="_blank">Aviso de privacidad</a> de Cecil.</span>
+        <span>He leído y acepto los <a href="legal.html" target="_blank">Términos y condiciones</a>, el <a href="legal.html" target="_blank">Contrato de suscripción</a> y el <a href="legal.html" target="_blank">Aviso de privacidad</a> de Broquer.</span>
       </label>
 
-      <button class="reg-submit" id="btn-save" onclick="guardar()" disabled>Continuar a Cecil</button>
+      <button class="reg-submit" id="btn-save" onclick="guardar()" disabled>Continuar a Broquer</button>
     </section>
   </main>
 </div>
@@ -400,7 +400,7 @@ async function guardar(){
       console.error('Supabase error:', r2.status, errText);
       showMsg('No pudimos guardar tu perfil. Intenta de nuevo.');
       btn.disabled = false;
-      btn.textContent = 'Continuar a Cecil';
+      btn.textContent = 'Continuar a Broquer';
       return;
     }
   }
@@ -421,7 +421,7 @@ async function guardar(){
   showMsg('Perfil guardado.', 'ok');
 
   // Promo con registro + pago inmediato (ej. AMPI/PIMAC): si venía pendiente,
-  // en vez de mandar a index.html disparamos el checkout real de Cecil y
+  // en vez de mandar a index.html disparamos el checkout real de Broquer y
   // llevamos al cliente directo a la pantalla de pago de Stripe.
   let promoPendiente = '';
   try { promoPendiente = localStorage.getItem('promo_pendiente') || ''; } catch (_) {}

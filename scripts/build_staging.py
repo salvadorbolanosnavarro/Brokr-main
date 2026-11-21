@@ -1,5 +1,8 @@
 """Build only tracked public assets for the existing broquer-staging Pages project."""
 import base64
+import io
+import re
+import tarfile
 import json
 import os
 from pathlib import Path
@@ -57,11 +60,25 @@ def build(env=os.environ):
         source = Path(temp) / 'cecil'
         build_cecil(source, staging=True)
         shutil.copytree(source, output / 'cecil')
-        # Keep public entry points usable while preserving /cecil navigation.
-        shutil.copytree(source, output, dirs_exist_ok=True)
+        # The baseline UI is real Broquer, wired only to the staging services.
+        # It is the fallback used to rehearse the pilot, never production data.
+        from scripts.build_cecil_canary import BASE_REF, EXTENSIONS, FOLDERS
+        archive=tarfile.open(fileobj=io.BytesIO(subprocess.check_output(['git','archive',BASE_REF],cwd=Path(__file__).resolve().parents[1])))
+        for entry in archive:
+            relative=Path(entry.name)
+            if not entry.isfile():continue
+            if not ((len(relative.parts)==1 or relative.parts[0] in FOLDERS) and (relative.suffix.lower() in EXTENSIONS or str(relative)=='manifest.json')):continue
+            target=output/relative;target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes(archive.extractfile(entry).read())
     for path in output.rglob('*'):
         if not path.is_file() or path.suffix not in {'.html','.js','.css','.json','.svg'}: continue
         text=path.read_text()
+        if path.name == 'app-shell.js':
+            # Do not send staging errors through the inherited production loader.
+            text=re.sub(r'  \(function initSentry\(\) \{.*?  /\* ── Config', '  /* ── Config', text, count=1, flags=re.S)
+            marker='    if (!profile) return; // redirected to login/landing'
+            if marker not in text:raise ValueError('Missing shared auth hook')
+            text=text.replace(marker,marker+"\n    const pilot=document.createElement('script');pilot.src='/staging-pilot.js';pilot.onload=()=>window.bkCecilRollout?.({api:location.origin,token:getToken(),userId:profile.user.id});document.head.appendChild(pilot);",1)
         if path.name == 'propiedades.html':
             # The redesigned modal footer is outside the form. SubmitEvent
             # still identifies its button; preserve legacy in-form fallback.
@@ -70,13 +87,14 @@ def build(env=os.environ):
         text=text.replace('api.broquer.app',urlsplit(api).hostname).replace('urtgysmtnvoqaljuhntz.supabase.co',urlsplit(db).hostname)
         if 'api.broquer.app' in text or 'urtgysmtnvoqaljuhntz' in text or PROD_KEY in text:
             raise ValueError(f'Production reference remains: {path.relative_to(output)}')
-        path.write_text(text)
+        path.write_text(re.sub(r'[ \t]+$', '', text, flags=re.M))
+    (output/'staging-pilot.js').write_bytes((Path(__file__).resolve().parent/'staging_pilot_client.js').read_bytes())
     audit_script=ROOT/'scripts/staging_network_audit.js'
     if audit_script.exists():
         (output/'staging-network-audit.js').write_bytes(audit_script.read_bytes())
         for page in output.rglob('*.html'):
             page.write_text(page.read_text().replace('</head>','<script src="/staging-network-audit.js" defer></script>\n</head>',1))
-    connections=f"'self' {api} {db} wss://{urlsplit(db).hostname}"
+    connections=f"'self' {api} {db} wss://{urlsplit(db).hostname} https://o4511509854945280.ingest.us.sentry.io"
     (output/'_headers').write_text(f"/*\n  X-Robots-Tag: noindex, nofollow\n  Content-Security-Policy: connect-src {connections}; object-src 'none'; base-uri 'self'\n")
     (output/'preview-release.json').write_text(json.dumps({'source_pr':217,'design': '086fd40e7953439eceb17822abca7e29aea4bd8e','mode':'staging-preview','api':api,'database_ref':urlsplit(db).hostname.split('.')[0]},indent=2))
     print('Cecil preview built with staging services exclusively.')
