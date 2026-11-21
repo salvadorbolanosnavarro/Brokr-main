@@ -26,14 +26,17 @@ function auditDOM(){
 (async()=>{
  assert(pages.filter(n=>n.startsWith('cecil/')).length>=53,'Do not omit Cecil screens');
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
- const origin='http://127.0.0.1:'+server.address().port, report={width:390,scope:'Published HTML + executed shell, mocked authentication/services; not a physical iPhone test',engines:[]};
+ const origin='http://127.0.0.1:'+server.address().port, report={width:390,scope:'Published HTML + executed shell, mocked authentication/services; legacy delayed font repair disabled for CSS audit; not a physical iPhone test',engines:[]};
  for(const engine of (process.env.MOBILE_TEST_BROWSERS||'chromium').split(',')){
   const browser=await ({chromium,webkit}[engine]).launch({...(engine==='chromium'&&process.env.BROQUER_CHROMIUM_EXECUTABLE?{executablePath:process.env.BROQUER_CHROMIUM_EXECUTABLE}:{}),...(engine==='chromium'?{args:['--no-sandbox']}: {})});
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
-  let disableFix=false;
+  let disableFix=false,disableLegacyFloor=true;
   await context.route('**/*',async route=>{
    const req=route.request(),u=new URL(req.url());
    if(u.origin===origin){
+    // This old MutationObserver repairs fonts after load and would mask CSS
+    // regressions (including the iOS focus-before-repair bug). Audit CSS alone.
+    if(u.pathname.endsWith('/mobile-inputs.js')&&disableLegacyFloor)return route.fulfill({status:200,contentType:'text/javascript',body:''});
     if(u.pathname==='/staging-mobile-fields.css'&&disableFix)return route.fulfill({status:200,contentType:'text/css',body:''});
     if(u.pathname==='/ui/cecil')return route.fulfill({json:{enabled:true,user_id:user.id}});
     return route.continue();
@@ -52,7 +55,7 @@ function auditDOM(){
   await context.addInitScript(({user,profile})=>{
    // Synthetic state exists only in this disposable local regression browser.
    const name=location.pathname.split('/').pop();
-   if(['login.html','landing.html','reset-password.html'].includes(name))return;
+   if(['login.html','landing.html','reset-password.html'].includes(name)){localStorage.clear();sessionStorage.clear();return;}
    localStorage.setItem('sb_token','offline-test-token');localStorage.setItem('sb_user',JSON.stringify(user));
    localStorage.setItem('sesion_activa','true');localStorage.setItem('broquer-ui-cecil:'+user.id,'off');
   },{user,profile});
@@ -108,7 +111,7 @@ function auditDOM(){
    const dynamic=await page.evaluate(()=>{const x=document.createElement('input');x.id='qa-dynamic';x.style.fontSize='11px';document.body.append(x);return parseFloat(getComputedStyle(x).fontSize);});
    assert(dynamic>=16,'Dynamically inserted field is smaller than16px');
    // Desktop stays at its original size with and without the mobile CSS.
-   await page.setViewportSize({width:1280,height:900});disableFix=false;await visit('cecil/isr.html');const desktopWith=await page.locator('#f-tipo').evaluate(e=>getComputedStyle(e).fontSize);
+   await page.setViewportSize({width:1280,height:900});disableLegacyFloor=false;disableFix=false;await visit('cecil/isr.html');const desktopWith=await page.locator('#f-tipo').evaluate(e=>getComputedStyle(e).fontSize);
    disableFix=true;await visit('cecil/isr.html');const desktopWithout=await page.locator('#f-tipo').evaluate(e=>getComputedStyle(e).fontSize);
    assert.equal(desktopWith,desktopWithout,'Mobile rule changed desktop typography');
    report.engines.push({engine,pages:rows.length,cecilPages:rows.filter(r=>r.page.startsWith('cecil/')).length,negativeControlBelow16:negative.below.map(e=>e.id),dynamicField:dynamic,desktopWith,desktopWithout,results:rows});
