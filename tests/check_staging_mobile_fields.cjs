@@ -14,10 +14,11 @@ const server=http.createServer((req,res)=>{
  if(!file.startsWith(ROOT+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);return res.end('Not found');}
  res.setHeader('content-type',(mime[path.extname(file)]||'application/octet-stream')+'; charset=utf-8');res.end(fs.readFileSync(file));
 });
-function auditDOM(){
+function auditDOM(injectNegative=false){
+ if(injectNegative){const x=document.createElement('input');x.id='qa-negative-small-field';x.style.setProperty('font-size','13px','important');document.body.append(x);}
  const fields=[...document.querySelectorAll('input:not([type="hidden"]),select,textarea')].map(el=>{
   const style=getComputedStyle(el),r=el.getBoundingClientRect();
-  return {id:el.id||null,tag:el.tagName,type:el.getAttribute('type'),fontSize:parseFloat(style.fontSize),visible:!!el.getClientRects().length&&r.width>0&&r.height>0&&style.visibility!=='hidden'&&style.visibility!=='collapse'};
+  return {id:el.id||null,tag:el.tagName,type:el.getAttribute('type'),fontSize:parseFloat(style.fontSize),inlineFont:el.style.getPropertyValue('font-size'),inlinePriority:el.style.getPropertyPriority('font-size'),visible:!!el.getClientRects().length&&r.width>0&&r.height>0&&style.visibility!=='hidden'&&style.visibility!=='collapse'};
  });
  const gesture=new Event('gesturestart',{bubbles:true,cancelable:true});document.dispatchEvent(gesture);
  const touchActions=[document.documentElement,document.body,document.querySelector('.bk-page')].filter(Boolean).map(e=>getComputedStyle(e).touchAction);
@@ -29,14 +30,14 @@ function auditDOM(){
  const origin='http://127.0.0.1:'+server.address().port, report={width:390,scope:'Published HTML + executed shell, mocked authentication/services; legacy delayed font repair disabled for CSS audit; not a physical iPhone test',engines:[]};
  for(const engine of (process.env.MOBILE_TEST_BROWSERS||'chromium').split(',')){
   const browser=await ({chromium,webkit}[engine]).launch({...(engine==='chromium'&&process.env.BROQUER_CHROMIUM_EXECUTABLE?{executablePath:process.env.BROQUER_CHROMIUM_EXECUTABLE}:{}),...(engine==='chromium'?{args:['--no-sandbox']}: {})});
-  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
-  let disableFix=false,disableLegacyFloor=true;
+  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});
+  let disableFix=false,disableLegacyFloor=true,legacyRepairScriptsBlocked=0;
   await context.route('**/*',async route=>{
    const req=route.request(),u=new URL(req.url());
    if(u.origin===origin){
     // This old MutationObserver repairs fonts after load and would mask CSS
     // regressions (including the iOS focus-before-repair bug). Audit CSS alone.
-    if(u.pathname.endsWith('/mobile-inputs.js')&&disableLegacyFloor)return route.fulfill({status:200,contentType:'text/javascript',body:''});
+    if(u.pathname.endsWith('/mobile-inputs.js')&&disableLegacyFloor){legacyRepairScriptsBlocked++;return route.fulfill({status:200,contentType:'text/javascript',body:''});}
     if(u.pathname==='/staging-mobile-fields.css'&&disableFix)return route.fulfill({status:200,contentType:'text/css',body:''});
     if(u.pathname==='/ui/cecil')return route.fulfill({json:{enabled:true,user_id:user.id}});
     return route.continue();
@@ -71,8 +72,9 @@ function auditDOM(){
    // Negative control: prove the assertion catches the reported regression.
    disableFix=true;await visit('cecil/isr.html');
    assert(await page.locator('#f-tipo').count(),'ISR fixture did not render: '+page.url());
-   await page.evaluate(()=>{const x=document.createElement('input');x.id='qa-negative-small-field';x.style.fontSize='13px';document.body.append(x);});
-   const negative=await page.evaluate(auditDOM);
+   // Inject and measure in ONE task, before any legacy repair can run.
+   const negative=await page.evaluate(auditDOM,true);
+   console.log(engine+' negative control '+JSON.stringify({below:negative.below,cssLoaded:negative.cssLoaded}));
    assert(negative.below.some(e=>e.id==='qa-negative-small-field'),'Negative control must detect an actual rendered field below16px');
    disableFix=false;
    for(const name of pages){
@@ -80,6 +82,7 @@ function auditDOM(){
     let a=await visit(name);
     assert(a.cssLoaded,engine+' '+name+': global mobile stylesheet missing');
     assert(!a.below.length,engine+' '+name+': fields below16px '+JSON.stringify(a.below));
+    assert(!a.fields.some(e=>e.inlinePriority==='important'&&e.inlineFont==='16px'),engine+' '+name+': delayed JS font repair masked CSS sizing');
     assert(!/user-scalable\s*=\s*(no|0)|maximum-scale\s*=\s*(?:0(?:\.\d*)?|1(?:\.0*)?)(?:\s*[,;]|\s*$)/i.test(a.viewport),engine+' '+name+': pinch zoom disabled');
     assert(!a.pinchPrevented,engine+' '+name+': gesturestart prevented');
     assert(a.touchActions.every(x=>x==='auto'||x==='manipulation'||x.includes('pinch-zoom')),engine+' '+name+': CSS blocks pinch '+JSON.stringify(a.touchActions));
@@ -114,7 +117,7 @@ function auditDOM(){
    await page.setViewportSize({width:1280,height:900});disableLegacyFloor=false;disableFix=false;await visit('cecil/isr.html');const desktopWith=await page.locator('#f-tipo').evaluate(e=>getComputedStyle(e).fontSize);
    disableFix=true;await visit('cecil/isr.html');const desktopWithout=await page.locator('#f-tipo').evaluate(e=>getComputedStyle(e).fontSize);
    assert.equal(desktopWith,desktopWithout,'Mobile rule changed desktop typography');
-   report.engines.push({engine,pages:rows.length,cecilPages:rows.filter(r=>r.page.startsWith('cecil/')).length,negativeControlBelow16:negative.below.map(e=>e.id),dynamicField:dynamic,desktopWith,desktopWithout,results:rows});
+   report.engines.push({engine,legacyRepairScriptsBlocked,pages:rows.length,cecilPages:rows.filter(r=>r.page.startsWith('cecil/')).length,negativeControlBelow16:negative.below.map(e=>e.id),dynamicField:dynamic,desktopWith,desktopWithout,results:rows});
   }finally{await context.close();await browser.close();}
  }
  const reportPath=process.argv[2]||'/tmp/cecil-mobile-fields-390.json';fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');
