@@ -1,57 +1,37 @@
-# Cierre de staging: estado comprobado y pendientes reales
+# Cierre de staging: evidencia del 21/11/2026
 
-No se cambió main, producción ni variables de Railway/Cloudflare. PR220 y PR217 siguen draft y sin merge. Preparación del piloto no equivale a aprobación de activarlo.
+No se modificaron main, producción ni variables de Railway/Cloudflare. PR220 y PR217 siguen draft, sin merge. No se recuperó A2. A3 entró mediante intervención del usuario y su sesión se conservó durante los recorridos.
 
-## Cuenta A3
+## Pruebas por interfaz con A3
 
-El usuario creó A3 y proporcionó su nueva contraseña exclusiva de staging. Se actualizó solo el archivo privado fuera de git. Se observó inicialmente la sesión iniciada; se cerró para verificar reingreso y el flujo seguro del navegador devolvió «Correo o contraseña incorrectos». No se volvió a intentar automáticamente ni se inyectaron tokens al navegador. Una prueba independiente de la API sí autentica con la contraseña guardada. **El reingreso UI y los cuatro recorridos NO están aprobados.** No se recuperó A2.
-
-A3 conserva rol agente y plan free; acceso funcional temporal7d para probar documentos sin cobros. UUID staging bd7e565d-c0c7-46d1-9cc2-70399ed97a91. Nunca usar este UUID en producción.
-
-## Piloto: pruebas de servidor
-
-El preview tiene Broquer original en raíz y Cecil en /cecil/, ambos contra la API/BD aisladas. El worker de Cloudflare valida la sesión con Auth de staging y lee una tabla RLS de solo lectura para el cliente. Solo A3 tiene flag activo. GET /ui/cecil comprueba identidad; las pantallas HTML Cecil también se protegen en el servidor mediante cookie HttpOnly/Secure/SameSite. API/Supabase mantienen sus propios permisos de negocio.
-
-No se cambiaron variables. Se crearon dos tablas exclusivamente en staging: cecil_staging_pilot y cecil_staging_error_receipts, con RLS y sin permiso de cliente para modificar flags. SQL exacto: pilot-schema-20261121.sql. Esta implementación de control del worker NO se copia a producción; PR217 conserva el flag autenticado del backend Railway.
-
-- A3: flag200 true y HTML Cecil200.
-- B2: flag200 false; HTML Cecil302 a Broquer; POST de error403.
-- Anónimo: endpoint de flag401.
-- B2 intentando modificar el flag de A3:403.
-- Apagado temporal: A3 flagfalse, HTML302; el mismo token sigue accediendo a su perfil200. Flag restaurado atrue solo para A3.
-- Cliente: pruebas de estado de ida, vuelta y revocación conservan la sesión; revalida cada15s y al volver a la pestaña. Esto es prueba unitaria, **no certificación de clics en navegador real**.
-
-## Errores
-
-CSP permite únicamente el host de ingestión Sentry observado en la configuración pública, además de los servicios de staging. Se retira de la compilación de staging el loader heredado de producción y se envían eventos sanitizados a través del worker, con environment=staging. No se envían correos, tokens, cookies, mensajes arbitrarios o stacks con datos de clientes. Errores runtime se limitan a3 por página del piloto; el probe controlado requiere flag activo.
-
-POST autenticado A3 /__staging/error-probe devolvió200, sentry_status200, sentry_accepted=true y receipt_saved=true. Event ID565301cf-35f2-4654-b484-e41dc7d4fc6b, confirmado después por SQL en la tabla de acuses. Esto demuestra aceptación por ingestión de Sentry y recepción del servidor; no se abrió el dashboard de incidencias de Sentry ni se verificó el botón mediante clic UI. El proyecto Sentry es el existente y el evento se etiqueta staging.
-
-## Cobertura final de esta sesión
-
-| Requisito | Evidencia | Estado |
+| Función | Recorrido observado | Resultado |
 |---|---|---|
-| A3 sale y vuelve a entrar por UI | Salida observada; reingreso seguro rechazado | Pendiente |
-| Contactos por interfaz | No se ejecutó tras el bloqueo de acceso | Pendiente |
-| Leads por interfaz | No se ejecutó tras el bloqueo de acceso | Pendiente |
-| Contratos por interfaz | No se ejecutó tras el bloqueo de acceso | Pendiente |
-| Opinión de valor por interfaz | No se ejecutó tras el bloqueo de acceso | Pendiente |
-| A3 dentro/B2 fuera por servidor | pilot-server-live-20261121.json | OK |
-| Cliente no puede modificar flag | pilot-client-write-denied-20261121.json | OK |
-| Revocación conservando sesión API | pilot-revocation-live-20261121.json | OK servidor |
-| Ida/vuelta y revocación por botones reales | Implementados; contrato de estado pasa | Pendiente UI |
-| Error de prueba recibido | Sentry200 + acuse SQL, environment staging | OK servidor; botón UI pendiente |
-| Publicación aislada |304 archivos HTTP/hash exactos, cero refs producción | OK |
-| ISR seis casos contra main | Mismos46 campos numéricos/booleanos; fixtures iguales | OK offline |
-| Respaldo/restauración completa medida | Copias físicas observadas; ensayo no ejecutado | Pendiente |
-| Procedimiento de recuperación | BACKUP_RUNBOOK_20261121.md y script con preflight | Preparado; no ensayado |
-| PR piloto producción | #217 con checklist, guardado corregido, revocación, flag apagado | Preparado, sin publicar |
-| iPhone Safari/WebView | Dispositivo físico del usuario | Pendiente |
+| Contactos | Crear contacto ficticio, recargar, editar, recargar y verificar, eliminar; estado vacío | OK UI |
+| Leads | Crear oportunidad ficticia, recargar, mover Nuevo→Activo, editar nombre/notas, recargar y verificar, eliminar; pipeline vacío | OK UI |
+| Contrato | Llenar arrendamiento con tres partes/direcciones ficticias, fechas, renta/deposito10000, generar y descargar Word | OK UI; DOCX45490bytes, partes/dirección verificadas en XML |
+| Opinión de valor | Casa Altozano/Morelia,220m²terreno/180m²construcción,3recámaras/2baños/2estacionamientos | Falla: dos intentos UI terminan en Error en el análisis |
+| Botones del piloto | Volver a Broquer → avatar Salvador Pruebas Cecil A3; Probar el diseño Cecil → Cecil, sin login | OK UI |
+| Error controlado | Clic Probar registro de errores, mensaje recibido; acuse SQL sentry_accepted=true | OK UI/servidor, f6149a79-a96a-4958-ab34-1bc164c02d92 |
+| Revocación en interfaz | Flag A3false → recarga vuelve a Broquer con avatar A3 y sin botón; reactivar soloA3 y entrar con botón real | OK UI; no acredita el tiempo de revocación sin recarga |
 
-## Veredicto
+Contacto y lead ficticios eliminados por sus botones reales. No se enviaron contratos a firma, correo o WhatsApp. Word de prueba en ui-a3-20261121/; no es un contrato celebrado. La prueba acredita generación técnica, no revisión jurídica.
 
-**NO activar producción todavía.** Las cuatro pruebas UI, el regreso real por botones y una restauración completa con Storage/timing siguen abiertos. Copias automáticas existentes y unit tests no sustituyen esos ensayos. Un rollback visual apaga el flag; no restaura toda la base ni borra escrituras de otros usuarios. PR217 no resuelve el UUID real de Salvador hasta que un administrador lo confirme por el correo objetivo.
+## Controles de servidor y aislamiento
 
-La intervención pendiente se concentra al final: recuperar el acceso A3 en el navegador seguro y habilitar un destino de restauración aislado (aprobación expresa del coste cotizado o conexión/destino privados existentes). No poner secretos en chat.
+Worker valida bearer con Auth de staging y flag RLS de solo lectura para clientes. A3flag200true/HTML200; B2flag200false/HTML302 a Broquer, error403; anónimo401; cliente no puede escribir flags403. Revocación API conservó el mismo token/perfil200. Solo A3 habilitada. Estas pruebas B2 son de servidor: no se atribuyen a un recorrido UI de B2.
 
-Evidencia visual del proyecto de staging: staging-backups-20261121.jpg. La etiqueta main/PRODUCTION de Supabase se refiere a la rama interna de ESTE proyecto de pruebas, no al proyecto de producción urtgysmtnvoqaljuhntz.
+Sentry usa el host exacto permitido por CSP, environment staging y códigos sanitizados sin PII/tokens. La ingestión aceptó el evento y el acuse SQL quedó guardado; no se abrió el Dashboard de Sentry para validar su agrupación.
+
+304archivos publicados comprobados200/hash exacto y sin api.broquer.app ni ref de producción. ISR:6casos con46campos numéricos/booleanos idénticos a main, datos ficticios offline.7tests focales Python,13checks routing y máquina de estados Node pasan.
+
+## Restauración y borrado
+
+Copia física de staging21/11 07:05:17UTC restaurada en proyecto temporal separado, autorizado hastaUSD10/mes por horas. Primer estado saludable en276.398s (4min36s).124tablas del punto temporal validadas:115hashes íntegros y9conteos/hashes al punto del respaldo; esquema, RLS, funciones, triggers, índices, roles y extensiones sin diferencias. Aislamiento RLS probado. Destino hdpstaqcswrdcrozcxrq **borrado**, confirmado por API y Dashboard; ver restore-20261121/timing.json y summary.json.
+
+Los metadatos de10buckets/5objetos están en la copia, **los bytes de Storage no**. Falta un ensayo separado de archivos para declarar recuperación integral. El tiempo de producción no se conoce y no se infiere del staging. BACKUP_RUNBOOK_20261121.md documenta responsable, herramienta, pasos y límites.
+
+## Piloto de producción: preparado, no autorizado ni activado
+
+PR217 conserva flag de servidor apagado/allowlist vacía y checklist de activación/reversión, guardado de propiedades corregido, retorno y revocación. No recibe tablas/worker de staging. El UUID real de Salvador debe verificarse por administrador; nunca copiar el UUID de A3 a producción.
+
+Antes de activar: resolver AVM y repetir su recorrido UI, ensayo Storage, revisión iPhone Safari/WebView por usuario y respaldo previo verificable del proyecto real, con ventana/custodio/aprobación. Issue221 (URLs Auth staging) sigue pendiente antes de probar flujos por correo. Fallos visuales se revierten apagando el flag, sin restaurar toda la base.
