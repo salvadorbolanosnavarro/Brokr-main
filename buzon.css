@@ -3,7 +3,6 @@
 .bz-lista { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; background: var(--bone); }
 .bz-top { padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-3); border-bottom: 1px solid var(--line); }
 .bz-estados { overflow-x: auto; max-width: 100%; }
-.bz-estados .bk-seg__btn { white-space: nowrap; }
 .bz-estados span:not(:empty) { margin-left: 4px; display: inline-flex; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill); background: var(--danger); color: var(--bone); font-size: var(--fs-label-3); align-items: center; justify-content: center; }
 .bz-filtros { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); }
 .bz-items { overflow-y: auto; flex: 1; }
@@ -33,7 +32,6 @@
 .bz-msg--out { background: var(--navy-soft); align-self: flex-end; }
 .bz-msg small { display: block; font-size: var(--fs-label-3); color: var(--mute); margin-top: 2px; }
 .bz-composer { padding: var(--sp-3) var(--sp-4); background: var(--bone); border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: var(--sp-2); }
-.bz-composer textarea { min-height: 64px; }
 .bz-composer__fila { display: flex; gap: var(--sp-2); flex-wrap: wrap; justify-content: space-between; }
 .bz-dato { font-size: var(--fs-sm); color: var(--ink-2); }
 .bz-dato a { color: var(--ink); }

@@ -13,7 +13,7 @@
   function g(id) { return document.getElementById(id); }
   function iniciales(n) { var p = String(n || '?').trim().split(/\s+/); return ((p[0] || '?')[0] + ((p[1] || '')[0] || '')).toUpperCase(); }
   function hace(iso) {
-    if (!iso) return '';
+    if (!iso || !Number.isFinite(new Date(iso).getTime())) return '';
     var s = (Date.now() - new Date(iso).getTime()) / 1000;
     if (s < 60) return 'ahora'; if (s < 3600) return Math.floor(s / 60) + ' min'; if (s < 86400) return Math.floor(s / 3600) + ' h';
     return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
@@ -27,25 +27,31 @@
   function aviso() { window.dispatchEvent(new Event('brokr-buzon-cambio')); }
 
   // ── Lista ──
-  async function cargar() {
+  var cargaActual = 0;
+  async function cargar(silenciosa) {
+    var carga = ++cargaActual;
+    if (!silenciosa) window.bkRenderState('bz-items', 'loading', { title: 'Cargando conversaciones…' });
     var qs = new URLSearchParams({ estado: S.estado });
     [['canal', 'bz-f-canal'], ['fuente_id', 'bz-f-fuente'], ['asignado', 'bz-f-asignado'], ['propiedad_id', 'bz-f-prop']].forEach(function (p) {
       var v = g(p[1]).value; if (v) qs.set(p[0], v);
     });
     try {
       var d = await api('/buzon?' + qs.toString());
+      if (carga !== cargaActual) return;
       S.leads = d.leads || []; S.es_admin = !!d.es_admin;
     } catch (e) {
-      g('bz-items').innerHTML = '<div class="bz-vacio">' + esc(e.message) + '</div>'; return;
+      if (carga !== cargaActual) return;
+      window.bkRenderState('bz-items', 'error', { title: 'No se pudo cargar el buzón', detail: e.message, onRetry: cargar }); return;
     }
     pintarLista();
     if (S.activo && !S.leads.some(function (l) { return l.id === S.activo; }) && window.innerWidth > 860) cerrarDetalle();
   }
   function pintarLista() {
     var cont = g('bz-items');
+    cont.setAttribute('aria-busy', 'false');
+    cont.dataset.state = S.leads.length ? 'data' : 'empty';
     if (!S.leads.length) {
-      cont.innerHTML = '<div class="bz-vacio"><strong>' + (S.estado === 'sin_atender' ? 'Todo al día' : 'Nada por aquí') + '</strong><p>' +
-        (S.estado === 'sin_atender' ? 'Cuando entre un lead de WhatsApp, tu sitio, la Bolsa o Zapier, aparece aquí.' : '') + '</p></div>';
+      window.bkRenderState(cont, 'empty', { title: S.estado === 'sin_atender' ? 'Todo al día' : 'Sin conversaciones', detail: S.estado === 'sin_atender' ? 'Cuando entre un lead, aparecerá aquí para darle seguimiento.' : 'Prueba otro estado o ajusta los filtros.' });
       return;
     }
     cont.innerHTML = S.leads.map(function (l) {
@@ -86,7 +92,7 @@
       l.email ? '<div class="bz-dato">Correo <a href="mailto:' + esc(l.email) + '">' + esc(l.email) + '</a></div>' : '',
       l.propiedad_id ? '<div class="bz-dato">Inmueble <a href="propiedades.html?id=' + encodeURIComponent(l.propiedad_id) + '" target="_blank">' + esc(l.propiedad_titulo || 'Ver ficha') + '</a></div>' : '',
       l.contacto_id ? '<div class="bz-dato">Contacto <a href="contactos.html?id=' + encodeURIComponent(l.contacto_id) + '">Ver ficha</a></div>' : '',
-      '<div class="bz-dato">Entró ' + esc(new Date(l.created_at).toLocaleString('es-MX')) + (l.primera_respuesta_seg != null ? ' · primera respuesta en <strong>' + esc(duracion(l.primera_respuesta_seg)) + '</strong>' : ' · <strong>sin responder</strong>') + '</div>',
+      '<div class="bz-dato">Entró ' + esc(l.created_at && Number.isFinite(new Date(l.created_at).getTime()) ? new Date(l.created_at).toLocaleString('es-MX') : 'Fecha no disponible') + (l.primera_respuesta_seg != null ? ' · primera respuesta en <strong>' + esc(duracion(l.primera_respuesta_seg)) + '</strong>' : ' · <strong>sin responder</strong>') + '</div>',
     ].join('');
     det.innerHTML = '<div class="bz-det-head">' +
         '<button class="bk-btn bk-btn--ghost bk-btn--sm bz-volver" id="bz-volver">‹ Buzón</button>' +
@@ -234,7 +240,7 @@
       }
       abrir(id);
     }
-    setInterval(function () { if (!document.hidden && !S.activo) cargar(); }, 60000);
+    setInterval(function () { if (!document.hidden && !S.activo) cargar(true); }, 60000);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

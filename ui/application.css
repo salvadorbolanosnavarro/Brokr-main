@@ -1,0 +1,31 @@
+/* Shared application components, moved from the injected shell.
+ * Existing legacy selectors are kept so their event handlers and roles survive. */
+/* ── Módulos legacy: unificación visual Broquer sin cambiar lógica ── */
+body[data-app]{background:var(--paper)!important;color:var(--ink)!important;font-family:var(--font-sans)!important;letter-spacing:-.01em!important}
+body[data-app] main,body[data-app] .app-main,body[data-app] .screen,body[data-app] .container,body[data-app] .wrap{background:transparent!important}
+body[data-app] .card,body[data-app] .ui-card,body[data-app] .panel,body[data-app] .box,body[data-app] .module,body[data-app] .section,body[data-app] .pf-card,body[data-app] .res-card,body[data-app] .form-card,body[data-app] .calc-card,body[data-app] .result-card{background:var(--bone)!important;border:1px solid var(--line)!important;border-radius:var(--r-lg)!important;box-shadow:var(--shadow-xs)!important;color:var(--ink)!important}
+body[data-app] h1,body[data-app] h2,body[data-app] h3,body[data-app] .title,body[data-app] .card-title,body[data-app] .section-title{font-family:var(--font-display)!important;color:var(--ink)!important;letter-spacing:-.02em!important;font-weight:600!important}
+/* Excepción: dentro de superficies azules (tarjetas de acción, hero,
+   App Store) los títulos vuelven a blanco. Sin esto, la regla genérica
+   de arriba los pinta de tinta oscura sobre azul. */
+body[data-app] .ai-card h1,body[data-app] .ai-card h2,body[data-app] .ai-card h3,body[data-app] .ai-card .title,body[data-app] .appstore-card h1,body[data-app] .appstore-card h2,body[data-app] .appstore-card h3,body[data-app] .appstore-card .title,body[data-app] .appstore-card__title,body[data-app] .sky-hero h1,body[data-app] .sky-hero h2,body[data-app] .sky-hero h3,body[data-app] .sky-hero .title{color:var(--bone)!important}
+body[data-app] label,body[data-app] .label,body[data-app] .field-label,body[data-app] .sec-lbl{color:var(--mute)!important;font-size:var(--ui-text-sm)!important;font-weight:600!important;letter-spacing:.01em!important}
+body[data-app] #gen-btn,body[data-app] #pdf-btn{background:var(--ui-action)!important;color:var(--ui-ink)!important;border:1px solid var(--ui-action)!important;box-shadow:none!important}
+body[data-app] #gen-btn:hover,body[data-app] #pdf-btn:hover{background:var(--ui-action-hover)!important;border-color:var(--ui-action-hover)!important}
+body[data-app] table{border-collapse:separate!important;border-spacing:0!important;background:var(--bone)!important;border:1px solid var(--line)!important;border-radius:var(--r)!important;overflow:hidden!important}
+body[data-app] th{background:var(--paper-2)!important;color:var(--mute)!important;font-size:var(--ui-text-sm)!important;letter-spacing:.01em!important}
+body[data-app] td{border-color:var(--line)!important;color:var(--ink)!important}
+/* Primary actions are owned by ui/actions.css. */
+body[data-app] #ai-btn,body[data-app] #calc-btn,body[data-app] #btn-analizar-ia,body[data-app] #btn-clean,body[data-app] #fa-ai-btn,body[data-app] #fa-submit-btn,body[data-app] #tpl-submit-btn{background:var(--ui-action)!important;color:var(--ui-ink)!important;border:1px solid var(--ui-action)!important;box-shadow:none!important}
+body[data-app] #ai-btn:hover,body[data-app] #calc-btn:hover,body[data-app] #btn-analizar-ia:hover,body[data-app] #btn-clean:hover,body[data-app] #fa-ai-btn:hover,body[data-app] #fa-submit-btn:hover,body[data-app] #tpl-submit-btn:hover{background:var(--ui-action-hover)!important;border-color:var(--ui-action-hover)!important}
+/* ── Unificación de TAMAÑO/FORMA de botones de acción (misma altura 44px,
+   padding, tipo y radio píldora en todos los módulos). Se excluyen a propósito
+   tiles de selección (.tipo-btn), toggles/segmented, chips de filtro y botones
+   de icono, que tienen su propia geometría. */
+body[data-app] .btn,body[data-app] .btn-primary,body[data-app] .ui-btn,body[data-app] .fa-btn,body[data-app] .wa-btn,body[data-app] .doc-btn,body[data-app] .gen-btn,body[data-app] .add-btn,body[data-app] .import-btn,body[data-app] .btn-new-tarea,body[data-app] .tk-composer .go,body[data-app] .btn-new-prop,body[data-app] .eb-import-btn,body[data-app] .pf-save-btn,body[data-app] .isr-calc-btn,body[data-app] .btn-pdf{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important}
+/* ── Unificación del TÍTULO DE PÁGINA: escala aprobada de módulo
+   (48 px escritorio, 32 px móvil) en los módulos que pintan su propio título ── */
+body[data-app] .props-head__title h1,body[data-app] .page-head h1,body[data-app] .tk-head__title h1,body[data-app] .ms-head h1,body[data-app] .guide-title,body[data-app] .bx-list__title h1,body[data-app] .es-hero__brand{font-size:var(--fs-h1)!important;font-weight:600!important;letter-spacing:-.02em!important;line-height:1.1!important}
+/* ── Alineación título↔cuerpo: el header canónico respeta el ancho del módulo ── */
+body[data-app] .bk-ph{max-width:var(--page-max,1180px)!important}
+

@@ -28,11 +28,11 @@ class DesignContractTests(unittest.TestCase):
             with self.subTest(semantic_name=semantic_name):
                 self.assertEqual(palette[semantic_name], tokens[token_name])
 
-    def test_canon_uses_single_inter_family_aliases(self):
+    def test_canon_uses_approved_manrope_family_aliases(self):
         tokens = theme_tokens()
         for token_name in ("font-sans", "font-display", "font-mono", "font-serif"):
             with self.subTest(token_name=token_name):
-                self.assertIn("Inter", tokens[token_name])
+                self.assertIn("Manrope", tokens[token_name])
 
 
 if __name__ == "__main__":

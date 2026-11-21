@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>El primer AI Real Estate Operating System creado por agentes inmobiliarios para agentes inmobiliarios</title>
+<title>Inicio · Broquer</title>
 <meta name="description" content="Somos un AI Real Estate Operating System (REOS): CRM (inmuebles, contactos, tareas y estadísticas), conexión con tu WhatsApp, contratos, firma electrónica, cumplimiento de ley, estimaciones de valor, cálculos de ISR, Facebook Ads, edición de imágenes, video, sitio web y el mejor y más inteligente asistente de IA 24/7: Broq."/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
@@ -41,7 +41,6 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); color: var(--ink);
 p { margin: 0; }
 a { color: var(--sky-blue); }
 img, svg, video { display: block; max-width: 100%; }
-button { font-family: inherit; }
 
 :focus-visible {
   outline: 2px solid var(--sky-blue);
@@ -61,18 +60,11 @@ button { font-family: inherit; }
 /* ── Botones ──────────────────────────────────────────────────── */
 .b2-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-family: var(--font-sans); font-size: var(--fs-body); font-weight: 700;
-  padding: 13px 24px; border-radius: var(--r-pill);
-  text-decoration: none; border: 0; cursor: pointer;
+  text-decoration: none; cursor: pointer;
   transition: background .18s var(--ease), transform .18s var(--ease), box-shadow .18s var(--ease);
 }
-.b2-btn--blue { background: var(--sky-blue); color: var(--paper); }
-.b2-btn--blue:hover { background: var(--sky-blue-press); transform: translateY(-1px); }
-.b2-btn--ghost { background: var(--paper); color: var(--ink); border: 1px solid var(--line); }
-.b2-btn--ghost:hover { border-color: var(--ink); }
-.b2-btn--white { background: var(--paper); color: var(--sky-navy); }
-.b2-btn--white:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
-.b2-btn--sm { font-size: var(--fs-sm); padding: 10px 18px; }
+.b2-btn--blue:hover { transform: translateY(-1px); }
+.b2-btn--white:hover { transform: translateY(-1px); }
 
 /* ── Etiquetas ────────────────────────────────────────────────── */
 .b2-tag {
@@ -181,16 +173,11 @@ button { font-family: inherit; }
 .ln-broqbar__btn {
   flex: none;
   display: inline-flex; align-items: center; gap: 8px;
-  background: var(--sky-blue); color: var(--paper);
-  font-size: var(--fs-sm); font-weight: 700;
-  padding: 12px 20px; border-radius: var(--r-pill);
   transition: background .18s var(--ease);
 }
-.ln-broqbar:hover .ln-broqbar__btn { background: var(--sky-blue-press); }
 @media (max-width: 520px) {
   .ln-broqbar { padding-left: 14px; }
   .ln-broqbar__btn span { display: none; }
-  .ln-broqbar__btn { padding: 12px 13px; }
 }
 .ln-hero__nota { font-size: var(--fs-sm); color: var(--mute); margin-top: 16px; }
 
@@ -213,7 +200,7 @@ button { font-family: inherit; }
   background: var(--paper-2); border-radius: var(--r-lg);
   padding: 22px 18px; text-align: center;
 }
-.ln-stat .v { font-family: var(--font-display); font-size: clamp(var(--fs-h2), 3vw, var(--fs-h1)); font-weight: 800; letter-spacing: -.03em; }
+.ln-stat .v { font-family: var(--font-display); font-size:var(--fs-h1); font-weight: 800; letter-spacing: -.03em; }
 .ln-stat .l { font-size: var(--fs-sm); color: var(--mute); margin-top: 4px; }
 @media (max-width: 560px) { .ln-stats { grid-template-columns: 1fr; } }
 
@@ -226,7 +213,7 @@ button { font-family: inherit; }
   color: var(--sky-blue); margin-bottom: 12px;
 }
 .ln-sec-head h2 {
-  font-size: clamp(var(--fs-h2), 3.4vw, var(--fs-display)); font-weight: 800;
+  font-size:var(--fs-h1); font-weight: 800;
   letter-spacing: -.03em; line-height: 1.08; margin-bottom: 12px;
 }
 .ln-sec-head p { font-size: var(--fs-body-lg); line-height: 1.6; color: var(--mute); }
@@ -356,7 +343,7 @@ button { font-family: inherit; }
 .ln-price__head { padding: 26px 26px 0; }
 .ln-price__head .name { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 800; letter-spacing: -.015em; }
 .ln-price__head .sub { font-size: var(--fs-sm); color: var(--mute); margin-top: 2px; }
-.ln-price__precio { font-family: var(--font-display); font-size: clamp(var(--fs-h2), 3vw, var(--fs-h1)); font-weight: 800; letter-spacing: -.03em; margin-top: 14px; }
+.ln-price__precio { font-family: var(--font-display); font-size:var(--fs-h1); font-weight: 800; letter-spacing: -.03em; margin-top: 14px; }
 .ln-price__precio-sub { font-size: var(--fs-sm); color: var(--mute); margin-top: 2px; }
 .ln-price__body { padding: 20px 26px 26px; display: flex; flex-direction: column; gap: 18px; flex: 1; }
 .ln-price__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; flex: 1; }
@@ -389,7 +376,7 @@ button { font-family: inherit; }
 }
 .ln-appstore__eyebrow { font-size: var(--fs-sm); font-weight: 600; color: color-mix(in srgb, var(--paper) 78%, transparent); margin-bottom: 12px; }
 .ln-appstore h2 {
-  font-size: clamp(var(--fs-h2), 3.4vw, var(--fs-display)); font-weight: 800; letter-spacing: -.03em;
+  font-size:var(--fs-h1); font-weight: 800; letter-spacing: -.03em;
   line-height: 1.1; color: var(--paper); margin-bottom: 10px;
 }
 .ln-appstore p { font-size: var(--fs-body); color: color-mix(in srgb, var(--paper) 78%, transparent); max-width: 460px; margin: 0 auto 26px; line-height: 1.55; }
@@ -400,7 +387,7 @@ button { font-family: inherit; }
 /* ── CTA final ──────────────────────────────────────────────── */
 .ln-final { padding: 90px 0; background: var(--paper-2); text-align: center; }
 .ln-final h2 {
-  font-size: clamp(var(--fs-h2), 3.4vw, var(--fs-display)); font-weight: 800; letter-spacing: -.03em;
+  font-size:var(--fs-h1); font-weight: 800; letter-spacing: -.03em;
   line-height: 1.08; max-width: 720px; margin: 0 auto 14px;
 }
 .ln-final p { font-size: var(--fs-body-lg); color: var(--mute); margin-bottom: 30px; }
@@ -421,6 +408,16 @@ button { font-family: inherit; }
 .ln-foot__meta img { height: 26px; width: auto; }
 .ln-foot__copy { font-size: var(--fs-label-3); color: var(--mute); }
 </style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body>
 
@@ -1011,17 +1008,14 @@ button { font-family: inherit; }
     box-shadow: var(--shadow-lg); position: relative; text-align: left; }
   .ln-demo-card h3 { font-size: var(--fs-h3); margin: 0 0 6px; color: var(--ink); letter-spacing: -.02em; }
   .ln-demo-card p { font-size: var(--fs-sm); color: var(--mute); margin: 0 0 18px; line-height: 1.5; }
-  .ln-demo-x { position: absolute; top: 12px; right: 14px; border: none; background: transparent;
-    color: var(--mute); font-size: var(--fs-h3); line-height: 1; cursor: pointer; padding: 4px 8px; font-family: inherit; }
+  .ln-demo-x { position: absolute; top: 12px; right: 14px; cursor: pointer; }
   .ln-demo-field { margin-bottom: 12px; }
   .ln-demo-field label { display: block; font-size: var(--fs-label-3); font-weight: 700;
     color: var(--ink); margin-bottom: 5px; }
   .ln-demo-field input, .ln-demo-field select, .ln-demo-field textarea {
-    width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: var(--r-sm);
-    padding: 11px 12px; font-size: var(--fs-sm); font-family: inherit; color: var(--ink);
-    background: var(--paper); }
+    width: 100%; box-sizing: border-box; color: var(--ink); }
   .ln-demo-field input:focus, .ln-demo-field select:focus, .ln-demo-field textarea:focus {
-    outline: none; border-color: var(--sky-blue); }
+    outline: none; }
   .ln-demo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .ln-demo-msg { min-height: 18px; font-size: var(--fs-label-3); margin-top: 8px; }
 

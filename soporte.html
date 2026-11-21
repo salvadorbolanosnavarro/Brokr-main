@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>Soporte — Broquer</title>
+<title>Soporte · Broquer</title>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <link rel="stylesheet" href="brokr-theme.css"/>
@@ -22,7 +22,7 @@ body {
 
 /* ── Header ─────────────────────────────────────────────────── */
 .hdr {
-  background: var(--ink);
+  background: var(--ui-paper);
   padding: 20px 24px;
   display: flex;
   align-items: center;
@@ -39,28 +39,28 @@ body {
   font-size:var(--fs-h3);
   letter-spacing: 0.02em;
   
-  color: rgba(255,255,255,0.45);
+  color: var(--ui-muted);
 }
 
 /* ── Hero ────────────────────────────────────────────────────── */
 .hero {
-  background: var(--ink);
+  background: var(--ui-paper);
   padding: 48px 24px 56px;
   text-align: center;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .hero h1 {
   font-family: var(--font-display);
-  font-size: clamp(28px, 5vw, 42px);
-  font-weight: 800;
-  color: var(--paper);
+  font-size: var(--ui-text-title);
+  font-weight: 600;
+  color: var(--ui-ink);
   letter-spacing: -0.03em;
   margin-bottom: 12px;
   line-height: 1.15;
 }
 .hero p {
   font-size: var(--fs-sm);
-  color: rgba(255,255,255,0.55);
+  color: var(--ui-muted);
   max-width: 480px;
   margin: 0 auto;
   line-height: 1.6;
@@ -143,9 +143,7 @@ body {
 }
 .contact-value a:hover { text-decoration: underline; }
 .contact-btn {
-  margin: 12px 0 4px; padding: 10px 20px; border-radius: var(--r-pill);
-  background: var(--sky-blue); color: var(--paper); border: 1px solid var(--sky-blue);
-  font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
+  margin: 12px 0 4px; cursor: pointer;
 }
 .contact-note {
   font-size: var(--fs-sm);
@@ -173,7 +171,7 @@ body {
   border: none;
   padding: 16px 20px;
   font-family: var(--font-sans);
-  font-size: var(--fs-body);
+  font-size: var(--ui-text-sm);
   font-weight: 600;
   color: var(--ink);
   cursor: pointer;
@@ -262,17 +260,28 @@ body {
 @media (max-width: 480px) {
   .hdr { padding: 16px 20px; }
   .hero { padding: 36px 20px 44px; }
+  .hero h1 { font-size:var(--ui-text-mobile); }
   .wrap { padding: 32px 20px 64px; }
   .contact-card { flex-direction: column; gap: 14px; }
   .modules-grid { grid-template-columns: 1fr 1fr; }
 }
 </style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body>
 
 <!-- Header -->
 <header class="hdr">
-  <img src="logo-broquer-blanco.png" alt="Broquer"/>
+  <img src="logotipo-black.png" alt="Broquer"/>
   <span class="hdr-badge">Centro de soporte</span>
 </header>
 

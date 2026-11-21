@@ -49,6 +49,8 @@ PROMO_CODE_AMPI = "ampi2026"
 
 
 def stripe_headers() -> dict:
+    from core.side_effects import require_staging_stripe_key
+    require_staging_stripe_key(STRIPE_SECRET_KEY)
     return {
         "Authorization": f"Bearer {STRIPE_SECRET_KEY}",
         "Content-Type": "application/x-www-form-urlencoded",
