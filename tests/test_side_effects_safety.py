@@ -46,6 +46,43 @@ class SideEffectsTests(unittest.TestCase):
             asyncio.run(run())
         self.assertEqual(calls,[])
 
+    def test_read_query_allowlist_reaches_transport_sync_and_async(self):
+        urls = [
+            ('GET','https://serpapi.com/search.json?q=casa'),
+            ('GET','https://maps.googleapis.com/maps/api/place/details/json'),
+            ('GET','https://maps.googleapis.com/maps/api/geocode/json'),
+            ('GET','https://www.googleapis.com/customsearch/v1'),
+            ('GET','https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos'),
+            ('POST','https://api.firecrawl.dev/v2/scrape'),
+            ('POST','https://api.firecrawl.dev/v2/search'),
+            ('POST','https://api.groq.com/openai/v1/chat/completions'),
+            ('POST','https://api.anthropic.com/v1/messages'),
+            ('POST','https://generativelanguage.googleapis.com/v1beta/models/gemini-test:generateContent'),
+        ]
+        seen=[]
+        def transport(r):seen.append((r.method,r.url.host));return httpx.Response(200,json={'ok':True})
+        with installed({'BROQUER_ENV':'staging'}):
+            with httpx.Client(transport=httpx.MockTransport(transport)) as c:
+                for method,url in urls:
+                    self.assertTrue(safety.read_query_allowed(httpx.Request(method,url)))
+                    self.assertEqual(c.request(method,url).status_code,200)
+                self.assertEqual(c.get('https://www.lamudi.com.mx/casa').status_code,200)
+            async def run():
+                async with httpx.AsyncClient(transport=httpx.MockTransport(transport)) as c:
+                    for method,url in urls:self.assertEqual((await c.request(method,url)).status_code,200)
+            asyncio.run(run())
+        self.assertEqual(len(seen),2*len(urls)+1)
+
+    def test_read_services_do_not_allow_writes_or_arbitrary_model_operations(self):
+        with installed({'BROQUER_ENV':'staging'}),httpx.Client(transport=httpx.MockTransport(lambda r:self.fail('NETWORK'))) as c:
+            for host in safety.READ_QUERY_SERVICES:
+                with self.assertRaises(safety.SideEffectBlocked):c.delete('https://'+host+'/files/private')
+            for url in ['https://api.anthropic.com/v1/files','https://api.groq.com/openai/v1/files',
+                        'https://generativelanguage.googleapis.com/v1beta/models/gemini:delete',
+                        'https://api.firecrawl.dev/v2/crawl']:
+                with self.assertRaises(safety.SideEffectBlocked):c.post(url)
+        self.assertFalse(safety.read_query_allowed(httpx.Request('POST','https://api.anthropic.com.evil.test/v1/messages')))
+
     def test_no_credentials_in_log_and_no_false_host_match(self):
         with installed({'SIDE_EFFECTS_DISABLED':'true'}),self.assertLogs('broquer.side_effects',level='WARNING') as logs:
             with httpx.Client() as c:

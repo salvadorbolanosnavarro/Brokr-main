@@ -28,6 +28,40 @@ _DOMAINS = {
     'easybroker': ('easybroker.com',),
 }
 
+# Text generation and market-data queries are allowed, including POST queries.
+# This is not an exemption for payment, messaging or integration hosts above.
+READ_QUERY_SERVICES = {
+    'api.firecrawl.dev': ('firecrawl', {'POST': ('/v1/scrape', '/v2/scrape', '/v2/search')}),
+    'serpapi.com': ('serpapi', {'GET': ('/search', '/search.json')}),
+    'maps.googleapis.com': ('google_places', {'GET': ('/maps/api/place/', '/maps/api/geocode/')}),
+    'www.googleapis.com': ('google_search', {'GET': ('/customsearch/v1',)}),
+    'www.banxico.org.mx': ('banxico', {'GET': ('/SieAPIRest/service/v1/series/',)}),
+    'api.groq.com': ('groq', {'POST': ('/openai/v1/chat/completions',)}),
+    'api.anthropic.com': ('anthropic', {'POST': ('/v1/messages',)}),
+    'generativelanguage.googleapis.com': ('gemini', {'POST': ('/v1beta/models/', '/v1/models/')}),
+}
+
+
+def read_query_allowed(request) -> bool:
+    entry = READ_QUERY_SERVICES.get((request.url.host or '').lower().rstrip('.'))
+    if not entry:
+        return False
+    path = request.url.path
+    paths = entry[1].get(request.method, ())
+    matches = any(path.startswith(p) if p.endswith('/') else path == p for p in paths)
+    if entry[0] == 'gemini':
+        matches = matches and path.endswith((':generateContent', ':streamGenerateContent'))
+    return matches
+
+
+def market_read_blocked(url: str) -> bool:
+    """Omit forbidden portal candidates before any direct/indirect fetch.
+
+    Omitting a source is not an attempted message/payment and must not poison
+    the AVM's entire successful response with a simulated integration result.
+    """
+    return disabled() and provider_for(httpx.URL(url).host or '') is not None
+
 
 def disabled() -> bool:
     value = os.getenv('SIDE_EFFECTS_DISABLED', '').strip().lower()
@@ -96,6 +130,9 @@ def _guard(request):
         require_staging_stripe_key(key)
     if provider and disabled():
         _block(provider, request.method, request)
+    read_service = READ_QUERY_SERVICES.get((request.url.host or '').lower().rstrip('.'))
+    if read_service and disabled() and not read_query_allowed(request):
+        _block(read_service[0], request.method, request)
 
 
 def install_side_effects_safety():
