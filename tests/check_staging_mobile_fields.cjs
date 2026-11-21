@@ -5,8 +5,8 @@ const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const ROOT=path.resolve('preview-public'), manifest=JSON.parse(fs.readFileSync('preview-public-manifest.json','utf8'));
 const pages=Object.keys(manifest).filter(n=>n.endsWith('.html')).sort();
-const user={id:'11111111-1111-4111-8111-111111111111',email:'mobile-test@example.invalid'};
-const profile={id:user.id,nombre:'QA móvil',rol:'admin',plan:'pro',pais:'MX',activo:true,acceso_completo_hasta:'2099-01-01T00:00:00Z',modulos_desactivados:[]};
+const user={id:'11111111-1111-4111-8111-111111111111',email:'mobile-test@example.invalid',email_confirmed_at:'2026-11-21T00:00:00Z',user_metadata:{nombre:'QA móvil',telefono:'0000000000'}};
+const profile={id:user.id,nombre:'QA móvil',telefono:'0000000000',email:user.email,rol:'admin',plan:'pro',pais:'MX',activo:true,acceso_completo_hasta:'2099-01-01T00:00:00Z',modulos_desactivados:[]};
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2','.woff':'font/woff'};
 const server=http.createServer((req,res)=>{
  const relative=decodeURIComponent(new URL(req.url,'http://localhost').pathname).replace(/^\//,'')||'index.html';
@@ -66,10 +66,14 @@ function auditDOM(){
   }
   try{
    // Negative control: prove the assertion catches the reported regression.
-   disableFix=true;const negative=await visit('cecil/isr.html');
-   assert(negative.below.some(e=>e.id==='f-tipo'),'Negative control must reproduce the ISR bug');
+   disableFix=true;await visit('cecil/isr.html');
+   assert(await page.locator('#f-tipo').count(),'ISR fixture did not render: '+page.url());
+   await page.evaluate(()=>{const x=document.createElement('input');x.id='qa-negative-small-field';x.style.fontSize='13px';document.body.append(x);});
+   const negative=await page.evaluate(auditDOM);
+   assert(negative.below.some(e=>e.id==='qa-negative-small-field'),'Negative control must detect an actual rendered field below16px');
    disableFix=false;
    for(const name of pages){
+    console.log(engine+' auditing '+name);
     let a=await visit(name);
     assert(a.cssLoaded,engine+' '+name+': global mobile stylesheet missing');
     assert(!a.below.length,engine+' '+name+': fields below16px '+JSON.stringify(a.below));
