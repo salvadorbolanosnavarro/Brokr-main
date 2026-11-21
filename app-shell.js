@@ -1,16 +1,4 @@
-/* ════════════════════════════════════════════════════════════════════
-   BROQUER — App Shell compartido
-   Inyecta: sidebar desktop, topbar, mobile header, bottom nav, Broq.
-   Conserva 1:1 el flujo de Supabase / OpenAI / Railway del repo original.
-
-   Uso en cada módulo:
-     <body data-app="isr">         ← clave del módulo activo
-        … contenido del módulo …
-     <script src="app-shell.js" defer></script>
-   Claves válidas: home, props, contactos, clientes, contratos, avm, valor,
-                   ficha, ficha-manual, isr, image-cleaner, facebook-ads,
-                   guia, admin
-   ════════════════════════════════════════════════════════════════════ */
+/* Shared application shell. */
 (function () {
   if (window.__brokrShellLoaded) return;
   window.__brokrShellLoaded = true;
@@ -4323,6 +4311,13 @@ body[data-app="facebook-ads"]{--page-max:980px}
   async function boot() {
     const profile = await authInit();
     if (!profile) return; // redirected to login/landing
+
+    // Optional UI only: do not delay or change the existing application boot.
+    const cecilRollout = document.createElement('script');
+    cecilRollout.src = '/ui/cecil-rollout.js';
+    cecilRollout.onload = () => window.bkCecilRollout?.({api: API_BASE, token: getToken(), userId: profile.user.id});
+    document.head.appendChild(cecilRollout);
+
 
     // Un admin puede apagar módulos por cuenta desde la Consola, sin tocar
     // el rol ni la suscripción. Si el módulo de esta página está apagado
