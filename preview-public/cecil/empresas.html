@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Empresas · Cecil</title>
+<meta name="description" content="Cecil Max para cada agente de tu equipo: mismo inventario, permisos que tú decides y tus contactos siempre tuyos. Escríbenos y armamos un plan a la medida."/>
+<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
+<link rel="apple-touch-icon" href="/cecil/brand/cecil-icon.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+/* ════════════════════════════════════════════════════════════
+   BROQUER — Cecil para Empresas (venta asesorada)
+   Sin precios públicos: el plan se arma por correo. Navy = estructura,
+   var(--sky-blue) = acción. Todo sale de tokens del sistema.
+   ════════════════════════════════════════════════════════════ */
+html, body { background: var(--paper); min-height: 100%; }
+body { color: var(--ink); font-family: var(--font-sans); letter-spacing: -0.01em; margin: 0; }
+
+.em-wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+@media (max-width: 720px) { .em-wrap { padding: 0 16px; } }
+
+/* ── Nav ─────────────────────────────────────────────────── */
+.em-nav { position: sticky; top: 0; z-index: var(--z-nav); background: var(--ui-paper); border-bottom: 1px solid rgba(255,255,255,.10); }
+.em-nav__in { max-width: 1080px; margin: 0 auto; padding: 0 28px; height: 78px; display: flex; align-items: center; gap: 24px; }
+.em-nav__logo img { height: 52px; width: auto; display: block; }
+.em-nav__cta { display: flex; gap: 10px; align-items: center; margin-left: auto; }
+.em-btn-ghost { text-decoration: none;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+@media (max-width: 720px) { .em-nav__in { padding: 0 16px; height: 68px; } .em-nav__logo img { height: 42px; } }
+
+/* ── Hero ────────────────────────────────────────────────── */
+.em-hero { background: var(--ui-paper); color: var(--ui-ink); padding: var(--sp-16) 0 var(--sp-20); }
+.em-hero__eyebrow { font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em; color: var(--ui-muted); margin-bottom: var(--sp-3); }
+.em-hero h1 { font-family: var(--font-display); font-size: var(--fs-display); font-weight: 700; letter-spacing: -0.035em; line-height: var(--lh-tight); margin: 0; max-width: 720px; }
+.em-hero p { font-size: var(--fs-body-lg); line-height: var(--lh); color: var(--ui-muted); max-width: 620px; margin: var(--sp-4) 0 0; }
+@media (max-width: 720px) { .em-hero { padding: var(--sp-10) 0 var(--sp-12); } .em-hero h1 { font-size: var(--fs-h1); } .em-hero p { font-size: var(--fs-body); } }
+
+/* ── Cuerpo ──────────────────────────────────────────────── */
+.em-body { padding: var(--sp-12) 0 var(--sp-20); }
+.em-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: var(--sp-7); align-items: start; }
+@media (max-width: 900px) { .em-grid { grid-template-columns: 1fr; } }
+
+.em-card { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-xl); padding: var(--sp-7); box-shadow: var(--shadow-sm); }
+.em-card + .em-card { margin-top: var(--sp-4); }
+.em-card__title { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; letter-spacing: -0.025em; margin: 0; }
+.em-card__sub { font-size: var(--fs-sm); color: var(--mute); line-height: var(--lh); margin: var(--sp-2) 0 var(--sp-6); }
+
+/* ── Bloque de contacto ──────────────────────────────────── */
+.em-mail {
+  margin-top: var(--sp-6); border: 1px solid var(--line); border-radius: var(--r);
+  background: var(--paper-2); padding: var(--sp-5);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap;
+}
+.em-mail__lbl { font-size: var(--fs-xs); font-weight: 700; color: var(--mute); }
+.em-mail__dir { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700; letter-spacing: -0.02em; color: var(--ink); text-decoration: none; }
+.em-mail__dir:hover { color: var(--sky-blue); }
+.em-puntos { list-style: none; margin: var(--sp-5) 0 0; padding: 0; display: grid; gap: var(--sp-3); }
+.em-puntos li { display: flex; gap: var(--sp-3); align-items: flex-start; font-size: var(--fs-sm); color: var(--ink-2); line-height: var(--lh); }
+.em-puntos svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--sky-blue); }
+
+/* ── Botones ─────────────────────────────────────────────── */
+.em-btn {
+  width: 100%; margin-top: var(--sp-6);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  cursor: pointer; text-decoration: none;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.em-btn:disabled { opacity: .55; cursor: not-allowed; }
+.em-nota { font-size: var(--fs-xs); color: var(--mute); line-height: var(--lh); margin-top: var(--sp-3); text-align: center; }
+
+/* ── Avisos ──────────────────────────────────────────────── */
+.em-aviso { border-radius: var(--r); padding: var(--sp-4); font-size: var(--fs-xs); line-height: var(--lh); margin-top: var(--sp-4); }
+.em-aviso--info { background: var(--info-soft); color: var(--info); }
+.em-aviso--warn { background: var(--warn-soft); color: var(--warn); }
+.em-aviso--ok   { background: var(--success-soft); color: var(--success); }
+.em-aviso--err  { background: var(--danger-soft); color: var(--danger); }
+.em-aviso a { color: inherit; font-weight: 700; }
+
+/* ── Lo que incluye ──────────────────────────────────────── */
+.em-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+.em-lista li { display: flex; gap: var(--sp-3); align-items: flex-start; font-size: var(--fs-sm); color: var(--ink-2); line-height: var(--lh); }
+.em-lista svg { width: 18px; height: 18px; flex: none; margin-top: 2px; color: var(--sky-blue); }
+.em-faq { margin-top: var(--sp-4); }
+.em-faq dt { font-size: var(--fs-body); font-weight: 700; color: var(--ink); margin-top: var(--sp-5); }
+.em-faq dd { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.6; margin: var(--sp-2) 0 0; max-width: 68ch; }
+
+/* ── Estado actual (ya es empresa) ───────────────────────── */
+.em-estado { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); margin-top: var(--sp-5); }
+@media (max-width: 560px) { .em-estado { grid-template-columns: 1fr; } }
+.em-kpi { background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r); padding: var(--sp-4); }
+.em-kpi b { display: block; font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.em-kpi span { display: block; font-size: var(--fs-caption); color: var(--mute); margin-top: var(--sp-1); }
+
+/* ── Footer ──────────────────────────────────────────────── */
+.em-foot { background: var(--ui-paper); color: var(--ui-muted); padding: var(--sp-8) 0; font-size: var(--fs-xs); }
+.em-foot__in { max-width: 1080px; margin: 0 auto; padding: 0 28px; display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: center; }
+.em-foot a { color: rgba(255,255,255,.85); text-decoration: none; font-weight: 600; }
+.em-foot a:hover { color: var(--ui-ink); }
+@media (max-width: 720px) { .em-foot__in { padding: 0 16px; } }
+</style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
+<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
+<link rel="stylesheet" href="/staging-mobile-fields.css"/>
+<script src="/staging-network-audit.js" defer></script>
+</head>
+<body>
+
+<nav class="em-nav">
+  <div class="em-nav__in">
+    <a class="em-nav__logo" href="landing.html" aria-label="Cecil">
+      <img src="/cecil/brand/cecil-wordmark.webp" alt="Cecil"/>
+    </a>
+    <div class="em-nav__cta">
+      <a class="em-btn-ghost" href="landing.html#precios">Ver todos los planes</a>
+    </div>
+  </div>
+</nav>
+
+<header class="em-hero">
+  <div class="em-wrap">
+    <div class="em-hero__eyebrow">Cecil para Empresas</div>
+    <h1>Todo Cecil Max, para cada agente de tu equipo</h1>
+    <p>Un solo inventario, permisos que tú decides y tus contactos siempre tuyos. Cada agencia opera distinto, así que el plan lo armamos contigo, a la medida de tu equipo.</p>
+  </div>
+</header>
+
+<main class="em-body">
+  <div class="em-wrap em-grid">
+
+    <!-- ── Columna izquierda: configurador ─────────────────── -->
+    <section>
+      <div class="em-card">
+        <h2 class="em-card__title">Hablemos de tu empresa</h2>
+        <p class="em-card__sub">No manejamos un precio de mostrador: escuchamos cómo trabaja tu agencia y te proponemos una solución a la medida, con los lugares, permisos e integraciones que tu operación necesita.</p>
+
+        <ul class="em-puntos">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Cuéntanos cuántos agentes son y cómo operan hoy</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Te respondemos con una propuesta clara para tu equipo</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Te acompañamos en la puesta en marcha y la migración de tu inventario</span></li>
+        </ul>
+
+        <div class="em-mail">
+          <div>
+            <div class="em-mail__lbl">Escríbenos a</div>
+            <a class="em-mail__dir" href="mailto:hola@broquer.app?subject=Broquer%20para%20Empresas">hola@broquer.app</a>
+          </div>
+        </div>
+
+        <a class="em-btn" id="em-cta" href="mailto:hola@broquer.app?subject=Broquer%20para%20Empresas&body=Hola%2C%20me%20interesa%20Broquer%20para%20Empresas.%0A%0ANombre%20de%20mi%20agencia%3A%20%0AN%C3%BAmero%20de%20agentes%3A%20%0ACiudad%3A%20">Escribir a Cecil</a>
+        <div class="em-nota" id="em-nota">Te contestamos por correo para agendar una llamada y armar tu plan.</div>
+        <div id="em-avisos"></div>
+      </div>
+    </section>
+
+    <!-- ── Columna derecha: qué incluye ────────────────────── -->
+    <aside>
+      <div class="em-card">
+        <h2 class="em-card__title">Qué incluye</h2>
+        <p class="em-card__sub">Cada lugar es una cuenta completa de Cecil Max.</p>
+        <ul class="em-lista">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Cecil Max completo para cada agente: Cecil IA, contratos, ISR, estimaciones de valor, editor de imágenes, WhatsApp y Facebook Ads</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Un solo inventario para todo el equipo, siempre sincronizado</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Tú decides quién ve teléfonos, comisiones, contactos del equipo y estadísticas</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Solo el dueño conecta Facebook y las integraciones de la empresa</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Varios números de WhatsApp con la recepcionista de Cecil IA</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Si un agente se va, contactos y propiedades se quedan contigo</span></li>
+        </ul>
+
+        <dl class="em-faq">
+          <dt>¿Cuánto cuesta?</dt>
+          <dd>Depende de tu equipo. Escríbenos a <a href="mailto:hola@broquer.app?subject=Broquer%20para%20Empresas">hola@broquer.app</a>, cuéntanos cuántos agentes son y te mandamos una propuesta a la medida.</dd>
+          <dt>¿Puedo agregar usuarios después?</dt>
+          <dd>Sí. Los lugares de tu plan se ajustan cuando tu equipo crece o cambia; lo vemos contigo directamente.</dd>
+          <dt>¿Cómo entra mi equipo?</dt>
+          <dd>Una vez activo tu plan, desde Equipo generas una invitación por correo para cada agente.</dd>
+        </dl>
+      </div>
+    </aside>
+
+  </div>
+</main>
+
+<footer class="em-foot">
+  <div class="em-foot__in">
+    <a href="landing.html">Cecil</a>
+    <a href="soporte.html">Soporte</a>
+    <a href="legal.html">Términos y privacidad</a>
+    <span>Cecil 2026</span>
+  </div>
+</footer>
+
+<script>
+const API_BASE = 'https://brokr-main-staging.up.railway.app';
+
+function g(id) { return document.getElementById(id); }
+function getToken() { return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>'"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[c])); }
+
+function aviso(tipo, html) {
+  g('em-avisos').innerHTML = '<div class="em-aviso em-aviso--' + tipo + '">' + html + '</div>';
+}
+
+/* ── Estado de la cuenta: si ya es empresa, mostramos sus lugares ── */
+async function cargarPlan() {
+  const tok = getToken();
+  if (!tok) return;
+
+  let plan = null;
+  try {
+    const r = await fetch(API_BASE + '/subscription/empresa/plan', { headers: { Authorization: 'Bearer ' + tok } });
+    if (!r.ok) return;
+    plan = await r.json();
+  } catch (e) { return; }
+
+  if (!(plan && plan.es_empresa && plan.activa)) return;
+
+  const o = plan.ocupacion || { miembros: 0, invitaciones: 0, usados: 0 };
+  const estado = document.createElement('div');
+  estado.className = 'em-estado';
+  estado.innerHTML =
+    '<div class="em-kpi"><b>' + (Number(plan.asientos_contratados) || 0) + '</b><span>Lugares contratados</span></div>' +
+    '<div class="em-kpi"><b>' + (Number(o.miembros) || 0) + '</b><span>Miembros activos</span></div>' +
+    '<div class="em-kpi"><b>' + (Number(o.invitaciones) || 0) + '</b><span>Invitaciones pendientes</span></div>';
+  const card = g('em-cta').closest('.em-card');
+  card.insertBefore(estado, card.querySelector('.em-puntos'));
+
+  aviso('ok', 'Tu plan <b>' + esc(plan.nombre || 'de empresa') + '</b> está activo. Para cambiar los lugares de tu equipo escríbenos a <a href="mailto:hola@broquer.app?subject=Cambiar%20lugares%20de%20mi%20plan">hola@broquer.app</a> y lo ajustamos contigo. Invita a tu equipo desde <a href="equipo.html">Equipo</a>.');
+}
+
+document.addEventListener('DOMContentLoaded', cargarPlan);
+</script>
+</body>
+</html>

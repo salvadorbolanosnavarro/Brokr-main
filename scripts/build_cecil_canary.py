@@ -25,7 +25,11 @@ def git(*args):
     return subprocess.check_output(['git', *args], cwd=ROOT)
 
 
-def build(output):
+def build(output, *, staging=False):
+    if staging:
+        import os
+        from scripts.build_staging import config
+        config(os.environ)
     output = Path(output).resolve()
     if output == ROOT or output.name != 'cecil' or output.exists():
         raise ValueError('Use a new output directory named cecil; never overwrite an existing release.')
@@ -35,7 +39,7 @@ def build(output):
     for ref in [BASE_REF, DESIGN_REF]: git('rev-parse', '--verify', ref+'^{commit}')
     allowed_changes={'app-shell.js','main.py','core/config.py','routers/cecil_ui.py','ui/cecil-rollout.js','scripts/build_cecil_canary.py','tests/test_cecil_ui.py','tests/check_cecil_rollout.cjs','CECIL_PILOT.md','tests/check_cecil_pilot_state.cjs','.github/workflows/quality.yml','tests/golden/http_contract_effective.json'}
     changed=set(git('diff','--name-only',BASE_REF,'HEAD').decode().splitlines())
-    if changed - allowed_changes:
+    if not staging and changed - allowed_changes:
         raise ValueError('Production advanced: integrate it into the design snapshot and update the pinned base before building.')
     archive = tarfile.open(fileobj=io.BytesIO(git('archive',DESIGN_REF)))
     with tempfile.TemporaryDirectory() as temp:
@@ -53,7 +57,7 @@ def build(output):
             output.mkdir(parents=True)
             pages=[]
             for path in source.rglob('*'):
-                if not path.is_file() or path.parts[-2]=='scripts':continue
+                if not path.is_file() or any(part in {'scripts','__pycache__'} for part in path.relative_to(source).parts):continue
                 relative=path.relative_to(source)
                 # No demo runtime, test fixtures, API rewriting or staging guard.
                 if path.name in {'demo-runtime.js','staging-auth-guard.js'}:continue
@@ -61,7 +65,7 @@ def build(output):
                 if path.suffix in {'.html','.js','.css','.json','.svg'}:
                     text=path.read_text()
                     if path.suffix in {'.html','.js','.json','.svg'} and relative.parts[0]!='brand':text=brand.brand_asset(str(relative),text)
-                    if relative==Path('app-shell.js'):
+                    if relative==Path('app-shell.js') and not staging:
                         marker='    if (!profile) return; // redirected to login/landing'
                         if marker not in text:raise ValueError('Missing shell authentication hook')
                         text=text.replace(marker,marker+"\n    const rollout=document.createElement('script');rollout.src='/ui/cecil-rollout.js';rollout.onload=()=>window.bkCecilRollout?.({api:API_BASE,token:getToken(),userId:profile.user.id});document.head.appendChild(rollout);",1)
@@ -75,12 +79,12 @@ def build(output):
                     target.write_text(text)
                 else:target.write_bytes(path.read_bytes())
             brand.write_brand_artwork(source,output)
-            (output/'release.json').write_text(json.dumps({'production_base':git('rev-parse',BASE_REF).decode().strip(),'design':git('rev-parse',DESIGN_REF).decode().strip(),'mode':'real-services','pages':pages},indent=2))
+            (output/'release.json').write_text(json.dumps({'production_base':git('rev-parse',BASE_REF).decode().strip(),'design':git('rev-parse',DESIGN_REF).decode().strip(),'mode':'staging-preview' if staging else 'real-services','pages':pages},indent=2))
         except Exception:
             import shutil
             shutil.rmtree(output)
             raise
-    print(f'Cecil pilot: {len(pages)} pages, production services retained, demo runtime excluded: {output}')
+    print(f'Cecil build: {len(pages)} pages; staging={staging}; demo runtime excluded: {output}')
 
 
 if __name__=='__main__':

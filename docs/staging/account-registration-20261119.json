@@ -1,0 +1,27 @@
+{
+  "at_utc": "2026-11-20T01:33:53.857155+00:00",
+  "environment": "staging",
+  "preview": "https://work-cecil-staging-preview-2.broquer-staging.pages.dev/login.html",
+  "accounts": [
+    {
+      "account": "A",
+      "email": "salvadorbolanosnavarro+cecila@gmail.com",
+      "state": "pending_email_confirmation",
+      "method": "preview UI signup email/password",
+      "agreements_accepted": true,
+      "session_verified": false,
+      "observed_message": "Te enviamos un correo de confirmación a salvadorbolanosnavarro+cecila@gmail.com. Al confirmar entrarás directo a Cecil."
+    },
+    {
+      "account": "B",
+      "email": "salvadorbolanosnavarro+cecilb@gmail.com",
+      "state": "pending_email_confirmation",
+      "method": "preview UI signup email/password",
+      "agreements_accepted": true,
+      "session_verified": false,
+      "observed_message": "Te enviamos un correo de confirmación a salvadorbolanosnavarro+cecilb@gmail.com. Al confirmar entrarás directo a Cecil."
+    }
+  ],
+  "credentials": "Stored privately outside git; excluded from this record",
+  "next_step": "User confirms both emails; then continue authenticated functional tests."
+}

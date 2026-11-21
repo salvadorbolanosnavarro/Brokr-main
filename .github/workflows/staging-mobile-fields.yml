@@ -1,0 +1,37 @@
+name: Staging mobile fields
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fields-390:
+    if: github.head_ref == 'work/cecil-staging-preview-20261119' || github.ref_name == 'work/cecil-staging-preview-20261119'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser test dependencies
+        run: |
+          npm install --prefix "$RUNNER_TEMP/cecil-playwright" --no-package-lock --ignore-scripts playwright@1.62.1
+          node "$RUNNER_TEMP/cecil-playwright/node_modules/playwright/cli.js" install --with-deps "${{ matrix.browser }}"
+      - name: Audit every published screen at 390px
+        env:
+          MOBILE_TEST_BROWSERS: ${{ matrix.browser }}
+        run: |
+          export PLAYWRIGHT_MODULE="$RUNNER_TEMP/cecil-playwright/node_modules/playwright"
+          node tests/check_staging_mobile_fields.cjs "$RUNNER_TEMP/mobile-fields-${{ matrix.browser }}.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-fields-${{ matrix.browser }}
+          path: ${{ runner.temp }}/mobile-fields-${{ matrix.browser }}.json

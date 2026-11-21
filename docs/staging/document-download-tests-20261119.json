@@ -1,0 +1,22 @@
+{
+  "checks": [
+    {
+      "name": "ficha_download_content",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "bytes": 98938,
+        "contains_fictitious_title": true
+      }
+    },
+    {
+      "name": "contract_docx_content",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "bytes": 45445,
+        "contains_fictitious_parties": true
+      }
+    }
+  ]
+}

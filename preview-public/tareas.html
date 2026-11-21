@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Tareas · Broquer</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<link rel="stylesheet" href="tareas-calendario.css"/>
+<style>
+/* layout owned by app-shell.js (.bk-page is the scroll container) */
+
+/* ── Page header — mismo patrón que propiedades ── */
+.tk-head {
+  padding: 22px 28px 0;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.tk-head__top {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 18px;
+}
+.tk-head__title h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.03em;
+}
+.tk-head__count {
+  font-family: var(--font-mono); font-size: var(--fs-xs);
+  color: var(--mute); margin-left: 10px; font-weight: 500;
+}
+.btn-new-tarea {
+  height: 44px; padding: 0 18px;
+  background: var(--forest); color: var(--paper);
+  border: none; border-radius: var(--r-pill);
+  font-size: var(--fs-xs); font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.btn-new-tarea:hover { background: var(--ink-2); }
+.btn-new-tarea:active { transform: scale(.98); }
+
+/* Toolbar — mismas métricas que propiedades */
+.tk-toolbar {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.tk-search-wrap {
+  flex: 1; min-width: 220px;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  padding: 0 16px;
+  height: 44px;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.tk-search-wrap:focus-within { border-color: var(--ink); box-shadow: var(--focus); }
+.tk-search-wrap svg { flex-shrink: 0; color: var(--mute); }
+.tk-search-wrap input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--ink); font-size: var(--fs-sm); font-family: inherit;
+  letter-spacing: -0.01em;
+}
+.tk-search-wrap input::placeholder { color: var(--mute-2); }
+.tk-toolbar select {
+  height: 44px; padding: 0 36px 0 14px;
+  background: var(--bone) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%236B6B66' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E") right 14px center/10px no-repeat;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  color: var(--ink); font-size: var(--fs-xs); font-weight: 500;
+  appearance: none; cursor: pointer; font-family: inherit;
+}
+.tk-toolbar select:hover { border-color: var(--line-3); }
+
+/* Tabs Tareas / Actividad — patrón ftab */
+.tk-tabs {
+  display: flex; gap: 6px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.tk-tabs::-webkit-scrollbar { display: none; }
+.tk-tab {
+  flex-shrink: 0;
+  border: none; background: none;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: var(--fs-xs); font-weight: 500;
+  color: var(--mute);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  letter-spacing: -0.005em;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.tk-tab.active { color: var(--ink); border-bottom-color: var(--forest); font-weight: 600; }
+.tk-tab:hover { color: var(--ink); }
+
+/* Contenido */
+.tk-body { padding: 20px var(--pad-x, 36px) 120px; max-width: var(--page-max, 1180px); }
+@media (max-width: 720px) { .tk-body { padding: 14px 16px 120px; } .tk-head { padding: 16px 16px 0; } }
+
+/* Composer de tarea nueva */
+.tk-composer {
+  display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap;
+}
+.tk-composer input[type="text"] {
+  flex: 1; min-width: 200px; height: 44px; padding: 0 16px;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  font-family: inherit; font-size: var(--fs-sm); color: var(--ink);
+  outline: none;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.tk-composer input[type="text"]:focus { border-color: var(--ink); box-shadow: var(--focus); }
+.tk-composer input[type="text"]::placeholder { color: var(--mute-2); }
+.tk-composer input[type="date"] {
+  height: 44px; padding: 0 12px; width: 148px;
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  font-family: inherit; font-size: var(--fs-xs); color: var(--ink-2);
+  outline: none;
+}
+.tk-composer input[type="date"]:focus { border-color: var(--ink); }
+.tk-composer select {
+  height: 44px; padding: 0 34px 0 14px; max-width: 240px;
+  background: var(--bone) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='none' stroke='%236B6B66' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l4 4 4-4'/%3E%3C/svg%3E") right 14px center/10px no-repeat;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-pill);
+  font-family: inherit; font-size: var(--fs-xs); color: var(--ink);
+  outline: none; cursor: pointer;
+  appearance: none;
+  text-overflow: ellipsis;
+}
+.tk-composer .go {
+  height: 44px; padding: 0 20px;
+  background: var(--ink); color: var(--paper);
+  border: none; border-radius: var(--r-pill);
+  font-family: inherit; font-size: var(--fs-xs); font-weight: 600;
+  cursor: pointer; flex-shrink: 0;
+  transition: background var(--dur) var(--ease);
+}
+.tk-composer .go:hover { background: var(--ink-2); }
+.tk-composer .go:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Grupos por vencimiento — etiqueta de sección del sistema */
+.tk-group-lbl {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label-3); font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--mute);
+  padding: 18px 0 10px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 8px;
+}
+.tk-group-lbl:first-child { padding-top: 0; }
+.tk-group-lbl .cnt { color: var(--mute); letter-spacing: 0; }
+.tk-group-lbl.is-danger { color: var(--danger); }
+
+/* Fila de tarea */
+.tk-item {
+  display: flex; gap: 12px; align-items: center;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+.tk-item:last-child { border-bottom: none; }
+.tk-check {
+  width: 24px; height: 24px; padding: 0; flex-shrink: 0;
+  border: 1.5px solid var(--line-2); border-radius: 50%;
+  background: var(--bone); color: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.tk-check:hover { border-color: var(--success); }
+.tk-item.is-done .tk-check { background: var(--success); border-color: var(--success); color: #fff; }
+.tk-item.is-done .tk-title { text-decoration: line-through; color: var(--mute); }
+.tke-chips{ display:flex; flex-wrap:wrap; gap:var(--sp-2); }
+.tke-chip{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:var(--r-pill);
+           background:var(--paper-2); font-size:var(--fs-xs); font-weight:600; }
+.tke-chip button{ background:none; border:0; cursor:pointer; color:var(--mute); font-size:var(--fs-sm); line-height:1; padding:0; }
+.tk-edit{ background:none; border:0; cursor:pointer; color:var(--mute); padding:4px; }
+.tk-edit:hover{ color:var(--ink); }
+.tk-main { flex: 1; min-width: 0; }
+.tk-title { font-size: var(--fs-sm); font-weight: 500; color: var(--ink); letter-spacing: -0.005em; overflow-wrap: break-word; }
+.tk-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.tk-due { font-size: var(--fs-caption); color: var(--mute); }
+.tk-due.is-overdue { color: var(--danger); font-weight: 600; }
+.tk-link {
+  display: inline-flex; align-items: center; gap: 5px; font-family: inherit;
+  font-size: var(--fs-caption); font-weight: 500;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  background: var(--paper-2); color: var(--ink-2);
+  border: 1px solid var(--line);
+  text-decoration: none;
+  max-width: 240px;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.tk-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tk-link:hover { border-color: var(--forest); color: var(--forest); }
+.tk-x {
+  border: none; background: none; padding: 5px 8px; flex-shrink: 0;
+  color: var(--mute); cursor: pointer; font-size: var(--fs-h5); line-height: 1;
+  border-radius: var(--r-sm);
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.tk-x:hover { color: var(--danger); background: var(--danger-soft); }
+
+/* Feed de actividad */
+.tk-act {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+.tk-act:last-child { border-bottom: none; }
+.tk-act__ico {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  background: var(--paper-2); color: var(--ink-3);
+  display: flex; align-items: center; justify-content: center;
+}
+.tk-act__ico.nota { background: var(--forest-soft); color: var(--forest); }
+.tk-act__ico.estatus { background: var(--warn-soft); color: var(--warn); }
+.tk-act__ico.tarea { background: var(--success-soft); color: var(--success); }
+.tk-act__txt { flex: 1; min-width: 0; font-size: var(--fs-xs); color: var(--ink); line-height: 1.5; overflow-wrap: break-word; }
+.tk-act__date { font-size: var(--fs-caption); color: var(--mute); margin-top: 3px; }
+
+/* Vacíos y carga */
+.tk-empty {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 56px 24px; gap: 10px; color: var(--mute);
+}
+.tk-empty svg { color: var(--mute-2); }
+.tk-empty h3 { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
+.tk-empty p { font-size: var(--fs-sm); max-width: 320px; line-height: 1.55; margin: 0; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 90px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--ink); color: var(--paper);
+  padding: 10px 18px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs); font-weight: 500;
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+  z-index: 999;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+
+<style id="sidebar-composition-normalization">
+/* Sidebar composition normalization: shared product skeleton only. */
+.tk-head {
+  max-width: var(--page-max) !important;
+  margin: 0 auto !important;
+  padding: var(--sp-7) var(--pad-x) 0 !important;
+}
+.tk-head__title h1 {
+  font-size:var(--fs-h2) !important;
+  line-height:var(--lh-tight) !important;
+  letter-spacing:-0.02em !important;
+}
+.tk-body { margin:0 auto !important; }
+@media (max-width:720px) {
+  .tk-head { padding:var(--sp-4) var(--pad-x) 0 !important; }
+  .tk-head__title h1 { font-size:var(--fs-h3) !important; }
+}
+</style>
+<link rel="stylesheet" href="/staging-mobile-fields.css"/>
+<script src="/staging-network-audit.js" defer></script>
+</head>
+<body data-app="tareas">
+
+<!-- HEADER -->
+<div class="tk-head">
+  <div class="tk-head__top">
+    <div class="tk-head__title">
+      <h1>Tareas<span class="tk-head__count" id="tk-count"></span></h1>
+    </div>
+    <button class="btn-new-tarea" onclick="tknAbrir()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+      Nueva tarea
+    </button>
+  </div>
+  <div class="tk-toolbar">
+    <div class="tk-search-wrap">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+      <input id="tk-search" type="text" placeholder="Buscar tarea…" oninput="filtrarDebounced()"/>
+    </div>
+    <select id="tk-filtro-estado" onchange="renderTareas()">
+      <option value="pendientes">Pendientes</option>
+      <option value="vencidas">Vencidas</option>
+      <option value="completadas">Completadas</option>
+      <option value="todas">Todas</option>
+    </select>
+    <select id="tk-filtro-vinculo" onchange="renderTareas()">
+      <option value="">Todos los vínculos</option>
+      <option value="contacto">De contactos</option>
+      <option value="propiedad">De inmuebles</option>
+      <option value="suelta">Sin vínculo</option>
+    </select>
+    <select id="tk-filtro-asignado" onchange="renderTareas()" hidden>
+      <option value="">Asignado: todos</option>
+    </select>
+    <select id="tk-filtro-categoria" onchange="renderTareas()" hidden>
+      <option value="">Todas las categorías</option>
+    </select>
+  </div>
+  <div class="tk-tabs">
+    <button class="tk-tab active" id="tk-tab-tareas" onclick="setTab('tareas')">Tareas</button>
+    <button class="tk-tab" id="tk-tab-act" onclick="setTab('actividad')">Actividad reciente</button>
+  </div>
+</div>
+
+<!-- CONTENIDO -->
+<div class="tk-body">
+  <div id="pane-tareas">
+    <div class="tk-composer">
+      <input type="text" id="tk-nueva-titulo" placeholder="Nueva tarea… (ej. Llamar a Pedro para agendar visita)" onkeydown="if(event.key==='Enter')crearTarea()"/>
+      <input type="date" id="tk-nueva-fecha"/>
+      <select id="tk-nueva-vinculo">
+        <option value="">Sin vínculo</option>
+      </select>
+      <button class="go" id="tk-nueva-btn" onclick="crearTarea()">Agregar</button>
+    </div>
+    <div id="tk-lista"></div>
+  </div>
+  <div id="pane-actividad" style="display:none">
+    <div id="tk-feed"></div>
+  </div>
+</div>
+
+<!-- ═══ Modal: editar tarea ═══ -->
+<div class="bk-overlay" id="tk-modal-editar">
+  <div class="bk-modal">
+    <div class="bk-modal__head"><span class="bk-modal__title">Editar tarea</span></div>
+    <div class="bk-modal__body">
+      <div class="bk-field"><label class="bk-label">Título</label><input class="bk-input" id="tke-titulo"/></div>
+      <div class="bk-field-row">
+        <div class="bk-field"><label class="bk-label">Fecha</label><input class="bk-input" type="date" id="tke-fecha"/></div>
+        <div class="bk-field"><label class="bk-label">Hora</label><input class="bk-input" type="time" id="tke-hora"/></div>
+      </div>
+      <div class="bk-field"><label class="bk-label">Notas</label><textarea class="bk-textarea" id="tke-notas" rows="2"></textarea></div>
+
+      <div class="bk-field" id="tke-asignado-wrap" hidden>
+        <label class="bk-label">Asignado a</label>
+        <select class="bk-select" id="tke-asignado-sel" onchange="tkeCambiarAsignado()"><option value="">Sin asignar</option></select>
+      </div>
+
+      <div class="bk-divider"></div>
+      <span class="bk-eyebrow">Categorías</span>
+      <div class="tke-chips" id="tke-categorias-chips" style="margin:var(--sp-2) 0;"></div>
+      <div class="bk-field-row">
+        <select class="bk-select" id="tke-agregar-categoria"><option value="">Agregar categoría…</option></select>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tkeNuevaCategoria()">+ Nueva</button>
+      </div>
+
+      <div class="bk-divider"></div>
+      <span class="bk-eyebrow">Contactos vinculados</span>
+      <div class="tke-chips" id="tke-contactos-chips" style="margin:var(--sp-2) 0;"></div>
+      <div class="bk-field-row">
+        <div class="prop-buscador">
+          <input type="text" class="bk-input" id="tke-agregar-contacto-buscar" placeholder="Buscar contacto…" autocomplete="off" oninput="tkeBuscarContactoInput()" onkeydown="tkeBuscarContactoKeydown(event)"/>
+          <input type="hidden" id="tke-agregar-contacto"/>
+          <div class="prop-sugerencias" id="tke-agregar-contacto-sug" hidden></div>
+        </div>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tkAgregarContacto()">Agregar</button>
+      </div>
+
+      <div class="bk-divider"></div>
+      <span class="bk-eyebrow">Inmuebles vinculados</span>
+      <div class="tke-chips" id="tke-propiedades-chips" style="margin:var(--sp-2) 0;"></div>
+      <div class="bk-field-row">
+        <div class="prop-buscador">
+          <input type="text" class="bk-input" id="tke-agregar-propiedad-buscar" placeholder="Buscar inmueble…" autocomplete="off" oninput="tkeBuscarPropInput()" onkeydown="tkeBuscarPropKeydown(event)"/>
+          <input type="hidden" id="tke-agregar-propiedad"/>
+          <div class="prop-sugerencias" id="tke-agregar-propiedad-sug" hidden></div>
+        </div>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="tkAgregarPropiedad()">Agregar</button>
+      </div>
+
+      <div class="bk-divider"></div>
+      <span class="bk-eyebrow">Archivos adjuntos</span>
+      <div class="tke-chips" id="tke-adjuntos" style="margin:var(--sp-2) 0;"></div>
+      <div style="display:flex;align-items:center;gap:var(--sp-3);">
+        <input type="file" id="tke-adj-input" multiple hidden onchange="haAgregarArchivos(this.files,'tke-adj-preview');this.value=''"/>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="g('tke-adj-input').click()">Adjuntar archivos</button>
+        <span class="bk-hint" style="margin:0">Fotos, videos, PDF… hasta 25 MB c/u</span>
+      </div>
+      <div class="ha-preview" id="tke-adj-preview" style="margin-top:var(--sp-2)"></div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--danger" onclick="tkEliminarDesdeModal()">Eliminar tarea</button>
+      <button class="bk-btn bk-btn--ghost" onclick="tkCerrarEditar()">Cancelar</button>
+      <button class="bk-btn bk-btn--forest" id="tke-guardar-btn" onclick="tkGuardarEdicion()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app-shell.js" defer></script>
+<script src="ficha-comun.js" defer></script>
+<script src="categorias.js" defer></script>
+<script src="historial-adjuntos.js" defer></script>
+<script src="tarea-nueva.js" defer></script>
+<script src="tareas-calendario.js" defer></script>
+
+<script>
+function g(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/* ── Conexión (mismo patrón que propiedades) ─────────────────── */
+async function sbFetch(path, method = 'GET', body = null) {
+  if (!window.brokrSb || !window.brokrSb.rest) {
+    throw new Error('La app aún se está cargando. Intenta de nuevo en un segundo.');
+  }
+  return await window.brokrSb.rest(path, { method, body });
+}
+let _uid = null;
+async function userId() {
+  if (_uid) return _uid;
+  const sb = window.brokrSb;
+  const tok = await sb.ensureToken();
+  if (!tok) return null;
+  try {
+    const r = await fetch(sb.url + '/auth/v1/user', { headers: { apikey: sb.key, Authorization: 'Bearer ' + tok } });
+    if (!r.ok) return null;
+    _uid = (await r.json())?.id || null;
+    return _uid;
+  } catch { return null; }
+}
+
+/* ── Estado ──────────────────────────────────────────────────── */
+let tareas = [];
+let contactosMin = [];   // {id, nombre}
+let propsMin = [];       // {id, titulo, clave_interna}
+let actividades = null;  // lazy
+let tabActual = 'tareas';
+
+/* ── Equipo y categorías (Broquer para Empresas) ───────────────
+   Las tareas dejan de ser 100% privadas en cuentas de empresa: cualquier
+   miembro activo del equipo las ve y puede asignarlas a cualquier otro
+   miembro (no solo a sí mismo), igual que ya pasa con Contactos e
+   Inmuebles. En cuentas individuales esto no cambia nada — la única
+   "empresa" es el propio dueño. */
+const TK_API = 'https://brokr-main-staging.up.railway.app';
+let tkEsEmpresa = false;
+let tkOrgId = null;
+let tkMiembros = [];      // [{user_id, nombre, email, activo}]
+let tkCategorias = [];    // [{id, nombre}]
+let TAREA_CATS = {};      // { tareaId: [categoriaId, ...] }
+
+function tkNombreAgente(uid) {
+  if (!uid) return '';
+  const m = tkMiembros.find(x => x.user_id === uid);
+  return m ? (m.nombre || m.email || 'Agente') : 'Agente';
+}
+
+async function tkCargarOrg() {
+  try {
+    const tok = await window.brokrSb.ensureToken();
+    if (!tok) return;
+    const r = await fetch(TK_API + '/org', { headers: { Authorization: 'Bearer ' + tok } });
+    if (!r.ok) return;
+    const org = await r.json();
+    tkOrgId = org.org_id || null;
+    tkEsEmpresa = org.es_empresa === true;
+    if (tkEsEmpresa) {
+      const rm = await fetch(TK_API + '/org/miembros', { headers: { Authorization: 'Bearer ' + tok } });
+      if (rm.ok) {
+        const d = await rm.json();
+        tkMiembros = (d.miembros || []).filter(m => m.activo);
+      }
+    }
+  } catch { /* si falla, la app sigue funcionando en modo individual */ }
+  tkPintarControlesEquipo();
+}
+
+function tkPintarControlesEquipo() {
+  const mostrar = tkEsEmpresa && tkMiembros.length > 0;
+  const selFiltro = g('tk-filtro-asignado');
+  selFiltro.hidden = !mostrar;
+  if (mostrar) {
+    selFiltro.innerHTML = '<option value="">Asignado: todos</option><option value="yo">Mis tareas</option>' +
+      tkMiembros.map(m => `<option value="${esc(m.user_id)}">${esc(m.nombre || m.email)}</option>`).join('');
+  }
+  const opts = '<option value="">Sin asignar</option>' +
+    tkMiembros.map(m => `<option value="${esc(m.user_id)}">${esc(m.nombre || m.email)}</option>`).join('');
+  ['tke'].forEach(pref => {
+    g(pref + '-asignado-wrap').hidden = !mostrar;
+    if (mostrar) g(pref + '-asignado-sel').innerHTML = opts;
+  });
+}
+
+async function tkAsignarA(tareaId, agenteId) {
+  const tok = await window.brokrSb.ensureToken();
+  if (!tok) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+  const r = await fetch(TK_API + '/org/asignar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+    body: JSON.stringify({ tabla: 'tareas', ids: [tareaId], agente_user_id: agenteId || null }),
+  });
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
+    throw new Error(j.detail || ('HTTP ' + r.status));
+  }
+}
+
+async function tkCargarCategorias() {
+  tkCategorias = await catCargar(tkOrgId);
+  try {
+    const rows = await sbFetch('tareas_categorias?select=tarea_id,categoria_id&limit=4000');
+    TAREA_CATS = {};
+    (Array.isArray(rows) ? rows : []).forEach(row => {
+      (TAREA_CATS[row.tarea_id] = TAREA_CATS[row.tarea_id] || []).push(String(row.categoria_id));
+    });
+  } catch { TAREA_CATS = {}; }
+  tkPintarFiltroCategorias();
+}
+
+// Solo aparece si la cuenta ya tiene categorías; conserva la selección al
+// repintar (p. ej. al crear una categoría nueva desde el modal de editar).
+function tkPintarFiltroCategorias() {
+  const sel = g('tk-filtro-categoria');
+  const actual = sel.value;
+  sel.hidden = !tkCategorias.length;
+  sel.innerHTML = '<option value="">Todas las categorías</option><option value="sin">Sin categoría</option>' +
+    tkCategorias.map(c => `<option value="${esc(String(c.id))}">${esc(c.nombre)}</option>`).join('');
+  sel.value = [...sel.options].some(o => o.value === actual) ? actual : '';
+}
+
+function showToast(msg) {
+  const t = g('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function fechaCorta(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric' }); }
+  catch { return ''; }
+}
+function horaCorta(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleTimeString('es-MX', { hour:'numeric', minute:'2-digit' }); }
+  catch { return ''; }
+}
+function fechaHora(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-MX', { day:'2-digit', month:'short' }) + ' · ' +
+           d.toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+  } catch { return ''; }
+}
+
+/* ── Carga inicial: TODO en un solo lote paralelo ────────────── */
+let VINCULOS = { contactos: {}, propiedades: {} };
+
+function construirVinculos(tareasList, filasContactos, filasPropiedades) {
+  const v = { contactos: {}, propiedades: {} };
+  // Los vínculos "viejos" (columna suelta contacto_id/propiedad_id de antes
+  // de que existieran las tablas de varios-a-varios) se muestran igual,
+  // para que ninguna tarea antigua "pierda" su vínculo de vista.
+  for (const t of tareasList) {
+    if (t.contacto_id) (v.contactos[t.id] = v.contactos[t.id] || new Set()).add(String(t.contacto_id));
+    if (t.propiedad_id) (v.propiedades[t.id] = v.propiedades[t.id] || new Set()).add(String(t.propiedad_id));
+  }
+  for (const fila of filasContactos) {
+    (v.contactos[fila.tarea_id] = v.contactos[fila.tarea_id] || new Set()).add(String(fila.contacto_id));
+  }
+  for (const fila of filasPropiedades) {
+    (v.propiedades[fila.tarea_id] = v.propiedades[fila.tarea_id] || new Set()).add(String(fila.propiedad_id));
+  }
+  const aArrays = (obj) => Object.fromEntries(Object.entries(obj).map(([k, s]) => [k, Array.from(s)]));
+  return { contactos: aArrays(v.contactos), propiedades: aArrays(v.propiedades) };
+}
+
+async function cargarTodo() {
+  const lista = g('tk-lista');
+  lista.innerHTML = '<div class="tk-empty"><h3>Cargando tareas…</h3></div>';
+  try {
+    const [t, c, p] = await Promise.all([
+      sbFetch('tareas?select=*&order=completada.asc,fecha_entrega.asc.nullslast,created_at.desc&limit=500'),
+      sbFetch('contactos?select=id,nombre&order=updated_at.desc&limit=1000'),
+      sbFetch('propiedades?select=id,titulo,clave_interna&order=updated_at.desc&limit=1000'),
+    ]);
+    tareas = Array.isArray(t) ? t : [];
+    contactosMin = Array.isArray(c) ? c : [];
+    propsMin = Array.isArray(p) ? p : [];
+    // Los vínculos se piden SOLO para las tareas cargadas. Antes se pedía
+    // la tabla completa con limit=2000, pero Supabase la recorta a 1000
+    // filas sin orden: a quien ya tenía muchas tareas ligadas a clientes
+    // se le "perdían" los vínculos de las más recientes en esta vista.
+    const ids = tareas.map(x => String(x.id));
+    const [vc, vp] = await Promise.all([
+      sbPorIds('tareas_contactos?select=tarea_id,contacto_id', 'tarea_id', ids),
+      sbPorIds('tareas_propiedades?select=tarea_id,propiedad_id', 'tarea_id', ids),
+    ]);
+    VINCULOS = construirVinculos(tareas, vc, vp);
+    await completarNombresVinculados();
+    poblarSelectVinculo();
+    renderTareas();
+  } catch (e) {
+    lista.innerHTML = '<div class="tk-empty"><h3>No se pudieron cargar tus tareas</h3><p>' + esc(e.message || 'Revisa tu conexión.') + '</p></div>';
+  }
+}
+
+// GET en tandas con "col=in.(...)" para no pasarse del largo de URL ni
+// del tope de filas de Supabase. Si una tanda falla se omite: la lista
+// se sigue viendo, solo sin esos vínculos.
+async function sbPorIds(base, col, ids) {
+  const unicos = [...new Set(ids.map(String))].filter(Boolean);
+  const tandas = [];
+  for (let i = 0; i < unicos.length; i += 80) tandas.push(unicos.slice(i, i + 80));
+  const res = await Promise.all(tandas.map(tanda => {
+    const lista = tanda.map(v => '"' + v.replace(/"/g, '') + '"').join(',');
+    return sbFetch(base + '&' + col + '=in.(' + encodeURIComponent(lista) + ')').catch(() => []);
+  }));
+  return res.flatMap(r => Array.isArray(r) ? r : []);
+}
+
+// Los contactos/inmuebles ligados a una tarea pueden no venir en la lista
+// general (se piden los 1000 más recientes): se traen aparte por id para
+// que el chip muestre el nombre del cliente y no un genérico "Contacto".
+async function completarNombresVinculados() {
+  const tieneC = new Set(contactosMin.map(c => String(c.id)));
+  const tieneP = new Set(propsMin.map(p => String(p.id)));
+  const faltanC = Object.values(VINCULOS.contactos).flat().filter(id => !tieneC.has(String(id)));
+  const faltanP = Object.values(VINCULOS.propiedades).flat().filter(id => !tieneP.has(String(id)));
+  const [c, p] = await Promise.all([
+    faltanC.length ? sbPorIds('contactos?select=id,nombre', 'id', faltanC) : [],
+    faltanP.length ? sbPorIds('propiedades?select=id,titulo,clave_interna', 'id', faltanP) : [],
+  ]);
+  contactosMin = contactosMin.concat(c);
+  propsMin = propsMin.concat(p);
+
+  // Si un compañero te asignó una tarea ligada a SU cliente y no tienes
+  // permiso de ver los contactos del equipo, la base no te deja leerlo y el
+  // chip decía solo "Contacto". El servidor devuelve nombre y teléfono de
+  // esos clientes (solo de tareas que te asignaron o que creaste).
+  const yaC = new Set(contactosMin.map(x => String(x.id)));
+  const sigue = Object.entries(VINCULOS.contactos)
+    .filter(([, ids]) => ids.some(id => !yaC.has(String(id))))
+    .map(([tid]) => tid);
+  if (sigue.length) {
+    try {
+      const tok = await window.brokrSb.ensureToken();
+      const r = tok && await fetch(TK_API + '/org/tareas/contactos-vinculados', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+        body: JSON.stringify({ tarea_ids: sigue.slice(0, 500) }),
+      });
+      if (r && r.ok) {
+        const d = await r.json();
+        const nuevos = (d.contactos || []).filter(x => !yaC.has(String(x.id)))
+          .map(x => Object.assign({}, x, { ajeno: true }));
+        contactosMin = contactosMin.concat(nuevos);
+      }
+    } catch { /* sin nombre se muestra "Cliente de otro asesor" */ }
+  }
+}
+
+// Nombres de todo lo vinculado a la tarea, para buscar "por cliente".
+function textoVinculos(t) {
+  const c = (VINCULOS.contactos[t.id] || []).map(id => (contactoIdx[String(id)] || {}).nombre || '');
+  const p = (VINCULOS.propiedades[t.id] || []).map(id => {
+    const x = propIdx[String(id)] || {};
+    return (x.clave_interna || '') + ' ' + (x.titulo || '');
+  });
+  return c.concat(p).join(' ').toLowerCase();
+}
+
+const _cIdx = () =>Object.fromEntries(contactosMin.map(c => [String(c.id), c]));
+const _pIdx = () => Object.fromEntries(propsMin.map(p => [String(p.id), p]));
+let contactoIdx = {}, propIdx = {};
+
+function poblarSelectVinculo() {
+  contactoIdx = _cIdx();
+  propIdx = _pIdx();
+  const sel = g('tk-nueva-vinculo');
+  let html = '<option value="">Sin vínculo</option>';
+  if (contactosMin.length) {
+    html += '<optgroup label="Contactos">' +
+      contactosMin.filter(c => !c.ajeno).map(c => `<option value="c:${esc(String(c.id))}">${esc(c.nombre || 'Sin nombre')}</option>`).join('') +
+      '</optgroup>';
+  }
+  if (propsMin.length) {
+    html += '<optgroup label="Inmuebles">' +
+      propsMin.map(p => `<option value="p:${esc(String(p.id))}">${esc(p.clave_interna ? p.clave_interna + ' · ' + (p.titulo||'') : (p.titulo || 'Sin título'))}</option>`).join('') +
+      '</optgroup>';
+  }
+  sel.innerHTML = html;
+}
+
+/* ── Filtro + agrupación por vencimiento ─────────────────────── */
+function tareasFiltradas() {
+  const q = (g('tk-search').value || '').trim().toLowerCase();
+  const estado = g('tk-filtro-estado').value;
+  const vinculo = g('tk-filtro-vinculo').value;
+  const asignado = g('tk-filtro-asignado').hidden ? '' : g('tk-filtro-asignado').value;
+  const categoria = g('tk-filtro-categoria').hidden ? '' : g('tk-filtro-categoria').value;
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+
+  return tareas.filter(t => {
+    if (q && !(t.titulo || '').toLowerCase().includes(q) && !textoVinculos(t).includes(q)) return false;
+    const due = t.fecha_entrega ? new Date(t.fecha_entrega) : null;
+    const vencida = due && !t.completada && due < hoy;
+    if (estado === 'pendientes' && t.completada) return false;
+    if (estado === 'completadas' && !t.completada) return false;
+    if (estado === 'vencidas' && !vencida) return false;
+    // Con los vínculos múltiples, no solo la columna vieja contacto_id/propiedad_id.
+    const nC = (VINCULOS.contactos[t.id] || []).length;
+    const nP = (VINCULOS.propiedades[t.id] || []).length;
+    if (vinculo === 'contacto' && !nC) return false;
+    if (vinculo === 'propiedad' && !nP) return false;
+    if (vinculo === 'suelta' && (nC || nP)) return false;
+    if (asignado === 'yo' && t.asignado_a !== _uid) return false;
+    if (asignado && asignado !== 'yo' && t.asignado_a !== asignado) return false;
+    const cats = TAREA_CATS[t.id] || [];
+    if (categoria === 'sin' && cats.length) return false;
+    if (categoria && categoria !== 'sin' && !cats.includes(categoria)) return false;
+    return true;
+  });
+}
+
+/* Grupos: Vencidas / Hoy / Esta semana / Después / Sin fecha / Completadas */
+function agrupar(lista) {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const finHoy = new Date(hoy); finHoy.setDate(finHoy.getDate() + 1);
+  const finSemana = new Date(hoy); finSemana.setDate(finSemana.getDate() + 7);
+  const grupos = { vencidas:[], hoy:[], semana:[], despues:[], sinFecha:[], completadas:[] };
+  for (const t of lista) {
+    if (t.completada) { grupos.completadas.push(t); continue; }
+    if (!t.fecha_entrega) { grupos.sinFecha.push(t); continue; }
+    const d = new Date(t.fecha_entrega);
+    if (d < hoy) grupos.vencidas.push(t);
+    else if (d < finHoy) grupos.hoy.push(t);
+    else if (d < finSemana) grupos.semana.push(t);
+    else grupos.despues.push(t);
+  }
+  return grupos;
+}
+
+function vinculoChip(t) {
+  const contactos = (VINCULOS.contactos[t.id] || []);
+  const propiedades = (VINCULOS.propiedades[t.id] || []);
+  let html = '';
+  for (const cid of contactos) {
+    const c = contactoIdx[String(cid)];
+    const ICO = `<svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.5-1.632z"/></svg>`;
+    if (c && c.ajeno) {
+      // Cliente de otro asesor que no puedes abrir: se muestra quién es y
+      // cómo contactarlo, que es lo que hace falta para trabajar la tarea.
+      const tel = String(c.wa || c.telefono || '').replace(/\D/g, '');
+      html += `<span class="tk-link" title="Cliente de otro asesor del equipo">${ICO}
+        <span>${esc(c.nombre || 'Sin nombre')}</span></span>`;
+      if (tel) {
+        html += `<a class="tk-link" href="tel:${esc(tel)}" title="Llamar" onclick="event.stopPropagation()">
+          <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106a1.125 1.125 0 00-1.173.417l-.97 1.293a12.035 12.035 0 01-7.143-7.143l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+          <span>${esc(c.wa || c.telefono)}</span></a>`;
+      } else if (c.email) {
+        html += `<a class="tk-link" href="mailto:${esc(c.email)}" onclick="event.stopPropagation()"><span>${esc(c.email)}</span></a>`;
+      }
+      continue;
+    }
+    html += `<a class="tk-link" href="contactos.html?id=${encodeURIComponent(String(cid))}" title="Ver en Contactos" onclick="event.stopPropagation()">
+      ${ICO}
+      <span>${esc(c ? c.nombre : 'Cliente de otro asesor')}</span>
+    </a>`;
+  }
+  for (const pid of propiedades) {
+    const p = propIdx[String(pid)];
+    html += `<a class="tk-link" href="propiedades.html?id=${encodeURIComponent(String(pid))}" title="Ver en Inmuebles" onclick="event.stopPropagation()">
+      <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>
+      <span>${esc(p ? (p.clave_interna || p.titulo || 'Inmueble') : 'Inmueble')}</span>
+    </a>`;
+  }
+  return html;
+}
+
+function adjuntosChip(t) {
+  const n = Array.isArray(t.adjuntos) ? t.adjuntos.length : 0;
+  if (!n) return '';
+  return `<button type="button" class="tk-link" style="cursor:pointer" onclick="event.stopPropagation();tkAbrirEditar('${esc(String(t.id))}')" title="Ver archivos adjuntos">
+      <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17.5 8.5l-7.1 7.1a2.5 2.5 0 003.5 3.5l7.1-7.1a4.5 4.5 0 00-6.4-6.4l-7.1 7.1a6.5 6.5 0 009.2 9.2"/></svg>
+      <span>${n} ${n === 1 ? 'archivo' : 'archivos'}</span>
+    </button>`;
+}
+
+function filaTarea(t, mostrarVencida) {
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const due = t.fecha_entrega ? new Date(t.fecha_entrega) : null;
+  const vencida = mostrarVencida && due && !t.completada && due < hoy;
+  const asignadoHtml = (tkEsEmpresa && t.asignado_a)
+    ? `<span class="tk-link" style="cursor:default" title="Asignado a">${esc(tkNombreAgente(t.asignado_a))}</span>` : '';
+  return `<div class="tk-item${t.completada ? ' is-done' : ''}">
+    <button class="tk-check" onclick="event.stopPropagation();toggleTarea('${esc(String(t.id))}')" title="${t.completada ? 'Reabrir' : 'Completar'}">
+      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+    </button>
+    <div class="tk-main" onclick="tkAbrirEditar('${esc(String(t.id))}')" style="cursor:pointer" title="Abrir tarea">
+      <div class="tk-title">${esc(t.titulo)}</div>
+      <div class="tk-meta">
+        ${due ? `<span class="tk-due${vencida ? ' is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${fechaCorta(t.fecha_entrega)} · ${horaCorta(t.fecha_entrega)}</span>` : ''}
+        ${asignadoHtml}
+        ${vinculoChip(t)}
+        ${adjuntosChip(t)}
+      </div>
+      ${catChipsSoloLectura(TAREA_CATS[t.id], tkCategorias)}
+    </div>
+    <button class="tk-edit" title="Editar tarea" onclick="event.stopPropagation();tkAbrirEditar('${esc(String(t.id))}')">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg>
+    </button>
+    <button class="tk-x" title="Eliminar tarea" onclick="event.stopPropagation();eliminarTarea('${esc(String(t.id))}')">×</button>
+  </div>`;
+}
+
+function renderTareas() {
+  const lista = g('tk-lista');
+  const filtradas = tareasFiltradas();
+  const pendientes = tareas.filter(t => !t.completada).length;
+  g('tk-count').textContent = pendientes ? '— ' + pendientes + ' pendientes' : '';
+
+  if (!filtradas.length) {
+    const hayFiltro = g('tk-search').value || g('tk-filtro-estado').value !== 'pendientes' || g('tk-filtro-vinculo').value || g('tk-filtro-categoria').value;
+    lista.innerHTML = `<div class="tk-empty">
+      <svg width="42" height="42" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <h3>${hayFiltro ? 'Sin resultados' : 'Todo al día'}</h3>
+      <p>${hayFiltro ? 'Prueba con otros términos o cambia los filtros.' : 'No tienes tareas pendientes. Agrega la primera arriba.'}</p>
+    </div>`;
+    return;
+  }
+
+  const gr = agrupar(filtradas);
+  const secciones = [
+    ['vencidas',    'Vencidas',     true],
+    ['hoy',         'Hoy',          false],
+    ['semana',      'Esta semana',  false],
+    ['despues',     'Más adelante', false],
+    ['sinFecha',    'Sin fecha',    false],
+    ['completadas', 'Completadas',  false],
+  ];
+  lista.innerHTML = secciones
+    .filter(([k]) => gr[k].length)
+    .map(([k, lbl, danger]) =>
+      `<div class="tk-group-lbl${danger ? ' is-danger' : ''}">${lbl} <span class="cnt">${gr[k].length}</span></div>` +
+      gr[k].map(t => filaTarea(t, k === 'vencidas')).join('')
+    ).join('');
+}
+
+let _filtT = null;
+function filtrarDebounced() {
+  clearTimeout(_filtT);
+  _filtT = setTimeout(renderTareas, 200);
+}
+
+function enfocarComposer() {
+  setTab('tareas');
+  g('tk-nueva-titulo').focus();
+}
+
+/* ── CRUD ────────────────────────────────────────────────────── */
+async function crearTarea() {
+  const inp = g('tk-nueva-titulo');
+  const btn = g('tk-nueva-btn');
+  const titulo = (inp.value || '').trim();
+  if (!titulo) { inp.focus(); return; }
+  const uid = await userId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); location.href = 'login.html'; return; }
+  const fecha = g('tk-nueva-fecha').value || null;
+  const vinculo = g('tk-nueva-vinculo').value;
+  const payload = {
+    user_id: uid,
+    org_id: tkOrgId,
+    titulo: titulo,
+    // OJO: nunca mandar "fecha+'T12:00:00'" pelón — la columna es timestamptz
+    // y Postgres lo toma como si YA fuera UTC, corriendo la hora real hasta
+    // 6h para atrás. new Date(...) interpreta el texto en la hora LOCAL del
+    // navegador, y toISOString() sí da el instante UTC correcto.
+    fecha_entrega: fecha ? new Date(fecha + 'T12:00:00').toISOString() : null,
+    contacto_id: vinculo.startsWith('c:') ? vinculo.slice(2) : null,
+    propiedad_id: vinculo.startsWith('p:') ? vinculo.slice(2) : null,
+  };
+  btn.disabled = true;
+  try {
+    const rows = await sbFetch('tareas', 'POST', payload);
+    const nueva = Array.isArray(rows) ? rows[0] : rows;
+    if (nueva && nueva.id) {
+      tareas.unshift(nueva);
+      // Sin esto el chip del cliente/inmueble no salía hasta recargar.
+      if (payload.contacto_id) {
+        (VINCULOS.contactos[nueva.id] = VINCULOS.contactos[nueva.id] || []).push(String(payload.contacto_id));
+        sbFetch('tareas_contactos', 'POST', { user_id: uid, tarea_id: nueva.id, contacto_id: payload.contacto_id }).catch(() => {});
+      }
+      if (payload.propiedad_id) {
+        (VINCULOS.propiedades[nueva.id] = VINCULOS.propiedades[nueva.id] || []).push(String(payload.propiedad_id));
+        sbFetch('tareas_propiedades', 'POST', { user_id: uid, tarea_id: nueva.id, propiedad_id: payload.propiedad_id }).catch(() => {});
+      }
+    }
+    inp.value = '';
+    g('tk-nueva-fecha').value = '';
+    g('tk-nueva-vinculo').value = '';
+    renderTareas();
+    showToast('Tarea creada');
+  } catch (e) {
+    alert('No se pudo crear la tarea.\n\n' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function toggleTarea(id) {
+  const t = tareas.find(x => String(x.id) === id); if (!t) return;
+  const completar = !t.completada;
+  t.completada = completar;                                   // optimista
+  t.fecha_completada = completar ? new Date().toISOString() : null;
+  renderTareas();
+  try {
+    await sbFetch('tareas?id=eq.' + encodeURIComponent(id), 'PATCH',
+      { completada: completar, fecha_completada: t.fecha_completada });
+    if (completar) {
+      const uid = await userId();
+      if (uid) sbFetch('actividades', 'POST', {
+        user_id: uid, tipo: 'tarea_completada',
+        texto: 'Tarea completada: ' + t.titulo,
+        contacto_id: t.contacto_id || null,
+        propiedad_id: t.propiedad_id || null,
+        org_id: tkOrgId,
+      }).catch(() => {});
+    }
+    showToast(completar ? 'Tarea completada' : 'Tarea reabierta');
+  } catch (e) {
+    t.completada = !completar;
+    t.fecha_completada = null;
+    renderTareas();
+    alert('No se pudo actualizar la tarea.\n\n' + (e.message || e));
+  }
+}
+
+async function eliminarTarea(id) {
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  try {
+    // Por el servidor, no directo a la base: si la tarea la creó otro
+    // compañero, la base "aceptaba" el borrado sin borrar nada y la tarea
+    // reaparecía al recargar. El servidor revisa el permiso y confirma.
+    const tok = await window.brokrSb.ensureToken();
+    if (!tok) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+    const r = await fetch(TK_API + '/org/tareas/' + encodeURIComponent(id), {
+      method: 'DELETE', headers: { Authorization: 'Bearer ' + tok },
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.detail || ('HTTP ' + r.status));
+    }
+    tareas = tareas.filter(t => String(t.id) !== id);
+    renderTareas();
+    showToast('Tarea eliminada');
+  } catch (e) {
+    alert('No se pudo eliminar la tarea.\n\n' + (e.message || e));
+  }
+}
+
+/* ── Editar tarea (título, fecha/hora, notas, vínculos múltiples) ──── */
+let TKE_ID = null; // id de la tarea que se está editando
+
+// Buscadores con sugerencias en vivo (bkCrearBuscador, ficha-comun.js) —
+// reemplazan los <select> que obligaban a scrollear cientos de contactos o
+// inmuebles uno por uno.
+let tkContactosDisponibles = [], tkPropsDisponibles = [];
+// OJO: este <script> corre de inmediato al parsear (no lleva "defer"), y
+// ficha-comun.js SÍ lleva "defer" — se ejecuta después. Instanciar los
+// buscadores aquí arriba, a secas, tronaría con "bkBuscadorContactos is not
+// defined". Por eso se crean perezosamente, la primera vez que hacen falta.
+let _buscTkeContacto, _buscTkeProp;
+function _asegurarBuscadoresTareas() {
+  if (_buscTkeContacto) return;
+  _buscTkeContacto = bkBuscadorContactos('tke-agregar-contacto-buscar', 'tke-agregar-contacto', 'tke-agregar-contacto-sug', 'No hay más contactos para agregar');
+  _buscTkeProp = bkBuscadorPropiedades('tke-agregar-propiedad-buscar', 'tke-agregar-propiedad', 'tke-agregar-propiedad-sug', 'No hay más inmuebles para agregar');
+}
+function tkeBuscarContactoInput() { _asegurarBuscadoresTareas(); _buscTkeContacto.onInput(tkContactosDisponibles); }
+function tkeBuscarContactoKeydown(ev) { _asegurarBuscadoresTareas(); _buscTkeContacto.onKeydown(ev); }
+function tkeBuscarPropInput() { _asegurarBuscadoresTareas(); _buscTkeProp.onInput(tkPropsDisponibles); }
+function tkeBuscarPropKeydown(ev) { _asegurarBuscadoresTareas(); _buscTkeProp.onKeydown(ev); }
+document.addEventListener('click', (ev) => {
+  if (!_buscTkeContacto) return; // nada que cerrar si nunca se han usado
+  if (_buscTkeContacto.manejarClick(ev.target)) return;
+  if (_buscTkeProp.manejarClick(ev.target)) return;
+  _buscTkeContacto.cerrarSiClickAfuera(ev.target);
+  _buscTkeProp.cerrarSiClickAfuera(ev.target);
+});
+
+function tkPintarChips() {
+  const contactos = VINCULOS.contactos[TKE_ID] || [];
+  const propiedades = VINCULOS.propiedades[TKE_ID] || [];
+  g('tke-contactos-chips').innerHTML = contactos.length
+    ? contactos.map(cid => {
+        const c = contactoIdx[String(cid)];
+        return `<span class="tke-chip">${esc(c ? c.nombre : 'Cliente de otro asesor')}<button onclick="tkQuitarContacto('${esc(String(cid))}')" title="Quitar">×</button></span>`;
+      }).join('')
+    : '<span class="bk-hint">Ninguno todavía.</span>';
+  g('tke-propiedades-chips').innerHTML = propiedades.length
+    ? propiedades.map(pid => {
+        const p = propIdx[String(pid)];
+        const nombre = p ? (p.clave_interna || p.titulo || 'Inmueble') : 'Inmueble';
+        return `<span class="tke-chip">${esc(nombre)}<button onclick="tkQuitarPropiedad('${esc(String(pid))}')" title="Quitar">×</button></span>`;
+      }).join('')
+    : '<span class="bk-hint">Ninguno todavía.</span>';
+  tkContactosDisponibles = contactosMin.filter(c => !c.ajeno && !contactos.includes(String(c.id)));
+  tkPropsDisponibles = propsMin.filter(p => !propiedades.includes(String(p.id)));
+  g('tke-agregar-contacto-buscar').value = '';
+  g('tke-agregar-contacto').value = '';
+  g('tke-agregar-propiedad-buscar').value = '';
+  g('tke-agregar-propiedad').value = '';
+}
+
+function tkAbrirEditar(id) {
+  const t = tareas.find(x => String(x.id) === id);
+  if (!t) return;
+  TKE_ID = id;
+  g('tke-titulo').value = t.titulo || '';
+  if (t.fecha_entrega) {
+    const d = new Date(t.fecha_entrega);
+    const pad = n => String(n).padStart(2, '0');
+    // Fecha y hora deben leerse AMBAS en hora local (no mezclar toISOString
+    // -que da el día en UTC- con toTimeString -que da la hora local-, porque
+    // cerca de medianoche eso puede mostrar el día equivocado).
+    g('tke-fecha').value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    g('tke-hora').value = pad(d.getHours()) + ':' + pad(d.getMinutes());
+  } else {
+    g('tke-fecha').value = '';
+    g('tke-hora').value = '';
+  }
+  g('tke-notas').value = t.notas || '';
+  if (tkEsEmpresa && tkMiembros.length) g('tke-asignado-sel').value = t.asignado_a || '';
+  tkPintarChips();
+  tkPintarCategoriasEdit();
+  TKE_ADJ = Array.isArray(t.adjuntos) ? t.adjuntos.slice() : [];
+  TKE_ADJ_CAMBIO = false;
+  haTomarAdjuntosListos('tke-adj-preview'); // limpia lo de otra tarea
+  tkPintarAdjuntos();
+  g('tk-modal-editar').classList.add('is-open');
+}
+
+// Archivos ya guardados en la tarea (tareas.adjuntos). Quitar uno solo se
+// aplica al darle Guardar, igual que el resto de los campos del modal.
+let TKE_ADJ = [], TKE_ADJ_CAMBIO = false;
+function tkPintarAdjuntos() {
+  g('tke-adjuntos').innerHTML = TKE_ADJ.length
+    ? TKE_ADJ.map((a, i) => `<span class="tke-chip"><a ${typeof haAttrLiga === 'function' ? haAttrLiga(a.url) : `href="${esc(a.url)}"`} target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(a.nombre || 'Archivo')}</a><button onclick="tkQuitarAdjunto(${i})" title="Quitar">×</button></span>`).join('')
+    : '<span class="bk-hint">Ninguno todavía.</span>';
+}
+function tkQuitarAdjunto(i) {
+  TKE_ADJ.splice(i, 1);
+  TKE_ADJ_CAMBIO = true;
+  tkPintarAdjuntos();
+}
+
+function tkPintarCategoriasEdit() {
+  catPintarPicker({
+    chipsEl: g('tke-categorias-chips'),
+    selectEl: g('tke-agregar-categoria'),
+    catalogo: tkCategorias,
+    seleccionadas: TAREA_CATS[TKE_ID] || [],
+    onQuitar: tkQuitarCategoria,
+    onAgregar: tkAgregarCategoria,
+  });
+}
+
+async function tkAgregarCategoria(catId) {
+  if (!TKE_ID) return;
+  const ok = await catVincular('tareas_categorias', 'tarea_id', TKE_ID, catId);
+  if (!ok) { alert('No se pudo agregar la categoría.'); return; }
+  (TAREA_CATS[TKE_ID] = TAREA_CATS[TKE_ID] || []).push(String(catId));
+  tkPintarCategoriasEdit();
+  renderTareas();
+}
+
+async function tkQuitarCategoria(catId) {
+  if (!TKE_ID) return;
+  const ok = await catDesvincular('tareas_categorias', 'tarea_id', TKE_ID, catId);
+  if (!ok) { alert('No se pudo quitar la categoría.'); return; }
+  TAREA_CATS[TKE_ID] = (TAREA_CATS[TKE_ID] || []).filter(x => x !== String(catId));
+  tkPintarCategoriasEdit();
+  renderTareas();
+}
+
+async function tkeNuevaCategoria() {
+  const nombre = prompt('Nombre de la nueva categoría:');
+  if (!nombre || !nombre.trim()) return;
+  const uid = await userId();
+  if (!uid || !tkOrgId) return;
+  const cat = await catCrear(tkOrgId, uid, nombre);
+  if (!cat) { alert('No se pudo crear la categoría.'); return; }
+  if (!tkCategorias.some(c => String(c.id) === String(cat.id))) {
+    tkCategorias.push(cat);
+    tkPintarFiltroCategorias();
+  }
+  await tkAgregarCategoria(cat.id);
+}
+
+async function tkeCambiarAsignado() {
+  if (!TKE_ID) return;
+  const val = g('tke-asignado-sel').value || null;
+  try {
+    await tkAsignarA(TKE_ID, val);
+    const t = tareas.find(x => String(x.id) === TKE_ID);
+    if (t) t.asignado_a = val;
+    renderTareas();
+    showToast('Asignación actualizada');
+  } catch (e) {
+    alert('No se pudo asignar la tarea.\n\n' + (e.message || e));
+  }
+}
+
+function tkCerrarEditar() {
+  g('tk-modal-editar').classList.remove('is-open');
+  haTomarAdjuntosListos('tke-adj-preview');
+  TKE_ID = null;
+}
+
+async function tkGuardarEdicion() {
+  if (!TKE_ID) return;
+  const titulo = g('tke-titulo').value.trim();
+  if (!titulo) { alert('El título es obligatorio.'); return; }
+  const fecha = g('tke-fecha').value;
+  const hora = g('tke-hora').value || '12:00';
+  const cambios = {
+    titulo,
+    // Mismo arreglo: construir con Date (hora LOCAL del navegador) y usar
+    // toISOString() para el instante UTC real, en vez de mandar el texto
+    // "fecha+T+hora" pelón que Postgres confundiría con UTC.
+    fecha_entrega: fecha ? new Date(fecha + 'T' + hora + ':00').toISOString() : null,
+    notas: g('tke-notas').value.trim() || null,
+    // Si se cambia la fecha/hora hay que resetear el aviso: si ya se había
+    // mandado el recordatorio (o el servidor ya lo había descartado por
+    // vencido) y no se limpia esta bandera, la tarea reprogramada se queda
+    // muda para siempre — nunca vuelve a avisar aunque tenga fecha nueva.
+    recordatorio_enviado: false,
+  };
+  if (haHaySubiendoPendiente('tke-adj-preview')) { alert('Espera a que terminen de subirse los archivos.'); return; }
+  const nuevosAdj = haAdjuntosListos('tke-adj-preview');
+  // Solo se manda la columna si cambió: así editar sigue funcionando aunque
+  // aún no se haya corrido migracion-tareas-adjuntos.sql.
+  if (nuevosAdj.length || TKE_ADJ_CAMBIO) cambios.adjuntos = TKE_ADJ.concat(nuevosAdj);
+  const btn = g('tke-guardar-btn');
+  const prevTxt = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+  try {
+    await sbFetch('tareas?id=eq.' + encodeURIComponent(TKE_ID), 'PATCH', cambios);
+    const t = tareas.find(x => String(x.id) === TKE_ID);
+    if (t) Object.assign(t, cambios);
+    tkCerrarEditar();
+    renderTareas();
+    showToast('Tarea actualizada');
+  } catch (e) {
+    alert('No se pudo guardar.\n\n' + (e.message || e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = prevTxt; }
+  }
+}
+
+function tkEliminarDesdeModal() {
+  const id = TKE_ID;
+  tkCerrarEditar();
+  if (id) eliminarTarea(id);
+}
+
+async function tkAgregarContacto() {
+  const cid = g('tke-agregar-contacto').value;
+  if (!cid || !TKE_ID) return;
+  const uid = await userId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  try {
+    await sbFetch('tareas_contactos', 'POST', { user_id: uid, tarea_id: TKE_ID, contacto_id: cid });
+    (VINCULOS.contactos[TKE_ID] = VINCULOS.contactos[TKE_ID] || []).push(String(cid));
+    tkPintarChips();
+    renderTareas();
+    showToast('Contacto vinculado');
+  } catch (e) {
+    alert('No se pudo vincular el contacto.\n\n' + (e.message || e));
+  }
+}
+
+async function tkQuitarContacto(cid) {
+  if (!TKE_ID) return;
+  try {
+    await sbFetch('tareas_contactos?tarea_id=eq.' + encodeURIComponent(TKE_ID) + '&contacto_id=eq.' + encodeURIComponent(cid), 'DELETE');
+    // Si también estaba en la columna vieja contacto_id, se limpia: si no,
+    // el vínculo "regresaba" al recargar.
+    const t = tareas.find(x => String(x.id) === TKE_ID);
+    if (t && String(t.contacto_id) === String(cid)) {
+      await sbFetch('tareas?id=eq.' + encodeURIComponent(TKE_ID), 'PATCH', { contacto_id: null });
+      t.contacto_id = null;
+    }
+    VINCULOS.contactos[TKE_ID] = (VINCULOS.contactos[TKE_ID] || []).filter(x => x !== String(cid));
+    tkPintarChips();
+    renderTareas();
+    showToast('Vínculo eliminado');
+  } catch (e) {
+    alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
+  }
+}
+
+async function tkAgregarPropiedad() {
+  const pid = g('tke-agregar-propiedad').value;
+  if (!pid || !TKE_ID) return;
+  const uid = await userId();
+  if (!uid) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  try {
+    await sbFetch('tareas_propiedades', 'POST', { user_id: uid, tarea_id: TKE_ID, propiedad_id: pid });
+    (VINCULOS.propiedades[TKE_ID] = VINCULOS.propiedades[TKE_ID] || []).push(String(pid));
+    tkPintarChips();
+    renderTareas();
+    showToast('Inmueble vinculado');
+  } catch (e) {
+    alert('No se pudo vincular el inmueble.\n\n' + (e.message || e));
+  }
+}
+
+async function tkQuitarPropiedad(pid) {
+  if (!TKE_ID) return;
+  try {
+    await sbFetch('tareas_propiedades?tarea_id=eq.' + encodeURIComponent(TKE_ID) + '&propiedad_id=eq.' + encodeURIComponent(pid), 'DELETE');
+    const t = tareas.find(x => String(x.id) === TKE_ID);
+    if (t && String(t.propiedad_id) === String(pid)) {
+      await sbFetch('tareas?id=eq.' + encodeURIComponent(TKE_ID), 'PATCH', { propiedad_id: null });
+      t.propiedad_id = null;
+    }
+    VINCULOS.propiedades[TKE_ID] = (VINCULOS.propiedades[TKE_ID] || []).filter(x => x !== String(pid));
+    tkPintarChips();
+    renderTareas();
+    showToast('Vínculo eliminado');
+  } catch (e) {
+    alert('No se pudo quitar el vínculo.\n\n' + (e.message || e));
+  }
+}
+
+/* ── Nueva tarea ────────────────────────────────────────────── */
+// El formulario vive en tarea-nueva.js y es el mismo que se abre desde la
+// ficha de un cliente: aquí solo se le pasan los datos ya cargados y se
+// refleja la tarea creada en la lista sin recargar.
+function tknAbrir() {
+  bkTareaNueva.abrir({
+    ctx: {
+      orgId: tkOrgId, esEmpresa: tkEsEmpresa, miembros: tkMiembros,
+      categorias: tkCategorias, contactos: contactosMin, propiedades: propsMin,
+    },
+    onCreada(nueva, vinc, fallidos) {
+      const id = String(nueva.id);
+      tareas.unshift(nueva);
+      if (vinc.contactos.length) VINCULOS.contactos[id] = vinc.contactos.slice();
+      if (vinc.propiedades.length) VINCULOS.propiedades[id] = vinc.propiedades.slice();
+      if (vinc.categorias.length) TAREA_CATS[id] = vinc.categorias.slice();
+      tkPintarFiltroCategorias(); // por si se creó una categoría nueva en el formulario
+      renderTareas();
+      showToast(fallidos
+        ? 'Tarea creada, pero ' + fallidos + ' vínculo(s) no se pudieron guardar'
+        : 'Tarea creada');
+    },
+  });
+}
+
+/* ── Tab Actividad (lazy: carga al abrir el tab) ─────────────── */
+function setTab(tab) {
+  tabActual = tab;
+  g('tk-tab-tareas').classList.toggle('active', tab === 'tareas');
+  g('tk-tab-act').classList.toggle('active', tab === 'actividad');
+  g('pane-tareas').style.display = tab === 'tareas' ? '' : 'none';
+  g('pane-actividad').style.display = tab === 'actividad' ? '' : 'none';
+  if (tab === 'actividad' && actividades === null) cargarActividad();
+}
+
+const ACT_ICONS = {
+  nota: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.862 4.487z"/></svg>',
+  cambio_estatus: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18M17 8l4 4m0 0l-4 4"/></svg>',
+  tarea_completada: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+};
+function actIconClass(tipo) {
+  if (tipo === 'cambio_estatus') return 'estatus';
+  if (tipo === 'tarea_completada') return 'tarea';
+  return 'nota';
+}
+function actVinculo(a) {
+  if (a.contacto_id) {
+    const c = contactoIdx[String(a.contacto_id)];
+    if (c) return ` · ${esc(c.nombre)}`;
+  }
+  if (a.propiedad_id) {
+    const p = propIdx[String(a.propiedad_id)];
+    if (p) return ` · ${esc(p.clave_interna || p.titulo || '')}`;
+  }
+  return '';
+}
+
+async function cargarActividad() {
+  const feed = g('tk-feed');
+  feed.innerHTML = '<div class="tk-empty"><h3>Cargando actividad…</h3></div>';
+  try {
+    actividades = await sbFetch('actividades?select=*&order=created_at.desc&limit=100');
+  } catch (e) {
+    actividades = null;
+    feed.innerHTML = '<div class="tk-empty"><h3>No se pudo cargar la actividad</h3><p>' + esc(e.message || '') + '</p></div>';
+    return;
+  }
+  feed.innerHTML = (actividades && actividades.length)
+    ? actividades.map(a => `<div class="tk-act">
+        <div class="tk-act__ico ${actIconClass(a.tipo)}">${ACT_ICONS[a.tipo] || ACT_ICONS.nota}</div>
+        <div style="flex:1;min-width:0">
+          <div class="tk-act__txt">${esc(a.texto || '')}</div>
+          <div class="tk-act__date">${fechaHora(a.created_at)}${actVinculo(a)}</div>
+        </div>
+      </div>`).join('')
+    : '<div class="tk-empty"><h3>Sin actividad todavía</h3><p>Aquí aparecerán tus notas, cambios de etapa y tareas completadas.</p></div>';
+}
+
+/* ── Enlace directo desde una notificación push de recordatorio ──
+   (ver capacitor-bridge.js): tareas.html?id=<tarea_id> abre esa tarea
+   directo en el modal de editar, en vez de dejar al agente que la busque
+   a mano en la lista. */
+function abrirDesdeURL() {
+  const id = new URLSearchParams(location.search).get('id');
+  if (id && tareas.some(t => String(t.id) === id)) tkAbrirEditar(id);
+}
+
+/* ── Init: espera al shell (mismo patrón que propiedades) ────── */
+async function _iniciarTareas() {
+  await userId();
+  await tkCargarOrg();
+  await Promise.all([cargarTodo(), tkCargarCategorias()]);
+  renderTareas();
+  abrirDesdeURL();
+}
+if (window.__brokrShellLoaded) { _iniciarTareas(); }
+else { window.addEventListener('brokr-shell-ready', _iniciarTareas, { once: true }); }
+</script>
+
+</body>
+</html>

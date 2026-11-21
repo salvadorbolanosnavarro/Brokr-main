@@ -1,0 +1,153 @@
+{
+  "mode": "real staging API; only disposable QA records",
+  "checks": [
+    {
+      "name": "cannot_delete_other_contacts_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "owner_record_still_exists": true,
+        "response": {
+          "eliminados": 0,
+          "alcance": "personal"
+        }
+      }
+    },
+    {
+      "name": "cannot_delete_other_contacts_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "owner_record_still_exists": true,
+        "response": {
+          "eliminados": 0,
+          "alcance": "personal"
+        }
+      }
+    },
+    {
+      "name": "delete_own_contacts_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "record_absent": true,
+        "response": {
+          "eliminados": 1,
+          "alcance": "personal"
+        }
+      }
+    },
+    {
+      "name": "delete_own_contacts_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "record_absent": true,
+        "response": {
+          "eliminados": 1,
+          "alcance": "personal"
+        }
+      }
+    },
+    {
+      "name": "cannot_delete_other_leads_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "owner_record_still_exists": true,
+        "response": {
+          "eliminados": 0,
+          "alcance": "personal"
+        }
+      }
+    },
+    {
+      "name": "cannot_delete_other_leads_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "owner_record_still_exists": true,
+        "response": {
+          "eliminados": 0,
+          "alcance": "personal"
+        }
+      }
+    },
+    {
+      "name": "delete_own_leads_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "record_absent": true,
+        "response": {
+          "eliminados": 1,
+          "alcance": "personal"
+        }
+      }
+    },
+    {
+      "name": "delete_own_leads_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "record_absent": true,
+        "response": {
+          "eliminados": 1,
+          "alcance": "personal"
+        }
+      }
+    },
+    {
+      "name": "cannot_delete_other_properties_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "owner_record_still_exists": true,
+        "response": {
+          "eliminadas": 0,
+          "fotos_programadas": 0,
+          "alcance": "personal"
+        }
+      }
+    },
+    {
+      "name": "cannot_delete_other_properties_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "owner_record_still_exists": true,
+        "response": {
+          "eliminadas": 0,
+          "fotos_programadas": 0,
+          "alcance": "personal"
+        }
+      }
+    },
+    {
+      "name": "delete_own_properties_A",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "record_absent": true,
+        "response": {
+          "eliminadas": 1,
+          "fotos_programadas": 0,
+          "alcance": "personal"
+        }
+      }
+    },
+    {
+      "name": "delete_own_properties_B",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "record_absent": true,
+        "response": {
+          "eliminadas": 1,
+          "fotos_programadas": 0,
+          "alcance": "personal"
+        }
+      }
+    }
+  ]
+}

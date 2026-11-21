@@ -1,0 +1,40 @@
+[
+  {
+    "name": "stripe_remains_blocked",
+    "status": 503,
+    "body": {
+      "ok": false,
+      "simulated": false,
+      "external_call_performed": false,
+      "code": "STAGING_STRIPE_TEST_KEY_REQUIRED",
+      "message": "Stripe requiere una llave sk_test_ en staging.",
+      "blocked_operations": [
+        {
+          "provider": "stripe",
+          "method": "CONFIG",
+          "kind": "stripe_configuration"
+        }
+      ]
+    },
+    "passed": true
+  },
+  {
+    "name": "whatsapp_remains_simulated",
+    "status": 409,
+    "body": {
+      "ok": false,
+      "simulated": true,
+      "external_call_performed": false,
+      "code": "SIDE_EFFECTS_DISABLED",
+      "message": "Simulaci\u00f3n: no se enviaron mensajes, cobros ni solicitudes al proveedor bloqueado.",
+      "blocked_operations": [
+        {
+          "provider": "meta",
+          "method": "POST",
+          "kind": "simulation"
+        }
+      ]
+    },
+    "passed": true
+  }
+]

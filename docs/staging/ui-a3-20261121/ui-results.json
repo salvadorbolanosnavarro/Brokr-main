@@ -1,0 +1,46 @@
+{
+  "account": "A3",
+  "date": "2026-11-21",
+  "contacts": {
+    "created": true,
+    "edited": true,
+    "reloaded": true,
+    "deleted": true,
+    "empty_state": true
+  },
+  "leads": {
+    "created": true,
+    "edited": true,
+    "stage_changed": "Nuevo→Activo",
+    "persisted_after_reload": true,
+    "deleted": true,
+    "empty_pipeline": true
+  },
+  "contract": {
+    "ui_generated": true,
+    "download_bytes": 45490,
+    "docx_parties_verified": true,
+    "sent_to_signature": false
+  },
+  "avm": {
+    "ui_attempts_before_fix": 2,
+    "passed_after_fix": true,
+    "comparables": 7,
+    "estimated_mxn": 5530000,
+    "pdf_downloaded_and_verified": true,
+    "backend_pr": 224
+  },
+  "pilot": {
+    "real_buttons_roundtrip": true,
+    "session_preserved": true,
+    "flag_revoked": true,
+    "revocation_observed": "reload returns to Broquer, A3 avatar retained, opt-in button absent",
+    "flag_reenabled_only_A3": true
+  },
+  "sentry": {
+    "ui_button": true,
+    "receipt_saved": true,
+    "sentry_accepted": true,
+    "event_id": "f6149a79-a96a-4958-ab34-1bc164c02d92"
+  }
+}

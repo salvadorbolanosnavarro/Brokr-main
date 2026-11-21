@@ -1,0 +1,70 @@
+{
+  "mode": "staging A2/B2, invalid synthetic WhatsApp connection only",
+  "checks": [
+    {
+      "name": "seed_fake_whatsapp_connection",
+      "http_status": 403,
+      "passed": false,
+      "details": {
+        "code": "42501",
+        "message": "new row violates row-level security policy for table \"wac_numbers\""
+      }
+    },
+    {
+      "name": "whatsapp_send_A2_real_endpoint",
+      "http_status": 404,
+      "passed": false,
+      "details": {
+        "detail": "Ese número no está conectado a tu cuenta."
+      }
+    },
+    {
+      "name": "photo_upload_A2",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "bytes": 134903,
+        "object": "qa_cecil_23fdbcad59164f188c753e436c82661f.jpg",
+        "error": null
+      }
+    },
+    {
+      "name": "photo_read_uploaded_A2",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "bytes": 134903
+      }
+    },
+    {
+      "name": "photo_cannot_delete_other_B2",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "still_exists": true
+      }
+    },
+    {
+      "name": "photo_delete_own_A2",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "read_after_delete": 400
+      }
+    },
+    {
+      "name": "paid_access_profile_schema",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "profile": [
+          {
+            "rol": "agente",
+            "activo": true,
+            "acceso_completo_hasta": null
+          }
+        ]
+      }
+    }
+  ]
+}

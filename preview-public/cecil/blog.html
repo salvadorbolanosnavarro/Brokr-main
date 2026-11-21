@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
+<link rel="apple-touch-icon" href="/cecil/brand/cecil-icon.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Blog · Cecil</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+/* ── Layout ─────────────────────────────────── */
+.bl-wrap { padding: 28px 36px 80px; max-width: 960px; margin: 0 auto; }
+@media (max-width: 720px) { .bl-wrap { padding: 18px 16px 80px; } }
+
+/* ── Header ─────────────────────────────────── */
+.bl-head { margin-bottom: 28px; }
+.bl-head__eyebrow { font-family: var(--font-mono); font-size: var(--fs-label-3); letter-spacing: 0.02em;  color: var(--mute); margin-bottom: 8px; }
+.bl-head h1 { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 6px; }
+.bl-head__sub { font-size:var(--fs-sm); color: var(--mute); line-height: 1.5; max-width: 580px; }
+@media (max-width: 720px) { .bl-head h1 { font-size:var(--fs-h2); } }
+
+/* ── Search ─────────────────────────────────── */
+.bl-search { position: relative; margin-bottom: 20px; }
+.bl-search__input { width: 100%; height: 48px; padding: 0 16px 0 44px; background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r-pill); font-size:var(--fs-sm); color: var(--ink); outline: none; transition: border-color var(--dur) var(--ease); }
+.bl-search__input:focus { border-color: var(--ink); }
+.bl-search__input::placeholder { color: var(--mute-2); }
+.bl-search__icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--mute-2); pointer-events: none; }
+.bl-search__clear { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; display: none; }
+.bl-search__clear.is-on { display: block; }
+
+/* ── Tags filter ────────────────────────────── */
+.bl-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.bl-tag { cursor: pointer; transition: all var(--dur) var(--ease); }
+
+/* ── Article list ───────────────────────────── */
+.bl-list { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+@media (max-width: 720px) { .bl-list { grid-template-columns: 1fr; } }
+
+.bl-card { background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 22px; cursor: pointer; transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease); display: flex; flex-direction: column; gap: 10px; }
+.bl-card:hover { transform: translateY(-2px); border-color: var(--line-2); }
+.bl-card__top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bl-card__cat { font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em;  padding: 3px 9px; border-radius: var(--r-pill); background: var(--forest-soft); color: var(--forest); }
+.bl-card__cat.pld    { background: var(--danger-soft); color: var(--danger); }
+.bl-card__cat.legal  { background: var(--warn-soft);   color: var(--warn); }
+.bl-card__cat.mercado{ background: var(--info-soft);    color: var(--info); }
+.bl-card__cat.tecnica{ background: var(--success-soft); color: var(--success); }
+.bl-card__meta { font-family: var(--font-mono); font-size:var(--fs-caption); color: var(--mute); margin-left: auto; white-space: nowrap; }
+.bl-card__title { font-family: var(--font-display); font-size:var(--fs-h5); font-weight: 600; letter-spacing: -0.018em; color: var(--ink); line-height: 1.3; }
+.bl-card__sub { font-size:var(--fs-xs); color: var(--mute); line-height: 1.5; }
+.bl-card__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.bl-card__tag { font-size:var(--fs-caption); padding: 2px 7px; border-radius: var(--r-pill); background: var(--paper-2); color: var(--mute); font-weight: 500; }
+.bl-card__footer { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); }
+.bl-card__author { font-size:var(--fs-caption); color: var(--mute); flex: 1; }
+.bl-card__read-more { font-size:var(--fs-xs); font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 4px; }
+
+/* Empty state */
+.bl-empty { text-align: center; padding: 48px 20px; color: var(--mute); grid-column: 1/-1; }
+.bl-empty svg { opacity: .2; margin-bottom: 12px; }
+.bl-empty p { font-size:var(--fs-sm); }
+
+/* ── Article view ───────────────────────────── */
+.bl-article { display: none; }
+.bl-article.is-on { display: block; }
+.bl-list-view.is-off { display: none; }
+
+/* Back button */
+.bl-back { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 24px; transition: background var(--dur) var(--ease); }
+
+/* Article header */
+.bl-art-head { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
+.bl-art-head__cat { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: var(--r-pill); font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em;  background: var(--danger-soft); color: var(--danger); margin-bottom: 14px; }
+.bl-art-head h1 { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 10px; }
+.bl-art-head__sub { font-size:var(--fs-body); color: var(--mute); line-height: 1.55; max-width: 680px; margin-bottom: 16px; }
+.bl-art-head__meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.bl-art-head__meta span { font-family: var(--font-mono); font-size:var(--fs-caption); color: var(--mute); }
+.bl-art-head__meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--mute-2); }
+@media (max-width: 600px) { .bl-art-head h1 { font-size:var(--fs-h2); } .bl-art-head__sub { font-size:var(--fs-sm); } }
+
+/* Article body */
+.bl-art-body { max-width: 720px; }
+.bl-art-body h2 { font-family: var(--font-display); font-size:var(--fs-h3); font-weight: 600; letter-spacing: -0.02em; margin: 36px 0 12px; color: var(--ink); }
+.bl-art-body h3 { font-family: var(--font-display); font-size:var(--fs-body); font-weight: 600; letter-spacing: -0.015em; margin: 24px 0 10px; color: var(--ink); }
+.bl-art-body p { font-size:var(--fs-sm); color: var(--ink-2); line-height: 1.75; margin-bottom: 14px; }
+.bl-art-body strong { font-weight: 600; color: var(--ink); }
+.bl-art-body em { font-style: italic; }
+.bl-art-body ul, .bl-art-body ol { padding-left: 0; margin-bottom: 16px; list-style: none; }
+.bl-art-body ul li, .bl-art-body ol li { position: relative; padding-left: 24px; margin-bottom: 10px; font-size:var(--fs-sm); color: var(--ink-2); line-height: 1.65; }
+.bl-art-body ul li::before { content: ""; position: absolute; left: 0; top: 10px; width: 5px; height: 5px; border-radius: 50%; background: var(--mute-2); }
+.bl-art-body ol { counter-reset: doc-list; }
+.bl-art-body ol li { counter-increment: doc-list; }
+.bl-art-body ol li::before { content: counter(doc-list); position: absolute; left: 0; top: 0; width: 20px; height: 20px; line-height: 20px; background: var(--ink); color: var(--paper); border-radius: 50%; text-align: center; font-size:var(--fs-caption); font-weight: 600; font-family: var(--font-mono); }
+
+/* Callout boxes */
+.bl-callout { padding: 16px 20px; border-radius: var(--r); margin: 20px 0; border-left: 3px solid; }
+.bl-callout.warn  { background: var(--warn-soft);    border-color: var(--warn); }
+.bl-callout.info  { background: var(--info-soft);    border-color: var(--info); }
+.bl-callout.danger{ background: var(--danger-soft);  border-color: var(--danger); }
+.bl-callout.success{background: var(--success-soft); border-color: var(--success); }
+.bl-callout__label { font-family: var(--font-mono); font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em;  margin-bottom: 6px; }
+.bl-callout.warn   .bl-callout__label { color: var(--warn); }
+.bl-callout.info   .bl-callout__label { color: var(--info); }
+.bl-callout.danger .bl-callout__label { color: var(--danger); }
+.bl-callout.success .bl-callout__label { color: var(--success); }
+.bl-callout p { font-size: var(--fs-sm); line-height: 1.6; margin: 0; }
+.bl-callout.warn   p { color: var(--warn); }
+.bl-callout.info   p { color: var(--info); }
+.bl-callout.danger p { color: var(--danger); }
+.bl-callout.success p{ color: var(--success); }
+
+/* Data table */
+.bl-table-wrap { overflow-x: auto; margin: 20px 0; border-radius: var(--r); border: 1px solid var(--line); }
+.bl-table { width: 100%; border-collapse: collapse; font-size:var(--fs-xs); }
+.bl-table th { background: var(--paper-2); padding: 10px 14px; text-align: left; font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em;  color: var(--mute); border-bottom: 1px solid var(--line); }
+.bl-table td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--ink-2); line-height: 1.5; vertical-align: top; }
+.bl-table tr:last-child td { border-bottom: none; }
+.bl-table tr:nth-child(even) td { background: var(--paper); }
+.bl-table .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.bl-table .hl { font-weight: 600; color: var(--ink); }
+
+/* Sources */
+.bl-sources { margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--line); }
+.bl-sources__title { font-family: var(--font-mono); font-size: var(--fs-label-3); font-weight: 700; letter-spacing: 0.02em;  color: var(--mute); margin-bottom: 12px; }
+.bl-sources ul { list-style: none; padding: 0; margin: 0; }
+.bl-sources li { font-size:var(--fs-xs); color: var(--mute); margin-bottom: 8px; display: flex; gap: 8px; align-items: baseline; }
+.bl-sources li::before { content: "↗"; flex-shrink: 0; font-size:var(--fs-caption); }
+.bl-sources a { color: var(--info); text-decoration: underline; }
+.bl-sources a:hover { color: var(--ink); }
+</style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
+<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
+<link rel="stylesheet" href="/staging-mobile-fields.css"/>
+<script src="/staging-network-audit.js" defer></script>
+</head>
+<body data-app="blog">
+
+<div style="display:none" hidden>
+  <aside class="app-sidebar">
+    <div class="app-sidebar__brand">Cecil<span class="dot">.</span></div>
+    <a class="app-nav-link" href="index.html">Inicio</a>
+    <a class="app-nav-link" href="propiedades.html">Inmuebles</a>
+    <a class="app-nav-link" href="contactos.html">Contactos</a>
+    <a class="app-nav-link" href="contratos.html">Contratos</a>
+    <a class="app-nav-link" href="avm.html">AVM</a>
+  </aside>
+</div>
+
+<div class="bl-wrap">
+
+  <!-- HEADER -->
+  <div class="bl-head" id="bl-head">
+    <div class="bl-head__eyebrow">Recursos profesionales</div>
+    <h1>Blog</h1>
+    <p class="bl-head__sub">Artículos serios sobre PLD, legal, mercado y mejores prácticas para agentes novatos y expertos.</p>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div class="bl-list-view" id="bl-list-view">
+
+    <div class="bl-search">
+      <svg class="bl-search__icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+      <input class="bl-search__input" id="bl-search" type="text" placeholder="Buscar por tema, palabra clave o tag…"/>
+      <button class="bl-search__clear" id="bl-search-clear" title="Limpiar búsqueda">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+      </button>
+    </div>
+
+    <div class="bl-list" id="bl-list"></div>
+
+  </div>
+
+  <!-- ARTICLE VIEW -->
+  <div class="bl-article" id="bl-article">
+    <button class="bl-back" id="bl-back">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+      Volver a artículos
+    </button>
+    <div id="bl-article-content"></div>
+  </div>
+
+</div>
+
+<script src="app-shell.js" defer></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   GUÍA DEL AGENTE — Blog estático
+   Para agregar artículos: añadir un objeto al array ARTICULOS.
+   ═══════════════════════════════════════════════════════ */
+
+const ARTICULOS = [
+  {
+    id: 'whatsapp-cobro-meta-octubre-2026',
+    titulo: 'Meta empieza a cobrar tus mensajes de WhatsApp el 1 de octubre: qué cambia y cómo evitar que se corte tu Recepción',
+    subtitulo: 'A partir del 1 de octubre de 2026, Meta cobra los mensajes que se envían dentro de la ventana de 24 horas de una conversación de WhatsApp Business. Si tu número no tiene un método de pago cargado en tu Administrador comercial antes del 30 de septiembre, Meta puede dejar de entregar tus mensajes. Esto no lo cobra Cecil: es un cambio de Meta, y el trámite lo haces tú, en tu propia cuenta.',
+    categoria: 'Legal / Cumplimiento',
+    catKey: 'legal',
+    tags: ['WhatsApp', 'Meta', 'Cobro', 'Facturación', 'Cloud API', 'Business Manager', 'Coexistencia', 'Precios'],
+    autor: 'Cecil Research',
+    fecha: '8 de septiembre de 2026',
+    lectura: '10 min',
+    resumen: 'Meta anunció que, desde el 1 de octubre de 2026, deja de dar gratis los mensajes de servicio y las plantillas de utilidad que se envían dentro de la ventana de 24 horas de una conversación en la WhatsApp Business Platform (Cloud API). Además, exige un método de pago vigente en cada cuenta de WhatsApp Business a más tardar el 30 de septiembre, o Meta deja de entregar mensajes desde el 1 de octubre. Aquí explicamos las cuatro categorías de mensajes y sus ventanas, cuánto cuesta cada una en México con ejemplos en pesos, consejos para pagar menos (incluido cuándo conviene contestar desde tu celular en vez de la bandeja de Cecil), y el paso a paso para agregar tu tarjeta antes de la fecha límite.',
+    fuentes: [
+      { texto: 'Meta for Developers — Pricing on the WhatsApp Business Platform (documentación oficial)', url: 'https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing' },
+      { texto: 'Meta for Developers — Upcoming pricing updates for Meta Business Agent, service and utility messages', url: 'https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing/non-template-messages' },
+      { texto: 'Meta for Developers — WhatsApp Business Platform changelog', url: 'https://developers.facebook.com/documentation/business-messaging/whatsapp/changelog' },
+      { texto: 'WhatsApp — Política de Mensajería para Empresas', url: 'https://business.whatsapp.com/policy' },
+      { texto: 'Cobertura del cambio y del requisito de método de pago (Invent, Landbot, YCloud — resúmenes de la documentación de Meta)', url: 'https://www.useinvent.com/blog/meta-whatsapp-payment-method-deadline-what-it-means-what-to-do' },
+    ],
+    contenido: `
+<div class="bl-art-head">
+  <div class="bl-art-head__cat">Legal / Cumplimiento</div>
+  <h1>Meta empieza a cobrar tus mensajes de WhatsApp el 1 de octubre: qué cambia y cómo evitar que se corte tu Recepción</h1>
+  <p class="bl-art-head__sub">A partir del 1 de octubre de 2026, Meta cobra los mensajes que se envían dentro de la ventana de 24 horas de una conversación de WhatsApp Business. Si tu número no tiene un método de pago cargado en tu Administrador comercial antes del 30 de septiembre, Meta puede dejar de entregar tus mensajes. Esto no lo cobra Cecil: es un cambio de Meta, y el trámite lo haces tú, en tu propia cuenta.</p>
+  <div class="bl-art-head__meta">
+    <span>Cecil Research</span>
+    <span class="dot"></span>
+    <span>8 de septiembre de 2026</span>
+    <span class="dot"></span>
+    <span>7 min de lectura</span>
+  </div>
+</div>
+
+<div class="bl-art-body">
+
+<div class="bl-callout danger">
+  <div class="bl-callout__label">Fecha límite</div>
+  <p>Si tu número de WhatsApp está conectado a Cecil, tienes hasta el <strong>30 de septiembre de 2026</strong> para cargar un método de pago en tu propio Administrador comercial de Meta. Sin él, Meta puede dejar de entregar tus mensajes desde el <strong>1 de octubre</strong>. El trámite toma un par de minutos; abajo está el paso a paso.</p>
+</div>
+
+<h2>Primero, entiende las ventanas: así clasifica Meta cada mensaje</h2>
+<p>Para que el cambio del 1 de octubre tenga sentido, hay que entender cómo divide Meta los mensajes de la Cloud API. No es "un precio por mensaje" parejo: son <strong>cuatro categorías</strong>, y cada una se dispara distinto.</p>
+<ul>
+  <li><strong>Servicio (ventana de 24 horas).</strong> Se abre en automático en cuanto un prospecto te escribe por primera vez, y se renueva cada vez que él vuelve a escribir — dura 24 horas desde <em>su</em> último mensaje, no desde el tuyo. Mientras está abierta, puedes contestar lo que quieras, en texto libre, sin plantilla: son las respuestas normales de una conversación, ya sea que las escriba Recepción o tú desde la bandeja de Cecil.</li>
+  <li><strong>Utilidad (utility).</strong> Si la ventana de 24 horas ya se cerró (el prospecto no te ha vuelto a escribir) y necesitas retomar el contacto por un motivo transaccional y puntual —confirmar una cita, avisar que un documento está listo—, Meta exige una <strong>plantilla previamente aprobada</strong> de esta categoría. Es la más barata de las plantillas.</li>
+  <li><strong>Marketing.</strong> Misma lógica que utilidad —plantilla aprobada, fuera de la ventana— pero para contenido promocional: justo lo que manda el módulo de <strong>Campañas</strong> de Cecil. Es la categoría más cara con diferencia.</li>
+  <li><strong>Autenticación.</strong> Códigos de un solo uso (OTP). Cecil no la usa hoy; la mencionamos para que la reconozcas si la ves en tu tarifario de Meta.</li>
+</ul>
+<p>El punto que más conviene recordar: <strong>la ventana de servicio la abre el prospecto, no tú.</strong> Si tú le escribes primero y él nunca te ha contactado, o si ya pasaron 24 horas desde su último mensaje, eso no es "servicio" — es una plantilla de utilidad o de marketing, con su propio costo, así la ventana esté cerrada por un minuto o por un mes.</p>
+
+<h2>Qué cambia el 1 de octubre</h2>
+<p>Meta documenta el cambio en su página oficial de precios de la WhatsApp Business Platform (la Cloud API, que es por donde Cecil conecta tu número). Hasta ahora, los mensajes de <strong>servicio</strong> dentro de la ventana de 24 horas eran gratuitos sin límite. A partir del <strong>1 de octubre de 2026</strong>, dejan de serlo por completo: siguen gratis los primeros <strong>1,000 mensajes de servicio por número al mes</strong> —una cifra que reportan de manera consistente varias coberturas especializadas de la documentación de Meta—, y de ahí en adelante cada mensaje de servicio adicional se cobra a la misma tarifa que una plantilla de utilidad en ese país. Esto aplica igual a las respuestas que da Recepción y a las que tú escribas a través de la Cloud API (bandeja de Cecil).</p>
+
+<div class="bl-table-wrap">
+  <table class="bl-table">
+    <thead><tr><th>Categoría</th><th>Cuándo se usa</th><th class="num">Tarifa aprox. (USD)</th><th class="num">Tarifa aprox. (MXN)*</th></tr></thead>
+    <tbody>
+      <tr><td>Servicio, dentro de tu 1,000 gratis/mes</td><td>Recepción o tú contestando dentro de la ventana de 24h</td><td class="num">$0.00</td><td class="num">$0.00</td></tr>
+      <tr><td>Servicio, pasado ese primer 1,000</td><td>Mismo caso, ya agotada la cuota gratuita del mes</td><td class="num">~$0.0085</td><td class="num">~$0.14</td></tr>
+      <tr><td>Utilidad (fuera de ventana)</td><td>Recordatorio o confirmación transaccional</td><td class="num">~$0.0080</td><td class="num">~$0.14</td></tr>
+      <tr><td>Autenticación</td><td>Código de un solo uso (Cecil no la usa)</td><td class="num">~$0.0207</td><td class="num">~$0.35</td></tr>
+      <tr><td>Marketing (fuera de ventana)</td><td>Campaña promocional — módulo Campañas</td><td class="num">~$0.0436</td><td class="num">~$0.74</td></tr>
+    </tbody>
+  </table>
+</div>
+<p style="font-size:var(--fs-caption);color:var(--mute);">*Conversión de referencia a ~$17 MXN/USD (tipo de cambio FIX de Banxico a principios de septiembre de 2026); Meta factura en la moneda y con el tipo de cambio del día de entrega de cada mensaje. Estas cifras son ilustrativas y pueden cambiar: la tarifa vigente y exacta para tu cuenta siempre es la que publica Meta en su documentación oficial, enlazada al final de este artículo.</p>
+
+<div class="bl-callout info">
+  <div class="bl-callout__label">Lo que sigue gratis, siempre</div>
+  <p>Esto <strong>no aplica</strong> a los mensajes que tú mandas a mano desde la aplicación de WhatsApp Business de tu celular. Por la forma en que Cecil conecta tu número —la modalidad que Meta llama "coexistencia"— esos mensajes siguen siendo gratuitos, sin ventana y sin cuota mensual. El cambio afecta únicamente a los mensajes que pasan por la Cloud API: los que contesta Recepción, y los que tú envíes desde la bandeja de Cecil.</p>
+</div>
+
+<h2>Cuánto es esto en pesos, con ejemplos reales</h2>
+<p>Con las cifras de la tabla de arriba, así se ve el cambio para distintos tamaños de operación. Son ejemplos ilustrativos —tu tarifa exacta depende de tu país y de lo que Meta tenga publicado el día que se entrega cada mensaje— pero dan una idea realista de la magnitud.</p>
+<ul>
+  <li><strong>Agente independiente, volumen típico.</strong> ~600 conversaciones activas al mes por WhatsApp, con un promedio de 3 mensajes de servicio cada una (Recepción calificando + algo de seguimiento) = ~1,800 mensajes de servicio. Los primeros 1,000 del mes son gratis; quedan 800 a pagar: 800 × $0.0085 USD ≈ <strong>$6.80 USD, unos $116 MXN al mes.</strong></li>
+  <li><strong>Equipo con más volumen.</strong> ~3,000 conversaciones activas al mes, 4 mensajes de servicio en promedio cada una = 12,000 mensajes de servicio. Después de los 1,000 gratis, 11,000 a pagar: 11,000 × $0.0085 USD ≈ <strong>$93.50 USD, cerca de $1,590 MXN al mes.</strong></li>
+  <li><strong>Campaña de reactivación a contactos fríos.</strong> Envías una plantilla a 500 contactos que llevan más de 24 horas sin escribirte. Si es una plantilla de <strong>marketing</strong>: 500 × $0.0436 USD ≈ $21.80 USD, unos <strong>$370 MXN</strong>. Si el mismo aviso califica como <strong>utilidad</strong> (por ejemplo, un recordatorio ligado a algo que el contacto ya solicitó): 500 × $0.0080 USD ≈ $4 USD, unos <strong>$68 MXN</strong> — más de cinco veces más barato por usar la categoría correcta.</li>
+</ul>
+<p>La conclusión práctica: para la inmensa mayoría de agentes y equipos pequeños, el costo adicional que trae el cambio del 1 de octubre se mide en <strong>cientos de pesos al mes, no en miles</strong>. Lo verdaderamente urgente no es el monto — es no dejar pasar la fecha del método de pago, porque sin él Meta corta la entrega sin importar cuánto o qué tan poco fueras a gastar.</p>
+
+<h2>El requisito que no puedes dejar pasar: método de pago antes del 30 de septiembre</h2>
+<p>Para poder cobrar, Meta exige que cada cuenta de WhatsApp Business (WABA) tenga un <strong>método de pago vigente</strong> registrado directamente en el Administrador comercial de Meta. La fecha límite es el <strong>30 de septiembre de 2026</strong>. Si tu cuenta llega a esa fecha sin una tarjeta cargada, Meta puede <strong>dejar de entregar tus mensajes de servicio a partir del 1 de octubre</strong>: seguirías recibiendo lo que te escriban tus prospectos, pero tus respuestas —las de Recepción y las tuyas— podrían no llegarles.</p>
+<p>Esta cuenta de WhatsApp Business es tuya, no de Cecil: se creó con tu propio Facebook/Meta Business al conectar tu número, en los términos que ya aceptaste en el Anexo de WhatsApp de nuestros <a href="legal.html#whatsapp">Términos y Condiciones</a>. Por eso el trámite —y la responsabilidad de completarlo a tiempo— es tuyo.</p>
+
+<h2>Paso a paso: cómo agregar tu método de pago</h2>
+<ol>
+  <li><strong>Entra a business.facebook.com</strong> (el Administrador comercial de Meta) con la misma cuenta de Facebook o Meta Business con la que conectaste tu número a Cecil.</li>
+  <li><strong>Ve a Configuración del negocio → Pagos</strong>, o bien entra al <strong>Administrador de WhatsApp</strong> (WhatsApp Manager), selecciona tu cuenta de WhatsApp Business y busca la sección de <strong>Facturación</strong>.</li>
+  <li><strong>Agrega una tarjeta de crédito o débito válida</strong> como método de pago de esa cuenta.</li>
+  <li><strong>Confirma que quede activa</strong> antes del 30 de septiembre de 2026. Si administras varios números en Cecil, revisa que cada WABA involucrada tenga su propio método de pago vigente.</li>
+</ol>
+<p>El trámite es directamente con Meta: Cecil no interviene en él, no ve ni almacena los datos de la tarjeta que captures ahí, y no puede completarlo por ti.</p>
+
+<h2>Consejos para ahorrar sin complicarte la operación</h2>
+<ul>
+  <li><strong>Para un mensaje suelto y manual, usa tu celular, no la bandeja de Cecil.</strong> Si le vas a contestar algo tú mismo a un cliente conocido, mandar un "gracias" o resolver algo puntual, hazlo desde la app de WhatsApp Business de tu teléfono. Por la coexistencia, eso es y seguirá siendo gratis siempre, sin ventana y sin cuota — mientras que ese mismo mensaje escrito desde la bandeja de Cecil sí pasa por la Cloud API y cuenta contra tu 1,000 gratis del mes. Deja que la bandeja y Recepción se usen para lo que de verdad justifica el costo: calificar prospectos nuevos de forma automática.</li>
+  <li><strong>Contesta dentro de la ventana de 24 horas en vez de reabrir después con una plantilla.</strong> Un mensaje de servicio dentro de la ventana siempre sale más barato que una plantilla de utilidad o marketing fuera de ella. Si sabes que vas a necesitar dar seguimiento, hazlo mientras el prospecto sigue "activo" en esas 24 horas.</li>
+  <li><strong>Usa la categoría de plantilla correcta.</strong> Una confirmación de cita es "utilidad" (barata); no la mandes por error como "marketing" (varias veces más cara) — como se ve en el ejemplo de la campaña de reactivación de arriba, la diferencia es de más de 5 a 1.</li>
+  <li><strong>Revisa tu entrenamiento de Recepción para que no mande mensajes de más</strong> — confirmaciones redundantes, "¿sigues ahí?" repetidos. Cada mensaje de servicio de más, una vez agotada tu cuota gratuita mensual, se suma a la cuenta.</li>
+  <li><strong>Los primeros meses después del cambio, revisa el resumen de facturación en el Administrador de WhatsApp de vez en cuando.</strong> Te deja ver tu volumen real de mensajes de servicio antes de que te sorprenda un cargo, y ajustar cualquiera de los puntos de arriba con datos, no con supuestos.</li>
+</ul>
+
+<h2>Esto no lo cobra Cecil</h2>
+<p>Vale la pena decirlo sin rodeos: <strong>este cobro es de Meta, no de Cecil</strong>, y no está incluido en tu suscripción, de la misma forma en que nunca lo ha estado el costo de mensajería de la Cloud API. Tu número de WhatsApp Business le pertenece a tu propia cuenta empresarial de Meta —Cecil no provee números ni revende líneas—, así que la relación de cobro por estos mensajes es directamente entre tú y Meta. Cecil seguirá conectando y operando tu Recepción exactamente igual; lo único que cambia es que, del lado de Meta, algunos de esos mensajes empiezan a tener costo y necesitan una tarjeta vigente para seguir entregándose.</p>
+
+<div class="bl-callout success">
+  <div class="bl-callout__label">Qué hacer hoy</div>
+  <p>Entra a tu Administrador comercial de Meta y carga tu método de pago ahora, no la última semana de septiembre. Si administras la cuenta de un equipo, confirma con el dueño de la empresa qué números están conectados y quién tiene acceso al Administrador comercial de cada uno.</p>
+</div>
+
+</div>
+`
+  },
+  {
+    id: 'alta-padron-actividades-vulnerables',
+    titulo: 'C\u00f3mo darte de alta ante el SAT como actividad vulnerable: la gu\u00eda que el portal oficial no te da en una sola p\u00e1gina',
+    subtitulo: 'El registro en el padr\u00f3n del SPPLD es gratuito, se hace en l\u00ednea con tu e.firma y toma menos de una hora. No hacerlo es la infracci\u00f3n m\u00e1s f\u00e1cil de detectar de toda la ley antilavado.',
+    categoria: 'PLD / Compliance',
+    catKey: 'pld',
+    tags: ['PLD', 'LFPIORPI', 'SAT', 'SPPLD', 'Alta', 'Padr\u00f3n', 'e.firma', 'Antilavado', 'UIF'],
+    autor: 'Cecil Research',
+    fecha: '1 de agosto de 2026',
+    lectura: '8 min',
+    resumen: 'Si intermedias compraventas de inmuebles de forma habitual, la LFPIORPI te considera actividad vulnerable y el primer deber formal es darte de alta en el padr\u00f3n del SAT a trav\u00e9s del portal SPPLD. Aqu\u00ed est\u00e1 el tr\u00e1mite completo: requisitos, pasos, bajo qu\u00e9 fracci\u00f3n te registras, qu\u00e9 pasa despu\u00e9s del alta y qu\u00e9 cambi\u00f3 con la reforma de julio de 2025. Todo con fuentes oficiales al pie.',
+    fuentes: [
+      { texto: 'SAT \u2014 Tr\u00e1mite oficial: \u201cDate de alta en el Portal de Lavado de Dinero\u201d (requisitos y fundamento)', url: 'https://www.sat.gob.mx/tramites/85869/date-de-alta-en-el-portal-de-lavado-de-dinero' },
+      { texto: 'SAT \u2014 Portal SPPLD (Sistema del Portal en Internet de Prevenci\u00f3n de Lavado de Dinero)', url: 'https://sppld.sat.gob.mx/' },
+      { texto: 'SAT \u2014 SPPLD: umbrales oficiales vigentes tras la reforma DOF 16 jul 2025', url: 'https://sppld.sat.gob.mx/pld/interiores/umbrales.html' },
+      { texto: 'SAT \u2014 Minisitio de Actividades Vulnerables (folletos y formatos por fracci\u00f3n)', url: 'https://www.sat.gob.mx/minisitio/ActividadesVulnerables/index.html' },
+      { texto: 'LFPIORPI \u2014 texto vigente, \u00faltima reforma DOF 16 jul 2025 (C\u00e1mara de Diputados)', url: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPIORPI.pdf' },
+      { texto: 'INEGI \u2014 Valor de la UMA 2026: $117.31 diarios (DOF 9 ene 2026)', url: 'https://www.inegi.org.mx/temas/uma/' },
+    ],
+    contenido: `
+<div class="bl-art-head">
+  <div class="bl-art-head__cat">PLD / Compliance</div>
+  <h1>C\u00f3mo darte de alta ante el SAT como actividad vulnerable: la gu\u00eda que el portal oficial no te da en una sola p\u00e1gina</h1>
+  <p class="bl-art-head__sub">El registro en el padr\u00f3n del SPPLD es gratuito, se hace en l\u00ednea con tu e.firma y toma menos de una hora. No hacerlo es la infracci\u00f3n m\u00e1s f\u00e1cil de detectar de toda la ley antilavado.</p>
+  <div class="bl-art-head__meta">
+    <span>Cecil Research</span>
+    <span class="dot"></span>
+    <span>1 de agosto de 2026</span>
+    <span class="dot"></span>
+    <span>8 min de lectura</span>
+  </div>
+</div>
+
+<div class="bl-art-body">
+
+<h2>Primero: confirma que la ley habla de ti</h2>
+<p>El art\u00edculo 17, fracci\u00f3n V de la <strong>Ley Federal para la Prevenci\u00f3n e Identificaci\u00f3n de Operaciones con Recursos de Procedencia Il\u00edcita</strong> (LFPIORPI) considera actividad vulnerable la prestaci\u00f3n habitual o profesional de servicios de construcci\u00f3n o desarrollo de bienes inmuebles, o de <strong>intermediaci\u00f3n en la transmisi\u00f3n de la propiedad o constituci\u00f3n de derechos sobre dichos bienes</strong>, en los que se involucren operaciones de compra o venta por cuenta o a favor de clientes.</p>
+<p>Traducci\u00f3n: si te dedicas a cerrar compraventas de inmuebles para tus clientes \u2014no como algo que te pas\u00f3 una vez, sino como tu profesi\u00f3n\u2014, <strong>eres sujeto obligado</strong>. No importa si eres persona f\u00edsica o moral, si trabajas solo o con equipo, ni si facturas poco. La habitualidad es lo que te mete, no el volumen.</p>
+<p>En el portal del SAT esta actividad aparece bajo el nombre oficial de <strong>\u201cTransmisi\u00f3n de derechos sobre bienes inmuebles\u201d</strong>. \u00daselo como referencia al momento de seleccionar tu fracci\u00f3n en el sistema, porque el cat\u00e1logo no dice \u201casesor inmobiliario\u201d por ning\u00fan lado.</p>
+
+<div class="bl-callout info">
+  <div class="bl-callout__label">Ojo con la fracci\u00f3n V Bis</div>
+  <p>La reforma publicada en el DOF el 16 de julio de 2025 separ\u00f3 el <strong>desarrollo inmobiliario</strong> (recibir recursos para construir con fin de venta o renta) en su propia fracci\u00f3n, la V Bis. Si adem\u00e1s de intermediar desarrollas proyectos, puedes estar obligado bajo las dos fracciones a la vez, y cada una se registra por separado en el padr\u00f3n.</p>
+</div>
+
+<h2>Lo que necesitas antes de empezar</h2>
+<p>El tr\u00e1mite oficial del SAT (\u201cDate de alta en el Portal de Lavado de Dinero\u201d) pide exactamente dos cosas. Sin ellas el sistema no te deja avanzar:</p>
+<ol>
+  <li><strong>Estar inscrito en el RFC</strong>, con tu situaci\u00f3n fiscal al corriente y una actividad econ\u00f3mica registrada que corresponda a lo que haces.</li>
+  <li><strong>Contar con e.firma vigente</strong> (los archivos .cer y .key con su contrase\u00f1a). Si la tuya expir\u00f3, primero renu\u00e9vala; ese es otro tr\u00e1mite y s\u00ed puede requerir cita.</li>
+</ol>
+<p>Si eres <strong>persona moral</strong>, hay un tercer requisito de fondo: la ley te obliga a designar ante la Secretar\u00eda de Hacienda a una <strong>persona representante encargada del cumplimiento</strong>, y a mantener vigente esa designaci\u00f3n en el mismo portal. Esa persona debe estar inscrita en el RFC y contar con su propia e.firma. Mientras no la designes, responde el \u00f3rgano de administraci\u00f3n completo, lo cual a ning\u00fan socio le hace gracia.</p>
+
+<h2>El tr\u00e1mite, paso a paso</h2>
+<ol>
+  <li><strong>Entra al portal SPPLD</strong> (sppld.sat.gob.mx). Es el sistema oficial del SAT para todo lo relacionado con actividades vulnerables: alta, avisos, informes en cero y acuses.</li>
+  <li><strong>Autent\u00edcate con tu e.firma.</strong> Carga tu archivo .cer, tu archivo .key y captura la contrase\u00f1a de la clave privada.</li>
+  <li><strong>Selecciona el alta al padr\u00f3n</strong> y elige tu actividad: fracci\u00f3n V, \u201cTransmisi\u00f3n de derechos sobre bienes inmuebles\u201d. Si tambi\u00e9n desarrollas, agrega la V Bis.</li>
+  <li><strong>Llena el cuestionario</strong> con tus datos de identificaci\u00f3n, domicilio y, en su caso, los del encargado de cumplimiento.</li>
+  <li><strong>Firma electr\u00f3nicamente y descarga tu acuse.</strong> El \u201cAcuse de Registro de Actividades Vulnerables\u201d es tu constancia. Gu\u00e1rdalo: el cumplimiento se demuestra con documentos fechados, no con explicaciones.</li>
+</ol>
+<p>El tr\u00e1mite es <strong>gratuito</strong> y no requiere ir a ninguna oficina. El fundamento del registro est\u00e1 en el art\u00edculo 18, fracci\u00f3n IV Bis de la LFPIORPI, los art\u00edculos 12 y 13 de su Reglamento y las Reglas de Car\u00e1cter General.</p>
+
+<div class="bl-callout warn">
+  <div class="bl-callout__label">\u00bfCu\u00e1ndo debes hacerlo?</div>
+  <p>Conforme al art\u00edculo 20 de la ley y al tr\u00e1mite oficial del SAT: <strong>en el momento en que inicies el desarrollo de la actividad vulnerable</strong>. No cuando cierres tu primera operaci\u00f3n grande, no cuando el SAT te escriba. Si ya llevas a\u00f1os intermediando sin registro, darte de alta hoy es infinitamente mejor que ser detectado ma\u00f1ana: la omisi\u00f3n del registro es visible con un simple cruce de tu RFC contra el padr\u00f3n.</p>
+</div>
+
+<h2>Qu\u00e9 te obliga la ley una vez dado de alta</h2>
+<p>El alta es el bolet\u00edn de entrada, no el cumplimiento completo. A partir de ah\u00ed, tus deberes permanentes como intermediario son estos:</p>
+<ul>
+  <li><strong>Identificar a cada cliente</strong> e integrar su expediente de identificaci\u00f3n con documentaci\u00f3n oficial, antes de cerrar la operaci\u00f3n.</li>
+  <li><strong>Conservar cada expediente y su soporte durante diez a\u00f1os.</strong> La reforma de 2025 ampli\u00f3 el plazo, que antes era de cinco.</li>
+  <li><strong>Presentar aviso ante la UIF</strong>, a trav\u00e9s del mismo portal SPPLD, cuando la operaci\u00f3n alcance el umbral de aviso vigente \u2014para la fracci\u00f3n V, <strong>8,025 UMA</strong>, que en 2026 equivalen a <strong>$941,412.75</strong> con la UMA de $117.31 diarios\u2014, a m\u00e1s tardar el <strong>d\u00eda 17 del mes siguiente</strong>.</li>
+  <li><strong>Acumular operaciones del mismo cliente</strong> dentro de una ventana de seis meses: varias operaciones que por separado no rebasan el umbral pueden rebasarlo sumadas, y entonces el aviso tambi\u00e9n es obligatorio.</li>
+  <li><strong>Avisar en 24 horas las operaciones inusuales.</strong> Otra novedad de la reforma: si detectas indicios de que los recursos son de procedencia il\u00edcita, el aviso no espera al d\u00eda 17.</li>
+  <li><strong>Mantener tus datos del padr\u00f3n actualizados</strong>, incluida la designaci\u00f3n del encargado de cumplimiento si eres persona moral.</li>
+</ul>
+<p>La reforma de julio de 2025 tambi\u00e9n incorpor\u00f3 al art\u00edculo 18 obligaciones de <strong>enfoque basado en riesgos</strong>, mecanismos automatizados de detecci\u00f3n y capacitaci\u00f3n anual del personal expuesto. Varias de ellas se detallan en Reglas de Car\u00e1cter General; el punto pr\u00e1ctico es que la tendencia regulatoria va en una sola direcci\u00f3n: m\u00e1s trazabilidad, no menos.</p>
+
+<h2>Qu\u00e9 pasa si no te das de alta</h2>
+<p>Omitir el registro, no integrar expedientes o no presentar avisos se sanciona con <strong>multa administrativa</strong>, calculada en UMA y escalable seg\u00fan la infracci\u00f3n y la reincidencia. Y hay un detalle que conviene interiorizar: de todas las obligaciones de la ley, <strong>el registro es la m\u00e1s barata de cumplir y la m\u00e1s f\u00e1cil de fiscalizar</strong>. No requiere criterio, ni interpretaci\u00f3n, ni un solo peso. Solo requiere hacerse.</p>
+
+<div class="bl-callout success">
+  <div class="bl-callout__label">D\u00f3nde entra Cecil</div>
+  <p>El alta en el padr\u00f3n la haces t\u00fa, una sola vez, con tu e.firma. Todo lo que viene despu\u00e9s \u2014expediente de identificaci\u00f3n por cliente, control de umbrales y acumulaci\u00f3n a seis meses, alertas de plazo y generaci\u00f3n del XML para el aviso en el SPPLD\u2014 es exactamente lo que el m\u00f3dulo de Cumplimiento de Cecil lleva por ti.</p>
+</div>
+
+</div>
+`
+  },
+  {
+    id: 'whatsapp-recepcion-speed-to-lead',
+    titulo: 'El primero que contesta se lleva el trato: qué hace realmente un WhatsApp con recepción automática',
+    subtitulo: 'El 90.6% de los mexicanos con smartphone usa mensajería instantánea. Tu prospecto ya está en WhatsApp. El problema no es el canal: es que tú duermes y él no espera.',
+    categoria: 'Tecnología / Operación',
+    catKey: 'tecnica',
+    tags: ['WhatsApp', 'Leads', 'Recepción', 'IA', 'Meta', 'Coexistencia', 'LFPDPPP', 'Speed to lead'],
+    autor: 'Cecil Research',
+    fecha: '16 de julio de 2026',
+    lectura: '11 min',
+    resumen: 'Dos estudios clásicos de gestión de leads (MIT 2007 y Harvard Business Review 2011) miden algo incómodo: la probabilidad de calificar a un prospecto se desploma en los primeros minutos, y la empresa promedio tarda 42 horas en contestar. En México, donde la mensajería instantánea es la aplicación más usada del país según el INEGI, ese hueco se paga en comisiones. Este artículo explica qué resuelve una recepción automática en WhatsApp, qué es la coexistencia, cuál es la letra chica de Meta y qué te exige a ti la LFPDPPP cuando una IA califica a tus prospectos.',
+    fuentes: [
+      { texto: 'INEGI — ENDUTIH 2025, reporte de resultados (16 jun 2026): uso de aplicaciones en smartphone', url: 'https://www.inegi.org.mx/contenidos/saladeprensa/boletines/2026/endutih/ENDUTIH_25_RR.pdf' },
+      { texto: 'Oldroyd, McElheran y Elkington — "The Short Life of Online Sales Leads", Harvard Business Review 89(3), marzo 2011', url: 'https://hbr.org/2011/03/the-short-life-of-online-sales-leads' },
+      { texto: 'Lead Response Management Study — Dr. James Oldroyd, MIT Sloan / InsideSales.com (2007)', url: 'https://www.hbs.edu/faculty/Pages/item.aspx?num=39955' },
+      { texto: 'Meta — Onboarding de usuarios de la app de WhatsApp Business ("Coexistencia"), documentación oficial', url: 'https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/onboarding-business-app-users' },
+      { texto: 'WhatsApp — Política de Mensajería para Empresas', url: 'https://business.whatsapp.com/policy' },
+      { texto: 'Ley Federal de Protección de Datos Personales en Posesión de los Particulares — DOF 20 mar 2025, última reforma DOF 14 nov 2025', url: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf' },
+    ],
+    contenido: `
+<div class="bl-art-head">
+  <div class="bl-art-head__cat">Tecnología / Operación</div>
+  <h1>El primero que contesta se lleva el trato: qué hace realmente un WhatsApp con recepción automática</h1>
+  <p class="bl-art-head__sub">El 90.6% de los mexicanos con smartphone usa mensajería instantánea. Tu prospecto ya está en WhatsApp. El problema no es el canal: es que tú duermes y él no espera.</p>
+  <div class="bl-art-head__meta">
+    <span>Cecil Research</span>
+    <span class="dot"></span>
+    <span>16 de julio de 2026</span>
+    <span class="dot"></span>
+    <span>11 min de lectura</span>
+  </div>
+</div>
+
+<div class="bl-art-body">
+
+<h2>El canal ya está decidido, y no lo decidiste tú</h2>
+<p>La ENDUTIH 2025 del INEGI, publicada en junio de 2026, midió <strong>104.9 millones de personas usuarias de internet en México</strong>, el 86.1% de la población de 6 años y más. De quienes usan teléfono celular, el <strong>97% usa smartphone</strong>. Y de ese universo, la categoría de aplicación más usada del país no son las redes sociales ni el video: es la <strong>mensajería instantánea, con 90.6%</strong>. Redes sociales quedó en 80.4% y contenidos de audio y video en 77.8%.</p>
+<p>Traducción para el agente: no hay ninguna decisión estratégica que tomar sobre el canal. Tu prospecto no va a llenar un formulario, no va a esperar tu correo y con suerte contesta una llamada de número desconocido. Te va a escribir por WhatsApp. Eso ya pasó.</p>
+<p>La pregunta que sí está abierta es otra: <strong>¿qué tan rápido le contestas?</strong></p>
+
+<h2>La ventana se cierra en minutos, no en días</h2>
+<p>Hay dos estudios que todo el mundo cita mal, mezclándolos en uno solo. Vale la pena separarlos, porque cada uno mide algo distinto y los dos importan.</p>
+
+<h3>El estudio del MIT (2007): la velocidad</h3>
+<p>El Dr. James Oldroyd, entonces en la Sloan School of Management del MIT, analizó junto con InsideSales.com tres años de datos de seis empresas que generan y contestan leads web: más de <strong>15,000 leads</strong> y más de <strong>100,000 intentos de contacto</strong>. El hallazgo central:</p>
+<ul>
+  <li>Contactar a un lead a los <strong>5 minutos</strong> contra hacerlo a los <strong>30 minutos</strong> cambia las probabilidades de <strong>lograr el contacto por un factor de 100</strong>.</li>
+  <li>Y las probabilidades de <strong>calificarlo por un factor de 21</strong>.</li>
+</ul>
+<p>Los autores concluyeron algo que suena obvio pero que casi nadie opera: la inmediatez de la respuesta pesa muchísimo más que el día de la semana o la hora del día. No es que "los martes convierten mejor". Es que quien contesta primero convierte mejor, y el resto es ruido.</p>
+
+<h3>El estudio de Harvard Business Review (2011): la realidad</h3>
+<p>Cuatro años después, Oldroyd, Kristina McElheran y David Elkington publicaron en <em>Harvard Business Review</em> una auditoría de <strong>2,241 empresas estadounidenses</strong>, a las que mandaron leads de prueba por su propio sitio web para medir cuánto tardaban en contestar. Los números son brutales:</p>
+<ul>
+  <li>Solo el <strong>37%</strong> contestó dentro de la primera hora.</li>
+  <li>El <strong>24%</strong> tardó más de 24 horas.</li>
+  <li>El <strong>23% nunca contestó</strong>.</li>
+  <li>El promedio entre las que sí contestaron fue de <strong>42 horas</strong>.</li>
+</ul>
+<p>Y el costo de esa lentitud, medido sobre un estudio paralelo de 1.25 millones de leads en 42 empresas: las firmas que intentaban contactar dentro de la primera hora eran <strong>casi 7 veces más propensas a calificar el lead</strong> que las que lo intentaban apenas una hora después, y <strong>más de 60 veces más propensas</strong> que las que esperaban 24 horas o más. Calificar, en su definición, significa lograr una conversación con sentido con quien decide.</p>
+<p>Junta los dos estudios y tienes el diagnóstico completo: <strong>el valor de un lead se evapora en minutos, y la empresa promedio responde en días</strong>. No hay técnica de cierre que compense eso.</p>
+
+<h2>Por qué el agente inmobiliario pierde esa carrera (y no es por flojera)</h2>
+<p>Aquí conviene ser honestos, porque la industria del software adora insinuar que el agente es lento por descuidado. No es eso. Es física.</p>
+<ul>
+  <li><strong>Estás en una cita.</strong> Enseñando una casa no puedes sacar el celular cada dos minutos. Son dos horas muertas.</li>
+  <li><strong>Estás manejando.</strong> Entre Morelia y una propiedad en Pátzcuaro se te acumulan cuarenta minutos de mensajes sin ver.</li>
+  <li><strong>Estás dormido.</strong> Un porcentaje enorme de los mensajes por anuncios entra de noche y en fin de semana, porque es cuando la gente busca casa.</li>
+  <li><strong>Estás con tu familia.</strong> Y tienes derecho.</li>
+  <li><strong>Ya tienes 40 chats sin leer.</strong> El que abriste primero no es el más caliente, es el más reciente.</li>
+</ul>
+<p>Un agente solo, por bueno que sea, no puede sostener una ventana de cinco minutos las 24 horas. Y su competencia tampoco, lo cual es exactamente donde está la oportunidad: <strong>el estándar del mercado es tan bajo que contestar en treinta segundos, siempre, es una ventaja desproporcionada.</strong></p>
+
+<h2>Qué hace exactamente una recepción automática</h2>
+<p>Un servicio de recepción sobre WhatsApp, como el módulo de Recepción de Cecil, hace cuatro cosas concretas. Ni más, ni menos:</p>
+<ol>
+  <li><strong>Contesta en segundos, siempre.</strong> A las tres de la mañana, en domingo, mientras enseñas una casa. El prospecto obtiene una respuesta humana en tono, inmediata en tiempo.</li>
+  <li><strong>Califica sin sonar a interrogatorio.</strong> Averigua qué busca, con cuánto cuenta, si es crédito o contado y para cuándo lo necesita. Es la misma conversación que tendrías tú, en el mismo orden.</li>
+  <li><strong>Registra todo en tu CRM.</strong> El contacto se crea solo, con temperatura, presupuesto, forma de pago y un resumen de una línea. Cuando abres el celular en la mañana no encuentras 40 chats: encuentras una lista ordenada por qué tan caliente está cada quien.</li>
+  <li><strong>Se quita de en medio.</strong> En el momento en que tú escribes en ese chat desde tu celular, la IA se apaga sola en esa conversación. No hay dos voces peleando por el mismo cliente.</li>
+</ol>
+<p>El cuarto punto es el que hace que el sistema sea usable. Una recepción que no sabe cuándo callarse es peor que no tener nada.</p>
+
+<h2>La coexistencia: la parte que nadie explica bien</h2>
+<p>Históricamente, conectar tu número a la API de WhatsApp significaba <strong>perder la app</strong>. Migrabas el número a la plataforma, y de ahí en adelante solo podías escribirle a tus clientes desde el software. Para un agente inmobiliario eso es un no rotundo: tu WhatsApp es tu vida laboral entera.</p>
+<p>Meta resolvió eso con lo que llama, en su documentación oficial, el <em>onboarding de usuarios de la app de WhatsApp Business</em>, conocido como <strong>coexistencia</strong>. El mismo número vive en dos lados a la vez:</p>
+<ul>
+  <li>Lo que la plataforma envía por la API <strong>aparece automáticamente en tu app</strong> del celular.</li>
+  <li>Lo que tú escribes desde tu app le llega a la plataforma mediante un evento que Meta llama <em>message echo</em>. Ese es, técnicamente, el mecanismo que permite que Recepción sepa que ya contestaste y se apague.</li>
+</ul>
+<p>Es decir: no cambias de número, no contratas uno nuevo, no pierdes tus chats y no dejas de usar tu WhatsApp de siempre. Eso es lo que vuelve viable esta herramienta para un agente individual y no solo para un call center.</p>
+
+<h3>La letra chica, porque sí la hay</h3>
+<p>Cualquiera que te venda esto sin decirte lo siguiente te está viendo la cara. Son reglas de Meta, no del proveedor de software, y aplican mientras tu número esté conectado:</p>
+<ul>
+  <li><strong>Las listas de difusión se deshabilitan.</strong> Las que ya tienes quedan de solo lectura y no puedes crear nuevas. Los envíos masivos pasan a hacerse con plantillas aprobadas.</li>
+  <li><strong>Los mensajes temporales, "ver una vez" y la ubicación en tiempo real se desactivan</strong> en todos tus chats individuales.</li>
+  <li><strong>Tus dispositivos vinculados se desvinculan</strong> al conectar. Puedes volver a vincular los compatibles, pero <strong>WhatsApp para Windows y para WearOS no son compatibles</strong>: lo que escribas desde ahí no le llega a la plataforma.</li>
+  <li><strong>Los chats de grupo no se sincronizan.</strong> Siguen en tu celular, no en el software.</li>
+  <li><strong>La palomita azul de cuenta oficial no es compatible</strong> con coexistencia.</li>
+  <li><strong>No desinstales la app</strong>, o se rompe el vínculo.</li>
+</ul>
+<p>Ninguna de estas es un impedimento serio para un agente inmobiliario. Pero enterarte después, no antes, sí es un problema.</p>
+
+<h2>La regla de las 24 horas y por qué cambia tu operación</h2>
+<p>La Política de Mensajería para Empresas de WhatsApp establece que, por la API, solo puedes responder con texto libre <strong>dentro de las 24 horas siguientes al último mensaje del usuario</strong>. Fuera de esa ventana, únicamente puedes enviar <strong>plantillas previamente aprobadas por Meta</strong>, y Meta se reserva revisar, aprobar, pausar o rechazar cualquiera de ellas cuando quiera.</p>
+<p>Hay un detalle de la coexistencia que casi nadie menciona y que es oro puro: según la propia documentación de Meta, <strong>los mensajes que envías desde tu app de WhatsApp Business no están sujetos a la ventana de 24 horas, siguen siendo gratuitos, y no crean, extienden ni afectan la ventana ni el costo de la API</strong>.</p>
+<p>Es decir, la operación sana es: <strong>la IA contesta en caliente dentro de la ventana, tú tomas el chat desde tu celular y lo trabajas sin límite de tiempo ni de costo</strong>. Lo mejor de los dos mundos, literalmente.</p>
+<p>Implicación práctica: crea tus plantillas de seguimiento el día uno, no el día en que las necesites. Meta las revisa una por una.</p>
+
+<h2>Lo que la ley te pide a ti, no a tu software</h2>
+<p>Aquí es donde la mayoría de los agentes en México va a ciegas, y donde el riesgo es real. Un dato duro: la nueva <strong>Ley Federal de Protección de Datos Personales en Posesión de los Particulares</strong>, publicada en el DOF el 20 de marzo de 2025, abrogó la ley de 2010 y trasladó la autoridad del extinto INAI a la <strong>Secretaría Anticorrupción y Buen Gobierno</strong>. Si tu aviso de privacidad todavía menciona al INAI, está desactualizado.</p>
+<p>Cuatro cosas que debes saber:</p>
+
+<h3>1. El responsable eres tú</h3>
+<p>Frente a tus prospectos, <strong>tú</strong> eres el responsable del tratamiento de sus datos. Tu plataforma es la <em>persona encargada</em>, que trata los datos por tu cuenta (artículo 2, fracción XII). La multa, si llega, llega a tu nombre.</p>
+
+<h3>2. Calificar con IA es un tratamiento automatizado</h3>
+<p>Este es el punto fino. El <strong>artículo 26, fracción II</strong> de la LFPDPPP le da a la persona titular el derecho de oponerse cuando sus datos son objeto de un tratamiento automatizado destinado a evaluar, <strong>sin intervención humana</strong>, aspectos personales como su <strong>situación económica</strong>, fiabilidad o comportamiento.</p>
+<p>Una recepción de IA que le pregunta a tu prospecto con cuánto cuenta, le asigna un puntaje del 0 al 100 y lo etiqueta como caliente, tibio o frío está haciendo exactamente eso. Es perfectamente legal, pero <strong>tienes que informarlo en tu aviso de privacidad y tienes que respetar la oposición</strong> si alguien la ejerce. En la práctica: apagas la IA en ese chat y lo atiendes tú.</p>
+
+<h3>3. Aviso de privacidad y opt-in</h3>
+<p>Los artículos 14 a 16 te obligan a poner tu aviso de privacidad a disposición <strong>desde el momento en que recabas los datos</strong>, y cuando los recabas por medios electrónicos el aviso simplificado es obligatorio. Por su parte, la política de WhatsApp exige que solo contactes a alguien si te dio su número <strong>y</strong> te dio permiso de escribirle. Comprar bases y meterlas a difusión es la forma más rápida de que Meta te tumbe el número.</p>
+
+<h3>4. Automatización sí, callejón sin salida no</h3>
+<p>La Política de Mensajería para Empresas de WhatsApp permite explícitamente usar automatización para responder dentro de la ventana de 24 horas, <strong>pero exige que tengas vías de escalamiento a una persona humana que sean prontas, claras y directas</strong>: transferencia a un agente en el chat, teléfono, correo, soporte web o formulario. Un bot que no te deja llegar a un humano es una violación de política.</p>
+<p>Dos prohibiciones más de esa misma política que pegan directo a nuestro giro: <strong>no pidas ni compartas números completos de tarjeta, cuentas financieras o identificaciones oficiales por WhatsApp</strong>, y <strong>no discrimines ni sugieras preferencia</strong> en contra de nadie por características personales. Lo segundo debería ser evidente en el negocio inmobiliario y aun así no siempre lo es.</p>
+
+<h2>Cómo se ve un martes cualquiera</h2>
+<p>Menos teoría. Así se ve la diferencia:</p>
+<p><strong>Sin recepción.</strong> 11:40 p.m., alguien ve tu anuncio de una casa en Altozano y escribe "¿sigue disponible?". A las 8:15 a.m. tú abres el celular, ves ese mensaje entre otros doce y contestas "Sí, ¿te interesa verla?". Son <strong>8 horas y 35 minutos</strong>. Según el estudio de HBR, para ese punto tus probabilidades de calificarlo cayeron a una fracción de lo que eran. Y lo más probable es que él le haya escrito a tres agentes esa misma noche.</p>
+<p><strong>Con recepción.</strong> 11:40 p.m., escribe. 11:40 p.m., Recepción contesta que sí sigue disponible y le pregunta qué está buscando. 11:43, él dice que quiere algo de tres recámaras, hasta cuatro millones, con crédito Infonavit, para mudarse en octubre. 11:44, Recepción le ofrece agendar una visita. A las 8:15 a.m. tú no abres un chat: abres tu bandeja y ves <em>"Caliente · 82 · 4 mdp · crédito · 3 recámaras · listo para visita"</em>. Escribes desde tu celular, la IA se apaga, y tú entras a cerrar, no a contestar "sí sigue disponible".</p>
+<p>Esa es toda la tesis. La IA no cierra la venta. <strong>Te compra las ocho horas y media que te estaban costando el prospecto.</strong></p>
+
+<h2>Qué no hace, para que no te vendan humo</h2>
+<ul>
+  <li><strong>No cierra tratos.</strong> Califica y agenda. El trato lo cierras tú, en persona, como siempre.</li>
+  <li><strong>No adivina.</strong> Si tu inventario no está bien capturado, va a contestar con generalidades.</li>
+  <li><strong>No es infalible.</strong> Es un modelo de lenguaje: puede equivocarse. Tú eres el responsable de todo lo que sale de tu número, lo hayas escrito tú o no.</li>
+  <li><strong>No te garantiza la conexión.</strong> Meta decide la elegibilidad de cada número a su criterio, considerando antigüedad de la cuenta y calidad de mensajería. Un número recién dado de alta casi nunca es elegible de inmediato.</li>
+  <li><strong>No te sale gratis.</strong> Los mensajes que salen por la API se rigen por el tarifario de Meta, se cobran por conversación de 24 horas y van por tu cuenta con Meta. Los que tú mandas desde tu celular sí son gratis.</li>
+</ul>
+
+<h2>Resumen para el agente</h2>
+<p>La mensajería instantánea es la aplicación más usada de México y ahí llegan tus leads. Dos estudios independientes miden que el valor de un lead cae por un factor de 21 a 100 en los primeros minutos, y que la empresa promedio tarda 42 horas en contestar. Un agente humano no puede ganar esa carrera solo, pero <strong>tampoco necesita ganarla solo</strong>: la coexistencia de Meta permite que una recepción automática cubra los huecos sin quitarte tu número ni tu app, y que se apague en cuanto tú entras.</p>
+<p>Lo que sí es tuyo y de nadie más: informar en tu aviso de privacidad que hay un perfilamiento automatizado, tener el opt-in de tu gente, respetar la oposición del artículo 26 fracción II, dejar siempre una salida hacia un humano y no pedir identificaciones ni datos bancarios por chat.</p>
+<p>Si conectas tu número hoy, la guía paso a paso está en <a href="guia-agente.html#whatsapp">Ayuda</a>, y el detalle legal completo en <a href="legal.html#whatsapp">WhatsApp y Datos</a>.</p>
+
+<p style="margin-top:24px;color:var(--mute);font-size:var(--fs-xs);font-style:italic">Este artículo es informativo para el agente inmobiliario y no constituye asesoría legal. Las políticas de Meta cambian de forma unilateral y sin aviso; verifica siempre la documentación oficial vigente. Para el diseño de tu aviso de privacidad y tus flujos de consentimiento, consulta con un abogado especializado en protección de datos.</p>
+
+</div>
+`,
+  },
+  {
+    id: 'exencion-isr-casa-habitacion',
+    titulo: 'Exención del ISR en venta de casa habitación: cómo aprovecharla cada 3 años',
+    subtitulo: 'Tu cliente puede vender su casa sin pagar ISR sobre los primeros 700,000 UDIS de ganancia. Te explicamos exactamente cómo funciona y qué pedirle.',
+    categoria: 'ISR / Fiscal',
+    catKey: 'isr',
+    tags: ['ISR', 'Exención', 'Casa habitación', 'UDIS', 'LISR', 'SAT', 'Notario'],
+    autor: 'Cecil Research',
+    fecha: '20 de mayo de 2026',
+    lectura: '7 min',
+    resumen: 'La Ley del ISR (art. 93 fr. XIX) permite a una persona física exentar el ISR sobre la ganancia obtenida en la venta de su casa habitación principal, siempre que la ganancia no exceda 700,000 UDIS y que NO se haya aplicado la misma exención en los 3 años previos. Es una de las herramientas fiscales más poderosas del agente inmobiliario — y la más subutilizada.',
+    fuentes: [
+      { texto: 'Ley del ISR — Art. 93 fr. XIX (exención casa habitación)', url: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LISR.pdf' },
+      { texto: 'Reglamento de la Ley del ISR — Art. 154 (requisitos exención)', url: 'https://www.diputados.gob.mx/LeyesBiblio/regley/Reg_LISR.pdf' },
+      { texto: 'Resolución Miscelánea Fiscal 2026 (reglas 3.10–3.12)', url: 'https://www.sat.gob.mx/normatividad/35323/resolucion-miscelanea-fiscal-(rmf)' },
+      { texto: 'Valor de la UDI — Banco de México (consulta diaria)', url: 'https://www.banxico.org.mx/tipcamb/main.do?page=tip&idioma=sp' },
+      { texto: 'INPC mensual — INEGI', url: 'https://www.inegi.org.mx/temas/inpc/' },
+    ],
+    contenido: `
+<div class="bl-art-head">
+  <div class="bl-art-head__cat">ISR / Fiscal</div>
+  <h1>Exención del ISR en venta de casa habitación: cómo aprovecharla cada 3 años</h1>
+  <p class="bl-art-head__sub">Tu cliente puede vender su casa sin pagar ISR sobre los primeros 700,000 UDIS de ganancia. Te explicamos exactamente cómo funciona y qué pedirle.</p>
+  <div class="bl-art-head__meta">
+    <span>Cecil Research</span>
+    <span class="dot"></span>
+    <span>20 de mayo de 2026</span>
+    <span class="dot"></span>
+    <span>7 min de lectura</span>
+  </div>
+</div>
+
+<div class="bl-art-body">
+
+<h2>¿Qué dice la ley?</h2>
+<p>El <strong>artículo 93, fracción XIX, inciso a)</strong> de la Ley del ISR establece que <strong>no se pagará ISR</strong> sobre la ganancia obtenida por la enajenación de la casa habitación del contribuyente, siempre que:</p>
+<ul>
+  <li>La ganancia no exceda <strong>700,000 UDIS</strong> (~$5.7 millones MXN en 2026, depende del valor diario de la UDI).</li>
+  <li>El enajenante <strong>no haya aplicado la misma exención</strong> en los <strong>3 años inmediatos anteriores</strong> a la fecha de la nueva enajenación.</li>
+</ul>
+<p>Si la ganancia excede 700,000 UDIS, <strong>solo se grava el excedente</strong> — es decir, los primeros 700,000 UDIS quedan exentos en cualquier caso.</p>
+
+<h2>¿Cómo se prueba que es "casa habitación"?</h2>
+<p>El <strong>artículo 154 del Reglamento de la LISR</strong> exige que el vendedor acredite que el inmueble fue su residencia. Documentos que el notario suele pedir <em>(elige al menos dos a nombre del enajenante, con domicilio del inmueble, expedidos en los últimos seis meses)</em>:</p>
+<ul>
+  <li>Credencial para votar (INE/IFE).</li>
+  <li>Estados de cuenta bancarios, de seguros, fondos de inversión o casas comerciales.</li>
+  <li>Recibos de luz, agua, predial, teléfono o gas.</li>
+  <li>Comprobante de inscripción al RFC con domicilio coincidente.</li>
+</ul>
+
+<h2>El timing es clave: la regla de los 3 años</h2>
+<p>El plazo se cuenta <strong>de fecha de escritura a fecha de escritura</strong>. Si tu cliente vendió una casa habitación en agosto de 2023, podrá usar la exención otra vez a partir de <strong>agosto de 2026</strong>. Si vende antes, la ganancia completa entra a la tarifa del artículo 152 LISR (cálculo notarial, retenciones SAT + entidad federativa).</p>
+<p><strong>Pro tip del agente:</strong> antes de listar la propiedad, pregunta a tu cliente si ha aplicado la exención antes. Si está dentro del plazo, considera asesorarle a esperar (si su situación lo permite) o ajustar el precio para compensar el ISR. Eso es lo que hace un agente experto.</p>
+
+<h2>¿Qué pasa si rebasa los 700,000 UDIS?</h2>
+<p>Solo el excedente paga ISR. Ejemplo (UDI ~$8.10 mxn en mayo 2026, valor referencial — consulta el del día en Banxico):</p>
+<ul>
+  <li>Precio venta: <strong>$8,000,000</strong></li>
+  <li>Costo actualizado (con INPC) del inmueble: <strong>$2,000,000</strong></li>
+  <li>Ganancia: <strong>$6,000,000</strong></li>
+  <li>Límite exento (700,000 UDIS × $8.10): <strong>~$5,670,000</strong></li>
+  <li>Base gravable: <strong>$330,000</strong> → sobre eso aplica la tarifa anual del art. 152 LISR.</li>
+</ul>
+<p>El notario actualiza el costo con el INPC del INEGI, descuenta deducciones (mejoras, escrituración, comisiones) y aplica la tarifa progresiva federal + 5% estatal. Cecil estima esto en segundos en el módulo <a href="isr.html">ISR</a>.</p>
+
+<h2>Casos donde NO aplica la exención</h2>
+<ul>
+  <li>El inmueble se usó como local comercial, oficina u arrendamiento (no era residencia principal).</li>
+  <li>El vendedor es persona moral o persona física con actividad empresarial donde el inmueble es activo del negocio.</li>
+  <li>Ya aplicaste la exención en los últimos 3 años a otra propiedad.</li>
+  <li>Departamentos y casas en preventa que nunca fueron habitados por el enajenante.</li>
+</ul>
+
+<h2>Lo que debes pedir al cierre</h2>
+<ol>
+  <li><strong>Confirmación escrita</strong> del cliente sobre si ha aplicado esta exención en los últimos 3 años.</li>
+  <li><strong>Los dos comprobantes de domicilio</strong> a nombre del enajenante para acreditar residencia.</li>
+  <li><strong>Avalúo y/o escritura de adquisición</strong> con valor original (para que el notario calcule la ganancia real con INPC).</li>
+  <li><strong>Comprobantes de mejoras</strong> (facturas con RFC del vendedor) si hubo remodelaciones — son deducibles.</li>
+</ol>
+
+<h2>Resumen para el agente</h2>
+<p>La exención del ISR por casa habitación es <strong>la diferencia entre cerrar y no cerrar</strong> una operación grande. Si manejas el timing y los documentos correctamente, puedes ahorrar a tu cliente <strong>cientos de miles de pesos</strong> y, de paso, ganarte su confianza para siempre. Usa el módulo de <a href="isr.html">ISR de Cecil</a> para estimar la retención antes de firmar el contrato — así llegas al cierre sin sorpresas.</p>
+
+<p style="margin-top:24px;color:var(--mute);font-size:var(--fs-xs);font-style:italic">Este artículo es de uso informativo para el agente inmobiliario. El cálculo y retención definitivos los realiza el notario público. Para casos atípicos (persona moral, copropiedad, herencia, donación previa) consulta con un contador fiscal certificado.</p>
+
+</div>
+`,
+  },
+  {
+    id: 'expediente-unico-pld',
+    titulo: 'El expediente único: tu blindaje legal como agente inmobiliario',
+    subtitulo: 'Todo lo que debes saber sobre la LFPIORPI, qué documentos pedir a tus clientes y qué pasa si no cumples',
+    categoria: 'PLD / Compliance',
+    catKey: 'pld',
+    tags: ['PLD', 'LFPIORPI', 'Legal', 'SAT', 'Expediente', 'Antilavado'],
+    autor: 'Cecil Research',
+    fecha: '16 de mayo de 2026',
+    lectura: '9 min',
+    resumen: 'Como intermediario inmobiliario eres sujeto obligado bajo la LFPIORPI. Esto significa que la ley te exige identificar a cada cliente, integrar un expediente completo y — en operaciones grandes — reportar al SAT. Te explicamos exactamente qué pedir, cuándo y qué pasa si no lo haces.',
+    fuentes: [
+      { texto: 'LFPIORPI — DOF 17 oct 2012, reformas DOF 16 jul 2025', url: 'https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPIORPI.pdf' },
+      { texto: 'Reglamento LFPIORPI — DOF 27 mar 2026', url: 'https://www.dof.gob.mx/' },
+      { texto: 'SAT — Actividades Vulnerables (umbrales oficiales)', url: 'https://www.sat.gob.mx/minisitio/ActividadesVulnerables/index.html' },
+      { texto: 'SAT — Portal SPPLD (registro y avisos)', url: 'https://sppld.sat.gob.mx/pld/interiores/umbrales.html' },
+      { texto: 'INEGI — Valor UMA 2026: $117.31 diarios (DOF 9 ene 2026)', url: 'https://www.inegi.org.mx/temas/uma/' },
+    ],
+    contenido: `
+<div class="bl-art-head">
+  <div class="bl-art-head__cat">PLD / Compliance</div>
+  <h1>El expediente único: tu blindaje legal como agente inmobiliario</h1>
+  <p class="bl-art-head__sub">Todo lo que debes saber sobre la LFPIORPI, qué documentos pedir a tus clientes y qué pasa si no cumples</p>
+  <div class="bl-art-head__meta">
+    <span>Cecil Research</span>
+    <span class="dot"></span>
+    <span>16 de mayo de 2026</span>
+    <span class="dot"></span>
+    <span>9 min de lectura</span>
+    <span class="dot"></span>
+    <span>Actualizado con UMA 2026 y reforma jul 2025</span>
+  </div>
+</div>
+
+<div class="bl-art-body">
+
+<div class="bl-callout warn">
+  <div class="bl-callout__label">Antes de empezar</div>
+  <p>Este artículo es informativo y no constituye asesoría legal. Ante dudas específicas sobre tu situación, consulta a un abogado o contador especializado en materia fiscal y antilavado.</p>
+</div>
+
+<h2>¿Por qué existe esta obligación?</h2>
+
+<p>La <strong>Ley Federal para la Prevención e Identificación de Operaciones con Recursos de Procedencia Ilícita</strong> (LFPIORPI), conocida como Ley Antilavado, está vigente desde octubre de 2013. Su objetivo es impedir que el sistema financiero y la economía formal sean usados para reciclar dinero de origen ilícito.</p>
+
+<p>El sector inmobiliario es uno de los más vulnerables a este riesgo a nivel global — así lo ha documentado el GAFI (Grupo de Acción Financiera Internacional). En México, la ley fue reformada de manera importante en julio de 2025 (DOF 16/07/2025) y su reglamento en marzo de 2026 (DOF 27/03/2026), endureciendo plazos, umbrales y obligaciones.</p>
+
+<h2>¿Por qué te aplica a ti como agente?</h2>
+
+<p>El <strong>Artículo 17, Fracción V</strong> de la LFPIORPI clasifica como "actividad vulnerable" la <em>intermediación habitual y profesional en la transmisión de la propiedad o constitución de derechos sobre bienes inmuebles</em>. Si estás cobrando comisión por facilitar una compraventa o arrendamiento, estás realizando esta actividad.</p>
+
+<p>No importa si eres persona física independiente o tienes una inmobiliaria. No importa si la operación fue pequeña. A partir del <strong>primer peso</strong> en que intermedias, ya estás obligado a identificar a tu cliente.</p>
+
+<div class="bl-callout info">
+  <div class="bl-callout__label">Dato clave</div>
+  <p>El umbral de <strong>identificación para agentes inmobiliarios es cero</strong> — aplica desde la primera operación sin importar el monto. Solo el umbral de <em>aviso al SAT</em> tiene un importe mínimo (ver tabla abajo).</p>
+</div>
+
+<h2>Umbrales 2026</h2>
+
+<p>La UMA 2026 tiene un valor de <strong>$117.31 MXN diarios</strong>, publicado por el INEGI en el DOF del 9 de enero de 2026, vigente del 1 de febrero de 2026 al 31 de enero de 2027.</p>
+
+<div class="bl-table-wrap">
+  <table class="bl-table">
+    <thead>
+      <tr>
+        <th>Actividad</th>
+        <th>Fracción</th>
+        <th>Identificación obligatoria</th>
+        <th>Aviso al SAT</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="hl">Intermediación en compraventa de inmuebles (agente)</td>
+        <td>Art. 17, Fr. V</td>
+        <td class="num">Siempre</td>
+        <td class="num">≥ 8,025 UMA<br>$941,412.75 MXN</td>
+      </tr>
+      <tr>
+        <td class="hl">Desarrollo y construcción inmobiliaria</td>
+        <td>Art. 17, Fr. V Bis</td>
+        <td class="num">Siempre</td>
+        <td class="num">≥ 8,025 UMA<br>$941,412.75 MXN</td>
+      </tr>
+      <tr>
+        <td class="hl">Arrendamiento de inmuebles (arrendador)</td>
+        <td>Art. 17, Fr. XV</td>
+        <td class="num">≥ 1,605 UMA<br>$188,282.55 MXN / mes</td>
+        <td class="num">≥ 3,210 UMA<br>$376,565.10 MXN / mes</td>
+      </tr>
+      <tr>
+        <td class="hl">Límite de pago en efectivo (inmuebles)</td>
+        <td>Art. 32</td>
+        <td colspan="2" class="num" style="text-align:center">Máx. 80,025 UMA = $9,389,133 MXN en efectivo</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p>El umbral de aviso se calcula sobre el <strong>monto sin IVA</strong> (según el Reglamento reformado del 27 de marzo de 2026). Para arrendamiento, si un mismo cliente acumula operaciones iguales o superiores a 1,605 UMA en un período de 6 meses, también se activa la obligación aunque cada operación individual esté por debajo.</p>
+
+<h2>Documentos que debes recopilar</h2>
+
+<p>El expediente único es el conjunto de documentos que acreditan la identidad y origen de fondos de tus clientes. Debe integrarse <strong>antes o durante</strong> la operación, nunca después. Aquí está la lista completa según el tipo de cliente:</p>
+
+<h3>Para persona física (comprador, vendedor, arrendatario, aval)</h3>
+
+<ol>
+  <li><strong>Identificación oficial vigente con fotografía</strong> — INE/IFE (ambas caras), pasaporte mexicano o extranjero vigente, o cédula profesional. No se aceptan identificaciones vencidas.</li>
+  <li><strong>CURP</strong> — Clave Única de Registro de Población. Puedes verificarla en línea en renapo.gob.mx.</li>
+  <li><strong>RFC con homoclave</strong> — Constancia de situación fiscal del SAT. Verifica que coincida con el nombre en la identificación.</li>
+  <li><strong>Comprobante de domicilio</strong> — No mayor a 3 meses. Recibo de CFE, Telmex, agua, predial o estado de cuenta bancario. Debe mostrar nombre y dirección.</li>
+  <li><strong>Datos de contacto verificables</strong> — Teléfono celular y correo electrónico. Documenta el medio por el que los obtuviste.</li>
+  <li><strong>Declaración de origen de fondos</strong> — Obligatoria cuando la operación alcanza el umbral de aviso (≥$941,412.75 MXN para compraventa). El cliente declara por escrito de dónde proviene el dinero para la operación.</li>
+  <li><strong>Carta laboral o comprobantes de ingresos</strong> — Estados de cuenta de los últimos 3-6 meses, nóminas o declaración anual de ISR. Especialmente importante cuando el origen de fondos no es evidente.</li>
+  <li><strong>Declaración de Persona Políticamente Expuesta (PEP)</strong> — Si el cliente es o ha sido servidor público federal, estatal o municipal en los últimos 2 años, o familiar directo de uno. Se requiere diligencia reforzada.</li>
+</ol>
+
+<h3>Para persona moral (empresa compradora, vendedora o arrendataria)</h3>
+
+<ol>
+  <li><strong>Acta constitutiva</strong> con todas sus reformas — copia certificada o cotejada.</li>
+  <li><strong>Poder notarial vigente</strong> del representante legal que va a firmar la operación.</li>
+  <li><strong>Identificación oficial vigente del representante legal</strong> (igual que persona física).</li>
+  <li><strong>RFC de la persona moral</strong> — Constancia de situación fiscal del SAT actualizada.</li>
+  <li><strong>Comprobante de domicilio fiscal</strong> de la empresa — no mayor a 3 meses.</li>
+  <li><strong>Identificación de todos los beneficiarios controladores</strong> — Desde la reforma de 2025, debes identificar a toda persona física que directa o indirectamente posea o controle el <strong>25% o más</strong> de la empresa (el porcentaje se redujo de 50% a 25%). Para cada uno se requiere la misma documentación que para persona física.</li>
+  <li><strong>Estructura corporativa simplificada</strong> — Si la empresa tiene socios que son otras empresas, debes trazar la cadena hasta llegar a la persona física beneficiaria final.</li>
+  <li><strong>Objeto social</strong> del acta que ampare la realización de operaciones inmobiliarias.</li>
+</ol>
+
+<div class="bl-callout danger">
+  <div class="bl-callout__label">Punto crítico de la reforma 2025</div>
+  <p>El umbral de participación para identificar beneficiarios controladores bajó del 50% al <strong>25%</strong>. Revisa tus expedientes anteriores de personas morales: si solo identificaste al socio mayoritario, es posible que ahora necesites complementar con socios con 25-49% de participación.</p>
+</div>
+
+<h2>Plazo de conservación</h2>
+
+<p>La reforma de julio de 2025 amplió el plazo de conservación de <strong>5 a 10 años</strong> contados a partir de la fecha de realización de la operación. Esto aplica a todos los documentos, correspondencia y análisis relacionados con la operación y con el cliente.</p>
+
+<p>Lo anterior significa que una operación realizada hoy, en mayo de 2026, deberás conservar su expediente hasta mayo de 2036 como mínimo.</p>
+
+<h2>Cómo registrarte en el SPPLD del SAT</h2>
+
+<p>Antes de realizar cualquier operación como agente, debes estar dado de alta como sujeto obligado. El proceso es:</p>
+
+<ol>
+  <li>Contar con <strong>e.firma (FIEL) vigente</strong>. Si no la tienes, tramítala en el SAT con cita previa.</li>
+  <li>Ingresar al <strong>Portal SPPLD</strong> en <em>sppld.sat.gob.mx</em> con tu e.firma.</li>
+  <li>Registrarte bajo la categoría <strong>"Actividades Vulnerables — Fracción V"</strong> (comercialización e intermediación de inmuebles).</li>
+  <li>Designar un <strong>Representante Encargado de Cumplimiento</strong>. Si eres persona física actuando de manera independiente, puedes ser tú mismo con tu propia e.firma.</li>
+  <li>Elaborar un <strong>Manual de Cumplimiento</strong> que documente tus políticas internas para identificar clientes, detectar operaciones inusuales y presentar avisos. No existe un formato único; debe adaptarse a tu operación específica.</li>
+</ol>
+
+<h2>Avisos mensuales al SAT</h2>
+
+<p>Cuando una operación alcanza el umbral de aviso, debes reportarla a la Unidad de Inteligencia Financiera (UIF) a través del SPPLD. Las reglas son:</p>
+
+<ul>
+  <li><strong>Aviso normal</strong> — Se presenta antes del <strong>día 17 del mes siguiente</strong> al cierre de la operación, en formato XML a través del portal SPPLD.</li>
+  <li><strong>Informe en ceros</strong> — Si en un mes no tuviste operaciones objeto de aviso, de todas formas debes presentar este informe antes del día 17. No presentarlo también es una infracción.</li>
+  <li><strong>Aviso urgente (24 horas)</strong> — Cuando detectes indicios de que los recursos provienen de fuente ilícita, o cuando tu cliente aparezca en las listas de personas bloqueadas de la UIF. El plazo para este aviso bajó de 3 días a <strong>24 horas</strong> con la reforma 2025.</li>
+</ul>
+
+<h2>Sanciones por incumplimiento</h2>
+
+<div class="bl-table-wrap">
+  <table class="bl-table">
+    <thead>
+      <tr><th>Tipo de infracción</th><th>Multa mínima</th><th>Multa máxima</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>No registrarse en el SPPLD</td><td class="num">200 UMA ($23,462)</td><td class="num">2,000 UMA ($234,620)</td></tr>
+      <tr><td>No presentar avisos o informes en ceros</td><td class="num">200 UMA ($23,462)</td><td class="num">2,000 UMA ($234,620)</td></tr>
+      <tr><td>No integrar expediente del cliente</td><td class="num">200 UMA ($23,462)</td><td class="num">2,000 UMA ($234,620)</td></tr>
+      <tr><td>Reincidencia en cualquier infracción</td><td class="num">10,000 UMA ($1,173,100)</td><td class="num">65,000 UMA ($7,625,150)</td></tr>
+      <tr><td>Colaboración con lavado (penal)</td><td colspan="2" style="text-align:center">Prisión de 5 a 15 años + multa (Art. 400 Bis CPF)</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>Montos calculados con UMA 2026 = $117.31 MXN/día. Adicionalmente, el SAT puede ordenar la <strong>suspensión temporal o definitiva</strong> de la actividad.</p>
+
+<h2>Los cambios clave de la reforma 2025-2026</h2>
+
+<p>Si ya tenías prácticas de cumplimiento previas a julio de 2025, estas son las actualizaciones que debes incorporar:</p>
+
+<ul>
+  <li>Plazo de conservación de expedientes: <strong>5 → 10 años</strong></li>
+  <li>Umbral para identificar beneficiarios controladores en personas morales: <strong>50% → 25%</strong> de participación</li>
+  <li>Plazo para aviso por operación sospechosa: <strong>72 horas → 24 horas</strong></li>
+  <li>Mecanismos automatizados de monitoreo: ahora son <strong>obligatorios</strong> por ley (Art. 18, Fr. X) — ya no es suficiente con registros en Excel</li>
+  <li>Nueva fracción <strong>V Bis</strong>: el desarrollo inmobiliario se separa como actividad vulnerable independiente</li>
+  <li>Para notarios: umbral de aviso por transmisión de inmuebles bajó de 16,000 a <strong>8,000 UMA</strong></li>
+  <li>El monto límite para pago en efectivo (Art. 32) ahora se calcula <strong>incluyendo IVA y accesorios</strong></li>
+</ul>
+
+<h2>Recomendación práctica</h2>
+
+<p>El expediente único no es burocracia — es tu protección. Si alguna de tus operaciones es investigada por la UIF y no tienes el expediente completo, eres vulnerable a sanciones independientemente de si la operación era legítima. Con el expediente en regla, tienes evidencia documentada de que realizaste la diligencia debida.</p>
+
+<p>Digitaliza tus expedientes desde el primer día: escanea todos los documentos, guárdalos en una carpeta organizada por cliente y fecha, y haz respaldo en la nube. El módulo de Verificador de Documentos de Cecil puede ayudarte a revisar la validez de los documentos antes de archivarlos.</p>
+
+<div class="bl-callout success">
+  <div class="bl-callout__label">Próximo paso</div>
+  <p>Si aún no estás dado de alta como sujeto obligado, ingresa hoy a <strong>sppld.sat.gob.mx</strong> con tu e.firma. El registro no tiene costo y es el primer paso antes de cualquier operación.</p>
+</div>
+
+</div>
+`
+  }
+];
+
+/* ════════════════════════════════════════════════════════
+   Lógica del blog
+   ════════════════════════════════════════════════════════ */
+(function(){
+  const $listView  = document.getElementById('bl-list-view');
+  const $artView   = document.getElementById('bl-article');
+  const $artContent= document.getElementById('bl-article-content');
+  const $list      = document.getElementById('bl-list');
+  const $tagsEl    = document.getElementById('bl-tags');
+  const $search    = document.getElementById('bl-search');
+  const $searchClr = document.getElementById('bl-search-clear');
+  const $back      = document.getElementById('bl-back');
+  const $head      = document.getElementById('bl-head');
+
+  let currentTag = '';
+  let currentQuery = '';
+
+  /* Recopilar todos los tags únicos */
+  const allTags = [];
+  ARTICULOS.forEach(a => a.tags.forEach(t => { if (!allTags.includes(t)) allTags.push(t); }));
+
+  /* Render tags */
+  function renderTags() {
+    $tagsEl.innerHTML = '<button class="bl-tag' + (!currentTag ? ' is-active' : '') + '" data-tag="">Todos</button>'
+      + allTags.map(t =>
+          '<button class="bl-tag' + (currentTag===t?' is-active':'') + '" data-tag="'+esc(t)+'">'+esc(t)+'</button>'
+        ).join('');
+    $tagsEl.querySelectorAll('.bl-tag').forEach(btn => {
+      btn.addEventListener('click', () => { currentTag = btn.dataset.tag; renderTags(); renderList(); });
+    });
+  }
+
+  /* Filtrar artículos */
+  function filteredArticulos() {
+    return ARTICULOS.filter(a => {
+      const matchTag = !currentTag || a.tags.includes(currentTag);
+      const q = currentQuery.toLowerCase().trim();
+      const matchQ = !q || [a.titulo, a.subtitulo, a.resumen, ...a.tags].some(x => x.toLowerCase().includes(q));
+      return matchTag && matchQ;
+    });
+  }
+
+  /* Render lista */
+  function renderList() {
+    const arts = filteredArticulos();
+    if (!arts.length) {
+      $list.innerHTML = '<div class="bl-empty">'
+        + '<svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607z"/></svg>'
+        + '<p>No se encontraron artículos para esa búsqueda.</p></div>';
+      return;
+    }
+    $list.innerHTML = arts.map(a => `
+      <div class="bl-card" data-id="${esc(a.id)}">
+        <div class="bl-card__top">
+          <span class="bl-card__cat ${a.catKey}">${esc(a.categoria)}</span>
+          <span class="bl-card__meta">${esc(a.lectura)}</span>
+        </div>
+        <div class="bl-card__title">${esc(a.titulo)}</div>
+        <div class="bl-card__sub">${esc(a.resumen)}</div>
+        <div class="bl-card__tags">${a.tags.map(t=>'<span class="bl-card__tag">'+esc(t)+'</span>').join('')}</div>
+        <div class="bl-card__footer">
+          <span class="bl-card__author">${esc(a.autor)} · ${esc(a.fecha)}</span>
+          <span class="bl-card__read-more">Leer
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </span>
+        </div>
+      </div>
+    `).join('');
+
+    $list.querySelectorAll('.bl-card').forEach(card => {
+      card.addEventListener('click', () => openArticle(card.dataset.id));
+    });
+  }
+
+  /* Abrir artículo */
+  function openArticle(id) {
+    const art = ARTICULOS.find(a => a.id === id);
+    if (!art) return;
+    const sourcesHtml = art.fuentes && art.fuentes.length
+      ? '<div class="bl-sources"><div class="bl-sources__title">Fuentes oficiales</div><ul>'
+          + art.fuentes.map(f => `<li>${f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.texto)}</a>` : esc(f.texto)}</li>`).join('')
+          + '</ul></div>'
+      : '';
+    $artContent.innerHTML = art.contenido + sourcesHtml;
+    $listView.classList.add('is-off');
+    $artView.classList.add('is-on');
+    $head.style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* Volver */
+  $back.addEventListener('click', () => {
+    $artView.classList.remove('is-on');
+    $listView.classList.remove('is-off');
+    $head.style.display = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* Search */
+  $search.addEventListener('input', () => {
+    currentQuery = $search.value;
+    $searchClr.classList.toggle('is-on', !!currentQuery);
+    renderList();
+  });
+  $searchClr.addEventListener('click', () => {
+    $search.value = '';
+    currentQuery = '';
+    $searchClr.classList.remove('is-on');
+    renderList();
+    $search.focus();
+  });
+
+  function esc(s) { return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  /* Init */
+  renderList();
+
+  /* Si la URL tiene ?art=ID abrir directamente */
+  const params = new URLSearchParams(location.search);
+  if (params.get('art')) openArticle(params.get('art'));
+
+})();
+</script>
+</body>
+</html>

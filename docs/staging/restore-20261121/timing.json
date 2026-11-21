@@ -1,0 +1,17 @@
+{
+  "source_project": "tymhlvawnqadqgwnpruk",
+  "temporary_project": "hdpstaqcswrdcrozcxrq",
+  "backup_at_utc": "2026-11-21T07:05:17Z",
+  "restore_started_utc": "2026-11-21T07:59:33.778Z",
+  "first_healthy_observed_utc": "2026-11-21T08:04:10.176Z",
+  "provision_and_restore_observed_seconds": 276.398,
+  "verification_completed_utc": "2026-11-21T08:07:38.145Z",
+  "deleted": true,
+  "scope": "Physical Postgres backup; Storage object bytes are not part of database backups",
+  "status": "DELETED",
+  "deletion_confirmed_utc": "2026-11-21T08:09:22.814Z",
+  "deletion_verified_by": [
+    "Supabase list_projects excludes exact temporary ref",
+    "Dashboard organization projects lists only original projects"
+  ]
+}

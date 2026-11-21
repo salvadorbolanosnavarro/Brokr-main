@@ -1,0 +1,242 @@
+{
+  "source": "tymhlvawnqadqgwnpruk",
+  "restored": "hdpstaqcswrdcrozcxrq",
+  "backup_at_utc": "2026-11-21T07:05:17Z",
+  "post_backup_tables_excluded": [
+    "cecil_staging_error_receipts",
+    "cecil_staging_pilot"
+  ],
+  "tables": {
+    "source": 124,
+    "restored": 124,
+    "missing": [],
+    "extra": [],
+    "changed": [
+      {
+        "key": [
+          "auth",
+          "sessions"
+        ],
+        "source": {
+          "data_md5": "1779c725d37f267776a3394d1c48cb5f",
+          "row_count": 14,
+          "table_name": "sessions",
+          "schema_name": "auth"
+        },
+        "restored": {
+          "data_md5": "f50dde6c4ed32510361b5921795b0afe",
+          "row_count": 9,
+          "table_name": "sessions",
+          "schema_name": "auth"
+        }
+      },
+      {
+        "key": [
+          "public",
+          "module_sessions"
+        ],
+        "source": {
+          "data_md5": "5264cdf4c9b29f009f0f786915380b19",
+          "row_count": 105,
+          "table_name": "module_sessions",
+          "schema_name": "public"
+        },
+        "restored": {
+          "data_md5": "257e0e5eb3e9220b49d152df5e53bbe5",
+          "row_count": 98,
+          "table_name": "module_sessions",
+          "schema_name": "public"
+        }
+      },
+      {
+        "key": [
+          "auth",
+          "users"
+        ],
+        "source": {
+          "data_md5": "014f077ccedef3787367aa52ca18ba6e",
+          "row_count": 8,
+          "table_name": "users",
+          "schema_name": "auth"
+        },
+        "restored": {
+          "data_md5": "b490bbde2182c1baf1ac867772bcb92d",
+          "row_count": 7,
+          "table_name": "users",
+          "schema_name": "auth"
+        }
+      },
+      {
+        "key": [
+          "public",
+          "organizaciones"
+        ],
+        "source": {
+          "data_md5": "c0dc1b746868a2fafaec6b986072564c",
+          "row_count": 7,
+          "table_name": "organizaciones",
+          "schema_name": "public"
+        },
+        "restored": {
+          "data_md5": "da8020e4cfd5befe7067dbde0f3c3b65",
+          "row_count": 6,
+          "table_name": "organizaciones",
+          "schema_name": "public"
+        }
+      },
+      {
+        "key": [
+          "public",
+          "usuarios"
+        ],
+        "source": {
+          "data_md5": "f421def258b06dfa9e698fd919aa7475",
+          "row_count": 8,
+          "table_name": "usuarios",
+          "schema_name": "public"
+        },
+        "restored": {
+          "data_md5": "d8f9af413a7afb5c326e8a76cccec964",
+          "row_count": 7,
+          "table_name": "usuarios",
+          "schema_name": "public"
+        }
+      },
+      {
+        "key": [
+          "auth",
+          "identities"
+        ],
+        "source": {
+          "data_md5": "94d4f9dcc7b43029772a786c2162159b",
+          "row_count": 8,
+          "table_name": "identities",
+          "schema_name": "auth"
+        },
+        "restored": {
+          "data_md5": "d9f172f4fd42a903c07469a1711a6e6d",
+          "row_count": 7,
+          "table_name": "identities",
+          "schema_name": "auth"
+        }
+      },
+      {
+        "key": [
+          "public",
+          "organizacion_miembros"
+        ],
+        "source": {
+          "data_md5": "10635d90b3aded7c78f35d5f0b653fe6",
+          "row_count": 8,
+          "table_name": "organizacion_miembros",
+          "schema_name": "public"
+        },
+        "restored": {
+          "data_md5": "e4c5013cb3bc90c5da727ecb1ab78899",
+          "row_count": 7,
+          "table_name": "organizacion_miembros",
+          "schema_name": "public"
+        }
+      },
+      {
+        "key": [
+          "auth",
+          "refresh_tokens"
+        ],
+        "source": {
+          "data_md5": "d4531931f0f208df2c17475a2f8bda8a",
+          "row_count": 26,
+          "table_name": "refresh_tokens",
+          "schema_name": "auth"
+        },
+        "restored": {
+          "data_md5": "1ac5a5c0aed88a5c2320d75afe837f22",
+          "row_count": 21,
+          "table_name": "refresh_tokens",
+          "schema_name": "auth"
+        }
+      },
+      {
+        "key": [
+          "auth",
+          "mfa_amr_claims"
+        ],
+        "source": {
+          "data_md5": "a68844494825903b91b0fcb08f6bc765",
+          "row_count": 14,
+          "table_name": "mfa_amr_claims",
+          "schema_name": "auth"
+        },
+        "restored": {
+          "data_md5": "bc484b9a3bbdfe431d49feaac2f02a0f",
+          "row_count": 9,
+          "table_name": "mfa_amr_claims",
+          "schema_name": "auth"
+        }
+      }
+    ]
+  },
+  "columns": {
+    "source": 1759,
+    "restored": 1759,
+    "missing": [],
+    "extra": [],
+    "changed": []
+  },
+  "policies": {
+    "source": 196,
+    "restored": 196,
+    "missing": [],
+    "extra": [],
+    "changed": []
+  },
+  "functions": {
+    "source": 780,
+    "restored": 780,
+    "missing": [],
+    "extra": [],
+    "changed": []
+  },
+  "triggers": {
+    "source": 33,
+    "restored": 33,
+    "missing": [],
+    "extra": [],
+    "changed": []
+  },
+  "constraints": {
+    "source": 381,
+    "restored": 381,
+    "missing": [],
+    "extra": [],
+    "changed": []
+  },
+  "indexes": {
+    "source": 454,
+    "restored": 454,
+    "missing": [],
+    "extra": [],
+    "changed": []
+  },
+  "rls": {
+    "source": 124,
+    "restored": 124,
+    "missing": [],
+    "extra": [],
+    "changed": []
+  },
+  "extensions": {
+    "source": 6,
+    "restored": 6,
+    "missing": [],
+    "extra": [],
+    "changed": []
+  },
+  "roles": {
+    "source": 30,
+    "restored": 30,
+    "missing": [],
+    "extra": [],
+    "changed": []
+  }
+}

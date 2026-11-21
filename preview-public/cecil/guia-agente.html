@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Ayuda · Cecil</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
+<link rel="apple-touch-icon" href="/cecil/brand/cecil-icon.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+.guide-wrap { padding: 32px 40px 80px; max-width: 840px; }
+@media (max-width:720px){ .guide-wrap{ padding:20px 16px 80px; } }
+
+.guide-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label-3); letter-spacing: 0.02em;
+  color: var(--mute); margin-bottom: 10px;
+}
+.guide-title {
+  font-family: var(--font-display);
+  font-size:var(--fs-h2); font-weight: 700; letter-spacing: -0.03em;
+  color: var(--ink); margin-bottom: 8px;
+}
+.guide-sub {
+  font-size:var(--fs-sm); color: var(--ink-2); line-height: 1.6;
+  max-width: 520px; margin-bottom: 36px;
+}
+
+.guide-section { margin-bottom: 40px; }
+.guide-section-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label-3); letter-spacing: 0.02em;
+  color: var(--mute); margin-bottom: 14px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--line-2);
+}
+
+/* Grid de módulos */
+.guide-modules {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+  gap: 10px;
+}
+.guide-mod {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 16px; background: var(--bone);
+  border: 1px solid var(--line); border-radius: var(--r);
+  text-decoration: none; color: inherit;
+  transition: border-color .15s, background .15s;
+}
+.guide-mod:hover { border-color: var(--forest); background: var(--paper); }
+.guide-mod-icon {
+  width: 34px; height: 34px; flex-shrink: 0;
+  background: var(--paper); border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--forest);
+}
+.guide-mod-name { font-size:var(--fs-xs); font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+.guide-mod-desc { font-size:var(--fs-xs); color: var(--mute); line-height: 1.4; }
+
+/* Acordeón de pasos */
+.guide-steps { display: flex; flex-direction: column; gap: 8px; }
+.guide-step {
+  border: 1px solid var(--line); border-radius: var(--r);
+  background: var(--bone); overflow: hidden;
+}
+.guide-step-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px; cursor: pointer;
+  transition: background .15s;
+}
+.guide-step-head:hover { background: var(--paper); }
+.guide-step-num {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  background: var(--forest); color: var(--paper) !important;
+  font-size:var(--fs-caption); font-weight: 700; font-family: var(--font-mono);
+  display: flex; align-items: center; justify-content: center;
+}
+.guide-step-lbl { flex: 1; font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
+.guide-step-arr { color: var(--mute); transition: transform .2s; flex-shrink: 0; }
+.guide-step.open .guide-step-arr { transform: rotate(180deg); }
+.guide-step-body {
+  display: none; padding: 2px 18px 16px 56px;
+  font-size:var(--fs-xs); color: var(--ink-2); line-height: 1.65;
+}
+.guide-step.open .guide-step-body { display: block; }
+.guide-step-body ol { padding-left: 18px; margin: 0; }
+.guide-step-body li { margin-bottom: 5px; }
+.guide-step-body code {
+  background: var(--line-2); padding: 2px 6px;
+  border-radius: var(--r-xs); font-family: var(--font-mono); font-size: var(--fs-caption);
+  color: var(--forest);
+}
+.guide-tip {
+  background: #FFFFFF; border-left: 3px solid var(--forest);
+  padding: 9px 13px; border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  margin-top: 10px; font-size: var(--fs-xs); color: var(--ink-2);
+}
+
+/* FAQ sin número */
+.guide-faq .guide-step-num { background: var(--line-2); color: var(--mute); font-size:var(--fs-sm); font-weight: 600; }
+
+/* Contacto */
+.guide-contact {
+  background: var(--sky-navy); color: var(--paper);
+  border-radius: var(--r); padding: 24px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap;
+}
+.guide-contact h3 {
+  font-family: var(--font-display); font-size: var(--fs-h5); font-weight: 700;
+  letter-spacing: -0.015em; margin-bottom: 4px; color: var(--paper);
+}
+.guide-contact p { font-size:var(--fs-xs); color: rgba(255,255,255,.6); }
+.guide-contact-btn {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-decoration: none;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.guide-contact-btn:hover {
+  transform: translateY(-1px);
+}
+.guide-contact-btn:active { transform: translateY(0); }
+.guide-contact-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+.guide-contact-mail { color: var(--paper); font-weight: 600; text-decoration: underline; }
+
+/* Variante: Eliminar cuenta — fondo claro, look profesional sereno */
+.guide-danger {
+  background: var(--bone); color: var(--ink);
+  border: 1px solid var(--line);
+}
+.guide-danger h3 {
+  font-family: var(--font-display); font-size: var(--fs-h5); font-weight: 700;
+  letter-spacing: -0.015em; color: var(--danger); margin-bottom: 4px;
+}
+.guide-danger p { font-size:var(--fs-sm); color: var(--ink-2); line-height: 1.6; }
+.guide-danger-btn {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; text-decoration: none;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.guide-danger-btn:hover { transform: translateY(-1px);
+}
+.guide-danger-btn:active { transform: translateY(0); }
+.guide-danger-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* ── Guía de WhatsApp ────────────────────────────────────────── */
+.wa-hero {
+  background: var(--sky-navy); color: var(--paper);
+  border-radius: var(--r); padding: 26px 28px; margin-bottom: 22px;
+}
+.wa-hero h2 {
+  font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700;
+  letter-spacing: -0.025em; color: var(--paper); margin-bottom: 8px;
+}
+.wa-hero p { font-size: var(--fs-sm); color: rgba(255,255,255,.72); line-height: 1.6; }
+.wa-hero p + p { margin-top: 10px; }
+.wa-hero b { color: var(--paper); }
+
+.wa-block { margin-bottom: 28px; }
+.wa-block h3 {
+  font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700;
+  letter-spacing: -0.02em; color: var(--ink); margin-bottom: var(--sp-3);
+}
+.wa-block > p { font-size: var(--fs-body); color: var(--ink-2); line-height: 1.7;
+                margin-bottom: var(--sp-4); max-width: 68ch; }
+
+/* Checklist previo */
+.wa-check { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.wa-check li {
+  display: flex; align-items: flex-start; gap: 11px;
+  background: var(--bone); border: 1px solid var(--line); border-radius: var(--r-sm);
+  padding: 12px 14px; font-size: var(--fs-xs); color: var(--ink-2); line-height: 1.55;
+}
+.wa-check svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 1px; color: var(--forest); }
+.wa-check b { color: var(--ink); }
+
+/* Pasos numerados siempre visibles */
+.wa-walk { list-style: none; padding: 0; margin: 0; counter-reset: wastep; }
+.wa-walk > li {
+  position: relative; counter-increment: wastep;
+  padding: 0 0 22px 46px; border-left: 1px solid var(--line-2); margin-left: 13px;
+}
+.wa-walk > li:last-child { border-left-color: transparent; padding-bottom: 0; }
+.wa-walk > li::before {
+  content: counter(wastep);
+  position: absolute; left: -14px; top: -2px;
+  width: 27px; height: 27px; border-radius: 50%;
+  background: var(--forest); color: var(--paper);
+  font-size: var(--fs-label-3); font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.wa-walk h4 {
+  font-size: var(--fs-body); font-weight: 700; color: var(--ink);
+  margin: 0 0 var(--sp-2); letter-spacing: -0.01em; line-height: 1.35;
+}
+.wa-walk p { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.65; margin: 0 0 var(--sp-2); }
+.wa-walk p:last-child { margin-bottom: 0; }
+.wa-walk b { color: var(--ink); }
+.wa-walk em { color: var(--ink); font-style: normal; font-weight: 600; }
+
+/* Avisos */
+.wa-note, .wa-warn {
+  display: flex; gap: 11px; align-items: flex-start;
+  padding: var(--sp-3) var(--sp-4); border-radius: var(--r-sm);
+  font-size: var(--fs-sm); line-height: 1.6; margin-top: var(--sp-3);
+}
+.wa-note { background: var(--paper-2); border-left: 3px solid var(--forest); color: var(--ink-2); }
+.wa-warn { background: var(--bone); border: 1px solid var(--line); border-left: 3px solid var(--warn); color: var(--ink-2); }
+.wa-note svg, .wa-warn svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; }
+.wa-note svg { color: var(--forest); }
+.wa-warn svg { color: var(--warn); }
+.wa-note b, .wa-warn b { color: var(--ink); }
+
+/* Tabla de cambios */
+.wa-tbl { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+.wa-tbl th {
+  text-align: left; padding: 9px 12px; color: var(--mute);
+  font-size: var(--fs-label-3); font-weight: 600; letter-spacing: 0.01em;
+  border-bottom: 1px solid var(--line-2); white-space: nowrap;
+}
+.wa-tbl td {
+  padding: 10px 12px; border-bottom: 1px solid var(--line);
+  color: var(--ink-2); vertical-align: top; line-height: 1.5;
+}
+.wa-tbl td:first-child { color: var(--ink); font-weight: 600; }
+.wa-tbl tr:last-child td { border-bottom: none; }
+.wa-tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--bone); }
+@media (max-width:600px){ .wa-tbl { min-width: 460px; } }
+</style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
+<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
+<link rel="stylesheet" href="/staging-mobile-fields.css"/>
+<script src="/staging-network-audit.js" defer></script>
+</head>
+<body data-app="guia">
+
+<div class="bk-page">
+<div class="guide-wrap">
+
+  <div class="guide-eyebrow">Cecil · Documentación</div>
+  <h1 class="guide-title">Ayuda</h1>
+  <p class="guide-sub">Todo lo que necesitas para sacar el máximo provecho de Cecil. Desde conectar tu WhatsApp y EasyBroker hasta generar contratos y valuaciones en segundos.</p>
+
+  <!-- Módulos -->
+  <div class="guide-section">
+    <div class="guide-section-label">Módulos de la plataforma</div>
+    <div class="guide-modules">
+      <a href="whatsapp.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 12a8.25 8.25 0 01-12.1 7.3L3.75 20.25l1-4.3A8.25 8.25 0 1120.25 12z"/><path stroke-linecap="round" stroke-linejoin="round" d="M8.9 8.4c.2-.45.4-.46.6-.47h.5c.16 0 .38.06.58.55l.7 1.72c.06.15.1.32.01.5-.09.18-.13.29-.26.45l-.38.45c-.13.13-.26.28-.11.54.14.26.65 1.07 1.4 1.73.96.85 1.77 1.12 2.02 1.25.25.13.4.11.55-.06l.63-.73c.18-.21.33-.16.55-.08l1.57.74c.23.11.39.17.45.26.06.09.06.53-.14 1.05-.2.51-1.19 1.03-1.6 1.06-.42.04-.8.19-2.7-.56-2.29-.9-3.74-3.24-3.85-3.4-.11-.15-.92-1.22-.92-2.33 0-1.11.58-1.65.79-1.87z"/></svg></div>
+        <div><div class="guide-mod-name">WhatsApp</div><div class="guide-mod-desc">Recepción contesta y califica a tus prospectos las 24 horas.</div></div>
+      </a>
+      <a href="propiedades.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.121 0L22.28 12M4.5 9.75v10.125a1.125 1.125 0 001.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125a1.125 1.125 0 001.125-1.125V9.75"/></svg></div>
+        <div><div class="guide-mod-name">Tus Inmuebles</div><div class="guide-mod-desc">Catálogo de propiedades. Importa desde EasyBroker o agrega manualmente.</div></div>
+      </a>
+      <a href="contratos.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></div>
+        <div><div class="guide-mod-name">Contratos</div><div class="guide-mod-desc">Arrendamiento y promesa de compraventa en segundos.</div></div>
+      </a>
+      <a href="avm.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M16 7.5c0-1.5-1.5-2.5-4-2.5s-4 1-4 2.5S9.5 10 12 10.5s4 1 4 2.5-1.5 3-4 3-4-1-4-2.5"/></svg></div>
+        <div><div class="guide-mod-name">Estimación de valor</div><div class="guide-mod-desc">Valuación automatizada con comparables en tiempo real.</div></div>
+      </a>
+      <a href="isr.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><rect x="4.5" y="3" width="15" height="18" rx="2.25" ry="2.25" stroke-linejoin="round"/><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 6.75h9v3h-9zM8.25 13.5h.008v.008H8.25V13.5zm0 3h.008v.008H8.25V16.5zm3.75-3h.008v.008H12V13.5zm0 3h.008v.008H12V16.5zm3.75-3h.008v.008h-.008V13.5zm0 3h.008v.008h-.008V16.5z"/></svg></div>
+        <div><div class="guide-mod-name">ISR</div><div class="guide-mod-desc">Calculadora de ISR por enajenación con desglose completo.</div></div>
+      </a>
+      <a href="finanzas.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"/></svg></div>
+        <div><div class="guide-mod-name">Finanzas</div><div class="guide-mod-desc">Ingresos, gastos, cuentas y rentabilidad por propiedad. Cecil IA lee tus tickets y detecta tus comisiones al cerrar; todo es editable y el informe se descarga en PDF o CSV.</div></div>
+      </a>
+      <a href="ficha-manual.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z"/></svg></div>
+        <div><div class="guide-mod-name">Ficha técnica</div><div class="guide-mod-desc">PDF profesional desde EasyBroker o manual.</div></div>
+      </a>
+      <a href="facebook-ads.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg></div>
+        <div><div class="guide-mod-name">Facebook Ads</div><div class="guide-mod-desc">Crea y gestiona anuncios en Meta desde Cecil.</div></div>
+      </a>
+      <a href="contactos.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg></div>
+        <div><div class="guide-mod-name">Contactos</div><div class="guide-mod-desc">CRM de prospectos, compradores y arrendatarios.</div></div>
+      </a>
+      <a href="image-cleaner.html" class="guide-mod">
+        <div class="guide-mod-icon"><svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg></div>
+        <div><div class="guide-mod-name">Editor de imágenes</div><div class="guide-mod-desc">Limpia fondos de fotos de propiedades con IA.</div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- WhatsApp: guía detallada -->
+  <div class="guide-section" id="whatsapp">
+    <div class="guide-section-label">Conectar tu WhatsApp</div>
+
+    <div class="wa-hero">
+      <h2>Tu número sigue siendo tuyo</h2>
+      <p>Esto es lo que más confunde, así que vamos claro desde el principio: <b>no vas a cambiar de número, no vas a contratar uno nuevo y no vas a perder la app de WhatsApp de tu celular.</b> Tu número sigue exactamente igual en tu teléfono, con tus chats y tus contactos de siempre.</p>
+      <p>Lo único que pasa es que le das permiso a Cecil para que también reciba los mensajes que llegan a ese número. Meta le llama <b>coexistencia</b>: tu WhatsApp vive en dos lados al mismo tiempo, en tu celular y en Cecil, sin pelearse.</p>
+      <p>Así, cuando alguien te escribe a las once de la noche por un anuncio, <b>Recepción contesta</b>, le pregunta qué busca, con cuánto cuenta y para cuándo, y lo deja registrado en tu CRM. Cuando tú abres tu celular en la mañana y escribes en ese chat, <b>Recepción se calla sola</b> y esa conversación queda tuya.</p>
+    </div>
+
+    <div class="wa-block">
+      <h3>Antes de empezar</h3>
+      <p>Revisa estos cinco puntos. Si te falta uno, la conexión va a fallar y no vas a entender por qué.</p>
+      <ul class="wa-check">
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div>Tienes instalada la app de <b>WhatsApp Business</b> (la del ícono verde con la "B"), no el WhatsApp normal. Si usas el WhatsApp de siempre para trabajar, primero migra tu número a WhatsApp Business desde la Play Store o la App Store. La app te lleva de la mano y no pierdes tus chats.</div>
+        </li>
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div>Tu WhatsApp Business está <b>actualizado</b>. Meta pide la versión 2.24.17 o más nueva. Entra a la tienda de apps y actualiza; si ya no aparece el botón, ya estás.</div>
+        </li>
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div>Tienes tu <b>cuenta de Facebook a la mano</b>, con su contraseña. Meta te va a pedir iniciar sesión. Si tienes página de negocio o corres anuncios, usa esa misma cuenta.</div>
+        </li>
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div>Tu <b>foto y tu nombre de negocio están bien puestos</b> en WhatsApp Business. Revísalos antes, porque después de conectar cuesta más trabajo cambiarlos.</div>
+        </li>
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div>Ese número <b>no está ya conectado a otra plataforma</b> de WhatsApp API (otro CRM, otro chatbot, otro proveedor). Solo puede estar en una a la vez.</div>
+        </li>
+      </ul>
+      <div class="wa-note">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
+          <div>Hazlo desde la computadora, con el celular al lado. Vas a brincar entre los dos y es más cómodo así. Tarda entre tres y diez minutos, y se hace una sola vez.</div>
+      </div>
+    </div>
+
+    <div class="wa-block">
+      <h3>Paso a paso</h3>
+      <p>Meta maneja toda la conexión en su propia ventana. Cecil nunca ve tu contraseña de Facebook ni tu contraseña de WhatsApp.</p>
+      <ol class="wa-walk">
+        <li>
+          <h4>Abre el módulo de WhatsApp en Cecil</h4>
+          <p>En el menú lateral entra a <em>WhatsApp</em> y haz clic en el botón verde <em>Conectar WhatsApp</em>. Se va a abrir una ventana de Meta encima de Cecil. Si tu navegador bloquea ventanas emergentes, permítelas para broquer.app y vuelve a intentar.</p>
+        </li>
+        <li>
+          <h4>Inicia sesión en Facebook</h4>
+          <p>Meta te pide tu correo y contraseña de Facebook. Esto es de Meta, no de Cecil. Si tienes verificación en dos pasos, ten tu celular a la mano para el código.</p>
+        </li>
+        <li>
+          <h4>Elige "conectar una cuenta existente"</h4>
+          <p>Meta te va a preguntar si quieres crear una cuenta de WhatsApp Business nueva o <b>conectar la que ya tienes</b>. Escoge <em>conectar la que ya tienes</em>. Esta es la opción importante: es la que hace que no pierdas tu número ni tu app.</p>
+          <div class="wa-warn">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+            <div>Si escoges crear una cuenta nueva, Meta te va a pedir un número que no esté en WhatsApp. Ese <b>no</b> es el camino que quieres.</div>
+          </div>
+        </li>
+        <li>
+          <h4>Escribe tu número</h4>
+          <p>Pon el número tal cual lo usas en WhatsApp Business, con lada. Meta te va a mostrar en pantalla un <b>código de verificación</b>. No lo cierres todavía: <em>cópialo o anótalo</em>, lo vas a necesitar en un momento.</p>
+        </li>
+        <li>
+          <h4>Ve a tu celular: te llegó un mensaje</h4>
+          <p>Abre tu app de WhatsApp Business. Te va a llegar un mensaje de la cuenta oficial <em>Facebook Business Account</em> (viene con palomita verificada). Es legítimo, es parte del proceso.</p>
+          <p>Abre ese mensaje y toca <em>Conectar</em>.</p>
+        </li>
+        <li>
+          <h4>Toca "Conectar a la Plataforma de Empresas"</h4>
+          <p>Dentro de la app aparece ese botón. Tócalo para seguir.</p>
+        </li>
+        <li>
+          <h4>Decide si compartes tu historial y confirma</h4>
+          <p>La app te pregunta si quieres compartir tus chats anteriores. <b>Cecil no importa historial viejo</b>, así que aquí da igual lo que elijas: tus conversaciones en Cecil empiezan a guardarse desde el momento en que conectas. Toca <em>Confirmar</em>.</p>
+        </li>
+        <li>
+          <h4>Pega el código de verificación</h4>
+          <p>Regresa a la pantalla donde Meta te dio el código y pégalo donde te lo pide. Termina lo que falte del formulario de Meta.</p>
+        </li>
+        <li>
+          <h4>Listo: tu número aparece conectado</h4>
+          <p>La ventana de Meta se cierra sola y Cecil te muestra tu número con el letrero <em>En línea</em>. Tu app de WhatsApp Business también se refresca y te avisa que tu número ya está conectado a la API.</p>
+          <p>Deja el celular con la app abierta un par de minutos mientras todo termina de sincronizar.</p>
+        </li>
+        <li>
+          <h4>Pruébalo</h4>
+          <p>Pídele a alguien de confianza (o usa otro celular) que le escriba a tu número algo como <em>"Hola, vi una casa que publicaste, ¿todavía está disponible?"</em>. En segundos Recepción debe contestar. Abre <em>Bandeja</em> en Cecil y vas a ver la conversación con el prospecto ya calificado.</p>
+        </li>
+      </ol>
+    </div>
+
+    <div class="wa-block">
+      <h3>Qué cambia en tu WhatsApp y qué no</h3>
+      <p>La coexistencia tiene letra chica. Son reglas de Meta, no de Cecil, y aplican mientras tu número esté conectado. Léelas antes de conectar, no después.</p>
+      <div class="wa-tbl-wrap">
+        <table class="wa-tbl">
+          <thead>
+            <tr><th>Función de tu app</th><th>Qué pasa al conectar</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Chats de uno a uno</td><td>Siguen igual. Lo que escribes desde el celular se ve en Cecil, y lo que Recepción contesta se ve en tu celular.</td></tr>
+            <tr><td>Chats de grupo</td><td>Siguen funcionando en tu celular, pero no se ven en Cecil.</td></tr>
+            <tr><td>Llamadas de voz y video</td><td>Siguen funcionando normal en tu celular.</td></tr>
+            <tr><td>Catálogo, pedidos, estados, etiquetas, respuestas rápidas, mensaje de bienvenida y de ausencia</td><td>Siguen funcionando normal en tu celular, pero no se administran desde Cecil.</td></tr>
+            <tr><td>Listas de difusión</td><td><b>Se deshabilitan.</b> Las que ya tienes quedan de solo lectura y no puedes crear nuevas. Para mandar mensajes masivos usa las plantillas aprobadas desde Cecil.</td></tr>
+            <tr><td>Mensajes temporales</td><td><b>Se desactivan</b> en todos tus chats individuales.</td></tr>
+            <tr><td>Ver una vez</td><td><b>Se desactiva</b> en todos tus chats individuales.</td></tr>
+            <tr><td>Ubicación en tiempo real</td><td><b>Se desactiva</b> en todos tus chats individuales.</td></tr>
+            <tr><td>Dispositivos vinculados</td><td>Se desvinculan al conectar. Vuelve a vincular los que uses. <b>WhatsApp para Windows y para WearOS no sirven</b> con coexistencia: lo que escribas desde ahí no le llega a Cecil.</td></tr>
+            <tr><td>Palomita azul de cuenta oficial</td><td>No es compatible con coexistencia y no se pasa de la app a la plataforma.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="wa-warn">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+        <div><b>No desinstales la app de WhatsApp Business.</b> Si la borras, tu número se desvincula y hay que volver a hacer todo el proceso.</div>
+      </div>
+    </div>
+
+    <div class="wa-block">
+      <h3>La regla de las 24 horas</h3>
+      <p>Esta es la regla de Meta que más pega en la operación diaria y conviene que la entiendas bien:</p>
+      <ul class="wa-check">
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div><b>Cuando un prospecto te escribe, se abre una ventana de 24 horas.</b> Dentro de esa ventana, tú y Recepción pueden contestarle lo que sea, con toda libertad.</div>
+        </li>
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div><b>Pasadas las 24 horas sin que él escriba, la ventana se cierra.</b> Desde Cecil ya no puedes mandarle texto libre: solo una <b>plantilla</b> que Meta haya aprobado antes. Por eso existe el módulo de plantillas.</div>
+        </li>
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div><b>Desde tu celular no hay ventana ni hay costo.</b> Los mensajes que tú escribes desde la app de WhatsApp Business son gratis y no tienen límite de tiempo. Esa es una de las mejores ventajas de la coexistencia.</div>
+        </li>
+      </ul>
+      <div class="wa-note">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
+        <div>Crea tus plantillas antes de necesitarlas. Meta las revisa una por una y puede tardar desde minutos hasta 24 horas. Ten al menos una de seguimiento lista desde el día uno.</div>
+      </div>
+    </div>
+
+    <div class="wa-block">
+      <h3>Tú decides cuándo contesta la IA</h3>
+      <p>En la pestaña <b>Recepción IA</b> del módulo de WhatsApp eliges el modo de encendido de cada número. Son tres, y el que elijas aplica a todos los chats de ese número:</p>
+      <ul class="wa-check">
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div><b>Encendida por default.</b> La IA contesta todos los chats. Tú puedes apagarla en los que quieras, uno por uno.</div>
+        </li>
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div><b>Apagada por default.</b> La IA no contesta nada. Tú la enciendes en los chats que quieras, uno por uno — y en esos chats contesta aunque el modo global esté apagado.</div>
+        </li>
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div><b>Solo clientes nuevos.</b> Contesta únicamente a números que nunca te han escrito, o que llevan más de cierto tiempo sin hacerlo (tres meses, y lo puedes cambiar). A tus clientes de siempre no les cae un robot en frío.</div>
+        </li>
+      </ul>
+      <p>Además, cada chat tiene su propio control con tres posiciones: <b>Auto</b> (obedece el modo del número), <b>Encendida</b> (contesta siempre en ese chat) y <b>Apagada</b> (nunca contesta en ese chat). Debajo del nombre del contacto siempre se lee, con palabras, qué va a pasar: si la IA contesta o no, y por qué.</p>
+      <p><b>Cuando tú respondes a mano, la IA se hace a un lado en ese chat.</b> Cuenta igual si escribes desde Cecil o desde el WhatsApp de tu celular. En Recepción IA eliges si se hace a un lado para siempre (hasta que tú la vuelvas a encender en ese chat) o solo por un rato: 30 minutos, 1 hora, 8 horas o 24 horas. También puedes apagar ese comportamiento por completo si prefieres que la IA nunca se detenga.</p>
+      <p>Los contactos que ya estaban en la agenda de tu celular al conectar arrancan con la IA apagada en su chat: la recepcionista es para prospectos, no para caerle en frío a un cliente de años. La enciendes tú si la quieres ahí.</p>
+      <div class="wa-note">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>
+        <div>Antes de encender la IA con prospectos reales, úsala en <b>Probar tu asistente</b> (dentro de Recepción IA): platica con ella como si fueras un cliente, con tu entrenamiento y tu catálogo reales, sin mandarle WhatsApp a nadie.</div>
+      </div>
+    </div>
+
+    <div class="wa-block">
+      <h3>Flujos: respuestas exactas, sin improvisar</h3>
+      <p>Un <b>flujo</b> es una secuencia de pasos que tú dibujas y que Cecil ejecuta al pie de la letra cuando pasa algo: llega un mensaje con cierta palabra, escribe alguien por primera vez, o escribe un cliente nuevo. Como el flujo no improvisa nada, nunca se equivoca — y puede combinar lo mejor de los dos mundos:</p>
+      <ul class="wa-check">
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div><b>Enviar mensajes</b> con el texto exacto que tú escribiste.</div>
+        </li>
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div><b>Hacer preguntas y guardar las respuestas</b> (nombre, presupuesto, interés) directo en la ficha del contacto.</div>
+        </li>
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div><b>Mostrar menús de opciones</b> numeradas; según lo que elija el prospecto, el flujo salta al paso que tú digas.</div>
+        </li>
+        <li>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div><b>Terminar entregando la conversación</b>: a ti (la IA se apaga y te llega una notificación) o a la IA (que sigue platicando con tu entrenamiento).</div>
+        </li>
+      </ul>
+      <p>Mientras un flujo está esperando una respuesta, ese chat es del flujo: la IA no se mete. Si el prospecto contesta dos veces algo que el menú no entiende, el flujo se hace a un lado con elegancia y la conversación sigue su curso normal.</p>
+    </div>
+
+    <div class="wa-block">
+      <h3>Si algo sale mal</h3>
+      <div class="guide-steps guide-faq">
+        <div class="guide-step" onclick="this.classList.toggle('open')">
+          <div class="guide-step-head">
+            <div class="guide-step-lbl" style="margin-left:0">Meta dice que mi número no es elegible</div>
+            <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="guide-step-body" style="padding-left:18px">
+            Meta decide la elegibilidad a su criterio, tomando en cuenta la antigüedad de la cuenta y la calidad de tu mensajería. Un número recién dado de alta en WhatsApp Business casi nunca es elegible de inmediato: úsalo normal unos días y vuelve a intentar. Si ese número estuvo antes conectado a otra plataforma de WhatsApp API, primero hay que darlo de baja de ahí y esperar. Cecil no puede saltarse ni acelerar esta decisión.
+          </div>
+        </div>
+        <div class="guide-step" onclick="this.classList.toggle('open')">
+          <div class="guide-step-head">
+            <div class="guide-step-lbl" style="margin-left:0">No me llegó el mensaje de Facebook Business Account</div>
+            <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="guide-step-body" style="padding-left:18px">
+            Casi siempre son tres cosas: estás viendo el WhatsApp normal en lugar del WhatsApp Business; la app está desactualizada; o escribiste el número con un dígito de más o de menos. Revísalas en ese orden, cierra la ventana de Meta y empieza de nuevo.
+          </div>
+        </div>
+        <div class="guide-step" onclick="this.classList.toggle('open')">
+          <div class="guide-step-head">
+            <div class="guide-step-lbl" style="margin-left:0">Contesté desde mi celular y Recepción siguió contestando</div>
+            <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="guide-step-body" style="padding-left:18px">
+            Cecil hace a un lado la inteligencia artificial en cuanto detecta un mensaje tuyo en ese chat (para siempre o por el tiempo que hayas elegido en Recepción IA). Primero revisa esa configuración: si apagaste "Pausar la IA en cuanto yo respondo", la IA sigue contestando a propósito. Si la pausa sí está activa y aun así contestó, lo más probable es que hayas escrito desde WhatsApp para Windows o desde un reloj: esos dispositivos no son compatibles con coexistencia y Meta no le avisa a Cecil. Contesta desde tu celular o desde WhatsApp Web y ya.
+          </div>
+        </div>
+        <div class="guide-step" onclick="this.classList.toggle('open')">
+          <div class="guide-step-head">
+            <div class="guide-step-lbl" style="margin-left:0">¿Cuánto me cuesta? ¿Está incluido en mi suscripción?</div>
+            <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="guide-step-body" style="padding-left:18px">
+            Lo que tú escribes desde tu celular es gratis, sin límite. Los mensajes que salen por la API (los de Recepción y las plantillas) se rigen por el tarifario de Meta, se cobran por conversación de 24 horas y no por mensaje, y van por tu cuenta con Meta, no por la suscripción de Cecil. Consulta el detalle en la sección <a href="legal.html#whatsapp">WhatsApp y Datos</a>.
+          </div>
+        </div>
+        <div class="guide-step" onclick="this.classList.toggle('open')">
+          <div class="guide-step-head">
+            <div class="guide-step-lbl" style="margin-left:0">Quiero desconectar mi número</div>
+            <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="guide-step-body" style="padding-left:18px">
+            Desde Cecil, en el módulo de WhatsApp, botón <strong>Desconectar</strong>. También puedes hacerlo desde tu celular en Configuración → Cuenta → Plataforma de empresas → Desconectar cuenta. Tu número y tu app siguen funcionando igual; solo deja de llegarle a Cecil. Tus conversaciones y leads ya guardados no se borran.
+          </div>
+        </div>
+        <div class="guide-step" onclick="this.classList.toggle('open')">
+          <div class="guide-step-head">
+            <div class="guide-step-lbl" style="margin-left:0">¿Qué guarda Cecil de mis conversaciones?</div>
+            <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+          <div class="guide-step-body" style="padding-left:18px">
+            El número y el nombre de perfil de quien te escribe, el texto de los mensajes (los que entran, los que contesta Recepción y también los que tú escribes desde tu celular), la fecha y hora, y la calificación que genera la inteligencia artificial. No guarda fotos, audios ni documentos, no importa tu historial anterior y no toca la libreta de contactos de tu teléfono. El detalle completo, y lo que la ley te exige a ti como responsable de esos datos, está en <a href="legal.html#whatsapp">WhatsApp y Datos</a>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pasos -->
+  <div class="guide-section">
+    <div class="guide-section-label">Primeros pasos</div>
+    <div class="guide-steps">
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-num">1</div>
+          <div class="guide-step-lbl">Cómo conectar EasyBroker</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body">
+          <ol>
+            <li>En EasyBroker, haz clic en tu nombre (esquina superior derecha) → <strong>Configuración de cuenta</strong>.</li>
+            <li>En el menú izquierdo, busca <strong>Integraciones</strong> o <strong>API</strong>.</li>
+            <li>Copia tu <strong>API Key personal</strong> (código alfanumérico largo).</li>
+            <li>En Cecil, abre tu perfil haciendo clic en tus iniciales (esquina inferior izquierda del sidebar en desktop, o el avatar en la cabecera en móvil).</li>
+            <li>En la sección <strong>EasyBroker</strong>, pega la API Key y haz clic en <strong>Conectar EasyBroker</strong>.</li>
+            <li>Cecil valida la conexión en segundos.</li>
+          </ol>
+          <div class="guide-tip">Cada agente debe usar su propia API Key personal. No la compartas con colegas — cada quien tiene la suya en EasyBroker.</div>
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-num">2</div>
+          <div class="guide-step-lbl">Importar propiedades desde EasyBroker</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body">
+          <ol>
+            <li>Ve a <strong>Tus Inmuebles</strong> en el sidebar.</li>
+            <li>Haz clic en <strong>Importar desde EasyBroker</strong>.</li>
+            <li>Cecil importa automáticamente todas tus propiedades publicadas. Puede tomar algunos segundos según el número de propiedades.</li>
+            <li>Las propiedades aparecen con fotos, descripción y datos completos.</li>
+          </ol>
+          <div class="guide-tip">Solo se importan propiedades con estatus "publicado". Si ya existen en Cecil, no se duplican.</div>
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-num">3</div>
+          <div class="guide-step-lbl">Generar un contrato de arrendamiento</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body">
+          <ol>
+            <li>Ve a <strong>Contratos</strong> → selecciona <strong>Arrendamiento</strong>.</li>
+            <li>Ingresa las fechas (inicio y término).</li>
+            <li>Llena los datos del inmueble arrendado.</li>
+            <li>Agrega arrendador (propietario), arrendatario (inquilino) y obligado solidario (aval) si aplica. Puedes seleccionarlos directamente desde tus contactos.</li>
+            <li>Llena renta, depósito y día de pago.</li>
+            <li>Haz clic en <strong>Generar contrato</strong> para descargar el Word listo para firmar.</li>
+          </ol>
+          <div class="guide-tip">También puedes pedirle a Cecil el asistente que llene el formulario por ti con solo describir el contrato en voz o texto.</div>
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-num">4</div>
+          <div class="guide-step-lbl">Calcular el ISR de una venta</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body">
+          <ol>
+            <li>Ve a <strong>ISR</strong> en el sidebar.</li>
+            <li>Selecciona el tipo de inmueble: casa habitación, terreno o comercial.</li>
+            <li>Ingresa precio de venta, precio de compra, fechas y deducciones (mejoras, escrituración, comisión).</li>
+            <li>Para casa habitación, indica si el vendedor usó la exención en los últimos 3 años.</li>
+            <li>Haz clic en <strong>Calcular</strong> para ver el resultado y descargarlo en PDF.</li>
+          </ol>
+          <div class="guide-tip">La exención de 700,000 UDIS aplica solo si el vendedor tiene escritura notarial de casa habitación y no la ha usado en los últimos 3 años fiscales.</div>
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-num">5</div>
+          <div class="guide-step-lbl">Usar Cecil el asistente (incluye modo voz)</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body">
+          <ol>
+            <li>Abre el asistente con el botón del isotipo (esquina inferior derecha en desktop, barra inferior en móvil).</li>
+            <li>Toca el ícono del micrófono para hablar en lugar de escribir.</li>
+            <li>Dile lo que necesitas: <em>"calcula el ISR de una venta de 3 millones"</em>, <em>"hazme un contrato de renta"</em>, <em>"valúa una casa en Chapultepec"</em>.</li>
+            <li>El asistente te pide los datos que faltan uno a uno, y al final llena el formulario y te lleva al módulo correcto.</li>
+          </ol>
+          <div class="guide-tip">Si vas manejando, usa solo la voz. El asistente entiende cuando dices "broker" o "broquer" y lo escribe siempre como Cecil. También puede asesorarte en temas de derecho inmobiliario, marketing y tecnología.</div>
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-num">6</div>
+          <div class="guide-step-lbl">Mandar un documento a firma electrónica</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body">
+          <ol>
+            <li>Ve a <strong>Firma electrónica</strong>, sube el PDF (o mándalo directo desde un contrato ya generado) y agrega a los firmantes con su correo o WhatsApp.</li>
+            <li>Cada firmante recibe una liga privada, revisa el documento, confirma con un código de un solo uso y traza su firma. Todo queda registrado en la bitácora: IP, hora, dispositivo y el texto exacto que aceptó.</li>
+            <li>Cuando firman todos, Cecil arma el documento final: el original intacto más una constancia con toda esa evidencia anexada al final, con folio propio (formato <code>BRQ-XXXXXXXX</code>).</li>
+            <li>Cualquiera puede confirmar que ese folio es auténtico en <strong>Verificar documento firmado</strong>, sin necesidad de cuenta.</li>
+          </ol>
+          <div class="guide-tip">
+            Cuando el documento queda completo, Cecil también intenta —de forma automática y opcional— obtener una
+            <strong>Constancia de Conservación NOM-151</strong> de un Proveedor de Servicios de Certificación (PSC) acreditado
+            sobre ese mismo PDF final. Es un sello adicional, no un requisito: tu firma electrónica ya es válida y queda
+            completa sin él. Si el PSC no está contratado, tarda o falla, el documento se queda "completo" exactamente
+            igual y el sello se puede reintentar después desde el propio documento. Cuando existe, aparece como el badge
+            "Certificado NOM-151" junto al folio en la página de verificación.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="guide-section">
+    <div class="guide-section-label">Preguntas frecuentes</div>
+    <div class="guide-steps guide-faq">
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-lbl" style="margin-left:0">¿Los contratos que genera Cecil tienen validez legal?</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body" style="padding-left:18px">
+          Sí. Los contratos están redactados conforme al Código Civil Federal y al Código Civil del Estado de Michoacán. Son contratos privados con plena validez legal. Para operaciones que requieran escritura pública, el contrato de Cecil funciona como promesa de compraventa previa a la notaría.
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-lbl" style="margin-left:0">¿Cecil reemplaza a EasyBroker?</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body" style="padding-left:18px">
+          No, son complementarios. EasyBroker es tu portal de publicación y CRM de operaciones. Cecil es tu copiloto operativo: calcula ISR, genera contratos, hace valuaciones, limpia fotos y crea fichas técnicas. Se integran a través de la API Key para que no captes datos dos veces.
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-lbl" style="margin-left:0">¿Cómo conecto mi correo electrónico a Cecil?</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body" style="padding-left:18px">
+          En el módulo <strong>Correo</strong>, elige tu proveedor (Gmail, Outlook o iCloud), captura tu dirección y una <strong>contraseña de aplicación</strong> — no tu contraseña normal. En Gmail se genera en un minuto: activa la verificación en dos pasos y crea la contraseña en myaccount.google.com/apppasswords; el módulo trae el paso a paso. Cecil guarda esa contraseña cifrada y solo la usa para conectarse a tu bandeja y enviar tus correos; nunca se muestra ni se comparte. Puedes desconectar tu correo cuando quieras desde el mismo módulo (se borra la conexión y la contraseña guardada) y también revocar la contraseña de aplicación desde tu proveedor. En algunos casos el envío sale por el servidor de correo de Cecil (a nombre de correo@broquer.app) con las respuestas dirigidas a tu correo; el módulo te avisa cuando aplica.
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-lbl" style="margin-left:0">Soy empresa: ¿cómo asigno clientes e inmuebles a mis agentes?</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body" style="padding-left:18px">
+          En cuentas de <strong>Cecil para Empresas</strong>, el dueño o un administrador puede asignar un agente responsable a cada contacto (desde su detalle en Contactos o Leads) y a cada inmueble (desde su detalle en Mis Inmuebles). Los agentes ven quién tiene asignado qué, pero solo el dueño o administrador puede asignar o reasignar. Asignar es una etiqueta de responsabilidad: no cambia quién creó el registro ni quién puede verlo. En ambos módulos hay un filtro para ver solo lo de un agente, o lo que está sin asignar.
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-lbl" style="margin-left:0">¿Qué pasa cuando alguien llena el formulario de mi sitio web?</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body" style="padding-left:18px">
+          El visitante queda registrado automáticamente como lead en tu bandeja de <strong>Leads</strong>, con fuente "Sitio web" y su mensaje en las notas, y además se le abre WhatsApp para escribirte directo. Así no pierdes el contacto aunque al final no te mande el mensaje. Si ya tenías un contacto con ese mismo teléfono, no se duplica: se marca como lead y el nuevo mensaje se agrega a sus notas. El visitante puede pedirte en cualquier momento que borres su registro, y puedes hacerlo desde Leads o Contactos.
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-lbl" style="margin-left:0">¿Puedo usar Cecil desde mi celular?</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body" style="padding-left:18px">
+          Sí. Cecil es una PWA: funciona en cualquier navegador moderno. En iPhone, desde Safari abre el menú de compartir → "Agregar a la pantalla de inicio". En Android, desde Chrome toca los tres puntos → "Instalar aplicación". Funciona como app nativa.
+        </div>
+      </div>
+
+      <div class="guide-step" onclick="this.classList.toggle('open')">
+        <div class="guide-step-head">
+          <div class="guide-step-lbl" style="margin-left:0">¿Mis datos y los de mis clientes están seguros?</div>
+          <svg class="guide-step-arr" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="guide-step-body" style="padding-left:18px">
+          Cecil usa Supabase con políticas de seguridad por fila (RLS): cada agente solo puede ver y editar sus propios datos. Las contraseñas nunca se almacenan en texto plano. Toda comunicación está cifrada con HTTPS/TLS.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Contacto -->
+  <div class="guide-contact">
+    <div>
+      <h3>¿Necesitas ayuda?</h3>
+      <p>Escríbenos desde aquí o a <a class="guide-contact-mail" href="mailto:hola@broquer.app">hola@broquer.app</a>. Responderemos en un plazo de 48 horas hábiles.</p>
+    </div>
+    <button type="button" data-soporte-abrir class="guide-contact-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      Contactar soporte
+    </button>
+  </div>
+
+  <!-- Eliminar cuenta -->
+  <div class="guide-contact guide-danger" style="margin-top:24px">
+    <div>
+      <h3>Eliminar cuenta y datos</h3>
+      <p>Acción irreversible. Se borran tus inmuebles, contactos, contratos, integraciones y tu cuenta de acceso.</p>
+    </div>
+    <button class="guide-danger-btn" onclick="confirmEliminarCuenta()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg>
+      Eliminar mi cuenta
+    </button>
+  </div>
+
+</div>
+</div>
+
+<script src="app-shell.js" defer></script>
+<script>
+// Ancla directa: guia-agente.html#whatsapp
+(function(){
+  function irAlHash(){
+    var h = location.hash.replace('#','');
+    if(!h) return;
+    var el = document.getElementById(h);
+    if(el) setTimeout(function(){ el.scrollIntoView({behavior:'smooth', block:'start'}); }, 120);
+  }
+  window.addEventListener('hashchange', irAlHash);
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', irAlHash);
+  else irAlHash();
+})();
+
+async function confirmEliminarCuenta() {
+  if (!confirm('¿Eliminar tu cuenta y TODOS tus datos? Esta acción es irreversible.')) return;
+  const txt = prompt('Para confirmar, escribe ELIMINAR en mayúsculas:');
+  if (txt !== 'ELIMINAR') { alert('Cancelado.'); return; }
+  const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
+  if (!tok) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
+  const API = window.API_BASE || 'https://brokr-main-staging.up.railway.app';
+  try {
+    const r = await fetch(API + '/usuario/eliminar-cuenta', {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + tok }
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.detail || ('Error ' + r.status));
+    localStorage.clear();
+    sessionStorage.clear();
+    alert('Tu cuenta y datos fueron eliminados. Gracias por probar Cecil.');
+    location.href = 'login.html';
+  } catch (e) {
+    alert('No se pudo eliminar la cuenta. ' + (e.message || e));
+  }
+}
+</script>
+<script src="soporte-form.js" defer></script>
+</body>
+</html>

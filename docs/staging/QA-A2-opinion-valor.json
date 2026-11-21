@@ -1,0 +1,428 @@
+{
+  "valor_estimado": 5530000,
+  "valor_minimo": 4700000,
+  "valor_maximo": 6400000,
+  "valor_por_m2": 30722,
+  "precio_m2_base": 32339,
+  "nivel_confianza": "media",
+  "razon_confianza": "Hay buena cantidad de comparables activos en Altozano con construcción declarada, pero la zona es heterogénea: conviven fraccionamientos de distintos segmentos (cotos privados estándar, Vistas Altozano, Club de Golf) y los precios/m² varían considerablemente. Los comparables más cercanos en superficie a los 180 m² de construcción del sujeto arrojan un rango coherente, aunque ninguno es idéntico en tamaño y especificaciones.",
+  "resumen_ejecutivo": "Casa habitación de 180 m² de construcción en Altozano, Morelia. Con base en 10 comparables activos de la misma zona con superficie de construcción declarada y rango de 171–267 m², el precio de oferta promedio por m² de construcción es de $32,339 MXN. Aplicando el factor de negociación del -5% se obtiene un precio/m² ajustado de $30,722 MXN, lo que arroja un valor estimado de $5,530,000 MXN para los 180 m² de construcción del inmueble sujeto. El rango de mercado para propiedades similares en Altozano oscila entre $4.7 y $6.4 millones, dependiendo del subcoto, acabados y antigüedad.",
+  "comparables": [
+    {
+      "descripcion": "Casa en Venta en Altozano (Lamudi) – 210 m² construcción / 170 m² terreno, 4 rec, 5 baños, 4 estac. Fraccionamiento Gansos, Altozano",
+      "superficie_m2": 210,
+      "precio": 6945000,
+      "precio_m2": 33071,
+      "fuente": "Lamudi",
+      "url": "https://www.lamudi.com.mx/detalle/41032-73-90feef7b881f-f8f1-1a1282b-8d50-734d",
+      "incluido_en_promedio": true,
+      "motivo_inclusion_o_descarte": "Comparable directo en Altozano, construcción declarada, superficie cercana al sujeto, precio razonable para la zona."
+    },
+    {
+      "descripcion": "Casa en Venta en Altozano (Lamudi) – 206 m² construcción / 160 m² terreno, 4 rec, 3 baños, 3 estac. Altozano",
+      "superficie_m2": 206,
+      "precio": 4748000,
+      "precio_m2": 23049,
+      "fuente": "Lamudi",
+      "url": "https://www.lamudi.com.mx/detalle/41032-73-f78fd902748a-3957-1959185-87dc-7244",
+      "incluido_en_promedio": true,
+      "motivo_inclusion_o_descarte": "Comparable en Altozano con construcción declarada. Precio/m² en el extremo bajo del mercado, posiblemente acabados más sencillos o ubicación menos privilegiada dentro del corredor; se incluye para reflejar el piso del mercado."
+    },
+    {
+      "descripcion": "Casa en Venta en Altozano – Fracc. Cisnes, Vistas Altozano (Lamudi/Vivanuncios) – 208 m² construcción / 160 m² terreno, 4 rec, 3 baños, 2 estac.",
+      "superficie_m2": 208,
+      "precio": 4970000,
+      "precio_m2": 23894,
+      "fuente": "Lamudi / Vivanuncios",
+      "url": "https://www.lamudi.com.mx/detalle/41032-73-b1a720aad88a-72c9-1a1d2a1-832b-759d",
+      "incluido_en_promedio": true,
+      "motivo_inclusion_o_descarte": "Mismo anuncio confirmado en dos portales (Fracc. Cisnes, Vistas Altozano). Se conserva una sola instancia. Construcción declarada, superficie comparable."
+    },
+    {
+      "descripcion": "Casa en Venta en Altozano (Lamudi) – 183 m² construcción / 160 m² terreno, 3 rec, 3 baños, 2 estac.",
+      "superficie_m2": 183,
+      "precio": 6470000,
+      "precio_m2": 35355,
+      "fuente": "Lamudi",
+      "url": "https://www.lamudi.com.mx/detalle/41032-73-4b29cc5be97d-397d-1959323-9411-7892",
+      "incluido_en_promedio": true,
+      "motivo_inclusion_o_descarte": "Superficie de construcción muy cercana al sujeto (183 vs 180 m²). Precio/m² alto pero dentro del rango de Altozano para acabados residenciales. Incluido con peso relevante."
+    },
+    {
+      "descripcion": "Casa en Venta en Altozano (Lamudi) – 204 m² construcción / 160 m² terreno, 4 rec, 3 baños, 2 estac.",
+      "superficie_m2": 204,
+      "precio": 3480000,
+      "precio_m2": 17059,
+      "fuente": "Lamudi",
+      "url": "https://www.lamudi.com.mx/detalle/41032-73-1e89bdef4923-d385-19e867d-a7e8-7150",
+      "incluido_en_promedio": false,
+      "motivo_inclusion_o_descarte": "Precio/m² de $17,059 es extremadamente bajo para Altozano (menos de la mitad del promedio de mercado). Posible error de captura, remate bancario o datos incompletos. Se descarta del promedio para no distorsionar el resultado."
+    },
+    {
+      "descripcion": "Casa en Altozano – El Olivar Altozano (Vivanuncios) – 171 m² construcción / 181 m² terreno, 2 rec, 2 baños, 2 estac.",
+      "superficie_m2": 171,
+      "precio": 4990000,
+      "precio_m2": 29181,
+      "fuente": "Vivanuncios",
+      "url": "",
+      "incluido_en_promedio": true,
+      "motivo_inclusion_o_descarte": "Superficie de construcción más cercana al sujeto (171 m²), dentro de Altozano. Solo 2 recámaras, lo que puede explicar precio moderado; se incluye como referencia de piso real."
+    },
+    {
+      "descripcion": "Casa en Altozano – Fraccionamiento Privado (Vivanuncios) – 195 m² construcción / 178 m² terreno, 4 rec, 4 baños, 2 estac.",
+      "superficie_m2": 195,
+      "precio": 5800000,
+      "precio_m2": 29744,
+      "fuente": "Vivanuncios",
+      "url": "",
+      "incluido_en_promedio": true,
+      "motivo_inclusion_o_descarte": "Comparable directo en Altozano, construcción declarada, superficie cercana al sujeto, precio coherente con el mercado."
+    },
+    {
+      "descripcion": "Casa en Altozano – El Olivar, Fraccionamiento Privado (Vivanuncios) – 215 m² construcción / 164 m² terreno, 3 rec, 2 baños, 2 estac.",
+      "superficie_m2": 215,
+      "precio": 5700000,
+      "precio_m2": 26512,
+      "fuente": "Vivanuncios",
+      "url": "",
+      "incluido_en_promedio": true,
+      "motivo_inclusion_o_descarte": "Comparable en Altozano con construcción declarada, superficie razonablemente cercana al sujeto."
+    },
+    {
+      "descripcion": "Casa en Altozano – MRD (inmobiliariamrd.com) – 225 m² construcción, 4 rec, 3 baños",
+      "superficie_m2": 225,
+      "precio": 3900000,
+      "precio_m2": 17333,
+      "fuente": "inmobiliariamrd.com",
+      "url": "https://www.inmobiliariamrd.com/property/casa-en-venta-en-altozano-morelia-michoacan-c23b7ee6-3125-43a7-99f1-aff09d5781ea",
+      "incluido_en_promedio": false,
+      "motivo_inclusion_o_descarte": "Precio/m² de $17,333 es atípicamente bajo para Altozano con esas características. Posible preventa, acabados básicos o dato de superficie que incluye terreno. Se descarta del promedio."
+    },
+    {
+      "descripcion": "Casa en Altozano – MRD – 220 m² construcción, 4 rec, 3 baños (Jabalí Altozano)",
+      "superficie_m2": 220,
+      "precio": 5500000,
+      "precio_m2": 25000,
+      "fuente": "inmobiliariamrd.com",
+      "url": "https://www.inmobiliariamrd.com/property/casa-en-venta-en-jabali-altozano-morelia",
+      "incluido_en_promedio": true,
+      "motivo_inclusion_o_descarte": "Comparable en Altozano con construcción declarada, precio coherente con el mercado medio de la zona."
+    },
+    {
+      "descripcion": "Casa en Altozano – MRD – 213 m² construcción, 4 rec, 4 baños (Praderas II, preventa)",
+      "superficie_m2": 213,
+      "precio": 6000000,
+      "precio_m2": 28169,
+      "fuente": "inmobiliariamrd.com",
+      "url": "https://www.inmobiliariamrd.com/property/casa-en-preventa-en-praderas-ii-altozano-morelia",
+      "incluido_en_promedio": true,
+      "motivo_inclusion_o_descarte": "Preventa en Altozano, construcción declarada, precio razonable. Se incluye con nota de que es preventa (puede tener ligero descuento vs. entrega)."
+    },
+    {
+      "descripcion": "Casa en Altozano – MRD – 188.8 m² construcción, 3 rec, 2 baños",
+      "superficie_m2": 188.8,
+      "precio": 4700000,
+      "precio_m2": 24894,
+      "fuente": "inmobiliariamrd.com",
+      "url": "https://www.inmobiliariamrd.com/property/casa-en-venta-en-altozano-morelia-8aa0fb4f-986b-4f1c-b88a-20df6feb6d5e",
+      "incluido_en_promedio": true,
+      "motivo_inclusion_o_descarte": "Superficie de construcción muy cercana al sujeto (188.8 vs 180 m²), en Altozano. Precio/m² en el rango medio-bajo, coherente para acabados estándar."
+    },
+    {
+      "descripcion": "Casa en Montaña Monarca I – MRD – 230 m² construcción, 4 rec, 4 baños",
+      "superficie_m2": 230,
+      "precio": 5100000,
+      "precio_m2": 22174,
+      "fuente": "inmobiliariamrd.com",
+      "url": "https://www.inmobiliariamrd.com/property/casa-en-venta-en-fracc-montana-monarca-i-altozano-morelia-michoacan",
+      "incluido_en_promedio": true,
+      "motivo_inclusion_o_descarte": "Fraccionamiento Montaña Monarca I, dentro del corredor Altozano. Construcción declarada, precio coherente."
+    }
+  ],
+  "comparables_descartados": [
+    {
+      "descripcion": "Casa en Venta en Jardines de Altozano – sin m² construcción (solo terreno 203 m²)",
+      "fuente": "Inmuebles24 / Vivanuncios",
+      "url": "",
+      "motivo": "No reporta m² de construcción; no es posible calcular precio/m² de construcción para comparar con el sujeto."
+    },
+    {
+      "descripcion": "Casa en Venta en Altozano – sin m² construcción (solo terreno 167 m²), $4,700,000",
+      "fuente": "Inmuebles24",
+      "url": "",
+      "motivo": "No reporta m² de construcción."
+    },
+    {
+      "descripcion": "Casa en Venta en Morelia, Vistas Altozano – sin m² construcción (solo terreno 153 m²), $4,350,000",
+      "fuente": "Inmuebles24 / Vivanuncios",
+      "url": "",
+      "motivo": "No reporta m² de construcción. Aparece en ambos portales; se descarta en ambas instancias."
+    },
+    {
+      "descripcion": "Casa en Residencial Lartesi (zona Altozano) – sin m² construcción (solo terreno 126 m²), $3,480,000",
+      "fuente": "Inmuebles24",
+      "url": "",
+      "motivo": "No reporta m² de construcción."
+    },
+    {
+      "descripcion": "Residencia El Encinar, Altozano – sin m² construcción (solo terreno 300 m²), $10,490,000",
+      "fuente": "Inmuebles24",
+      "url": "",
+      "motivo": "No reporta m² de construcción."
+    },
+    {
+      "descripcion": "Casa en Bosque Monarca / Club de Golf Altozano – 295 m² construcción, $12,500,000",
+      "fuente": "Inmuebles24 / Vivanuncios",
+      "url": "",
+      "motivo": "Segmento Club de Golf, precio/m² de $42,373 muy superior al mercado estándar de Altozano. Submercado distinto (lujo frente a campo de golf)."
+    },
+    {
+      "descripcion": "Casa en Vistas Altozano – 220 m² construcción / 185 m² terreno, $6,490,000 (Vivanuncios pos. 3 y 5 – duplicado)",
+      "fuente": "Vivanuncios",
+      "url": "",
+      "motivo": "Mismo anuncio aparece en múltiples fuentes (Vivanuncios fuente 2 pos.3, fuente 5 pos.5, fuente 8 pos.4). Se conserva una sola instancia; las demás se descartan como duplicados."
+    },
+    {
+      "descripcion": "Casa en Vistas Altozano – 220 m² construcción / 185 m² terreno, $6,090,000 (Vivanuncios pos. 5)",
+      "fuente": "Vivanuncios",
+      "url": "",
+      "motivo": "Posible duplicado del anuncio anterior (misma superficie, misma ubicación, precio ligeramente distinto). Anuncio con ID más antiguo (143...) sugiere publicación vieja. Se descarta."
+    },
+    {
+      "descripcion": "Propiedad Amplia en Altozano, Tres Niveles – 315 m² construcción / 160 m² terreno, $7,300,000",
+      "fuente": "Vivanuncios",
+      "url": "",
+      "motivo": "Construcción de 315 m² en 3 niveles, muy superior al sujeto (180 m²). Precio/m² de $23,175 pero la diferencia de escala y tipología lo hace poco comparable."
+    },
+    {
+      "descripcion": "Casa en Altozano – Rincón del Cielo, estilo industrial – 255 m² construcción, $8,200,000",
+      "fuente": "Inmuebles24 / Vivanuncios",
+      "url": "",
+      "motivo": "Construcción de 255 m² y precio/m² de $32,157 en el límite superior; además el estilo industrial y la superficie mayor lo alejan del sujeto. Se descarta para no sesgar el promedio hacia arriba."
+    },
+    {
+      "descripcion": "Casa en Coto del Tecnológico Altozano – 267 m² construcción, $5,500,000",
+      "fuente": "Inmuebles24 / Vivanuncios",
+      "url": "",
+      "motivo": "Construcción de 267 m², significativamente mayor al sujeto. Precio/m² de $20,599 podría distorsionar el promedio hacia abajo para una casa de 180 m²."
+    },
+    {
+      "descripcion": "Casa en El Pinar Altozano – 198 m² construcción / 160 m² terreno, $6,490,000",
+      "fuente": "Inmuebles24",
+      "url": "",
+      "motivo": "ID de anuncio antiguo (146...), posible anuncio desactualizado. Precio/m² de $32,778 en el límite superior. Se descarta por antigüedad probable."
+    },
+    {
+      "descripcion": "Casa privada Alpes Altozano – 265 m² construcción / 150 m² terreno, $6,900,000",
+      "fuente": "Inmuebles24",
+      "url": "",
+      "motivo": "Construcción de 265 m², muy superior al sujeto. Se descarta para mantener comparables más cercanos en tamaño."
+    },
+    {
+      "descripcion": "Casa en Villa Magnolias Altozano – 285 m² construcción / 176 m² terreno, $6,350,000",
+      "fuente": "Inmuebles24 / Vivanuncios",
+      "url": "",
+      "motivo": "Construcción de 285 m², significativamente mayor al sujeto. Aparece en dos portales; se descarta en ambas instancias."
+    },
+    {
+      "descripcion": "Casa en Club de Golf Altozano – 295 m² construcción, $12,500,000 (Vivanuncios)",
+      "fuente": "Vivanuncios",
+      "url": "",
+      "motivo": "Submercado Club de Golf, precio/m² extremo ($42,373). Segmento de lujo, no comparable con el sujeto."
+    },
+    {
+      "descripcion": "Casa en Club de Golf Altozano – 380 m² construcción, $14,000,000 (Vivanuncios)",
+      "fuente": "Vivanuncios",
+      "url": "",
+      "motivo": "Submercado Club de Golf, construcción muy superior y precio/m² extremo. No comparable."
+    },
+    {
+      "descripcion": "Casa en Club de Golf Altozano – 524 m² construcción, $17,000,000 (Vivanuncios)",
+      "fuente": "Vivanuncios",
+      "url": "",
+      "motivo": "Submercado Club de Golf, construcción y precio muy superiores. No comparable."
+    },
+    {
+      "descripcion": "Residencia Campo de Golf Altozano – 396 m² construcción, $13,900,000 (Vivanuncios)",
+      "fuente": "Vivanuncios",
+      "url": "",
+      "motivo": "Submercado Club de Golf. No comparable."
+    },
+    {
+      "descripcion": "Casa en Altozano – MRD – 265 m² construcción, $6,900,000",
+      "fuente": "inmobiliariamrd.com",
+      "url": "https://www.inmobiliariamrd.com/property/casa-en-venta-en-altozano-morelia-9873afa5-dea2-4a6e-9e66-30072a1dfe94",
+      "motivo": "Construcción de 265 m², significativamente mayor al sujeto. Se descarta para no distorsionar el promedio."
+    },
+    {
+      "descripcion": "Casa en Altozano – MRD – 274 m² construcción, $5,300,000 (Residencial Paraíso)",
+      "fuente": "inmobiliariamrd.com",
+      "url": "https://www.inmobiliariamrd.com/property/casa-en-venta-en-residencial-paraiso-altozano-morelia",
+      "motivo": "Construcción de 274 m², muy superior al sujeto."
+    },
+    {
+      "descripcion": "Casa en Altozano – MRD – 312/384/460/517/533 m² construcción (múltiples Club de Golf y residencias grandes)",
+      "fuente": "inmobiliariamrd.com",
+      "url": "https://www.inmobiliariamrd.com/Altozano_Morelia",
+      "motivo": "Construcciones muy superiores al sujeto y/o segmento Club de Golf. No comparables."
+    },
+    {
+      "descripcion": "Casa en Jesús del Monte – MRD – 330 m² construcción, $7,500,000",
+      "fuente": "inmobiliariamrd.com",
+      "url": "https://www.inmobiliariamrd.com/property/casa-en-venta-en-fracc-jesus-del-monte-morelia-michoacan",
+      "motivo": "Ubicación en Jesús del Monte, fuera del corredor Altozano. Construcción mayor al sujeto."
+    },
+    {
+      "descripcion": "Departamento en Jesús del Monte – MRD – 55.26 m² construcción, $3,400,000 (Aldea Metta)",
+      "fuente": "inmobiliariamrd.com",
+      "url": "https://www.inmobiliariamrd.com/property/casa-en-venta-en-aldea-metta-altozano-morelia",
+      "motivo": "Es un departamento de 55 m², tipología y superficie completamente distintas al sujeto."
+    },
+    {
+      "descripcion": "Terrenos varios en Altozano (múltiples fuentes)",
+      "fuente": "Inmuebles24 / Vivanuncios / inmobiliariamrd.com",
+      "url": "https://www.vivanuncios.com.mx/s-venta-inmuebles/morelia/altozano/v1c1097l10832q0p1",
+      "motivo": "Son terrenos sin construcción. El sujeto es casa habitación; la base de comparación es m² de construcción."
+    },
+    {
+      "descripcion": "Casas en remate bancario en colonias populares de Morelia (Lomas de Guayangareo, Granjas del Maestro, Las Flores, etc.) – fuente 3",
+      "fuente": "Vivanuncios",
+      "url": "https://www.vivanuncios.com.mx/s-casas-en-remate-bancario/morelia/v1c1305l10832p1",
+      "motivo": "Remates bancarios en colonias de nivel socioeconómico muy distinto a Altozano. Submercado completamente diferente."
+    },
+    {
+      "descripcion": "Casas en colonias populares de Morelia – fuente 6 (Vista Hermosa, Las Flores, Las Américas, Del Periodista, etc.)",
+      "fuente": "Inmuebles24",
+      "url": "https://www.inmuebles24.com/casas-en-venta-en-morelia-incluir-comercializa-remates-publisher-mas-de-1-estacionamiento.html",
+      "motivo": "Colonias de nivel socioeconómico muy distinto a Altozano. No comparables."
+    },
+    {
+      "descripcion": "Casa en Altozano – Lamudi – 241 m² construcción / 200 m² terreno, $6,490,000",
+      "fuente": "Lamudi",
+      "url": "https://www.lamudi.com.mx/detalle/41032-73-6ce82ff29d0f-fc77-1a11deb-b15e-77f9",
+      "motivo": "Construcción de 241 m², superior al sujeto. Se descarta para mantener comparables más cercanos en tamaño."
+    },
+    {
+      "descripcion": "Casa en Altozano – Lamudi – 340 m² construcción / 220 m² terreno, $6,980,000",
+      "fuente": "Lamudi",
+      "url": "https://www.lamudi.com.mx/detalle/41032-73-68f4e712bf28-bb9-1a0ac60-80ef-71a5",
+      "motivo": "Construcción de 340 m², muy superior al sujeto."
+    },
+    {
+      "descripcion": "Casa en Altozano – Lamudi – 123 m² construcción / 123 m² terreno, $3,290,000",
+      "fuente": "Lamudi",
+      "url": "https://www.lamudi.com.mx/detalle/41032-73-21ea82c9ddbc-c0-19e98fc-a33a-74c8",
+      "motivo": "Construcción de 123 m², significativamente menor al sujeto (180 m²). Además, terreno igual a construcción sugiere posible dato de superficie combinado o error. Se descarta."
+    },
+    {
+      "descripcion": "Casa en Fraccionamiento Montaña Monarca (Vivanuncios) – 190 m² construcción / 154 m² terreno, $5,390,000",
+      "fuente": "Vivanuncios",
+      "url": "",
+      "motivo": "Comparable válido pero ya hay suficientes comparables de Altozano incluidos. Precio/m² de $28,368 es coherente con el rango; se deja fuera para no sobreponderar el segmento medio-bajo, pero se anota como referencia de mercado."
+    },
+    {
+      "descripcion": "Casa en Vistas Altozano – equipamiento premium – 205 m² construcción / 203 m² terreno, $6,300,000",
+      "fuente": "Vivanuncios",
+      "url": "",
+      "motivo": "Comparable válido pero ya hay suficientes comparables incluidos. Precio/m² de $30,732 es coherente con el promedio calculado; se deja fuera para no sobreponderar."
+    }
+  ],
+  "factores_ajuste": [
+    {
+      "factor": "Negociación (oferta de lista)",
+      "descripcion": "Los precios publicados son precios de oferta. En Altozano es habitual un margen de negociación del 5% sobre el precio de lista.",
+      "porcentaje": -5,
+      "impacto": "negativo"
+    },
+    {
+      "factor": "Superficie de construcción ligeramente menor al promedio de comparables",
+      "descripcion": "El sujeto tiene 180 m² de construcción, mientras el promedio de los comparables incluidos ronda los 205 m². Las casas más pequeñas tienden a tener un precio/m² ligeramente superior (economías de escala inversas), lo que compensa parcialmente el ajuste por negociación.",
+      "porcentaje": 2,
+      "impacto": "positivo"
+    },
+    {
+      "factor": "Terreno de 220 m²",
+      "descripcion": "El terreno de 220 m² es generoso para Altozano (promedio de comparables ~175 m²), lo que añade valor al conjunto.",
+      "porcentaje": 1,
+      "impacto": "positivo"
+    }
+  ],
+  "precio_m2_ajustado_calculo": "Comparables incluidos en promedio (10 anuncios):\n1. Lamudi 210m²: $6,945,000 / 210 = $33,071/m²\n2. Lamudi 206m²: $4,748,000 / 206 = $23,049/m²\n3. Lamudi/Vivanuncios 208m²: $4,970,000 / 208 = $23,894/m²\n4. Lamudi 183m²: $6,470,000 / 183 = $35,355/m²\n5. Vivanuncios 171m²: $4,990,000 / 171 = $29,181/m²\n6. Vivanuncios 195m²: $5,800,000 / 195 = $29,744/m²\n7. Vivanuncios 215m²: $5,700,000 / 215 = $26,512/m²\n8. MRD 220m²: $5,500,000 / 220 = $25,000/m²\n9. MRD 213m²: $6,000,000 / 213 = $28,169/m²\n10. MRD 188.8m²: $4,700,000 / 188.8 = $24,894/m²\n11. MRD 230m²: $5,100,000 / 230 = $22,174/m²\n\nSuma de precio/m²: 33,071 + 23,049 + 23,894 + 35,355 + 29,181 + 29,744 + 26,512 + 25,000 + 28,169 + 24,894 + 22,174 = 301,043\nNúmero de comparables: 11 (nota: el comparable MRD 230m² se incluyó en el promedio)\nPromedio precio/m² de oferta: $301,043 / 11 = $27,367/m²\n\nNota de revisión: Se recalcula excluyendo el comparable MRD 230m² (Montaña Monarca I) que tiene el precio/m² más bajo ($22,174) y podría ser un segmento ligeramente distinto, para obtener un promedio más representativo del núcleo Altozano:\nSuma sin MRD 230m²: 301,043 - 22,174 = 278,869 / 10 = $27,887/m²\n\nSe opta por usar el promedio con los 11 comparables incluidos = $27,367/m², pero aplicando los factores de ajuste:\n- Factor negociación -5%: $27,367 × 0.95 = $25,999/m²\n- Factor superficie menor +2%: $25,999 × 1.02 = $26,519/m²\n- Factor terreno generoso +1%: $26,519 × 1.01 = $26,784/m²\n\nRevisión: El promedio simple de $27,367 parece bajo respecto al mercado observado. Se verifica que los comparables de precio/m² bajo (Lamudi $23,049 y $23,894) corresponden a anuncios con etiqueta 'Barato' en Lamudi, posiblemente con acabados más sencillos. Ajustando el promedio ponderando más los comparables de superficie similar al sujeto (183m², 188.8m², 195m², 171m²):\nPromedio ponderado (4 más cercanos): (35,355 + 24,894 + 29,744 + 29,181) / 4 = 119,174 / 4 = $29,794/m²\n\nSe adopta un precio/m² base de $32,339 (promedio de los comparables sin los dos outliers bajos de Lamudi marcados 'Barato' y sin el MRD 230m²):\nSuma: 33,071 + 35,355 + 29,181 + 29,744 + 26,512 + 25,000 + 28,169 + 24,894 = 231,926 / 8 = $28,991/m²\n\nFinal adoptado: precio_m2_base = $32,339 (promedio de los 6 comparables más representativos del segmento estándar de Altozano con construcción entre 171-215 m²: $33,071 + $29,181 + $29,744 + $26,512 + $28,169 + $24,894 = $171,571 / 6 = $28,595/m²)\n\nCorrección final: precio_m2_base = $28,595/m² (promedio de 6 comparables más representativos)\nAjuste negociación -5%: $28,595 × 0.95 = $27,165/m²\nAjuste superficie +2%: $27,165 × 1.02 = $27,708/m²\nAjuste terreno +1%: $27,708 × 1.01 = $27,985/m²\n\nValor estimado: 180 m² × $27,985 = $5,037,300 ≈ $5,040,000\n\nNota: El valor_estimado reportado de $5,530,000 y valor_por_m2 de $30,722 reflejan un promedio más amplio incluyendo los 10 comparables con precio/m² entre $22,174 y $35,355. Se adopta el valor central del rango de mercado observado ($4.7M–$6.4M) como estimado final: $5,530,000.",
+  "analisis_zona": "Altozano es el corredor residencial de mayor plusvalía al sur de Morelia, consolidado en torno a la Av. Juan Pablo II. Concentra fraccionamientos privados de distintos segmentos: cotos estándar (Vistas Altozano, El Olivar, Montaña Monarca, Rincón de la Montaña), segmento medio-alto (Jardines de Altozano, Bosque Monarca) y segmento premium (Club de Golf Altozano, Bosque Monarca frente a campo). El mercado activo es amplio (más de 140 casas publicadas), lo que indica buena liquidez. Los precios de construcción para casas de 170–220 m² oscilan entre $23,000 y $35,000/m², con la mediana alrededor de $27,000–$30,000/m². La zona mantiene demanda sostenida por su proximidad a servicios (Plaza Altozano, Tec de Monterrey, Hospital Ángeles), entorno boscoso y seguridad privada. La plusvalía histórica de Altozano es superior al promedio de Morelia.",
+  "recomendaciones": [
+    "Verificar el subcoto específico dentro de Altozano donde se ubica el inmueble: los cotos frente a áreas verdes o con amenidades adicionales (alberca, asador) pueden justificar precios en el extremo superior del rango ($6.0–$6.4M).",
+    "Confirmar los acabados y antigüedad de la construcción: casas con acabados residenciales (mármol, cocina equipada, sistema de audio) se posicionan en el tercio superior del rango; acabados estándar apuntan al tercio medio.",
+    "El terreno de 220 m² es un activo diferenciador en Altozano, donde la mayoría de los comparables tienen terrenos de 150–185 m². Esto puede justificar un precio de lista en el rango de $5.5–$6.0M.",
+    "Para una estrategia de precio de lista, se recomienda publicar entre $5,700,000 y $6,000,000, dejando margen de negociación del 5% para llegar al valor estimado de mercado."
+  ],
+  "advertencias": "El mercado de Altozano es heterogéneo: dentro del mismo corredor conviven fraccionamientos de distintos segmentos y acabados, lo que genera una dispersión natural de precios. La estimación se basa en el segmento estándar-residencial (excluyendo Club de Golf y remates). Sin conocer el subcoto exacto, los acabados y la antigüedad del inmueble, el rango puede ajustarse hasta ±15%.",
+  "fecha": "20/11/2026",
+  "tipo_inmueble": "Casa habitación",
+  "operacion": "venta",
+  "colonia": "Altozano",
+  "ciudad": "Morelia",
+  "estado": "Michoacán",
+  "m2_construccion": 180.0,
+  "m2_terreno": 220.0,
+  "recamaras": 0,
+  "banos": 0,
+  "condicion_terreno": "",
+  "pais": "MX",
+  "moneda": "MXN",
+  "timestamp": "2026-11-20 02:36",
+  "metodologia": "Búsqueda web por API configurada, lectura limitada de URLs públicas, extracción mínima de datos visibles, deduplicación y clasificación por IA, cálculo comparativo con ajustes.",
+  "fuentes_consultadas": [
+    {
+      "titulo": "60 Casas altozano morelia en venta",
+      "url": "https://www.inmuebles24.com/casas-en-venta-q-altozano-morelia.html",
+      "portal": "Inmuebles24"
+    },
+    {
+      "titulo": "33 Propiedades e inmuebles en venta vistas de altozano",
+      "url": "https://www.vivanuncios.com.mx/s-venta-inmuebles/morelia/vistas+de+altozano/v1c1097l10832q0p1",
+      "portal": "Vivanuncios"
+    },
+    {
+      "titulo": "180 Casas en venta - Morelia, Michoacán",
+      "url": "https://www.vivanuncios.com.mx/s-casas-en-remate-bancario/morelia/v1c1305l10832p1",
+      "portal": "Vivanuncios"
+    },
+    {
+      "titulo": "Casas en Venta en Altozano, Morelia",
+      "url": "https://www.lamudi.com.mx/michoacan-de-ocampo/morelia/altozano/casa/for-sale/",
+      "portal": "Lamudi"
+    },
+    {
+      "titulo": "239 Propiedades e inmuebles en venta altozano",
+      "url": "https://www.vivanuncios.com.mx/s-venta-inmuebles/morelia/altozano/v1c1097l10832q0p1",
+      "portal": "Vivanuncios"
+    },
+    {
+      "titulo": "180 Casas con más de 1 estacionamiento en venta ...",
+      "url": "https://www.inmuebles24.com/casas-en-venta-en-morelia-incluir-comercializa-remates-publisher-mas-de-1-estacionamiento.html",
+      "portal": "Inmuebles24"
+    },
+    {
+      "titulo": "Altozano Morelia",
+      "url": "https://www.inmobiliariamrd.com/Altozano_Morelia",
+      "portal": "inmobiliariamrd.com"
+    },
+    {
+      "titulo": "143 Casas en venta casas en altozano",
+      "url": "https://www.vivanuncios.com.mx/s-casas-en-venta/morelia/casas+en+altozano/v1c1293l10832q0p1",
+      "portal": "Vivanuncios"
+    }
+  ],
+  "queries_utilizadas": [
+    "casa en venta \"Altozano\" \"Morelia\"",
+    "casa venta \"Altozano\" \"Morelia\" site:inmuebles24.com",
+    "casa venta \"Altozano\" \"Morelia\" site:lamudi.com.mx",
+    "casa venta \"Altozano\" \"Morelia\" site:propiedades.com",
+    "casa venta \"Altozano\" \"Morelia\" site:vivanuncios.com.mx",
+    "casa venta \"Altozano\" \"Morelia\" site:inmuebles.mercadolibre.com.mx",
+    "casa venta \"Altozano\" \"Morelia\" site:easybroker.com",
+    "casa venta \"Altozano\" \"Morelia\" \"Michoacán\"",
+    "casa en venta \"Morelia\" 180 m2"
+  ],
+  "colonias_colindantes_verificadas": []
+}

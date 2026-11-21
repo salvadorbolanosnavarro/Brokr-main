@@ -1,0 +1,28 @@
+{
+  "mode": "server/API only, browser session not certified",
+  "checks": [
+    {
+      "name": "A3_flag_off",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "enabled": false,
+        "user_id": "bd7e565d-c0c7-46d1-9cc2-70399ed97a91"
+      }
+    },
+    {
+      "name": "A3_alternate_html_off_redirect",
+      "http_status": 302,
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "same_session_remains_valid",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "own_profile_visible": true
+      }
+    }
+  ]
+}

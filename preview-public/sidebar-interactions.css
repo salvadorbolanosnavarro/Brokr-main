@@ -1,0 +1,97 @@
+/* Broquer — canonical interaction states for real sidebar modules only.
+   Same semantic control = same visual language.
+   navigation tab   -> blue underline
+   segmented toggle -> white active pill + subtle shadow
+   filter/preset    -> blue-tinted selected chip
+   card/radio       -> blue border + focus halo
+   focusable field  -> blue border + focus halo
+*/
+
+/* ── Navigation tabs: one language everywhere ───────────── */
+body[data-app="contactos"] .ftab.active,
+body[data-app="leads"] .ftab.active,
+body[data-app="tareas"] .tk-tab.active,
+body[data-app="estadisticas"] .ftab.active,
+body[data-app="avm"] .avm-tab.active {
+  color: var(--ink) !important;
+  border-bottom-color: var(--sky-blue) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Facebook's top-level navigation is a tab bar, not a segmented toggle. */
+body[data-app="facebook-ads"] .fa-tabs {
+  gap: var(--sp-5) !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+}
+body[data-app="facebook-ads"] .fa-tab {
+  flex: 0 0 auto !important;
+  padding: var(--sp-3) 0 var(--sp-2) !important;
+  color: var(--mute) !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  border-bottom: 2px solid transparent !important;
+  box-shadow: none !important;
+}
+body[data-app="facebook-ads"] .fa-tab.active {
+  color: var(--ink) !important;
+  border-bottom-color: var(--sky-blue) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* ── Segmented toggles: same active pill as WhatsApp ─────── */
+body[data-app="estadisticas"] .es-seg button.is-active,
+body[data-app="leads"] .view-seg button.active {
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  border-color: transparent !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+
+/* ── Filter / preset chips ───────────────────────────────── */
+body[data-app="propiedades"] .props-filter-est-btn.is-active,
+body[data-app="video"] .vid-ed-preset.is-sel {
+  background: var(--sky-canvas) !important;
+  border-color: var(--sky-blue) !important;
+  color: var(--sky-blue) !important;
+  box-shadow: none !important;
+}
+
+/* ── Card/radio selection ────────────────────────────────── */
+body[data-app="avm"] .tipo-btn.selected,
+body[data-app="avm"] .comp-auto-card.selected,
+body[data-app="video"] .vid-ed-card.is-sel,
+body[data-app="video"] .vid-fmt.is-sel {
+  background: var(--sky-canvas) !important;
+  border-color: var(--sky-blue) !important;
+  color: var(--ink) !important;
+  box-shadow: var(--focus) !important;
+}
+
+/* ── Field/search focus: blue, never ad-hoc black ────────── */
+body[data-app="contactos"] .head-search:focus-within,
+body[data-app="leads"] .head-search:focus-within,
+body[data-app="propiedades"] .props-search-wrap:focus-within,
+body[data-app="tareas"] .tk-search-wrap:focus-within,
+body[data-app="tareas"] .tk-composer input[type="text"]:focus,
+body[data-app="facebook-ads"] .fa-field input:focus,
+body[data-app="facebook-ads"] .fa-field textarea:focus,
+body[data-app="video"] .vid-ed-prompt:focus {
+  border-color: var(--sky-blue) !important;
+  box-shadow: var(--focus) !important;
+  outline: none !important;
+}
+
+/* Action inside the task composer follows the same blue CTA language. */
+body[data-app="tareas"] .tk-composer .go {
+  background: var(--sky-blue) !important;
+  color: var(--paper) !important;
+}
+body[data-app="tareas"] .tk-composer .go:hover {
+  background: var(--sky-blue-press) !important;
+}

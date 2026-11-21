@@ -1,0 +1,61 @@
+{
+  "mode": "authenticated server HTTP checks; UI still pending",
+  "checks": [
+    {
+      "name": "A3_server_flag",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "enabled": true
+      }
+    },
+    {
+      "name": "A3_alternate_html_server_gate",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "expected_status": 200
+      }
+    },
+    {
+      "name": "B2_server_flag",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "enabled": false
+      }
+    },
+    {
+      "name": "B2_alternate_html_server_gate",
+      "http_status": 302,
+      "passed": true,
+      "details": {
+        "expected_status": 302
+      }
+    },
+    {
+      "name": "anonymous_flag_rejected",
+      "http_status": 401,
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "B2_error_probe_denied",
+      "http_status": 403,
+      "passed": true,
+      "details": null
+    },
+    {
+      "name": "Sentry_ingestion_and_receipt",
+      "http_status": 200,
+      "passed": true,
+      "details": {
+        "event_id": "565301cf-35f2-4654-b484-e41dc7d4fc6b",
+        "sentry_status": 200,
+        "sentry_accepted": true,
+        "receipt_saved": true,
+        "environment": "staging"
+      }
+    }
+  ]
+}

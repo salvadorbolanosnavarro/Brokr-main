@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#081C4E" /><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+  <title>WhatsApp de ChatGPT · Broquer</title>
+  <link rel="stylesheet" href="brokr-theme.css" />
+  <style>
+    .wac-page { min-height:100%; background:var(--paper); padding:var(--sp-4) var(--pad-x) var(--sp-10); }
+    .wac-wrap { max-width:var(--page-max); margin:0 auto; }
+    .wac-hero { display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:var(--sp-4); margin-bottom:var(--sp-4); }
+    .wac-card { background:var(--paper); border:1px solid var(--line-2); border-radius:var(--r-lg); box-shadow:var(--shadow-xs); overflow:hidden; }
+    .wac-intro { padding:var(--sp-7); }
+    .wac-eyebrow { display:inline-flex; background:var(--success-soft); color:var(--success); border-radius:var(--r-pill); padding:var(--sp-1) var(--sp-3); font-size:var(--fs-xs); font-weight:800; }
+    .wac-title { font-family:var(--font-display); font-size:var(--fs-display); line-height:var(--lh-display); letter-spacing:-.035em; margin:var(--sp-4) 0 var(--sp-3); color:var(--ink); }
+    .wac-sub { color:var(--ink-2); font-size:var(--fs-body); line-height:var(--lh); max-width:850px; }
+    .wac-actions,.wac-row { display:flex; gap:var(--sp-2); flex-wrap:wrap; align-items:center; }
+    .wac-actions { margin-top:var(--sp-5); }
+    .wac-btn { min-height:var(--h-sm); border:1px solid var(--line-2); background:var(--paper); color:var(--ink); border-radius:var(--r-sm); padding:0 var(--sp-4); font:700 var(--fs-sm)/1 var(--font-sans); cursor:pointer; text-decoration:none; transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease); }
+    .wac-btn:hover { background:var(--paper-2); border-color:var(--sky-blue-lift); }
+    .wac-btn.primary { background:var(--sky-blue); border-color:var(--sky-blue); color:var(--paper); }
+    .wac-btn.primary:hover { background:var(--sky-blue-press); border-color:var(--sky-blue-press); }
+    .wac-btn.green { background:var(--success); border-color:var(--success); color:var(--paper); }
+    .wac-btn:disabled { opacity:.5; cursor:not-allowed; }
+    .wac-status { padding:var(--sp-5); display:grid; gap:var(--sp-4); }
+    .wac-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-2); }
+    .wac-kpi { background:var(--paper-2); border-radius:var(--r); padding:var(--sp-3); text-align:center; }
+    .wac-kpi b { display:block; font-size:var(--fs-h3); font-variant-numeric:tabular-nums; }
+    .wac-kpi span { font-size:var(--fs-caption); color:var(--mute); font-weight:700; }
+    .wac-grid { display:grid; grid-template-columns:320px minmax(380px,1fr) 360px; gap:var(--sp-4); }
+    .wac-head { padding:var(--sp-4); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+    .wac-head h2 { font-size:var(--fs-sm); margin:0; }
+    .wac-body { padding:var(--sp-4); }
+    .wac-number { width:100%; border:1px solid var(--line); background:var(--paper); border-radius:var(--r); padding:var(--sp-3); text-align:left; margin-bottom:var(--sp-2); cursor:pointer; display:flex; gap:var(--sp-3); align-items:center; font-family:var(--font-sans); }
+    .wac-number:hover { background:var(--paper-2); }
+    .wac-number.is-active { background:var(--sky-canvas); border-color:var(--sky-blue); }
+    .wac-avatar { width:40px; height:40px; border-radius:var(--r-sm); background:var(--sky-navy); color:var(--paper); display:grid; place-items:center; font-weight:800; }
+    .wac-meta { min-width:0; flex:1; }
+    .wac-meta strong,.wac-meta span { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .wac-meta strong { font-size:var(--fs-sm); }
+    .wac-meta span { font-size:var(--fs-xs); color:var(--mute); }
+    .wac-badge { font-size:var(--fs-caption); font-weight:800; border-radius:var(--r-pill); padding:var(--sp-1) var(--sp-2); background:var(--paper-2); color:var(--ink-2); }
+    .wac-badge.ok { background:var(--success-soft); color:var(--success); }
+    .wac-badge.warn { background:var(--warn-soft); color:var(--warn); }
+    .wac-badge.bad { background:var(--danger-soft); color:var(--danger); }
+    .wac-toolbar { display:flex; gap:var(--sp-2); padding:var(--sp-4); border-bottom:1px solid var(--line); flex-wrap:wrap; }
+    .wac-input,.wac-area { width:100%; border:1px solid var(--line-2); border-radius:var(--r); padding:var(--sp-3) var(--sp-4); font:500 var(--fs-sm)/var(--lh-sm) var(--font-sans); box-sizing:border-box; background:var(--shell); color:var(--ink); }
+    .wac-input:focus,.wac-area:focus { outline:none; border-color:var(--sky-blue); box-shadow:var(--focus); }
+    .wac-area { min-height:118px; resize:vertical; }
+    .wac-feed { min-height:560px; max-height:660px; overflow:auto; background:var(--paper-2); padding:var(--sp-5); display:flex; flex-direction:column; gap:var(--sp-3); }
+    .wac-msg { max-width:78%; border-radius:var(--r-lg); padding:var(--sp-3) var(--sp-4); font-size:var(--fs-sm); line-height:var(--lh-sm); box-shadow:var(--shadow-xs); }
+    .wac-msg.in { align-self:flex-start; background:var(--paper); border:1px solid var(--line); }
+    .wac-msg.out { align-self:flex-end; background:var(--sky-canvas); color:var(--ink); border:1px solid var(--line-2); }
+    .wac-msg small { display:block; margin-top:var(--sp-2); color:var(--mute); font-size:var(--fs-caption); }
+    .wac-note { background:var(--paper-2); border:1px solid var(--line); border-radius:var(--r); padding:var(--sp-3); margin:var(--sp-2) 0; }
+    .wac-note b { font-size:var(--fs-xs); }
+    .wac-note p { font-size:var(--fs-xs); color:var(--ink-2); line-height:var(--lh-xs); margin:var(--sp-1) 0 0; }
+    .wac-modal { position:fixed; inset:0; background:rgba(8,28,78,.55); display:none; align-items:center; justify-content:center; z-index:var(--z-modal); padding:var(--sp-5); }
+    .wac-modal.is-open { display:flex; }
+    .wac-dialog { width:min(680px,100%); background:var(--paper); border:1px solid var(--line-2); border-radius:var(--r-modal); box-shadow:var(--shadow-xl); padding:var(--sp-6); }
+    .wac-dialog h3 { margin:0 0 var(--sp-2); }
+    .wac-dialog p { color:var(--ink-2); line-height:var(--lh); }
+    .wac-alert { border:1px solid var(--line); border-radius:var(--r); padding:var(--sp-3); margin-top:var(--sp-3); color:var(--ink-2); }
+    .wac-alert.bad { background:var(--danger-soft); border-color:var(--danger); color:var(--danger); }
+    .wac-alert.ok { background:var(--success-soft); border-color:var(--success); color:var(--success); }
+    @media (max-width:1100px) { .wac-hero,.wac-grid { grid-template-columns:1fr; } .wac-feed { max-height:none; } }
+    @media (max-width:720px) { .wac-page { padding:var(--sp-3) var(--sp-3) var(--sp-20); } .wac-kpis { grid-template-columns:1fr; } .wac-msg { max-width:92%; } .wac-title{font-size:var(--fs-h1);line-height:var(--lh-h1);} }
+  </style>
+<link rel="stylesheet" href="/staging-mobile-fields.css"/>
+<script src="/staging-network-audit.js" defer></script>
+</head>
+<body data-app="whatsapp-chatgpt">
+  <main class="wac-page">
+    <div class="wac-wrap">
+      <section class="wac-hero">
+        <article class="wac-card wac-intro">
+          <span class="wac-eyebrow">URL-only · conexión real</span>
+          <h1 class="wac-title">WhatsApp de ChatGPT para Broquer.</h1>
+          <p class="wac-sub">Conecta uno o varios números con Meta Embedded Signup, centraliza chats por número o todos a la vez y activa a Broquer para responder, calificar, anotar, buscar inmuebles y agendar citas.</p>
+          <div class="wac-actions">
+            <button class="wac-btn primary" id="connectBtn">Conectar mi número ahora</button>
+            <button class="wac-btn" id="reloadBtn">Actualizar conexión</button>
+            <button class="wac-btn green" id="openTestBtn">Enviar prueba</button>
+          </div>
+          <div id="setupAlert" class="wac-alert"></div>
+        </article>
+        <aside class="wac-card wac-status">
+          <div class="wac-kpis">
+            <div class="wac-kpi"><b id="numCount">0</b><span>números</span></div>
+            <div class="wac-kpi"><b id="chatCount">0</b><span>chats listos</span></div>
+            <div class="wac-kpi"><b id="scoreAvg">—</b><span>score promedio</span></div>
+          </div>
+          <div class="wac-note"><b>Requisito de Meta</b><p>La conexión abre Facebook/Meta. Debes tener sesión y permisos para administrar la cuenta de WhatsApp Business que quieres vincular.</p></div>
+        </aside>
+      </section>
+      <section class="wac-grid">
+        <aside class="wac-card">
+          <div class="wac-head"><h2>Números conectados</h2><span class="wac-badge ok">multi</span></div>
+          <div class="wac-body" id="numberList"></div>
+        </aside>
+        <section class="wac-card">
+          <div class="wac-toolbar">
+            <input id="searchBox" class="wac-input" placeholder="Buscar prospecto, necesidad o zona…" style="flex:1;min-width:240px;width:auto" />
+            <button class="wac-btn" data-filter="all">Todos</button>
+            <button class="wac-btn" data-filter="hot">Calientes</button>
+            <button class="wac-btn" data-filter="handoff">Handoff</button>
+          </div>
+          <div id="feed" class="wac-feed"></div>
+        </section>
+        <aside class="wac-card">
+          <div class="wac-head"><h2>Identidad y automatización</h2></div>
+          <div class="wac-body">
+            <label><b>Entrenamiento</b></label>
+            <textarea id="identity" class="wac-area">Habla como asesor inmobiliario premium: claro, cálido y directo. Pregunta presupuesto, zona, fecha de mudanza y método de pago antes de proponer inmuebles.</textarea>
+            <div class="wac-row" style="margin-top:var(--sp-3)">
+              <button class="wac-btn primary" id="saveIdentity">Guardar</button>
+              <button class="wac-btn" id="simulateBtn">Simular</button>
+            </div>
+            <div id="leadCard" class="wac-note"></div>
+            <div class="wac-note"><b>Inmuebles sugeridos</b><p id="propertyMatches">Conecta el número y Broquer podrá usar el inventario para proponer fichas según la búsqueda del prospecto.</p></div>
+            <button class="wac-btn primary" id="scheduleBtn">Agendar cita</button>
+          </div>
+        </aside>
+      </section>
+    </div>
+  </main>
+  <div class="wac-modal" id="testModal">
+    <div class="wac-dialog">
+      <h3>Enviar mensaje de prueba</h3>
+      <p>Meta sólo permite iniciar conversaciones con plantillas aprobadas fuera de la ventana de 24h. Este botón envía texto libre si el destinatario ya abrió conversación o si tu número está en modo prueba.</p>
+      <label>Número destino con lada</label>
+      <input id="testTo" class="wac-input" placeholder="5215512345678" />
+      <label>Mensaje</label>
+      <textarea id="testBody" class="wac-area">Hola, soy Broquer. Tu número quedó conectado correctamente a WhatsApp de ChatGPT.</textarea>
+      <div class="wac-row" style="margin-top:var(--sp-3)">
+        <button class="wac-btn primary" id="sendTestBtn">Enviar por WhatsApp</button>
+        <button class="wac-btn" id="closeTestBtn">Cerrar</button>
+      </div>
+      <div id="testResult" class="wac-alert"></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      const API = (window.API_BASE || 'https://brokr-main-staging.up.railway.app') + '/whatsapp-chatgpt';
+      let cfg = null;
+      let numbers = [];
+      let selected = 'all';
+      let filter = 'all';
+      const sampleChats = [
+        { name: 'Mariana Ríos', need: 'Depto 2 rec en Roma Norte, hasta $35k', score: 92, handoff: true, in: 'Hola, busco un departamento pet friendly en Roma Norte.', out: 'Tengo tres opciones que cumplen. ¿Quieres que te comparta fichas y horarios para visitarlos?' },
+        { name: 'Carlos Ibarra', need: 'Casa en Zapopan, compra con crédito', score: 74, handoff: false, in: '¿Tienes casas por Andares con jardín?', out: 'Sí. Estoy filtrando por jardín, 3 recámaras y crédito. Te envío coincidencias con precio y ficha.' },
+        { name: 'Ana Paula', need: 'Penthouse Polanco, inversión', score: 86, handoff: true, in: 'Me interesa algo premium para invertir esta semana.', out: 'Por el rango y urgencia, te propongo una llamada hoy y preparo comparables de renta.' },
+      ];
+      const $ = (selector) => document.querySelector(selector);
+      const token = () => localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
+      function headers() {
+        const h = { 'Content-Type': 'application/json' };
+        if (token()) h.Authorization = 'Bearer ' + token();
+        return h;
+      }
+      function alertBox(el, msg, type = 'ok') {
+        el.className = 'wac-alert ' + type;
+        el.textContent = msg;
+      }
+      function esc(value) {
+        return String(value || '').replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+      }
+      async function api(path, opts = {}) {
+        const r = await fetch(API + path, { ...opts, headers: { ...headers(), ...(opts.headers || {}) } });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.detail || j.error || r.statusText);
+        return j;
+      }
+      async function init() {
+        try {
+          cfg = await api('/config');
+          if (!cfg.ok) {
+            alertBox($('#setupAlert'), 'Backend casi listo. Faltan variables: ' + cfg.missing.join(', ') + '. Configúralas y vuelve a cargar.', 'bad');
+            $('#connectBtn').disabled = true;
+          } else {
+            alertBox($('#setupAlert'), 'Listo para conectar. Se abrirá Meta Embedded Signup y al terminar guardaremos el número en Broquer.', 'ok');
+          }
+          await loadNumbers();
+          loadSdk();
+        } catch (e) {
+          alertBox($('#setupAlert'), e.message.includes('Inicia sesión') ? 'Inicia sesión en Broquer antes de conectar WhatsApp.' : e.message, 'bad');
+          $('#connectBtn').disabled = true;
+          renderNumbers();
+          renderFeed();
+        }
+      }
+      function loadSdk() {
+        if (!cfg || !cfg.app_id || window.FB) return;
+        window.fbAsyncInit = function () {
+          FB.init({ appId: cfg.app_id, autoLogAppEvents: true, xfbml: false, version: cfg.graph_version || 'v23.0' });
+        };
+        const js = document.createElement('script');
+        js.async = true;
+        js.defer = true;
+        js.crossOrigin = 'anonymous';
+        js.src = 'https://connect.facebook.net/es_LA/sdk.js';
+        document.body.appendChild(js);
+      }
+      async function loadNumbers() {
+        try {
+          const j = await api('/numbers');
+          numbers = j.numbers || [];
+        } catch (_) {
+          numbers = [];
+        }
+        renderNumbers();
+        renderFeed();
+      }
+      function renderNumbers() {
+        const rows = [{ phone_number_id: 'all', display_number: 'Todos los números', waba_name: 'Vista unificada' }].concat(numbers);
+        $('#numberList').innerHTML = rows.map((n) => `<button class="wac-number ${selected === n.phone_number_id ? 'is-active' : ''}" data-num="${esc(n.phone_number_id)}"><span class="wac-avatar">${n.phone_number_id === 'all' ? '∞' : 'WA'}</span><span class="wac-meta"><strong>${esc(n.display_number || n.phone_number_id)}</strong><span>${esc(n.waba_name || n.status || 'Conectado')}</span></span><span class="wac-badge ${n.phone_number_id === 'all' ? 'ok' : 'warn'}">${n.quality_rating || 'live'}</span></button>`).join('') || '<div class="wac-note"><b>Sin números</b><p>Conecta tu primer número con el botón superior.</p></div>';
+        $('#numCount').textContent = numbers.length;
+        $('#chatCount').textContent = numbers.length ? sampleChats.length : 0;
+        $('#scoreAvg').textContent = numbers.length ? 84 : '—';
+      }
+      function chats() {
+        const q = $('#searchBox').value.toLowerCase();
+        return sampleChats.filter((c) => (filter === 'all' || (filter === 'hot' && c.score >= 80) || (filter === 'handoff' && c.handoff)) && (!q || (`${c.name} ${c.need}`).toLowerCase().includes(q)));
+      }
+      function renderFeed() {
+        const list = chats();
+        $('#feed').innerHTML = numbers.length
+          ? list.map((c) => `<div class="wac-msg in">${esc(c.in)}<small>${esc(c.name)} · ${esc(c.need)} · score ${c.score}</small></div><div class="wac-msg out">${esc(c.out)}<small>Broquer · ${c.handoff ? 'requiere handoff' : 'respuesta automática'}</small></div>`).join('')
+          : '<div class="wac-note"><b>Conecta tu número ahora</b><p>Cuando Meta confirme el número, aquí verás conversaciones reales. Esta pantalla ya está conectada al backend nuevo para guardar varios números y enviar pruebas.</p></div>';
+        const c = list[0] || sampleChats[0];
+        $('#leadCard').innerHTML = '<b>Prospecto seleccionado</b><p>' + esc(c.name) + ' · score ' + c.score + ' · ' + (c.handoff ? 'pasar al usuario' : 'Broquer puede continuar') + '</p>';
+      }
+      function connect() {
+        if (!window.FB) {
+          alertBox($('#setupAlert'), 'Cargando SDK de Facebook. Intenta de nuevo en unos segundos.', 'bad');
+          return;
+        }
+        FB.login(async function (resp) {
+          try {
+            if (!resp.authResponse || !resp.authResponse.code) throw new Error('Meta no devolvió código. Cierra popups/bloqueadores y reintenta.');
+            const payload = { code: resp.authResponse.code, register_number: true };
+            const session = resp.authResponse.session_info || resp.authResponse.granted_scopes || {};
+            if (session.waba_id) payload.waba_id = session.waba_id;
+            if (session.phone_number_id) payload.phone_number_id = session.phone_number_id;
+            const done = await api('/complete-signup', { method: 'POST', body: JSON.stringify(payload) });
+            alertBox($('#setupAlert'), 'Número conectado: ' + (done.number.display_number || done.number.phone_number_id), 'ok');
+            await loadNumbers();
+          } catch (e) {
+            alertBox($('#setupAlert'), e.message, 'bad');
+          }
+        }, { config_id: cfg.login_config_id, response_type: 'code', override_default_response_type: true, extras: { setup: {}, featureType: 'whatsapp_business_app_onboarding' } });
+      }
+      document.addEventListener('click', (e) => {
+        const n = e.target.closest('[data-num]');
+        if (n) { selected = n.dataset.num; renderNumbers(); renderFeed(); }
+        const f = e.target.closest('[data-filter]');
+        if (f) { filter = f.dataset.filter; renderFeed(); }
+        if (e.target.id === 'connectBtn') connect();
+        if (e.target.id === 'reloadBtn') loadNumbers();
+        if (e.target.id === 'openTestBtn') $('#testModal').classList.add('is-open');
+        if (e.target.id === 'closeTestBtn') $('#testModal').classList.remove('is-open');
+        if (e.target.id === 'saveIdentity') { localStorage.setItem('broquer_wac_identity', $('#identity').value); alertBox($('#setupAlert'), 'Entrenamiento guardado localmente.', 'ok'); }
+        if (e.target.id === 'simulateBtn') alertBox($('#setupAlert'), 'Simulación: Broquer respondería con tu tono y pediría presupuesto/zona si falta.', 'ok');
+        if (e.target.id === 'scheduleBtn') alertBox($('#setupAlert'), 'Agenda: Broquer propondrá horarios y escalará cuando el prospecto acepte una cita.', 'ok');
+        if (e.target.id === 'sendTestBtn') sendTest();
+      });
+      async function sendTest() {
+        try {
+          if (!numbers[0]) throw new Error('Primero conecta un número.');
+          const res = await api('/send-test', {
+            method: 'POST',
+            body: JSON.stringify({ phone_number_id: numbers[0].phone_number_id, to: $('#testTo').value, body: $('#testBody').value }),
+          });
+          alertBox($('#testResult'), 'Enviado. Meta ID: ' + JSON.stringify(res.meta.messages || res.meta), 'ok');
+        } catch (err) {
+          alertBox($('#testResult'), err.message, 'bad');
+        }
+      }
+      $('#searchBox').addEventListener('input', renderFeed);
+      init();
+    })();
+  </script>
+  <script src="app-shell.js" defer></script>
+</body>
+</html>

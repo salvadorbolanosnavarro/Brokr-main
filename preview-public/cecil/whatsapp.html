@@ -1,0 +1,2529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>WhatsApp · Cecil</title>
+<!--
+  Módulo oculto: no está en MODS de app-shell.js, así que no aparece en el
+  menú lateral. Solo se abre escribiendo whatsapp2.html en la barra del
+  navegador (o un link directo). El header sí lo pinta el shell, vía la
+  entrada 'whatsapp2' en PAGE_META.
+-->
+<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<!-- BROQUER UI v2: identidad landing/Zillow, gana la cascada -->
+<style>
+  .w2-scroll{ padding:24px 28px 64px; max-width:1680px; margin:0 auto; }
+  @media (max-width:720px){ .w2-scroll{ padding:14px 12px 88px; } }
+
+  /* ── Barra superior: números (panel compacto, sin botonzotes) ───── */
+  .w2-topbar{ display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3);
+              flex-wrap:wrap; margin-bottom:var(--sp-5); }
+  .w2-select-filtro{ min-width:220px; }
+  .w2-numeros-link{ cursor:pointer; }
+  .w2-numeros-panel{ display:flex; flex-direction:column; gap:var(--sp-2); margin-top:var(--sp-2); }
+  .w2-numero-row{ display:flex; align-items:center; gap:14px; padding:16px;
+                   border:1px solid var(--line); border-radius:var(--r); background:var(--bone); }
+  .w2-numero-row__dot{ width:9px; height:9px; border-radius:50%; background:var(--mute-2); flex:none; }
+  .w2-numero-row__dot.is-on{ background:var(--success); }
+  .w2-numero-row__info{ flex:1; min-width:0; }
+  .w2-numero-row__alias{ font-weight:700; font-size:var(--fs-body); }
+  .w2-numero-row__sub{ font-size:var(--fs-sm); color:var(--mute); }
+  .w2-numero-row__warn{ color:var(--danger); font-size:var(--fs-xs); font-weight:700; }
+  .w2-app-webhook{ display:flex; align-items:center; gap:var(--sp-3); margin-top:var(--sp-3);
+                    padding-top:var(--sp-3); border-top:1px solid var(--line); }
+
+  /* ── Tabs internos ────────────────────────────────────────── */
+  .w2-tabs{ display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-bottom:var(--sp-5); border-bottom:1px solid var(--line); }
+  .w2-tab{
+           border-bottom:2px solid transparent; cursor:pointer; border-left:0; border-right:0; border-top:0; }
+  .w2-tab.is-active{ border-bottom-color:var(--sky-blue); }
+  .w2-tabs .w2-avanzado{ margin-left:auto; display:flex; align-items:center; gap:var(--sp-2);
+    font-size:var(--fs-xs); color:var(--mute); padding-bottom:var(--sp-2); }
+
+  /* Etiquetas del contacto dentro del hilo */
+  .w2-thread__tags{ display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-1); margin-top:2px; }
+  .w2-tag{ display:inline-flex; align-items:center; gap:4px; font-size:var(--fs-xs); color:var(--ink);
+    background:var(--canvas); border:1px solid var(--line); border-radius:var(--r-pill, 999px);
+    padding:1px var(--sp-2); }
+  .w2-tag button{ cursor:pointer; }
+  .w2-tag-add{ border:1px dashed var(--line); background:none; border-radius:var(--r-pill, 999px);
+    font-size:var(--fs-xs); color:var(--mute); padding:1px var(--sp-2); width:92px; }
+  .w2-tag-add:focus{ outline:none; border-color:var(--sky-blue); color:var(--ink); }
+
+  /* Campañas */
+  .w2-cp-preview{ margin-top:var(--sp-2); padding:var(--sp-3); background:var(--canvas);
+    border:1px solid var(--line); border-radius:var(--r-md, 10px); font-size:var(--fs-sm);
+    color:var(--ink); white-space:pre-wrap; }
+  .w2-cp-row{ display:flex; align-items:center; gap:var(--sp-3); padding:var(--sp-3);
+    border:1px solid var(--line); border-radius:var(--r-md, 10px); background:var(--paper); }
+  .w2-cp-row__info{ flex:1; min-width:0; }
+  .w2-cp-row__nombre{ font-weight:700; font-size:var(--fs-sm); color:var(--ink); }
+  .w2-cp-row__sub{ font-size:var(--fs-xs); color:var(--mute); margin-top:2px; }
+
+  /* Automatizaciones (recetas) */
+  .w2-au-paso{ display:flex; align-items:center; gap:var(--sp-2); margin-bottom:var(--sp-2); }
+  .w2-au-paso .bk-select{ max-width:240px; }
+  .w2-au-paso input{ flex:1; }
+  .w2-au-quitar{ cursor:pointer; }
+
+  /* ── Chats: consola conversacional ────────────────────────── */
+  .w2-app{ display:grid; grid-template-columns:360px 1fr; height:calc(100vh - 250px); min-height:620px;
+           border:1px solid var(--line); border-radius:var(--r-lg); overflow:hidden;
+           background:var(--bone); box-shadow:var(--shadow-xs); }
+  @media (max-width:1080px){ .w2-app{ grid-template-columns:308px 1fr; } }
+
+  .w2-side{ display:flex; flex-direction:column; min-width:0; min-height:0; border-right:1px solid var(--line); background:var(--bone); }
+  .w2-side__head{ padding:14px 16px 12px; display:flex; flex-direction:column; gap:10px; border-bottom:1px solid var(--line); }
+  .w2-search{ position:relative; }
+  .w2-search input{ width:100%; color:var(--ink); }
+  .w2-search input:focus{ outline:none; }
+  .w2-search svg{ position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--mute); }
+  .w2-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .w2-chip{ cursor:pointer; }
+
+  .w2-list{ flex:1; overflow-y:auto; min-width:0; min-height:0; }
+  .w2-conv{ display:flex; gap:12px; align-items:center; padding:12px 16px; cursor:pointer;
+            border-bottom:1px solid var(--line); background:var(--bone); }
+  .w2-conv:hover{ background:var(--shell); }
+  .w2-conv.is-active{ background:var(--sky-canvas); }
+  .w2-conv__ava{ width:48px; height:48px; border-radius:50%; display:flex; align-items:center;
+                 justify-content:center; font-weight:800; font-size:var(--fs-sm); flex:none;
+                 background:var(--data-1-soft); color:var(--data-1); }
+  .w2-ava-1{ background:var(--data-1-soft); color:var(--data-1); }
+  .w2-ava-2{ background:var(--data-3-soft); color:var(--data-3); }
+  .w2-ava-3{ background:var(--data-5-soft); color:var(--data-5); }
+  .w2-ava-4{ background:var(--data-4-soft); color:var(--data-4); }
+  .w2-ava-5{ background:var(--data-2-soft); color:var(--data-2); }
+  .w2-conv__body{ min-width:0; flex:1; }
+  .w2-conv__top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .w2-conv__name{ font-weight:700; font-size:var(--fs-body); color:var(--ink);
+                  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .w2-conv__time{ font-size:var(--fs-caption); color:var(--mute); flex:none; }
+  .w2-conv__bot{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:3px; }
+  .w2-conv__sub{ font-size:var(--fs-sm); color:var(--mute); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .w2-conv__unread{ min-width:20px; height:20px; padding:0 6px; border-radius:var(--r-pill); background:var(--success);
+                    color:#fff; font-size:var(--fs-caption); font-weight:800; flex:none;
+                    display:flex; align-items:center; justify-content:center; }
+  .w2-conv__unread--punto{ min-width:12px; width:12px; height:12px; padding:0; }
+  .w2-conv.is-pendiente .w2-conv__name{ font-weight:800; }
+  .w2-conv.is-pendiente .w2-conv__sub{ color:var(--ink-2); }
+  .w2-conv__ia{ width:8px; height:8px; border-radius:50%; background:var(--success); flex:none; }
+
+  /* ── Hilo ─────────────────────────────────────────────────── */
+  .w2-thread{ display:flex; flex-direction:column; min-width:0; min-height:0; position:relative; background:var(--wa-canvas); }
+  .w2-thread__head{ padding:10px 16px; background:var(--bone); border-bottom:1px solid var(--line);
+                    display:flex; align-items:center; gap:12px; }
+  .w2-back{ display:none; cursor:pointer; }
+  .w2-thread__id{ min-width:0; flex:1; }
+  .w2-thread__name{ font-weight:700; font-size:var(--fs-body); color:var(--ink);
+                    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .w2-thread__sub{ font-size:var(--fs-xs); color:var(--mute); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .w2-thread__acts{ display:flex; align-items:center; gap:4px; flex:none; }
+  .w2-iconbtn{ width:var(--ui-control-small);
+               cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .w2-cal-badge{ font-size:var(--fs-caption); font-weight:700; color:var(--mute); background:var(--shell);
+                 padding:3px 9px; border-radius:var(--r-pill); white-space:nowrap; }
+
+  .w2-msgs{ flex:1; overflow-y:auto; min-height:0; padding:18px 24px 14px; display:flex; flex-direction:column;
+            background:var(--wa-canvas); }
+  .w2-day{ align-self:center; background:var(--bone); border:1px solid var(--line); color:var(--mute);
+           font-size:var(--fs-caption); font-weight:700; padding:4px 12px; border-radius:var(--r-pill);
+           margin:10px 0 12px; box-shadow:var(--shadow-xs); }
+  .w2-nota-sistema{ align-self:center; max-width:80%; text-align:center; background:var(--bone);
+           border:1px solid var(--line); color:var(--mute); font-size:var(--fs-xs); font-style:italic;
+           padding:6px 14px; border-radius:var(--r-pill); margin:6px 0 12px; box-shadow:var(--shadow-xs); }
+  .w2-loadmore{ align-self:center; color:var(--mute); font-size:var(--fs-xs); padding:6px 0 12px; }
+  .w2-loadmore--btn{ cursor:pointer; }
+  .w2-row{ display:flex; margin-top:2px; }
+  .w2-row--grupo{ margin-top:12px; }
+  .w2-row--in{ justify-content:flex-start; }
+  .w2-row--out{ justify-content:flex-end; }
+  .w2-bubble{ max-width:min(74%, 560px); padding:9px 13px 6px; font-size:var(--fs-body); line-height:var(--lh);
+              box-shadow:var(--shadow-xs); overflow-wrap:anywhere; white-space:pre-wrap; }
+  .w2-row--in .w2-bubble{ background:var(--bone); color:var(--ink); border:1px solid var(--line);
+                          border-radius:var(--r-lg); }
+  .w2-row--in.w2-row--grupo .w2-bubble{ border-radius:var(--r-xs) var(--r-lg) var(--r-lg) var(--r-lg); }
+  .w2-row--out .w2-bubble{ background:var(--wa-out); color:var(--wa-out-ink);
+                          border:1px solid rgba(11,74,47,.10); border-radius:var(--r-lg); }
+  .w2-row--out.w2-row--grupo .w2-bubble{ border-radius:var(--r-lg) var(--r-xs) var(--r-lg) var(--r-lg); }
+  .w2-row--out.is-ia .w2-bubble{ background:var(--wa-ia-soft); color:var(--ink);
+                                 border-color:rgba(109,40,217,.16); }
+  .w2-row--out.is-ia .w2-bubble__meta{ color:var(--wa-ia); }
+  .w2-bubble__meta{ font-size:var(--fs-caption); margin-top:4px; display:flex; gap:5px;
+                    align-items:center; justify-content:flex-end; }
+  .w2-row--in .w2-bubble__meta{ color:var(--mute); }
+  .w2-row--out .w2-bubble__meta{ color:var(--wa-out-meta); }
+  .w2-bubble--pend{ opacity:.65; }
+  .w2-media{ display:block; margin-bottom:6px; }
+  .w2-media img{ display:block; width:100%; max-width:260px; border-radius:var(--r-sm);
+                 cursor:zoom-in; background:var(--paper-2); }
+  .w2-media audio{ display:block; width:min(260px, 100%); margin-bottom:2px; }
+  .w2-media__doc{ display:inline-flex; align-items:center; gap:var(--sp-2);
+                  padding:var(--sp-2) var(--sp-3); border-radius:var(--r-sm);
+                  background:var(--paper-2); color:var(--ink); text-decoration:none;
+                  font-size:var(--fs-caption); max-width:260px; }
+  .w2-row--out .w2-media__doc{ background:rgba(0,20,59,.06); color:var(--ink); }
+  .w2-media__baja{ font-size:var(--fs-caption); text-decoration:underline; opacity:.85; }
+  .w2-row--in .w2-media__baja{ color:var(--ink-3); }
+  .w2-row--out .w2-media__baja{ color:var(--wa-out-ink); }
+  .w2-bubble__x{ cursor:pointer; opacity:.7; }
+  .w2-lightbox{ position:fixed; inset:0; background:rgba(0,20,59,.9); z-index:90;
+                display:flex; align-items:center; justify-content:center; padding:var(--sp-5);
+                cursor:zoom-out; }
+  .w2-lightbox img{ max-width:100%; max-height:100%; border-radius:var(--r-sm); }
+  .w2-prueba{ display:flex; flex-direction:column; gap:var(--sp-2); min-height:120px;
+              max-height:380px; overflow-y:auto; padding:var(--sp-3);
+              background:var(--paper-2); border-radius:var(--r-md); }
+  .w2-prueba__vacio{ color:var(--mute); font-size:var(--fs-caption); margin:auto; text-align:center; }
+  .w2-prueba__msg{ max-width:min(80%, 480px); padding:8px 12px; border-radius:var(--r-lg);
+                   font-size:var(--fs-body); line-height:var(--lh); white-space:pre-wrap; }
+  .w2-prueba__msg--yo{ align-self:flex-end; background:var(--wa-out); color:var(--wa-out-ink); }
+  .w2-prueba__msg--ia{ align-self:flex-start; background:var(--paper);
+                       border:1px solid var(--line); color:var(--ink); }
+  .w2-prueba__ficha{ align-self:flex-start; max-width:min(90%, 520px); font-size:var(--fs-caption);
+                     color:var(--ink-3); background:var(--paper); border:1px dashed var(--line);
+                     border-radius:var(--r-sm); padding:var(--sp-2) var(--sp-3); }
+
+  .w2-nuevos{ position:absolute; left:50%; transform:translateX(-50%); bottom:96px; cursor:pointer; z-index:var(--z-fab); }
+
+  .w2-composer{ display:flex; gap:10px; align-items:flex-end; padding:12px 16px;
+                background:var(--bone); border-top:1px solid var(--line); }
+  .w2-composer textarea{ flex:1; resize:none; max-height:132px; color:var(--ink); }
+  .w2-composer textarea:focus{ outline:none; }
+  .w2-send{ width:46px;
+            cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none; }
+
+  .w2-empty-thread{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+                    gap:10px; color:var(--mute); font-size:var(--fs-sm); text-align:center; padding:40px; }
+
+  @media (max-width:820px){
+    .w2-app{ grid-template-columns:1fr; height:calc(100vh - 210px); min-height:0; }
+    .w2-side{ border-right:0; }
+    .w2-thread{ display:none; }
+    .w2-app.is-chat .w2-side{ display:none; }
+    .w2-app.is-chat .w2-thread{ display:flex; }
+    .w2-back{ display:flex; }
+    .w2-msgs{ padding:14px 12px 10px; }
+    .w2-bubble{ max-width:86%; }
+    .w2-composer{ padding:10px 12px; }
+  }
+
+  /* ── Entrenamiento / Agenda ───────────────────────────────── */
+  .w2-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-5); }
+  @media (max-width:820px){ .w2-form-grid{ grid-template-columns:1fr; } }
+  .w2-tags{ display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-top:var(--sp-2); }
+
+  /* ── Modos de encendido de la IA (tarjetas-radio) ─────────── */
+  .w2-modos{ display:grid; grid-template-columns:repeat(3, 1fr); gap:var(--sp-3); margin-top:var(--sp-2); }
+  @media (max-width:820px){ .w2-modos{ grid-template-columns:1fr; } }
+  .w2-modo{ position:relative; border:1px solid var(--line); border-radius:var(--r);
+            background:var(--bone); padding:16px; cursor:pointer; display:block;
+            transition:border-color .15s, box-shadow .15s; }
+  .w2-modo input{ position:absolute; opacity:0; pointer-events:none; }
+  .w2-modo:hover{ border-color:var(--sky-blue); }
+  .w2-modo.is-on{ border-color:var(--sky-blue); box-shadow:var(--focus); background:var(--canvas); }
+  .w2-modo__titulo{ font-weight:700; font-size:var(--fs-body); color:var(--ink);
+                    display:flex; align-items:center; gap:8px; }
+  .w2-modo__punto{ width:10px; height:10px; border-radius:50%; border:2px solid var(--mute-2); flex:none; }
+  .w2-modo.is-on .w2-modo__punto{ border-color:var(--sky-blue); background:var(--sky-blue); }
+  .w2-modo__desc{ font-size:var(--fs-sm); color:var(--mute); margin-top:6px; line-height:var(--lh); }
+
+  /* ── IA por chat: control de tres estados ─────────────────── */
+  .w2-seg{ display:inline-flex; background:var(--shell); border:1px solid var(--line);
+           border-radius:var(--r-pill); padding:3px; gap:2px; flex:none; }
+  .w2-seg button{ cursor:pointer; }
+  .w2-ia-estado{ font-size:var(--fs-caption); color:var(--mute); }
+  .w2-ia-estado.is-on{ color:var(--success); font-weight:600; }
+
+  /* ── Constructor de flujos por pasos ──────────────────────── */
+  .w2-fp{ border:1px solid var(--line); border-radius:var(--r); background:var(--bone);
+          padding:14px 16px; margin-bottom:var(--sp-2); }
+  .w2-fp__head{ display:flex; align-items:center; gap:var(--sp-2); }
+  .w2-fp__num{ width:26px; height:26px; border-radius:50%; background:var(--sky-blue); color:#fff;
+               font-size:var(--fs-xs); font-weight:700; display:flex; align-items:center;
+               justify-content:center; flex:none; }
+  .w2-fp__head select{ flex:1; min-width:0; }
+  .w2-fp__mini{ width:var(--ui-control-small); cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none; }
+  .w2-fp__cuerpo{ margin-top:var(--sp-2); display:flex; flex-direction:column; gap:var(--sp-2); }
+  .w2-fp__op{ display:flex; align-items:center; gap:var(--sp-2); }
+  .w2-fp__op input{ flex:1; min-width:0; }
+  .w2-fp__op select{ max-width:220px; }
+  .w2-fp__hint{ font-size:var(--fs-caption); color:var(--mute); }
+</style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
+<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
+<link rel="stylesheet" href="/staging-mobile-fields.css"/>
+<script src="/staging-network-audit.js" defer></script>
+</head>
+<body data-app="whatsapp">
+
+<div class="w2-scroll">
+
+  <div class="w2-topbar">
+    <select class="bk-select w2-select-filtro" id="w2-filtro-numero" onchange="w2SeleccionarNumero(this.value)">
+      <option value="todos">Todos los números</option>
+    </select>
+    <button class="w2-numeros-link" onclick="w2ToggleNumerosPanel()">Administrar números</button>
+  </div>
+
+  <div class="bk-alert bk-alert--warn" id="w2-meta-billing-alert" style="margin-bottom:var(--sp-4);align-items:flex-start;" hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+    <div style="flex:1;">
+      Meta empieza a cobrar los mensajes de WhatsApp dentro de la ventana de 24&nbsp;horas a partir del <strong>1 de octubre</strong> (tus primeras 1,000 conversaciones de servicio al mes por número siguen gratis). Lo urgente: si tu número no tiene un método de pago en tu Administrador comercial de Meta antes del <strong>30 de septiembre</strong>, Meta puede dejar de entregar tus mensajes.
+      <a href="soporte.html#pago-meta-whatsapp" style="color:inherit;font-weight:700;text-decoration:underline;">Cómo agregarlo y cómo ahorrar</a>
+      &nbsp;·&nbsp;
+      <a href="legal.html#whatsapp" style="color:inherit;font-weight:700;text-decoration:underline;">Detalle legal</a>
+    </div>
+    <button type="button" onclick="w2CerrarAvisoMetaCobro()" aria-label="Cerrar aviso" style="background:none;border:none;cursor:pointer;color:inherit;opacity:.6;font-size:var(--fs-body-lg);line-height:1;padding:0 0 0 var(--sp-2);">×</button>
+  </div>
+
+  <div class="bk-card bk-card--pad" id="w2-numeros-card" hidden>
+    <div class="bk-cluster" style="justify-content:space-between;">
+      <span class="bk-eyebrow">Tus números conectados</span>
+      <button class="bk-btn bk-btn--ghost bk-btn--sm" id="wa-connect-btn" onclick="w2ConectarNumero()">+ Conectar número</button>
+    </div>
+    <div class="w2-numeros-panel" id="w2-numeros-panel"></div>
+    <div class="w2-app-webhook">
+      <button class="w2-numeros-link w2-app-webhook-link" onclick="w2RevisarWebhookApp()">Revisar webhook de la app</button>
+      <button class="bk-btn bk-btn--ghost bk-btn--sm" id="w2-app-webhook-fix-btn" onclick="w2ArreglarWebhookApp()" hidden>Arreglar</button>
+    </div>
+  </div>
+
+  <div style="height:var(--sp-4);"></div>
+
+  <div class="w2-tabs">
+    <button class="w2-tab is-active" data-tab="chats" onclick="w2IrATab('chats')">Chats</button>
+    <button class="w2-tab" data-tab="entrenamiento" onclick="w2IrATab('entrenamiento')">Recepción IA</button>
+    <button class="w2-tab" data-tab="automatizaciones" onclick="w2IrATab('automatizaciones')">Flujos</button>
+    <button class="w2-tab" data-tab="campanas" onclick="w2IrATab('campanas')">Campañas</button>
+    <button class="w2-tab" data-tab="plantillas" onclick="w2IrATab('plantillas')">Plantillas</button>
+    <label class="w2-avanzado bk-switch" title="Muestra las opciones técnicas del módulo" hidden>
+      <input type="checkbox" id="w2-avanzado-check" onchange="w2ToggleAvanzado(this.checked)"/>
+      <span class="bk-switch__track"></span> Modo avanzado
+    </label>
+  </div>
+
+  <!-- ═══ CHATS ═══ -->
+  <div id="w2-view-chats">
+    <div class="w2-app" id="w2-app">
+      <aside class="w2-side">
+        <div class="w2-side__head">
+          <div class="w2-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/></svg>
+            <input id="w2-buscar" type="search" placeholder="Buscar conversación" oninput="w2RenderLista()"/>
+          </div>
+          <div class="w2-chips">
+            <button class="w2-chip is-on" data-filtro="todos" onclick="w2Filtrar('todos')">Todos</button>
+            <button class="w2-chip" data-filtro="nuevos" onclick="w2Filtrar('nuevos')">Sin leer</button>
+            <button class="w2-chip" data-filtro="ia" onclick="w2Filtrar('ia')">IA activa</button>
+          </div>
+        </div>
+        <div class="w2-list" id="w2-list"></div>
+      </aside>
+
+      <section class="w2-thread" id="w2-thread">
+        <div class="w2-empty-thread" id="w2-thread-empty">Elige una conversación para verla aquí.</div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ═══ CAMPAÑAS ═══ -->
+  <div id="w2-view-campanas" hidden>
+    <div class="bk-section-header"><h2>Campañas de WhatsApp</h2></div>
+    <div class="bk-alert bk-alert--info" style="margin-bottom:var(--sp-4);">
+      Una campaña le manda la misma plantilla aprobada a un grupo de tus contactos, uno por uno.
+      Nunca le llega a quien pidió darse de baja escribiendo "baja" o "stop".
+    </div>
+
+    <div class="bk-card bk-card--pad" style="margin-bottom:var(--sp-5);">
+      <span class="bk-eyebrow">Nueva campaña</span>
+      <div class="w2-form-grid" style="margin-top:var(--sp-3);">
+        <div class="bk-field">
+          <label class="bk-label" for="w2-cp-numero">Desde el número</label>
+          <select class="bk-select" id="w2-cp-numero" onchange="w2CampCambioNumero()"></select>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="w2-cp-audiencia">A quién le llega</label>
+          <select class="bk-select" id="w2-cp-audiencia" onchange="w2CampActualizarAudiencia()">
+            <option value="">Todos mis contactos de este número</option>
+          </select>
+          <div class="bk-hint" id="w2-cp-audiencia-hint">Elige un número para calcular la audiencia.</div>
+        </div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-cp-plantilla">Plantilla aprobada</label>
+        <select class="bk-select" id="w2-cp-plantilla" onchange="w2CampCambioPlantilla()"></select>
+        <div class="w2-cp-preview" id="w2-cp-preview" hidden></div>
+      </div>
+      <div id="w2-cp-variables"></div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-cp-nombre">Nombre de la campaña (solo lo ves tú)</label>
+        <input class="bk-input" id="w2-cp-nombre" placeholder="Ej. Seguimiento expo septiembre"/>
+      </div>
+      <button class="bk-btn bk-btn--forest" id="w2-cp-enviar" onclick="w2CampEnviar()">Enviar campaña</button>
+    </div>
+
+    <span class="bk-eyebrow">Campañas anteriores</span>
+    <div id="w2-cp-historial" style="display:flex;flex-direction:column;gap:var(--sp-2);margin-top:var(--sp-3);"></div>
+  </div>
+
+  <!-- ═══ FLUJOS (constructor por pasos) ═══ -->
+  <div id="w2-view-automatizaciones" hidden>
+    <div class="bk-section-header"><h2>Flujos</h2></div>
+    <div class="bk-alert bk-alert--info" style="margin-bottom:var(--sp-4);">
+      Un flujo hace exactamente los pasos que tú dibujes, en orden, sin improvisar nada — por eso nunca se equivoca.
+      Puede mandar mensajes, hacer preguntas y guardar las respuestas, mostrar menús de opciones, etiquetar,
+      y al final entregarte la conversación a ti o dejársela a la IA.
+    </div>
+
+    <div class="bk-card bk-card--pad" style="margin-bottom:var(--sp-5);">
+      <div class="bk-cluster" style="justify-content:space-between;">
+        <span class="bk-eyebrow" id="w2-au-titulo">Nuevo flujo</span>
+        <button class="bk-btn bk-btn--ghost bk-btn--sm" id="w2-au-cancelar" hidden onclick="w2AuCancelarEdicion()">Cancelar edición</button>
+      </div>
+      <div class="w2-form-grid" style="margin-top:var(--sp-3);">
+        <div class="bk-field">
+          <label class="bk-label" for="w2-au-nombre">Nombre (solo lo ves tú)</label>
+          <input class="bk-input" id="w2-au-nombre" placeholder="Ej. Bienvenida y calificación"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="w2-au-numero">Aplica en</label>
+          <select class="bk-select" id="w2-au-numero"></select>
+        </div>
+      </div>
+      <div class="w2-form-grid">
+        <div class="bk-field">
+          <label class="bk-label" for="w2-au-disparador">Cuando pasa esto</label>
+          <select class="bk-select" id="w2-au-disparador" onchange="w2AuCambioDisparador()">
+            <option value="palabra">El mensaje contiene una palabra</option>
+            <option value="nuevo">Escribe alguien por primera vez</option>
+            <option value="nuevo_3m">Escribe un cliente nuevo (primera vez, o más de 3 meses sin escribir)</option>
+          </select>
+        </div>
+        <div class="bk-field" id="w2-au-palabras-wrap">
+          <label class="bk-label" for="w2-au-palabras">Palabras que lo disparan (separadas por coma)</label>
+          <input class="bk-input" id="w2-au-palabras" placeholder="Ej. precio, cuánto cuesta, costo"/>
+        </div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label">Pasos que hace, en orden</label>
+        <div id="w2-au-pasos"></div>
+        <div class="bk-cluster">
+          <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2FlujoAgregarPaso()">+ Agregar paso</button>
+          <span class="w2-fp__hint">Hasta 12 pasos. Las preguntas y los menús esperan la respuesta del prospecto antes de seguir.</span>
+        </div>
+      </div>
+      <button class="bk-btn bk-btn--forest" id="w2-au-guardar-btn" onclick="w2AuGuardar()">Guardar flujo</button>
+    </div>
+
+    <span class="bk-eyebrow">Tus flujos</span>
+    <div id="w2-au-lista" style="display:flex;flex-direction:column;gap:var(--sp-2);margin-top:var(--sp-3);"></div>
+  </div>
+
+  <!-- ═══ PLANTILLAS ═══ -->
+  <div id="w2-view-plantillas" hidden>
+    <div class="bk-section-header"><h2>Plantillas para mensajes fuera de la ventana de 24h</h2></div>
+    <div class="bk-alert bk-alert--info" style="margin-bottom:var(--sp-4);">
+      WhatsApp solo deja mandar texto libre durante 24 horas después del último mensaje del prospecto.
+      Pasado ese tiempo, la única forma de escribirle primero es con una plantilla aprobada por Meta.
+      La aprobación puede tardar de minutos a un par de días.
+    </div>
+    <div class="bk-field" style="max-width:340px;">
+      <label class="bk-label" for="w2-pl-numero-selector">Número</label>
+      <select class="bk-select" id="w2-pl-numero-selector" onchange="w2CargarPlantillas()"></select>
+    </div>
+
+    <div class="bk-divider"></div>
+    <span class="bk-eyebrow">Tus plantillas</span>
+    <div id="w2-pl-lista" style="display:flex;flex-direction:column;gap:var(--sp-2);margin:var(--sp-3) 0 var(--sp-5);"></div>
+
+    <div id="w2-pl-crear" hidden>
+    <div class="bk-divider"></div>
+    <span class="bk-eyebrow">Crear nueva plantilla</span>
+    <div class="w2-form-grid" style="margin-top:var(--sp-3);">
+      <div class="bk-field">
+        <label class="bk-label" for="w2-pl-nombre">Nombre interno (sin espacios ni acentos)</label>
+        <input class="bk-input" id="w2-pl-nombre" placeholder="Ej. seguimiento_visita"/>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-pl-categoria">Categoría</label>
+        <select class="bk-select" id="w2-pl-categoria">
+          <option value="UTILITY">Utilidad (seguimiento, confirmaciones)</option>
+          <option value="MARKETING">Marketing (promociones, novedades)</option>
+        </select>
+      </div>
+    </div>
+    <div class="bk-field">
+      <label class="bk-label" for="w2-pl-cuerpo">Texto del mensaje</label>
+      <textarea class="bk-textarea" id="w2-pl-cuerpo" rows="3"
+        placeholder="Hola {{1}}, seguimos con lo de la propiedad que viste. ¿Sigue interesado?"></textarea>
+      <div class="bk-hint">Usa {{1}}, {{2}}… para lo que cambie en cada envío (nombre, propiedad, etc.). No pongas datos reales aquí, solo el molde.</div>
+    </div>
+    <div class="bk-field">
+      <label class="bk-label" for="w2-pl-ejemplo">Ejemplo de esas variables (separadas por coma)</label>
+      <input class="bk-input" id="w2-pl-ejemplo" placeholder="Ej. Juan Pérez"/>
+      <div class="bk-hint">Meta pide un ejemplo real para poder aprobarla — no se le manda a nadie, es solo para su revisión.</div>
+    </div>
+    <div class="bk-field">
+      <label class="bk-label" for="w2-pl-footer">Pie de página (opcional)</label>
+      <input class="bk-input" id="w2-pl-footer" placeholder="Ej. Cecil · Bienes raíces"/>
+    </div>
+    <button class="bk-btn bk-btn--forest" onclick="w2CrearPlantilla()">Enviar a Meta para aprobación</button>
+    </div>
+    <div class="bk-hint" id="w2-pl-crear-aviso">Crear plantillas nuevas es parte del modo avanzado — actívalo arriba a la derecha si necesitas una.</div>
+  </div>
+
+  <!-- ═══ RECEPCIÓN IA (entrenamiento + modos de encendido) ═══ -->
+  <div id="w2-view-entrenamiento" hidden>
+    <div class="bk-section-header"><h2>Tu recepcionista con IA</h2></div>
+    <div class="bk-field" style="max-width:340px;">
+      <label class="bk-label" for="w2-t-numero-selector">Número a configurar</label>
+      <select class="bk-select" id="w2-t-numero-selector" onchange="w2CambiarNumeroEntrenamiento(this.value)">
+        <option value="">Plantilla para números nuevos</option>
+      </select>
+    </div>
+    <div class="bk-alert bk-alert--info" id="w2-t-contexto" style="margin-bottom:var(--sp-4);"></div>
+
+    <form class="bk-card bk-card--pad bk-card--raise" onsubmit="event.preventDefault(); w2GuardarEntrenamiento();">
+
+      <!-- ── Encendido: cuándo contesta la IA ─────────────────────── -->
+      <span class="bk-eyebrow">Cuándo contesta la IA</span>
+      <div class="bk-field" style="margin-top:var(--sp-3);">
+        <label class="bk-switch"><input type="checkbox" id="w2-t-activo" checked/><span class="bk-switch__track"></span> IA activa en este número</label>
+        <div class="bk-hint">Con esto apagado, la IA no contesta nada de este número, sin importar lo demás.</div>
+      </div>
+      <div class="w2-modos" id="w2-t-modos">
+        <label class="w2-modo" data-modo="siempre_encendida" onclick="w2SetModoGlobal('siempre_encendida')">
+          <input type="radio" name="w2-t-modo" value="siempre_encendida"/>
+          <div class="w2-modo__titulo"><span class="w2-modo__punto"></span> Encendida por default</div>
+          <div class="w2-modo__desc">La IA contesta todos los chats. Tú puedes apagarla en los que quieras, uno por uno.</div>
+        </label>
+        <label class="w2-modo" data-modo="siempre_apagada" onclick="w2SetModoGlobal('siempre_apagada')">
+          <input type="radio" name="w2-t-modo" value="siempre_apagada"/>
+          <div class="w2-modo__titulo"><span class="w2-modo__punto"></span> Apagada por default</div>
+          <div class="w2-modo__desc">La IA no contesta nada. Tú la enciendes en los chats que quieras, uno por uno.</div>
+        </label>
+        <label class="w2-modo" data-modo="solo_nuevos" onclick="w2SetModoGlobal('solo_nuevos')">
+          <input type="radio" name="w2-t-modo" value="solo_nuevos"/>
+          <div class="w2-modo__titulo"><span class="w2-modo__punto"></span> Solo clientes nuevos</div>
+          <div class="w2-modo__desc">Contesta únicamente a números que nunca te han escrito, o que llevan tiempo sin hacerlo.</div>
+        </label>
+      </div>
+      <div class="bk-field" id="w2-t-nuevos-wrap" style="max-width:420px; margin-top:var(--sp-3);" hidden>
+        <label class="bk-label" for="w2-t-nuevos-meses">¿Cuánto tiempo sin escribirte cuenta como cliente nuevo?</label>
+        <select class="bk-select" id="w2-t-nuevos-meses">
+          <option value="1">Más de 1 mes</option>
+          <option value="2">Más de 2 meses</option>
+          <option value="3" selected>Más de 3 meses</option>
+          <option value="6">Más de 6 meses</option>
+          <option value="12">Más de 12 meses</option>
+        </select>
+      </div>
+
+      <div class="bk-divider"></div>
+
+      <!-- ── Cuando tú respondes a mano ───────────────────────────── -->
+      <span class="bk-eyebrow">Cuando tú respondes a mano</span>
+      <div class="bk-field" style="margin-top:var(--sp-3);">
+        <label class="bk-switch"><input type="checkbox" id="w2-t-pausa" checked onchange="w2PausaCambio()"/><span class="bk-switch__track"></span> Pausar la IA en un chat en cuanto yo respondo</label>
+        <div class="bk-hint">Cuenta igual si respondes desde Cecil o desde el WhatsApp de tu celular. Así nunca contestan dos "personas" en el mismo chat.</div>
+      </div>
+      <div class="bk-field" id="w2-t-pausa-dur-wrap" style="max-width:420px;">
+        <label class="bk-label" for="w2-t-pausa-dur">¿Por cuánto tiempo se pausa?</label>
+        <select class="bk-select" id="w2-t-pausa-dur">
+          <option value="0" selected>Para siempre — hasta que yo la vuelva a encender en ese chat</option>
+          <option value="30">30 minutos</option>
+          <option value="60">1 hora</option>
+          <option value="480">8 horas</option>
+          <option value="1440">24 horas</option>
+        </select>
+      </div>
+
+      <div class="bk-divider"></div>
+
+      <!-- ── Lo básico del asistente ──────────────────────────────── -->
+      <span class="bk-eyebrow">Tu asistente</span>
+      <div class="w2-form-grid" style="margin-top:var(--sp-3);">
+        <div class="bk-field">
+          <label class="bk-label" for="w2-t-nombre">Nombre con el que se presenta</label>
+          <input class="bk-input" id="w2-t-nombre" placeholder="Ej. Recepción"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="w2-t-zona">Zona horaria (de dónde atiendes)</label>
+          <select class="bk-select" id="w2-t-zona">
+            <option value="America/Mexico_City">Centro — CDMX, Morelia, Guadalajara (UTC-6)</option>
+            <option value="America/Cancun">Sureste — Cancún, Quintana Roo (UTC-5)</option>
+            <option value="America/Chihuahua">Pacífico — Chihuahua, Mazatlán (UTC-6/-7)</option>
+            <option value="America/Hermosillo">Pacífico — Sonora (UTC-7, sin horario de verano)</option>
+            <option value="America/Tijuana">Noroeste — Baja California (UTC-7/-8)</option>
+            <option value="America/Bogota">Colombia (UTC-5)</option>
+            <option value="America/Lima">Perú (UTC-5)</option>
+            <option value="America/Argentina/Buenos_Aires">Argentina (UTC-3)</option>
+            <option value="America/Santiago">Chile (UTC-4/-3)</option>
+          </select>
+        </div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label">Información de tu negocio</label>
+        <textarea class="bk-textarea" id="w2-t-conocimiento" rows="8"
+          placeholder="Todo lo que tu asistente no puede adivinar de tus inmuebles. Escríbelo con tus palabras, como se lo explicarías a alguien nuevo en tu oficina.&#10;&#10;Ej.&#10;Aceptamos Infonavit, Fovissste y crédito bancario.&#10;La comisión es del 5% más IVA y la paga quien vende.&#10;Para apartar se piden 20 mil pesos, reembolsables 15 días.&#10;La oficina está en Av. Camelinas 1234, atendemos de 9 a 7."></textarea>
+        <div class="bk-hint">Lo que escribas aquí es la verdad para tu asistente. Si le preguntan algo que no esté, no lo va a inventar: dirá que lo confirma contigo.</div>
+      </div>
+      <div class="bk-field-row">
+        <div class="bk-field">
+          <label class="bk-switch"><input type="checkbox" id="w2-t-horario"/><span class="bk-switch__track"></span> Solo responder en horario</label>
+        </div>
+        <div></div>
+      </div>
+      <div class="bk-field-row">
+        <div class="bk-field"><label class="bk-label">Hora inicio</label><input class="bk-input" type="time" id="w2-t-hi"/></div>
+        <div class="bk-field"><label class="bk-label">Hora fin</label><input class="bk-input" type="time" id="w2-t-hf"/></div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-t-fuera">Mensaje fuera de horario</label>
+        <input class="bk-input" id="w2-t-fuera" placeholder="Gracias por tu mensaje, en cuanto abramos te contesto."/>
+      </div>
+
+      <div class="bk-divider"></div>
+
+      <!-- ── Configuración avanzada (entrenamiento exhaustivo) ────── -->
+      <div class="bk-cluster" style="justify-content:space-between;">
+        <span class="bk-eyebrow">Configuración avanzada</span>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" id="w2-t-avanzado-btn" onclick="w2ToggleEntrenAvanzado()">Mostrar</button>
+      </div>
+      <div id="w2-t-avanzado" hidden>
+        <div class="bk-hint" style="margin:var(--sp-2) 0 var(--sp-3);">Aquí afinas la personalidad, las reglas y la calificación. Si no tocas nada, la IA usa una configuración probada que funciona bien.</div>
+        <div class="w2-form-grid">
+          <div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-identidad">Quién es (identidad)</label>
+              <textarea class="bk-textarea" id="w2-t-identidad" rows="3" placeholder="Ej. Eres 'Sofía', el asistente de WhatsApp de Chava, asesor inmobiliario en Morelia."></textarea>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-tono">Tono</label>
+              <input class="bk-input" id="w2-t-tono" placeholder="Ej. cálido, directo, sin tecnicismos"/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-objetivo">Objetivo principal</label>
+              <input class="bk-input" id="w2-t-objetivo" placeholder="Ej. calificar y agendar una visita"/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-especialidad">Especialidad / zona</label>
+              <input class="bk-input" id="w2-t-especialidad" placeholder="Ej. casas en Morelia centro"/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-max">Máximo de mensajes seguidos de la IA antes de pasarlo a ti (0 = sin límite)</label>
+              <input class="bk-input" type="number" min="0" id="w2-t-max" style="max-width:160px;"/>
+            </div>
+          </div>
+          <div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-puede">Puede</label>
+              <textarea class="bk-textarea" id="w2-t-puede" rows="2"></textarea>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-debe">Debe</label>
+              <textarea class="bk-textarea" id="w2-t-debe" rows="2"></textarea>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-nodebe">Nunca</label>
+              <textarea class="bk-textarea" id="w2-t-nodebe" rows="2"></textarea>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-datos">Qué debe calificar (separado por comas)</label>
+              <input class="bk-input" id="w2-t-datos" placeholder="presupuesto, forma de pago, para cuándo busca"/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-preguntas">Preguntas extra (separadas por comas)</label>
+              <input class="bk-input" id="w2-t-preguntas" placeholder="¿Ya vendiste tu propiedad actual?"/>
+            </div>
+            <div class="bk-field">
+              <label class="bk-label" for="w2-t-escalar">Palabras que lo pasan contigo (separadas por comas)</label>
+              <input class="bk-input" id="w2-t-escalar" placeholder="hablar con alguien, urgente"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bk-cluster" style="justify-content:flex-end; margin-top:var(--sp-4);">
+        <button type="submit" class="bk-btn bk-btn--forest">Guardar configuración</button>
+      </div>
+    </form>
+
+    <div class="bk-card bk-card--pad" style="margin-top:var(--sp-5);">
+      <div class="bk-card__head">
+        <div>
+          <h2 class="bk-card__title">Probar tu asistente</h2>
+          <div class="bk-hint">Escríbele como si fueras un prospecto. Usa tu entrenamiento y tu catálogo reales, pero no le manda WhatsApp a nadie ni guarda nada. Pruébalo hasta quedar conforme antes de encenderlo.</div>
+        </div>
+        <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2ReiniciarPrueba()">Empezar de nuevo</button>
+      </div>
+      <div class="w2-prueba" id="w2-prueba-hilo"></div>
+      <div class="bk-cluster" style="margin-top:var(--sp-3);">
+        <input class="bk-input" id="w2-prueba-texto" style="flex:1;"
+               placeholder="Ej. Hola, vi una casa en Altozano, ¿me pasas precio?"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();w2EnviarPrueba();}"/>
+        <button type="button" class="bk-btn bk-btn--forest" onclick="w2EnviarPrueba()">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ Modal: agendar cita a mano ═══ -->
+<div class="bk-overlay" id="w2-modal-cita" hidden>
+  <div class="bk-modal">
+    <div class="bk-modal__head"><span class="bk-modal__title">Agendar cita</span></div>
+    <div class="bk-modal__body">
+      <div class="bk-hint" style="margin-bottom:var(--sp-4);">Se crea como tarea en tu módulo de Tareas, y si esto viene de una conversación con un prospecto, se le manda la invitación por WhatsApp.</div>
+      <div class="bk-field"><label class="bk-label">Título</label><input class="bk-input" id="w2-cita-titulo"/></div>
+      <div class="bk-field-row">
+        <div class="bk-field"><label class="bk-label">Fecha</label><input class="bk-input" type="date" id="w2-cita-fecha"/></div>
+        <div class="bk-field"><label class="bk-label">Hora</label><input class="bk-input" type="time" id="w2-cita-hora"/></div>
+      </div>
+      <div class="bk-field"><label class="bk-label">Notas</label><textarea class="bk-textarea" id="w2-cita-notas" rows="2"></textarea></div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--ghost" onclick="w2CerrarModalCita()">Cancelar</button>
+      <button class="bk-btn bk-btn--forest" onclick="w2GuardarCitaManual()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="bk-overlay" id="w2-modal-plantilla" hidden>
+  <div class="bk-modal">
+    <div class="bk-modal__head"><span class="bk-modal__title">Enviar plantilla</span></div>
+    <div class="bk-modal__body">
+      <div class="bk-hint" style="margin-bottom:var(--sp-4);">Pasaron más de 24h desde el último mensaje del prospecto — solo una plantilla aprobada puede reabrir la conversación.</div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-plm-nombre">Plantilla aprobada</label>
+        <select class="bk-select" id="w2-plm-nombre" onchange="w2PintarPreviewPlantilla()"></select>
+      </div>
+      <div class="bk-field" id="w2-plm-preview-wrap" hidden>
+        <label class="bk-label">Vista previa</label>
+        <div class="bk-hint" id="w2-plm-preview">—</div>
+      </div>
+      <div class="bk-field">
+        <label class="bk-label" for="w2-plm-variables">Variables (separadas por coma, en el mismo orden de {{1}}, {{2}}…)</label>
+        <input class="bk-input" id="w2-plm-variables" placeholder="Ej. Juan Pérez, Casa en Chapultepec"/>
+      </div>
+    </div>
+    <div class="bk-modal__foot">
+      <button class="bk-btn bk-btn--ghost" onclick="w2CerrarModalPlantilla()">Cancelar</button>
+      <button class="bk-btn bk-btn--forest" onclick="w2EnviarPlantillaDesdeChat()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<script src="app-shell.js" defer></script>
+<script>
+const API_BASE = window.API_BASE || 'https://brokr-main-staging.up.railway.app';
+const META_APP_ID = '1709238933850389';
+const WA_CONFIG_ID = '1028338620073056';
+
+function getToken(){
+  return localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || null;
+}
+function w2Auth(){ return { Authorization: 'Bearer ' + getToken() }; }
+let _w2ToastTimer = null;
+function toast(msg){
+  let el = document.getElementById('w2-toast');
+  if(!el){
+    el = document.createElement('div'); el.id = 'w2-toast';
+    el.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);'
+      + 'background:var(--sky-navy);color:#fff;padding:12px 18px;border-radius:var(--r-pill);'
+      + 'font-family:var(--font-sans);font-size:var(--fs-xs);font-weight:700;'
+      + 'box-shadow:var(--shadow-md);z-index:2147483000;opacity:0;transition:opacity .2s;'
+      + 'max-width:90vw;text-align:center;pointer-events:none;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  if(_w2ToastTimer) clearTimeout(_w2ToastTimer);
+  _w2ToastTimer = setTimeout(() => { el.style.opacity = '0'; }, 3600);
+}
+
+/* ── SDK de Facebook (Embedded Signup) ───────────────────── */
+window.fbAsyncInit = function(){ FB.init({ appId: META_APP_ID, cookie:true, xfbml:false, version:'v21.0' }); };
+(function(d,s,id){
+  if(d.getElementById(id)) return;
+  const js=d.createElement(s); js.id=id; js.src='https://connect.facebook.net/es_LA/sdk.js';
+  js.async=true; js.defer=true; js.crossOrigin='anonymous';
+  d.getElementsByTagName('head')[0].appendChild(js);
+})(document,'script','facebook-jssdk');
+
+let _w2SignupData = null;
+window.addEventListener('message', (e) => {
+  if(!/facebook\.com$/.test(new URL(e.origin).hostname)) return;
+  try{
+    const d = JSON.parse(e.data);
+    if(d.type !== 'WA_EMBEDDED_SIGNUP') return;
+    if(d.event === 'FINISH' || d.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'){
+      _w2SignupData = {
+        waba_id: d.data?.waba_id || null,
+        phone_number_id: d.data?.phone_number_id || null,
+        coexistence: d.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'
+      };
+    }
+  }catch(_){ /* mensajes no-JSON del iframe, se ignoran */ }
+});
+
+function w2ConectarNumero(){
+  if(!window.FB){ toast('Aún cargando. Intenta en un segundo.'); return; }
+  _w2SignupData = null;
+  FB.login((response) => {
+    const code = response?.authResponse?.code;
+    if(code){ w2ExchangeCode(code); }
+    else{ toast('Conexión cancelada.'); }
+  }, {
+    config_id: WA_CONFIG_ID, response_type: 'code', override_default_response_type: true,
+    extras: { setup:{}, featureType:'whatsapp_business_app_onboarding', sessionInfoVersion:'3' }
+  });
+}
+
+async function w2ExchangeCode(code){
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/connect', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({
+        code, waba_id: _w2SignupData?.waba_id || null,
+        phone_number_id: _w2SignupData?.phone_number_id || null,
+        coexistence: _w2SignupData?.coexistence || false
+      })
+    });
+    const d = await r.json();
+    if(r.ok && d.ok){
+      if(d.webhook_verificado){
+        toast('Número conectado y verificado con Meta.');
+      } else {
+        toast(d.advertencia || 'Número guardado, pero Meta no confirmó la conexión todavía. Verifica en unos minutos.');
+      }
+      document.getElementById('w2-numeros-card').hidden = false;
+      await w2CargarNumeros();
+    } else{ toast(d.detail || 'No se pudo conectar el número.'); }
+  }catch(e){ toast('Error de conexión. Intenta de nuevo.'); }
+}
+
+/* ── Estado ───────────────────────────────────────────────── */
+let W2_NUMEROS = [];
+let W2_NUMERO_ACTUAL = 'todos';   // filtro de la pestaña Chats
+let W2_ENTREN_NUMERO = '';        // selector de la pestaña Entrenamiento ('' = plantilla)
+let W2_CONVS = [];
+let W2_CONV_ACTUAL = null;
+let W2_TAB = 'chats';
+let W2_POLL = null;
+let W2_MSGS = [];                 // mensajes cargados del chat abierto (viejo → nuevo)
+let W2_HAY_MAS = false;           // ¿quedan mensajes más antiguos por cargar?
+let W2_CARGANDO_MAS = false;
+let W2_FILTRO = 'todos';
+const W2_ENTREN_CACHE = {};       // config de Recepción IA por numero_id (para el estado del chat)
+let W2_VENTANA_CERRADA = null;
+let W2_EN_HILO = false;           // ¿el agente está viendo el hilo abierto?
+const W2_PAGINA = 30;             // cuántos mensajes se traen por tanda
+
+/* ── Tabs ─────────────────────────────────────────────────── */
+function w2IrATab(tab){
+  W2_TAB = tab;
+  document.querySelectorAll('.w2-tab').forEach(b => b.classList.toggle('is-active', b.dataset.tab === tab));
+  document.getElementById('w2-view-chats').hidden = tab !== 'chats';
+  document.getElementById('w2-view-campanas').hidden = tab !== 'campanas';
+  document.getElementById('w2-view-automatizaciones').hidden = tab !== 'automatizaciones';
+  document.getElementById('w2-view-plantillas').hidden = tab !== 'plantillas';
+  document.getElementById('w2-view-entrenamiento').hidden = tab !== 'entrenamiento';
+  if(tab === 'campanas') w2AbrirTabCampanas();
+  if(tab === 'automatizaciones') w2AbrirTabAutomatizaciones();
+  if(tab === 'plantillas') w2AbrirTabPlantillas();
+  if(tab === 'entrenamiento') w2CargarEntrenamiento();
+  // capacitor-bridge.js (iOS) decide si limpiar el globito de notificaciones
+  // leyendo este hash, y push las manda con '#chats' para forzar esta pestaña.
+  try{ history.replaceState(null, '', location.pathname + location.search + '#' + tab); }catch(_){}
+}
+
+/* ── Números ──────────────────────────────────────────────── */
+async function w2CargarNumeros(){
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/numeros', { headers: w2Auth() });
+    if(!r.ok){
+      // Antes esto caía derecho a "W2_NUMEROS = []" porque un 401/403 sí trae
+      // JSON válido ({"detail":...}) — r.json() no truena, solo no trae
+      // "numeros". El usuario veía "no tienes ningún número conectado" cuando
+      // en realidad su sesión expiró y nunca se le avisó.
+      const d = await r.json().catch(() => ({}));
+      toast(d.detail || 'No se pudieron cargar tus números de WhatsApp.');
+      return;
+    }
+    const d = await r.json();
+    W2_NUMEROS = d.numeros || [];
+  }catch(e){
+    toast('No se pudieron cargar tus números de WhatsApp. Revisa tu conexión.');
+    return;
+  }
+  w2PintarSelectFiltro();
+  w2PintarSelectEntrenamiento();
+  w2PintarPanelNumeros();
+  // La config de cada número se precarga para que el estado de IA de la
+  // lista y de los chats sea exacto (y se repinta la lista al llegar).
+  W2_NUMEROS.forEach(n => { w2EntrenDe(n.id).then(() => w2RenderLista()); });
+  await w2CargarConversaciones();
+}
+
+function w2PintarSelectFiltro(){
+  const sel = document.getElementById('w2-filtro-numero');
+  const actual = W2_NUMERO_ACTUAL;
+  sel.innerHTML = '<option value="todos">Todos los números</option>' +
+    W2_NUMEROS.map(n => `<option value="${n.id}">${n.alias || n.display_number || 'Número'}</option>`).join('');
+  sel.value = actual;
+}
+
+function w2PintarSelectEntrenamiento(){
+  const sel = document.getElementById('w2-t-numero-selector');
+  const actual = W2_ENTREN_NUMERO;
+  sel.innerHTML = '<option value="">Plantilla para números nuevos</option>' +
+    W2_NUMEROS.map(n => `<option value="${n.id}">${n.alias || n.display_number || 'Número'}</option>`).join('');
+  sel.value = actual;
+}
+
+function w2ToggleNumerosPanel(){
+  const card = document.getElementById('w2-numeros-card');
+  card.hidden = !card.hidden;
+}
+
+function w2CerrarAvisoMetaCobro(){
+  try { localStorage.setItem('bk_wa_meta_billing_oct2026_cerrado', '1'); } catch(e){}
+  const el = document.getElementById('w2-meta-billing-alert');
+  if (el) el.hidden = true;
+}
+
+(function w2InitAvisoMetaCobro(){
+  // Aviso temporal sobre el nuevo cobro de Meta a mensajes de servicio,
+  // vigente a partir del 1 de octubre de 2026. Se puede quitar de aquí
+  // (y del bloque HTML correspondiente) una vez pasado ese cambio.
+  const HASTA = new Date('2026-10-15T00:00:00-06:00').getTime();
+  if (Date.now() > HASTA) return;
+  let cerrado = false;
+  try { cerrado = localStorage.getItem('bk_wa_meta_billing_oct2026_cerrado') === '1'; } catch(e){}
+  if (cerrado) return;
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('w2-meta-billing-alert');
+    if (el) el.hidden = false;
+  });
+})();
+
+function w2PintarPanelNumeros(){
+  const cont = document.getElementById('w2-numeros-panel');
+  if(!W2_NUMEROS.length){
+    cont.innerHTML = '<div class="bk-hint">Aún no tienes ningún número conectado.</div>';
+    return;
+  }
+  cont.innerHTML = W2_NUMEROS.map(n => `
+    <div class="w2-numero-row">
+      <span class="w2-numero-row__dot ${n.ia_enabled!==false?'is-on':''}"></span>
+      <div class="w2-numero-row__info">
+        <div class="w2-numero-row__alias">${n.alias || 'Sin nombre'} <span class="bk-hint">${n.display_number || ''}</span></div>
+        ${n.webhook_verificado ? '' : '<div class="w2-numero-row__warn">Meta no ha confirmado esta conexión — dale a Verificar.</div>'}
+        ${n.es_mio === false ? '<div class="bk-hint">Número de un compañero de equipo</div>' : ''}
+        ${n.numero_personal ? `<div class="bk-hint">Cecil IA personal: +${n.numero_personal}</div>` : ''}
+      </div>
+      <label class="bk-switch"><input type="checkbox" ${n.ia_enabled!==false?'checked':''} onchange="w2ToggleIaNumero('${n.id}', this.checked)"/><span class="bk-switch__track"></span> IA</label>
+      <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2BroqPersonal('${n.id}', '${(n.numero_personal || '').replace(/'/g,"")}')">Cecil IA personal</button>
+      ${!n.webhook_verificado ? `<button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2VerificarNumero('${n.id}')">Verificar</button>` : ''}
+      <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2DesconectarNumero('${n.id}', '${(n.alias || n.display_number || 'este número').replace(/'/g,"")}')">Desconectar</button>
+    </div>`).join('');
+}
+
+async function w2DesconectarNumero(id, nombre){
+  if(!confirm(`¿Desconectar ${nombre} de Cecil?\n\nDejará de recibir y responder mensajes por WhatsApp hasta que lo vuelvas a conectar desde cero.`)) return;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/numeros/' + id, { method:'DELETE', headers: w2Auth() });
+    if(!r.ok){ toast('No se pudo desconectar. Intenta de nuevo.'); return; }
+    toast('Número desconectado.');
+    await w2CargarNumeros();
+  }catch(e){ toast('No se pudo desconectar. Intenta de nuevo.'); }
+}
+
+async function w2BroqPersonal(id, actual){
+  const num = prompt(
+    'Tu número personal de WhatsApp (10 dígitos, con lada de tu ciudad).\n\n' +
+    'Cuando le escribas a tu número de Cecil DESDE este número, te atenderá Cecil IA ' +
+    'en modo asesor (agregar comentarios a contactos o citas, crear pendientes, ' +
+    'consultar tu CRM) por texto o nota de voz — en lugar de la recepcionista.\n\n' +
+    'Déjalo vacío y acepta para quitarlo.',
+    actual || ''
+  );
+  if(num === null) return; // canceló
+  const limpio = num.replace(/\D/g, '');
+  if(limpio && limpio.length < 10){ toast('El número debe tener al menos 10 dígitos.'); return; }
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/numeros/' + id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ numero_personal: limpio })
+    });
+    if(!r.ok){ toast('No se pudo guardar. Intenta de nuevo.'); return; }
+    toast(limpio ? 'Listo. Escríbele a tu número de Cecil desde tu personal y te contesta Cecil IA.'
+                 : 'Número personal quitado.');
+    await w2CargarNumeros();
+  }catch(e){ toast('No se pudo guardar. Intenta de nuevo.'); }
+}
+
+async function w2ToggleIaNumero(id, on){
+  try{
+    await fetch(API_BASE + '/whatsapp2/numeros/' + id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ ia_enabled: on })
+    });
+    await w2CargarNumeros();
+  }catch(e){ toast('No se pudo actualizar.'); }
+}
+
+function w2SeleccionarNumero(id){
+  W2_NUMERO_ACTUAL = id;
+  w2CargarConversaciones();
+}
+
+function w2CambiarNumeroEntrenamiento(id){
+  W2_ENTREN_NUMERO = id;
+  w2CargarEntrenamiento();
+}
+
+async function w2VerificarNumero(id){
+  toast('Verificando con Meta…');
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/numeros/' + id + '/verificar', { headers: w2Auth() });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo verificar.'); return; }
+    toast(d.webhook_verificado ? 'Confirmado: este número manda sus mensajes a WhatsApp 2.0.'
+                                : 'Meta dice que este número NO está apuntando a WhatsApp 2.0 todavía.');
+    await w2CargarNumeros();
+  }catch(e){ toast('No se pudo verificar.'); }
+}
+
+async function w2RevisarWebhookApp(){
+  toast('Revisando el webhook de la app…');
+  document.getElementById('w2-app-webhook-fix-btn').hidden = true;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/app-webhook', { headers: w2Auth() });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo revisar el webhook de la app.'); return; }
+    const apunta = !!(d.callback_url && d.callback_url.endsWith('/whatsapp2/webhook') && d.active !== false);
+    if(apunta){
+      toast('El webhook de la app ya apunta a Cecil. Todo en orden.');
+    }else{
+      toast(d.callback_url ? 'El webhook de la app NO apunta a Cecil todavía.'
+                            : 'La app no tiene ningún webhook configurado todavía.');
+      document.getElementById('w2-app-webhook-fix-btn').hidden = false;
+    }
+  }catch(e){ toast('No se pudo revisar el webhook de la app.'); }
+}
+
+async function w2ArreglarWebhookApp(){
+  toast('Fijando el webhook de la app…');
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/app-webhook', { method:'POST', headers: w2Auth() });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo fijar el webhook de la app.'); return; }
+    await w2RevisarWebhookApp();
+  }catch(e){ toast('No se pudo fijar el webhook de la app.'); }
+}
+
+/* ── Conversaciones ───────────────────────────────────────── */
+async function w2CargarConversaciones(){
+  try{
+    const qs = W2_NUMERO_ACTUAL !== 'todos' ? ('?numero_id=' + W2_NUMERO_ACTUAL) : '';
+    const r = await fetch(API_BASE + '/whatsapp2/conversaciones' + qs, { headers: w2Auth() });
+    const d = await r.json();
+    W2_CONVS = d.conversaciones || [];
+  }catch(e){ W2_CONVS = []; }
+  // Mantener sincronizado el chat abierto (ventana de 24h, IA, datos del contacto)
+  if(W2_CONV_ACTUAL){
+    const fresca = W2_CONVS.find(c => c.id === W2_CONV_ACTUAL.id);
+    if(fresca){
+      W2_CONV_ACTUAL = fresca;
+      if(w2VentanaCerrada() !== W2_VENTANA_CERRADA) w2RenderThread();
+      else { w2PintarSegIa(); w2ActualizarEstadoIa(); }
+    }
+  }
+  w2RenderLista();
+}
+
+function w2Iniciales(nombre){
+  if(!nombre) return '?';
+  return nombre.trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase();
+}
+
+function w2Esc(t){
+  return String(t == null ? '' : t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function w2AvaClase(txt){
+  let n = 0;
+  for(const ch of String(txt || '?')) n = (n + ch.charCodeAt(0)) % 5;
+  return 'w2-ava-' + (n + 1);
+}
+
+function w2Hora(iso){
+  try{ return new Date(iso).toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'}); }
+  catch(e){ return ''; }
+}
+
+function w2MismoDia(a, b){
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+
+function w2EtiquetaDia(iso){
+  const f = new Date(iso), hoy = new Date(), ayer = new Date(Date.now() - 864e5);
+  if(w2MismoDia(f, hoy)) return 'Hoy';
+  if(w2MismoDia(f, ayer)) return 'Ayer';
+  return f.toLocaleDateString('es-MX', {day:'numeric', month:'long', year:'numeric'});
+}
+
+function w2HoraLista(iso){
+  if(!iso) return '';
+  const f = new Date(iso), hoy = new Date(), ayer = new Date(Date.now() - 864e5);
+  if(w2MismoDia(f, hoy)) return w2Hora(iso);
+  if(w2MismoDia(f, ayer)) return 'Ayer';
+  return f.toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit'});
+}
+
+function w2Filtrar(f){
+  W2_FILTRO = f;
+  document.querySelectorAll('.w2-chip').forEach(b => b.classList.toggle('is-on', b.dataset.filtro === f));
+  w2RenderLista();
+}
+
+function w2RenderLista(){
+  const cont = document.getElementById('w2-list');
+  if(!cont) return;
+  const q = (document.getElementById('w2-buscar')?.value || '').trim().toLowerCase();
+
+  const lista = W2_CONVS.filter(c => {
+    const ct = c.wa2_contactos || {};
+    if(W2_FILTRO === 'nuevos' && !w2Pendiente(c)) return false;
+    if(W2_FILTRO === 'ia' && !w2IaAproxOn(c)) return false;
+    if(!q) return true;
+    return [ct.nombre, ct.wa_id, c.preview_texto, ct.resumen].some(v => (v || '').toLowerCase().includes(q));
+  });
+
+  if(!lista.length){
+    cont.innerHTML = '<div class="bk-hint" style="padding:var(--sp-4);">' +
+      (q || W2_FILTRO !== 'todos' ? 'Ningún chat coincide con lo que buscas.' : 'Aún no hay conversaciones en este número.') +
+      '</div>';
+    return;
+  }
+
+  cont.innerHTML = lista.map(c => {
+    const ct = c.wa2_contactos || {};
+    const nombre = ct.nombre || ct.wa_id || 'Prospecto';
+    const activa = W2_CONV_ACTUAL && W2_CONV_ACTUAL.id === c.id;
+    const pend = w2Pendiente(c);
+    const sinLeer = Number(c.unread_count) || 0;
+    const globito = pend
+      ? `<span class="w2-conv__unread ${sinLeer ? '' : 'w2-conv__unread--punto'}">${sinLeer ? (sinLeer > 99 ? '99+' : sinLeer) : ''}</span>`
+      : (w2IaAproxOn(c) ? '<span class="w2-conv__ia" title="La IA contesta este chat"></span>' : '');
+    let prev = c.preview_texto || ct.resumen || ct.busca || 'Sin mensajes aún';
+    if(c.preview_sender === 'sistema') /* nota interna: se muestra tal cual, sin prefijo */;
+    else if(c.preview_direction === 'out') prev = (c.preview_sender === 'ia' ? 'IA: ' : 'Tú: ') + prev;
+    return `<div class="w2-conv ${activa?'is-active':''} ${pend?'is-pendiente':''}" onclick="w2AbrirConversacion('${c.id}')">
+              <div class="w2-conv__ava ${w2AvaClase(nombre)}">${w2Esc(w2Iniciales(nombre))}</div>
+              <div class="w2-conv__body">
+                <div class="w2-conv__top">
+                  <span class="w2-conv__name">${w2Esc(nombre)}</span>
+                  <span class="w2-conv__time">${w2HoraLista(c.last_message_at)}</span>
+                </div>
+                <div class="w2-conv__bot">
+                  <span class="w2-conv__sub">${w2Esc(prev)}</span>
+                  ${globito}
+                </div>
+              </div>
+            </div>`;
+  }).join('');
+}
+
+/* ── Estado de la IA por chat (espejo exacto de la lógica del servidor) ──
+   'auto' obedece el modo global del número; 'on' contesta siempre aquí;
+   'off' nunca contesta aquí. La pausa temporal calla incluso al 'on'. */
+function w2ModoConv(c){
+  const m = c && c.ia_modo;
+  if(m === 'auto' || m === 'on' || m === 'off') return m;
+  return (c && c.ai_enabled === false) ? 'off' : 'auto';
+}
+function w2ConvPausada(c){
+  const h = c && c.ia_pausada_hasta;
+  return !!h && new Date(h) > new Date();
+}
+async function w2EntrenDe(numero_id){
+  if(!numero_id) return null;
+  if(W2_ENTREN_CACHE[numero_id]) return W2_ENTREN_CACHE[numero_id];
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/entrenamiento?numero_id=' + numero_id, { headers: w2Auth() });
+    if(!r.ok) return null;
+    const t = await r.json();
+    W2_ENTREN_CACHE[numero_id] = t;
+    return t;
+  }catch(e){ return null; }
+}
+/* Aproximación síncrona para la lista (usa la caché; si aún no llegó la
+   config del número, asume el default: encendida). */
+function w2IaAproxOn(c){
+  const modo = w2ModoConv(c);
+  if(modo === 'off') return false;
+  if(w2ConvPausada(c)) return false;
+  if(modo === 'on') return true;
+  const t = W2_ENTREN_CACHE[c.numero_id];
+  const g = (t && t.modo_ia) || 'siempre_encendida';
+  if(t && t.activo === false) return false;
+  if(g === 'siempre_apagada') return false;
+  if(g === 'solo_nuevos') return !!c.ia_sesion_nueva;
+  return true;
+}
+/* Texto de estado para el encabezado del chat. */
+async function w2EstadoIaChat(c){
+  const modo = w2ModoConv(c);
+  if(modo === 'off') return { on:false, texto:'IA apagada en este chat — respondes tú' };
+  if(w2ConvPausada(c)) return { on:false, texto:'IA en pausa hasta las ' + w2Hora(c.ia_pausada_hasta) + ' — respondiste a mano' };
+  if(modo === 'on') return { on:true, texto:'IA encendida en este chat — contesta aunque el modo del número esté apagado' };
+  const t = await w2EntrenDe(c.numero_id);
+  if(t && t.activo === false) return { on:false, texto:'En automático — no contesta (la IA está desactivada en este número)' };
+  const g = (t && t.modo_ia) || 'siempre_encendida';
+  if(g === 'siempre_apagada') return { on:false, texto:'En automático — no contesta (modo del número: apagada por default)' };
+  if(g === 'solo_nuevos'){
+    return c.ia_sesion_nueva
+      ? { on:true, texto:'En automático — contesta (cliente nuevo)' }
+      : { on:false, texto:'En automático — no contesta (no es cliente nuevo)' };
+  }
+  return { on:true, texto:'En automático — contesta (modo del número: encendida por default)' };
+}
+
+/* Una conversación está pendiente si trae mensajes sin leer o si el agente
+   la marcó como no leída a mano. Eso es lo único que pinta el globito. */
+function w2Pendiente(c){
+  return !!(Number(c.unread_count) || c.no_leida);
+}
+
+/* Marcar leído/no leído SIEMPRE pasa por aquí. La lectura dejó de ser un
+   efecto secundario de bajar los mensajes: solo cuenta cuando el agente
+   abre la conversación o la marca él mismo. */
+async function w2Lectura(id, noLeida){
+  const conv = W2_CONVS.find(c => c.id === id);
+  if(conv){ conv.no_leida = !!noLeida; conv.unread_count = noLeida ? Math.max(1, Number(conv.unread_count) || 0) : 0; }
+  w2RenderLista();
+  try{
+    await fetch(`${API_BASE}/whatsapp2/conversaciones/${encodeURIComponent(id)}/lectura`, {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ no_leida: !!noLeida })
+    });
+  }catch(e){ /* se reintenta al siguiente refresco de la bandeja */ }
+  // El globito de la barra inferior vive en el shell: se le avisa.
+  window.dispatchEvent(new Event('brokr-chats-leidos'));
+}
+
+async function w2AbrirConversacion(id){
+  const conv = W2_CONVS.find(c => c.id === id);
+  if(!conv) return;
+  W2_CONV_ACTUAL = conv;
+  W2_EN_HILO = true;
+  document.getElementById('w2-app')?.classList.add('is-chat');
+  w2RenderLista();
+  w2RenderThread();
+  await w2Lectura(id, false);
+  await w2CargarMensajes(id);
+}
+
+async function w2MarcarNoLeida(){
+  if(!W2_CONV_ACTUAL) return;
+  const id = W2_CONV_ACTUAL.id;
+  W2_CONV_ACTUAL = null;
+  W2_EN_HILO = false;
+  document.getElementById('w2-app')?.classList.remove('is-chat');
+  await w2Lectura(id, true);
+  w2RenderThread();
+  toast('Conversación marcada como no leída.');
+}
+
+function w2VolverALista(){
+  W2_EN_HILO = false;
+  document.getElementById('w2-app')?.classList.remove('is-chat');
+}
+
+/* ── Hilo de mensajes ─────────────────────────────────────── */
+function w2VentanaCerrada(){
+  // La ventana de 24h de WhatsApp se cuenta desde el ÚLTIMO MENSAJE DEL
+  // PROSPECTO (last_inbound_at), no desde cualquier actividad del chat.
+  const li = W2_CONV_ACTUAL?.last_inbound_at;
+  return !!li && (Date.now() - new Date(li).getTime()) > 24*60*60*1000;
+}
+
+function w2RenderThread(){
+  const thread = document.getElementById('w2-thread');
+  if(!thread) return;
+  if(!W2_CONV_ACTUAL){
+    thread.innerHTML = '<div class="w2-empty-thread">Elige una conversación para verla aquí.</div>';
+    return;
+  }
+  const ct = W2_CONV_ACTUAL.wa2_contactos || {};
+  const nombre = ct.nombre || ct.wa_id || 'Conversación';
+  const sub = ct.wa_id || '';
+  // Calificación: solo un vistazo (temperatura · score) — el detalle completo
+  // ya vive en Contactos/Leads, aquí no se repite ni se vuelve tarjeta.
+  const cal = (ct.temperatura || ct.score != null)
+    ? `<span class="w2-cal-badge">${w2Esc(ct.temperatura || 'Nuevo')} · ${ct.score ?? 0}</span>` : '';
+  const verContacto = ct.contacto_crm_id
+    ? `<a class="w2-iconbtn" title="Ver contacto" href="contactos.html?id=${encodeURIComponent(ct.contacto_crm_id)}" target="_blank" rel="noopener">
+         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.6 3.1-5.6 7-5.6s7 2 7 5.6"/></svg>
+       </a>` : '';
+
+  W2_VENTANA_CERRADA = w2VentanaCerrada();
+  const composer = W2_VENTANA_CERRADA
+    ? `<div class="w2-composer" style="align-items:center;">
+         <div class="bk-hint" style="flex:1;">Pasaron más de 24 horas desde su último mensaje — usa una plantilla para escribirle.</div>
+         <button class="bk-btn bk-btn--forest bk-btn--sm" onclick="w2AbrirModalPlantilla()">Enviar plantilla</button>
+       </div>`
+    : `<div class="w2-composer">
+         <textarea id="w2-composer-texto" rows="1" placeholder="Escribe un mensaje"></textarea>
+         <button class="w2-send" title="Enviar" onclick="w2EnviarManual()">
+           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 20 4l-3 8 3 8z"/><path d="M4 12h13"/></svg>
+         </button>
+       </div>`;
+
+  thread.innerHTML = `
+    <div class="w2-thread__head">
+      <button class="w2-back" title="Volver" onclick="w2VolverALista()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div class="w2-conv__ava ${w2AvaClase(nombre)}" style="width:40px;height:40px;">${w2Esc(w2Iniciales(nombre))}</div>
+      <div class="w2-thread__id">
+        <div class="w2-thread__name">${w2Esc(nombre)} ${cal}</div>
+        <div class="w2-thread__sub">${w2Esc(sub)} <span class="w2-ia-estado" id="w2-ia-estado"></span></div>
+        <div class="w2-thread__tags" id="w2-thread-tags"></div>
+      </div>
+      <div class="w2-thread__acts">
+        <div class="w2-seg" id="w2-seg-ia" role="group" aria-label="IA en este chat" title="Auto: obedece el modo del número. Encendida: contesta siempre aquí. Apagada: nunca contesta aquí.">
+          <button type="button" data-modo="auto" onclick="w2SetIaModo('auto')">Auto</button>
+          <button type="button" data-modo="on" onclick="w2SetIaModo('on')">Encendida</button>
+          <button type="button" data-modo="off" onclick="w2SetIaModo('off')">Apagada</button>
+        </div>
+        <button class="w2-iconbtn" title="Agendar cita" onclick="w2AbrirModalCita()">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3.5v3M16 3.5v3"/></svg>
+        </button>
+        ${verContacto}
+        <button class="w2-iconbtn" title="Marcar como no leída" onclick="w2MarcarNoLeida()">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="m3.9 7.1 8.1 6 8.1-6"/></svg>
+        </button>
+        <button class="w2-iconbtn" title="Eliminar esta conversación de Cecil" onclick="w2BorrarConversacion()">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="w2-msgs" id="w2-thread-msgs"></div>
+    <button class="w2-nuevos" id="w2-nuevos" hidden onclick="w2IrAlFinal(true)">Mensajes nuevos</button>
+    ${composer}`;
+
+  const box = document.getElementById('w2-thread-msgs');
+  box.addEventListener('scroll', () => {
+    if(box.scrollTop < 80) w2CargarMasAntiguos();
+    if(w2AlFondo(box)) document.getElementById('w2-nuevos').hidden = true;
+  });
+
+  const ta = document.getElementById('w2-composer-texto');
+  if(ta){
+    ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 132) + 'px'; });
+    ta.addEventListener('keydown', e => {
+      if(e.key === 'Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); w2EnviarManual(); }
+    });
+  }
+  w2PintarMensajes();
+  w2PintarEtiquetas();
+  w2PintarSegIa();
+  w2ActualizarEstadoIa();
+}
+
+function w2PintarSegIa(){
+  const seg = document.getElementById('w2-seg-ia');
+  if(!seg || !W2_CONV_ACTUAL) return;
+  const modo = w2ModoConv(W2_CONV_ACTUAL);
+  seg.querySelectorAll('button').forEach(b => b.classList.toggle('is-on', b.dataset.modo === modo));
+}
+
+async function w2ActualizarEstadoIa(){
+  const el = document.getElementById('w2-ia-estado');
+  if(!el || !W2_CONV_ACTUAL) return;
+  const convId = W2_CONV_ACTUAL.id;
+  const estado = await w2EstadoIaChat(W2_CONV_ACTUAL);
+  // Por si el agente cambió de chat mientras llegaba la config del número.
+  if(!W2_CONV_ACTUAL || W2_CONV_ACTUAL.id !== convId) return;
+  el.textContent = '· ' + estado.texto;
+  el.classList.toggle('is-on', estado.on);
+}
+
+async function w2SetIaModo(modo){
+  if(!W2_CONV_ACTUAL) return;
+  W2_CONV_ACTUAL.ia_modo = modo;
+  W2_CONV_ACTUAL.ia_pausada_hasta = null;   // cambiarlo a mano borra la pausa
+  W2_CONV_ACTUAL.ai_enabled = modo !== 'off';
+  w2PintarSegIa();
+  w2ActualizarEstadoIa();
+  w2RenderLista();
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/conversaciones/' + W2_CONV_ACTUAL.id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ ia_modo: modo })
+    });
+    if(!r.ok) throw new Error();
+  }catch(e){ toast('No se pudo actualizar. Intenta de nuevo.'); }
+}
+
+function w2AlFondo(box){
+  return (box.scrollHeight - box.scrollTop - box.clientHeight) < 90;
+}
+
+function w2IrAlFinal(ocultarAviso){
+  const box = document.getElementById('w2-thread-msgs');
+  if(box) box.scrollTop = box.scrollHeight;
+  if(ocultarAviso){ const p = document.getElementById('w2-nuevos'); if(p) p.hidden = true; }
+}
+
+function w2Adjunto(m){
+  const url = m.media_url;
+  if(!url) return '';
+  const u = w2Esc(url);
+  const cuerpo = (m.body || '').toLowerCase();
+  if(/^\[foto/.test(cuerpo) || /\.(jpe?g|png|gif|webp)(\?|$)/i.test(url)){
+    return `<span class="w2-media"><img src="${u}" alt="Foto que envió el prospecto" loading="lazy" onclick="w2Ampliar('${u}')"/>
+            <a class="w2-media__baja" href="${u}" download target="_blank" rel="noopener">Descargar</a></span>`;
+  }
+  if(/^\[nota de voz/.test(cuerpo) || /\.(ogg|mp3|m4a|wav|opus)(\?|$)/i.test(url)){
+    return `<span class="w2-media"><audio controls preload="none" src="${u}"></audio>
+            <a class="w2-media__baja" href="${u}" download target="_blank" rel="noopener">Descargar audio</a></span>`;
+  }
+  if(/^\[video/.test(cuerpo)){
+    return `<span class="w2-media"><a class="w2-media__doc" href="${u}" target="_blank" rel="noopener">Ver video</a></span>`;
+  }
+  return `<span class="w2-media"><a class="w2-media__doc" href="${u}" download target="_blank" rel="noopener">Descargar archivo</a></span>`;
+}
+
+function w2Ampliar(url){
+  const d = document.createElement('div');
+  d.className = 'w2-lightbox';
+  d.innerHTML = `<img src="${url}" alt="Foto ampliada"/>`;
+  d.onclick = () => d.remove();
+  document.body.appendChild(d);
+}
+
+async function w2BorrarMensaje(id){
+  if(!confirm('¿Eliminar este mensaje de Cecil? También se borra el archivo adjunto. '
+            + 'No se puede deshacer y no afecta el WhatsApp del prospecto.')) return;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/mensajes/' + encodeURIComponent(id),
+                          { method:'DELETE', headers: w2Auth() });
+    if(!r.ok) throw new Error();
+    W2_MSGS = W2_MSGS.filter(m => m.id !== id);
+    w2PintarMensajes();
+    toast('Mensaje eliminado');
+  }catch(e){ toast('No se pudo eliminar el mensaje'); }
+}
+
+async function w2BorrarConversacion(){
+  if(!W2_CONV_ACTUAL) return;
+  if(!confirm('¿Eliminar toda esta conversación de Cecil? Se borran los mensajes y los archivos. '
+            + 'El contacto en tu CRM no se toca. No se puede deshacer.')) return;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/conversaciones/' + encodeURIComponent(W2_CONV_ACTUAL.id),
+                          { method:'DELETE', headers: w2Auth() });
+    if(!r.ok) throw new Error();
+    W2_CONV_ACTUAL = null;
+    toast('Conversación eliminada');
+    await w2CargarConversaciones();
+    w2VolverALista();
+  }catch(e){ toast('No se pudo eliminar la conversación'); }
+}
+
+function w2PintarMensajes(){
+  const box = document.getElementById('w2-thread-msgs');
+  if(!box) return;
+  if(!W2_MSGS.length){
+    box.innerHTML = '<div class="w2-loadmore">Todavía no hay mensajes en este chat.</div>';
+    return;
+  }
+  let html = W2_HAY_MAS
+    ? (W2_CARGANDO_MAS
+        ? '<div class="w2-loadmore">Cargando mensajes anteriores…</div>'
+        : '<div class="w2-loadmore w2-loadmore--btn" onclick="w2CargarMasAntiguos()">Ver mensajes anteriores</div>')
+    : '<div class="w2-loadmore">Este es el inicio de la conversación.</div>';
+  let diaPrevio = '', remitentePrevio = '';
+  for(const m of W2_MSGS){
+    const dia = w2EtiquetaDia(m.created_at);
+    let grupo = false;
+    if(dia !== diaPrevio){ html += `<div class="w2-day">${w2Esc(dia)}</div>`; diaPrevio = dia; grupo = true; }
+    if(m.sender === 'sistema'){
+      html += `<div class="w2-nota-sistema">${w2Esc(m.body)}</div>`;
+      remitentePrevio = 'sistema';
+      continue;
+    }
+    const out = m.direction === 'out';
+    const quien = out ? (m.sender === 'ia' ? 'ia' : 'agente') : 'in';
+    if(quien !== remitentePrevio) grupo = true;
+    remitentePrevio = quien;
+    const firma = out ? (m.sender === 'ia' ? 'IA' : 'Tú') : '';
+    const borrar = m.id && !m._pendiente
+      ? `<button class="w2-bubble__x" title="Eliminar este mensaje de Cecil" onclick="w2BorrarMensaje('${w2Esc(m.id)}')">Eliminar</button>`
+      : '';
+    const fallo = m.entrega_error
+      ? `<span title="${w2Esc(m.entrega_error)}">· no se entregó</span>` : '';
+    html += `<div class="w2-row ${out ? 'w2-row--out' : 'w2-row--in'} ${m.sender === 'ia' ? 'is-ia' : ''} ${grupo ? 'w2-row--grupo' : ''}">
+               <div class="w2-bubble ${m._pendiente ? 'w2-bubble--pend' : ''}">${w2Adjunto(m)}${w2Esc(m.body)}<div class="w2-bubble__meta">${firma ? w2Esc(firma) + ' ·' : ''} ${w2Hora(m.created_at)}${m._pendiente ? ' · enviando' : ''} ${fallo} ${borrar}</div></div>
+             </div>`;
+  }
+  box.innerHTML = html;
+}
+
+async function w2CargarMensajes(conversacion_id){
+  W2_MSGS = []; W2_HAY_MAS = false;
+  const box = document.getElementById('w2-thread-msgs');
+  if(box) box.innerHTML = '<div class="w2-loadmore">Cargando…</div>';
+  try{
+    const r = await fetch(`${API_BASE}/whatsapp2/mensajes?conversacion_id=${encodeURIComponent(conversacion_id)}&limit=${W2_PAGINA}`, { headers: w2Auth() });
+    const d = await r.json();
+    W2_MSGS = d.mensajes || [];
+    W2_HAY_MAS = !!d.hay_mas_antiguos;
+    w2PintarMensajes();
+    w2IrAlFinal(true);
+    // Si la tanda no llenó la pantalla no habría cómo hacer scroll: se rellena.
+    const caja = document.getElementById('w2-thread-msgs');
+    if(caja && W2_HAY_MAS && caja.scrollHeight <= caja.clientHeight + 20) await w2CargarMasAntiguos();
+  }catch(e){
+    if(box) box.innerHTML = '<div class="w2-loadmore">No se pudo cargar la conversación.</div>';
+  }
+}
+
+async function w2CargarMasAntiguos(){
+  if(W2_CARGANDO_MAS || !W2_HAY_MAS || !W2_CONV_ACTUAL || !W2_MSGS.length) return;
+  W2_CARGANDO_MAS = true;
+  const box = document.getElementById('w2-thread-msgs');
+  const altoAntes = box.scrollHeight, topAntes = box.scrollTop;
+  try{
+    const before = encodeURIComponent(W2_MSGS[0].created_at);
+    const r = await fetch(`${API_BASE}/whatsapp2/mensajes?conversacion_id=${encodeURIComponent(W2_CONV_ACTUAL.id)}&limit=${W2_PAGINA}&before=${before}`, { headers: w2Auth() });
+    const d = await r.json();
+    const viejos = d.mensajes || [];
+    W2_HAY_MAS = !!d.hay_mas_antiguos;
+    if(viejos.length) W2_MSGS = viejos.concat(W2_MSGS);
+    w2PintarMensajes();
+    // Se conserva la posición de lectura: lo que crece se compensa hacia abajo.
+    box.scrollTop = topAntes + (box.scrollHeight - altoAntes);
+  }catch(e){ /* sin conexión: se reintenta en el siguiente scroll */ }
+  W2_CARGANDO_MAS = false;
+}
+
+function w2UltimoTsReal(){
+  for(let i = W2_MSGS.length - 1; i >= 0; i--){ if(!W2_MSGS[i]._pendiente) return W2_MSGS[i].created_at; }
+  return null;
+}
+
+async function w2RefrescarMensajes(){
+  if(!W2_CONV_ACTUAL) return;
+  const box = document.getElementById('w2-thread-msgs');
+  if(!box) return;
+  const desde = w2UltimoTsReal();
+  if(!desde){ await w2CargarMensajes(W2_CONV_ACTUAL.id); return; }
+  try{
+    const r = await fetch(`${API_BASE}/whatsapp2/mensajes?conversacion_id=${encodeURIComponent(W2_CONV_ACTUAL.id)}&after=${encodeURIComponent(desde)}`, { headers: w2Auth() });
+    const d = await r.json();
+    const vistos = new Set(W2_MSGS.map(m => m.id));
+    const nuevos = (d.mensajes || []).filter(m => !vistos.has(m.id));
+    if(!nuevos.length) return;
+    const pegado = w2AlFondo(box);
+    const topAntes = box.scrollTop;
+    W2_MSGS = W2_MSGS.filter(m => !m._pendiente).concat(nuevos);
+    w2PintarMensajes();
+    if(pegado){ w2IrAlFinal(true); }
+    else { box.scrollTop = topAntes; document.getElementById('w2-nuevos').hidden = false; }
+    // Si el agente tiene el hilo enfrente, lo que acaba de entrar cuenta como
+    // leído. Si se regresó a la lista, NO: ahí sí debe quedar el globito.
+    if(W2_EN_HILO && nuevos.some(m => m.direction === 'in')) await w2Lectura(W2_CONV_ACTUAL.id, false);
+  }catch(e){ /* silencioso: es un refresco de fondo */ }
+}
+
+async function w2EnviarManual(){
+  const el = document.getElementById('w2-composer-texto');
+  const texto = (el?.value || '').trim();
+  if(!texto || !W2_CONV_ACTUAL) return;
+  el.value = ''; el.style.height = 'auto';
+  // Se pinta de inmediato (como WhatsApp) y se confirma al responder el servidor.
+  W2_MSGS.push({ id:'tmp-' + Date.now(), direction:'out', sender:'agente', body:texto,
+                 created_at:new Date().toISOString(), _pendiente:true });
+  w2PintarMensajes(); w2IrAlFinal(true);
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/mensajes', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ conversacion_id: W2_CONV_ACTUAL.id, texto })
+    });
+    if(!r.ok){
+      const d = await r.json().catch(() => ({}));
+      const detalle = d.detail || {};
+      W2_MSGS = W2_MSGS.filter(m => !m._pendiente);
+      w2PintarMensajes();
+      if(detalle.ventana_cerrada){
+        toast(detalle.mensaje || 'La ventana de 24h está cerrada.');
+        W2_CONV_ACTUAL.last_inbound_at = W2_CONV_ACTUAL.last_inbound_at || new Date(Date.now() - 25*60*60*1000).toISOString();
+        w2RenderThread();
+        w2AbrirModalPlantilla();
+      } else {
+        toast(typeof detalle === 'string' ? detalle : 'No se pudo enviar el mensaje.');
+      }
+      return;
+    }
+    const ok = await r.json().catch(() => ({}));
+    if(ok.ia_pausada){
+      // El servidor pausa la IA al escribir; aquí se refleja en pantalla.
+      W2_CONV_ACTUAL.ia_sesion_nueva = false;
+      if(ok.para_siempre){
+        W2_CONV_ACTUAL.ia_modo = 'off';
+        W2_CONV_ACTUAL.ai_enabled = false;
+        toast('Tomaste esta conversación. La IA se apagó aquí; enciéndela cuando quieras.');
+      } else {
+        W2_CONV_ACTUAL.ia_pausada_hasta = ok.ia_pausada_hasta;
+        toast('Tomaste esta conversación. La IA queda en pausa hasta las ' + w2Hora(ok.ia_pausada_hasta) + '.');
+      }
+      w2PintarSegIa();
+      w2ActualizarEstadoIa();
+      w2RenderLista();
+    }
+    await w2RefrescarMensajes();
+    w2IrAlFinal(true);
+  }catch(e){
+    W2_MSGS = W2_MSGS.filter(m => !m._pendiente);
+    w2PintarMensajes();
+    toast('No se pudo enviar el mensaje.');
+  }
+}
+
+/* ── Entrenamiento ────────────────────────────────────────── */
+/* ── Plantillas ───────────────────────────────────────────── */
+function w2AbrirTabPlantillas(){
+  const sel = document.getElementById('w2-pl-numero-selector');
+  sel.innerHTML = W2_NUMEROS.map(n => `<option value="${n.id}">${n.alias || n.display_number || 'Número'}</option>`).join('');
+  if(W2_NUMEROS.length) w2CargarPlantillas();
+  else document.getElementById('w2-pl-lista').innerHTML = '<div class="bk-hint">Conecta un número primero.</div>';
+}
+
+async function w2CargarPlantillas(){
+  const numero_id = document.getElementById('w2-pl-numero-selector').value;
+  const cont = document.getElementById('w2-pl-lista');
+  if(!numero_id) return;
+  cont.innerHTML = '<div class="bk-hint">Cargando…</div>';
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/plantillas?numero_id=' + numero_id, { headers: w2Auth() });
+    const d = await r.json();
+    const plantillas = d.plantillas || [];
+    if(!plantillas.length){ cont.innerHTML = '<div class="bk-hint">Aún no tienes plantillas para este número.</div>'; return; }
+    const estatusTxt = { APPROVED:'Aprobada', PENDING:'En revisión', REJECTED:'Rechazada' };
+    cont.innerHTML = plantillas.map(p => `
+      <div class="w2-numero-row">
+        <div class="w2-numero-row__info">
+          <div class="w2-numero-row__alias">${p.nombre} <span class="bk-hint">${p.idioma}</span></div>
+          <div class="w2-numero-row__sub">${(p.cuerpo || '').slice(0,120)}</div>
+        </div>
+        <span class="bk-badge">${estatusTxt[p.estatus] || p.estatus}</span>
+      </div>`).join('');
+  }catch(e){ cont.innerHTML = '<div class="bk-hint">No se pudieron cargar las plantillas.</div>'; }
+}
+
+async function w2CrearPlantilla(){
+  const numero_id = document.getElementById('w2-pl-numero-selector').value;
+  const nombre = document.getElementById('w2-pl-nombre').value.trim();
+  const cuerpo = document.getElementById('w2-pl-cuerpo').value.trim();
+  if(!numero_id){ toast('Elige un número primero.'); return; }
+  if(!nombre || !cuerpo){ toast('Falta el nombre o el texto del mensaje.'); return; }
+  const body = {
+    numero_id,
+    nombre,
+    categoria: document.getElementById('w2-pl-categoria').value,
+    cuerpo,
+    variables_ejemplo: w2Lista('w2-pl-ejemplo'),
+    footer: document.getElementById('w2-pl-footer').value.trim() || null,
+  };
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/plantillas', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() }, body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo crear la plantilla.'); return; }
+    toast('Plantilla enviada a Meta para aprobación.');
+    document.getElementById('w2-pl-nombre').value = '';
+    document.getElementById('w2-pl-cuerpo').value = '';
+    document.getElementById('w2-pl-ejemplo').value = '';
+    document.getElementById('w2-pl-footer').value = '';
+    await w2CargarPlantillas();
+  }catch(e){ toast('No se pudo crear la plantilla.'); }
+}
+
+async function w2CargarEntrenamiento(){
+  const numero_id = W2_ENTREN_NUMERO || '';
+  const numeroObj = W2_NUMEROS.find(n => n.id === W2_ENTREN_NUMERO);
+  const contexto = document.getElementById('w2-t-contexto');
+  if(numero_id && numeroObj){
+    contexto.textContent = 'Estás editando el número "' + (numeroObj.alias || numeroObj.display_number) + '". Estos cambios solo afectan a este número.';
+  } else if(W2_NUMEROS.length){
+    contexto.textContent = 'Tienes seleccionado "Plantilla para números nuevos": esto NO edita ninguno de tus números ya conectados, solo se usará cuando conectes uno nuevo. Elige un número arriba para editar el suyo.';
+  } else {
+    contexto.textContent = 'Aún no tienes ningún número conectado. Esto guarda la plantilla que usará el primer número que conectes.';
+  }
+  try{
+    const qs = numero_id ? ('?numero_id=' + numero_id) : '';
+    const r = await fetch(API_BASE + '/whatsapp2/entrenamiento' + qs, { headers: w2Auth() });
+    if(!r.ok){ toast('No se pudo cargar el entrenamiento (error ' + r.status + ').'); return; }
+    const t = await r.json();
+    document.getElementById('w2-t-nombre').value = t.nombre_ia || '';
+    document.getElementById('w2-t-identidad').value = t.identidad || '';
+    document.getElementById('w2-t-tono').value = t.tono || '';
+    document.getElementById('w2-t-objetivo').value = t.objetivo || '';
+    document.getElementById('w2-t-especialidad').value = t.especialidad || '';
+    document.getElementById('w2-t-conocimiento').value = t.conocimiento || '';
+    document.getElementById('w2-t-puede').value = t.puede || '';
+    document.getElementById('w2-t-debe').value = t.debe || '';
+    document.getElementById('w2-t-nodebe').value = t.no_debe || '';
+    document.getElementById('w2-t-datos').value = (t.datos_calificar || []).join(', ');
+    document.getElementById('w2-t-preguntas').value = (t.preguntas_extra || []).join(', ');
+    document.getElementById('w2-t-escalar').value = (t.escalar_palabras || []).join(', ');
+    document.getElementById('w2-t-horario').checked = !!t.horario_activo;
+    document.getElementById('w2-t-hi').value = t.hora_inicio || '08:00';
+    document.getElementById('w2-t-hf').value = t.hora_fin || '21:00';
+    document.getElementById('w2-t-zona').value = t.zona_horaria || (window.bkPaisCfg ? bkPaisCfg().zonaHoraria : 'America/Mexico_City');
+    document.getElementById('w2-t-fuera').value = t.fuera_horario_msg || '';
+    document.getElementById('w2-t-max').value = t.max_mensajes_ia || 0;
+    document.getElementById('w2-t-activo').checked = t.activo !== false;
+    w2SetModoGlobal(t.modo_ia || 'siempre_encendida', true);
+    document.getElementById('w2-t-nuevos-meses').value = String(t.nuevos_meses || 3);
+    document.getElementById('w2-t-pausa').checked = t.pausa_al_responder !== false;
+    document.getElementById('w2-t-pausa-dur').value = String(t.pausa_duracion_min || 0);
+    w2PausaCambio();
+    if(numero_id) W2_ENTREN_CACHE[numero_id] = t;   // refrescar la caché del estado por chat
+  }catch(e){ toast('No se pudo cargar el entrenamiento (sin conexión).'); }
+}
+
+/* Tarjetas-radio del modo global de encendido. */
+function w2SetModoGlobal(modo, soloUI){
+  document.querySelectorAll('#w2-t-modos .w2-modo').forEach(card => {
+    const es = card.dataset.modo === modo;
+    card.classList.toggle('is-on', es);
+    const radio = card.querySelector('input');
+    if(radio) radio.checked = es;
+  });
+  document.getElementById('w2-t-nuevos-wrap').hidden = modo !== 'solo_nuevos';
+}
+
+function w2ModoGlobalElegido(){
+  const on = document.querySelector('#w2-t-modos .w2-modo.is-on');
+  return (on && on.dataset.modo) || 'siempre_encendida';
+}
+
+function w2PausaCambio(){
+  const activa = document.getElementById('w2-t-pausa').checked;
+  document.getElementById('w2-t-pausa-dur-wrap').hidden = !activa;
+}
+
+function w2ToggleEntrenAvanzado(){
+  const div = document.getElementById('w2-t-avanzado');
+  const btn = document.getElementById('w2-t-avanzado-btn');
+  div.hidden = !div.hidden;
+  btn.textContent = div.hidden ? 'Mostrar' : 'Ocultar';
+}
+
+/* ── Simulador ────────────────────────────────────────────── */
+let W2_PRUEBA = [];
+let W2_PRUEBA_OCUPADO = false;
+
+function w2ReiniciarPrueba(){ W2_PRUEBA = []; w2PintarPrueba(); }
+
+function w2PintarPrueba(pensando){
+  const box = document.getElementById('w2-prueba-hilo');
+  if(!box) return;
+  if(!W2_PRUEBA.length && !pensando){
+    box.innerHTML = '<div class="w2-prueba__vacio">Escribe abajo lo que diría un prospecto y mira cómo contesta tu asistente.</div>';
+    return;
+  }
+  let html = '';
+  for(const m of W2_PRUEBA){
+    html += `<div class="w2-prueba__msg w2-prueba__msg--${m.rol === 'ia' ? 'ia' : 'yo'}">${w2Esc(m.texto)}</div>`;
+    if(m.ficha) html += `<div class="w2-prueba__ficha">${w2Esc(m.ficha)}</div>`;
+  }
+  if(pensando) html += '<div class="w2-prueba__msg w2-prueba__msg--ia">Escribiendo…</div>';
+  box.innerHTML = html;
+  box.scrollTop = box.scrollHeight;
+}
+
+async function w2EnviarPrueba(){
+  if(W2_PRUEBA_OCUPADO) return;
+  const input = document.getElementById('w2-prueba-texto');
+  const texto = (input.value || '').trim();
+  if(!texto) return;
+  input.value = '';
+  W2_PRUEBA.push({ rol:'prospecto', texto });
+  W2_PRUEBA_OCUPADO = true;
+  w2PintarPrueba(true);
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/probar', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({
+        numero_id: W2_ENTREN_NUMERO || null,
+        historial: W2_PRUEBA.slice(0, -1).map(m => ({ rol: m.rol, texto: m.texto })),
+        mensaje: texto,
+      })
+    });
+    const d = await r.json();
+    if(!r.ok){ toast((d && d.detail) || 'No se pudo probar el asistente.'); W2_PRUEBA.pop(); w2PintarPrueba(); return; }
+
+    const detalle = [];
+    if(d.temperatura) detalle.push('Lo calificó como ' + d.temperatura + (d.score != null ? ' (' + d.score + ')' : ''));
+    if(d.presupuesto) detalle.push('Presupuesto: ' + d.presupuesto);
+    if(d.accion && d.accion.tipo === 'agendar_visita') detalle.push('Agendaría visita el ' + (d.accion.fecha || '') + ' a las ' + (d.accion.hora || ''));
+    if(d.accion && d.accion.tipo === 'pasar_a_humano') detalle.push('Te pasaría la conversación: ' + (d.accion.motivo || ''));
+    if(d.propiedades && d.propiedades.length){
+      detalle.push('Le mandaría ' + d.propiedades.length + ' inmueble(s) de tu catálogo: '
+                   + d.propiedades.map(p => p.titulo).join(' · '));
+    }
+    if(d.aviso) detalle.push(d.aviso);
+    if(d.falla_tecnica) detalle.push('Ojo: la IA no pudo responder bien en este intento. Vuelve a probar.');
+
+    W2_PRUEBA.push({ rol:'ia', texto: d.reply || '', ficha: detalle.join(' — ') || '' });
+    w2PintarPrueba();
+  }catch(e){
+    toast('No se pudo probar el asistente.');
+    W2_PRUEBA.pop();
+    w2PintarPrueba();
+  }finally{
+    W2_PRUEBA_OCUPADO = false;
+  }
+}
+
+function w2Lista(id){
+  return (document.getElementById(id).value || '').split(',').map(s => s.trim()).filter(Boolean);
+}
+
+async function w2GuardarEntrenamiento(){
+  const numero_id = W2_ENTREN_NUMERO || null;
+  const body = {
+    numero_id,
+    nombre_ia: document.getElementById('w2-t-nombre').value.trim(),
+    identidad: document.getElementById('w2-t-identidad').value.trim(),
+    tono: document.getElementById('w2-t-tono').value.trim(),
+    objetivo: document.getElementById('w2-t-objetivo').value.trim(),
+    especialidad: document.getElementById('w2-t-especialidad').value.trim(),
+    conocimiento: document.getElementById('w2-t-conocimiento').value.trim(),
+    puede: document.getElementById('w2-t-puede').value.trim(),
+    debe: document.getElementById('w2-t-debe').value.trim(),
+    no_debe: document.getElementById('w2-t-nodebe').value.trim(),
+    datos_calificar: w2Lista('w2-t-datos'),
+    preguntas_extra: w2Lista('w2-t-preguntas'),
+    escalar_palabras: w2Lista('w2-t-escalar'),
+    horario_activo: document.getElementById('w2-t-horario').checked,
+    hora_inicio: document.getElementById('w2-t-hi').value || '08:00',
+    hora_fin: document.getElementById('w2-t-hf').value || '21:00',
+    zona_horaria: document.getElementById('w2-t-zona').value || (window.bkPaisCfg ? bkPaisCfg().zonaHoraria : 'America/Mexico_City'),
+    fuera_horario_msg: document.getElementById('w2-t-fuera').value.trim(),
+    max_mensajes_ia: parseInt(document.getElementById('w2-t-max').value || '0', 10),
+    activo: document.getElementById('w2-t-activo').checked,
+    modo_ia: w2ModoGlobalElegido(),
+    pausa_al_responder: document.getElementById('w2-t-pausa').checked,
+    pausa_duracion_min: parseInt(document.getElementById('w2-t-pausa-dur').value || '0', 10),
+    nuevos_meses: parseInt(document.getElementById('w2-t-nuevos-meses').value || '3', 10),
+  };
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/entrenamiento', {
+      method:'PUT', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify(body)
+    });
+    let d = {};
+    try{ d = await r.json(); }catch(_){}
+    if(!r.ok){
+      toast(d.detail || ('No se guardó (error ' + r.status + '). Intenta de nuevo.'));
+      return;
+    }
+    if(numero_id) delete W2_ENTREN_CACHE[numero_id];
+    toast(numero_id ? 'Guardado para este número.' : 'Guardada la plantilla para números nuevos.');
+    // Vuelve a leerlo del servidor para confirmar que de verdad quedó guardado,
+    // no solo que el navegador lo cree.
+    await w2CargarEntrenamiento();
+  }catch(e){ toast('No se pudo guardar (sin conexión). Intenta de nuevo.'); }
+}
+
+function w2AbrirModalCita(){
+  document.getElementById('w2-cita-titulo').value = W2_CONV_ACTUAL?.wa2_contactos?.nombre
+    ? ('Visita con ' + W2_CONV_ACTUAL.wa2_contactos.nombre) : 'Visita';
+  document.getElementById('w2-cita-fecha').value = '';
+  document.getElementById('w2-cita-hora').value = '';
+  document.getElementById('w2-cita-notas').value = '';
+  const modal = document.getElementById('w2-modal-cita');
+  modal.hidden = false;
+  // rAF: registrar hidden=false antes de is-open para que la transición se anime.
+  requestAnimationFrame(() => modal.classList.add('is-open'));
+}
+function w2CerrarModalCita(){
+  const modal = document.getElementById('w2-modal-cita');
+  modal.classList.remove('is-open');
+  setTimeout(() => { modal.hidden = true; }, 200);
+}
+
+async function w2GuardarCitaManual(){
+  const fecha = document.getElementById('w2-cita-fecha').value;
+  const hora = document.getElementById('w2-cita-hora').value;
+  if(!fecha || !hora){ toast('Falta fecha y hora.'); return; }
+  const body = {
+    conversacion_id: W2_CONV_ACTUAL?.id || null,
+    titulo: document.getElementById('w2-cita-titulo').value.trim() || 'Visita',
+    fecha, hora,
+    notas: document.getElementById('w2-cita-notas').value.trim(),
+  };
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/agendar', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo agendar.'); return; }
+    w2CerrarModalCita();
+    toast('Listo — la cita ya está en tu módulo de Tareas.');
+  }catch(e){ toast('No se pudo agendar (sin conexión).'); }
+}
+
+/* ── Modal de plantilla (mandar mensaje con la ventana de 24h cerrada) ──── */
+let W2_PLANTILLAS_CHAT = [];
+
+async function w2AbrirModalPlantilla(){
+  const sel = document.getElementById('w2-plm-nombre');
+  sel.innerHTML = '<option>Cargando…</option>';
+  document.getElementById('w2-plm-variables').value = '';
+  document.getElementById('w2-plm-preview-wrap').hidden = true;
+  const modal = document.getElementById('w2-modal-plantilla');
+  modal.hidden = false;
+  requestAnimationFrame(() => modal.classList.add('is-open'));
+
+  const numero_id = W2_CONV_ACTUAL?.numero_id;
+  if(!numero_id){ sel.innerHTML = '<option value="">Sin número</option>'; return; }
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/plantillas?numero_id=' + numero_id, { headers: w2Auth() });
+    const d = await r.json();
+    W2_PLANTILLAS_CHAT = (d.plantillas || []).filter(p => p.estatus === 'APPROVED');
+    sel.innerHTML = W2_PLANTILLAS_CHAT.length
+      ? W2_PLANTILLAS_CHAT.map(p => `<option value="${p.nombre}|${p.idioma}">${p.nombre}</option>`).join('')
+      : '<option value="">No hay plantillas aprobadas todavía</option>';
+    w2PintarPreviewPlantilla();
+  }catch(e){ sel.innerHTML = '<option value="">No se pudieron cargar</option>'; }
+}
+
+function w2PintarPreviewPlantilla(){
+  const sel = document.getElementById('w2-plm-nombre');
+  const [nombre] = (sel.value || '').split('|');
+  const p = W2_PLANTILLAS_CHAT.find(x => x.nombre === nombre);
+  const wrap = document.getElementById('w2-plm-preview-wrap');
+  if(!p){ wrap.hidden = true; return; }
+  wrap.hidden = false;
+  document.getElementById('w2-plm-preview').textContent = p.cuerpo || '—';
+}
+
+function w2CerrarModalPlantilla(){
+  const modal = document.getElementById('w2-modal-plantilla');
+  modal.classList.remove('is-open');
+  setTimeout(() => { modal.hidden = true; }, 200);
+}
+
+async function w2EnviarPlantillaDesdeChat(){
+  if(!W2_CONV_ACTUAL) return;
+  const [nombre, idioma] = (document.getElementById('w2-plm-nombre').value || '').split('|');
+  if(!nombre){ toast('Elige una plantilla aprobada.'); return; }
+  const variables = w2Lista('w2-plm-variables');
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/mensajes/plantilla', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ conversacion_id: W2_CONV_ACTUAL.id, nombre, idioma, variables })
+    });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo enviar la plantilla.'); return; }
+    w2CerrarModalPlantilla();
+    await w2CargarMensajes(W2_CONV_ACTUAL.id);
+    toast('Plantilla enviada.');
+  }catch(e){ toast('No se pudo enviar (sin conexión).'); }
+}
+
+/* ── Modo avanzado ────────────────────────────────────────── */
+/* La capa estándar muestra solo lo de uso diario; lo técnico (como crear
+   plantillas nuevas para aprobación de Meta) vive detrás de este switch. */
+function w2Avanzado(){ try{ return localStorage.getItem('w2_avanzado') === '1'; }catch(_){ return false; } }
+function w2ToggleAvanzado(on){
+  try{ localStorage.setItem('w2_avanzado', on ? '1' : '0'); }catch(_){}
+  w2AplicarAvanzado();
+}
+function w2AplicarAvanzado(){
+  // Switch oculto: todo va como capa estándar (reactivar: quitar hidden de w2-avanzado y leer w2Avanzado()).
+  const on = true;
+  const check = document.getElementById('w2-avanzado-check');
+  if(check) check.checked = w2Avanzado();
+  const crear = document.getElementById('w2-pl-crear');
+  if(crear) crear.hidden = !on;
+  const aviso = document.getElementById('w2-pl-crear-aviso');
+  if(aviso) aviso.hidden = on;
+}
+
+/* ── Etiquetas del contacto (segmentan las campañas) ──────── */
+function w2PintarEtiquetas(){
+  const cont = document.getElementById('w2-thread-tags');
+  if(!cont || !W2_CONV_ACTUAL) return;
+  const ct = W2_CONV_ACTUAL.wa2_contactos || {};
+  const tags = Array.isArray(ct.etiquetas) ? ct.etiquetas : [];
+  cont.innerHTML = tags.map((t, i) =>
+    `<span class="w2-tag">${w2Esc(t)}<button title="Quitar etiqueta" onclick="w2QuitarEtiqueta(${i})">×</button></span>`
+  ).join('') + `<input class="w2-tag-add" id="w2-tag-add" placeholder="+ etiqueta" maxlength="40"/>`;
+  const input = document.getElementById('w2-tag-add');
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Enter' && !e.isComposing){ e.preventDefault(); w2AgregarEtiqueta(input.value); }
+  });
+}
+
+async function w2GuardarEtiquetas(nuevas){
+  const ct = W2_CONV_ACTUAL?.wa2_contactos;
+  if(!ct?.id) return;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/contactos/' + ct.id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ etiquetas: nuevas })
+    });
+    if(!r.ok){ toast('No se pudo guardar la etiqueta.'); return; }
+    ct.etiquetas = nuevas;
+    w2PintarEtiquetas();
+  }catch(e){ toast('No se pudo guardar (sin conexión).'); }
+}
+
+function w2AgregarEtiqueta(texto){
+  const t = (texto || '').trim();
+  if(!t) return;
+  const ct = W2_CONV_ACTUAL?.wa2_contactos || {};
+  const tags = Array.isArray(ct.etiquetas) ? ct.etiquetas.slice() : [];
+  if(tags.includes(t)){ toast('Esa etiqueta ya está puesta.'); return; }
+  tags.push(t);
+  w2GuardarEtiquetas(tags);
+}
+
+function w2QuitarEtiqueta(i){
+  const ct = W2_CONV_ACTUAL?.wa2_contactos || {};
+  const tags = Array.isArray(ct.etiquetas) ? ct.etiquetas.slice() : [];
+  tags.splice(i, 1);
+  w2GuardarEtiquetas(tags);
+}
+
+/* ── Flujos (constructor por pasos) ───────────────────────── */
+const W2_FP_TIPOS = {
+  mensaje:  'Enviar un mensaje',
+  pregunta: 'Hacer una pregunta y guardar la respuesta',
+  opciones: 'Menú de opciones (el prospecto elige)',
+  etiqueta: 'Ponerle una etiqueta al contacto',
+  humano:   'Apagar la IA y avisarme a mí',
+  ia:       'Entregarle la conversación a la IA',
+};
+const W2_FP_CAMPOS = {
+  nombre: 'Su nombre', presupuesto: 'Su presupuesto',
+  interes: 'Qué le interesa', nota: 'Una nota general',
+};
+
+let W2_FLUJO = { editandoId: null, pasos: [] };
+
+function w2AbrirTabAutomatizaciones(){
+  const sel = document.getElementById('w2-au-numero');
+  sel.innerHTML = '<option value="">Todos mis números</option>'
+    + W2_NUMEROS.map(n => `<option value="${n.id}">${n.alias || n.display_number || 'Número'}</option>`).join('');
+  if(!W2_FLUJO.pasos.length) w2FlujoAgregarPaso();
+  w2AuCambioDisparador();
+  w2FlujoRender();
+  w2AuCargarLista();
+}
+
+function w2AuCambioDisparador(){
+  const esPalabra = document.getElementById('w2-au-disparador').value === 'palabra';
+  document.getElementById('w2-au-palabras-wrap').hidden = !esPalabra;
+}
+
+function w2FlujoAgregarPaso(){
+  if(W2_FLUJO.pasos.length >= 12){ toast('Máximo 12 pasos por flujo.'); return; }
+  W2_FLUJO.pasos.push({ tipo:'mensaje', valor:'', guardar:'nota', opciones:[] });
+  w2FlujoRender();
+}
+
+function w2FlujoQuitar(i){ W2_FLUJO.pasos.splice(i, 1); w2FlujoRender(); }
+
+function w2FlujoMover(i, dir){
+  const j = i + dir;
+  if(j < 0 || j >= W2_FLUJO.pasos.length) return;
+  const t = W2_FLUJO.pasos[i];
+  W2_FLUJO.pasos[i] = W2_FLUJO.pasos[j];
+  W2_FLUJO.pasos[j] = t;
+  w2FlujoRender();
+}
+
+function w2FlujoCampo(i, campo, valor){
+  const paso = W2_FLUJO.pasos[i];
+  if(!paso) return;
+  paso[campo] = valor;
+  if(campo === 'tipo'){
+    if(valor === 'opciones' && !(paso.opciones || []).length){
+      paso.opciones = [{ texto:'', ir:0 }, { texto:'', ir:0 }];
+    }
+    w2FlujoRender();
+  }
+}
+
+function w2FlujoOpAgregar(i){
+  const paso = W2_FLUJO.pasos[i];
+  if(!paso) return;
+  paso.opciones = paso.opciones || [];
+  if(paso.opciones.length >= 6){ toast('Máximo 6 opciones por menú.'); return; }
+  paso.opciones.push({ texto:'', ir:0 });
+  w2FlujoRender();
+}
+
+function w2FlujoOpQuitar(i, j){
+  const paso = W2_FLUJO.pasos[i];
+  if(!paso) return;
+  paso.opciones.splice(j, 1);
+  w2FlujoRender();
+}
+
+function w2FlujoOpCampo(i, j, campo, valor){
+  const op = (W2_FLUJO.pasos[i] || {}).opciones?.[j];
+  if(!op) return;
+  op[campo] = campo === 'ir' ? parseInt(valor || '0', 10) : valor;
+}
+
+function w2FlujoRender(){
+  const cont = document.getElementById('w2-au-pasos');
+  if(!cont) return;
+  const total = W2_FLUJO.pasos.length;
+  cont.innerHTML = W2_FLUJO.pasos.map((paso, i) => {
+    const tipos = Object.entries(W2_FP_TIPOS).map(([v, t]) =>
+      `<option value="${v}" ${paso.tipo === v ? 'selected' : ''}>${t}</option>`).join('');
+    let cuerpo = '';
+    if(paso.tipo === 'mensaje'){
+      cuerpo = `<textarea class="bk-textarea" rows="2" maxlength="1000" placeholder="El mensaje que se le envía"
+                  oninput="w2FlujoCampo(${i}, 'valor', this.value)">${w2Esc(paso.valor)}</textarea>`;
+    } else if(paso.tipo === 'pregunta'){
+      cuerpo = `<textarea class="bk-textarea" rows="2" maxlength="1000" placeholder="La pregunta que se le hace. Ej. ¿Con cuánto presupuesto cuentas?"
+                  oninput="w2FlujoCampo(${i}, 'valor', this.value)">${w2Esc(paso.valor)}</textarea>
+        <div class="w2-fp__op">
+          <span class="w2-fp__hint" style="flex:none;">Guardar la respuesta como</span>
+          <select class="bk-select" onchange="w2FlujoCampo(${i}, 'guardar', this.value)">
+            ${Object.entries(W2_FP_CAMPOS).map(([v, t]) =>
+              `<option value="${v}" ${(paso.guardar || 'nota') === v ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="w2-fp__hint">El flujo se detiene aquí hasta que el prospecto conteste. Lo que responda queda en su ficha.</div>`;
+    } else if(paso.tipo === 'opciones'){
+      const destinos = (j) => {
+        let ops = '<option value="0">Continuar al siguiente paso</option>';
+        for(let n = 1; n <= total; n++){
+          if(n === i + 1) continue;
+          const sel = (W2_FLUJO.pasos[i].opciones[j].ir === n) ? 'selected' : '';
+          ops += `<option value="${n}" ${sel}>Ir al paso ${n}</option>`;
+        }
+        return ops;
+      };
+      cuerpo = `<textarea class="bk-textarea" rows="2" maxlength="1000" placeholder="La pregunta del menú. Ej. ¿Qué te interesa?"
+                  oninput="w2FlujoCampo(${i}, 'valor', this.value)">${w2Esc(paso.valor)}</textarea>
+        ${(paso.opciones || []).map((op, j) => `
+          <div class="w2-fp__op">
+            <input class="bk-input" maxlength="60" placeholder="Opción ${j + 1}. Ej. Comprar" value="${w2Esc(op.texto)}"
+                   oninput="w2FlujoOpCampo(${i}, ${j}, 'texto', this.value)"/>
+            <select class="bk-select" onchange="w2FlujoOpCampo(${i}, ${j}, 'ir', this.value)">${destinos(j)}</select>
+            <button type="button" class="w2-fp__mini" title="Quitar esta opción" onclick="w2FlujoOpQuitar(${i}, ${j})">×</button>
+          </div>`).join('')}
+        <div class="w2-fp__op">
+          <button type="button" class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2FlujoOpAgregar(${i})">+ Agregar opción</button>
+          <span class="w2-fp__hint">Se le muestran numeradas y contesta con el número o el texto.</span>
+        </div>`;
+    } else if(paso.tipo === 'etiqueta'){
+      cuerpo = `<input class="bk-input" maxlength="40" placeholder="La etiqueta que se le pone. Ej. interesado-renta"
+                  value="${w2Esc(paso.valor)}" oninput="w2FlujoCampo(${i}, 'valor', this.value)"/>`;
+    } else if(paso.tipo === 'humano'){
+      cuerpo = `<div class="w2-fp__hint">La IA se apaga en ese chat y te llega una notificación para que lo sigas tú. El flujo termina aquí.</div>`;
+    } else if(paso.tipo === 'ia'){
+      cuerpo = `<div class="w2-fp__hint">La IA se enciende en ese chat y contesta desde este punto con tu entrenamiento. El flujo termina aquí.</div>`;
+    }
+    return `<div class="w2-fp">
+      <div class="w2-fp__head">
+        <span class="w2-fp__num">${i + 1}</span>
+        <select class="bk-select" onchange="w2FlujoCampo(${i}, 'tipo', this.value)">${tipos}</select>
+        <button type="button" class="w2-fp__mini" title="Subir este paso" onclick="w2FlujoMover(${i}, -1)">↑</button>
+        <button type="button" class="w2-fp__mini" title="Bajar este paso" onclick="w2FlujoMover(${i}, 1)">↓</button>
+        <button type="button" class="w2-fp__mini" title="Quitar este paso" onclick="w2FlujoQuitar(${i})">×</button>
+      </div>
+      <div class="w2-fp__cuerpo">${cuerpo}</div>
+    </div>`;
+  }).join('');
+}
+
+function w2FlujoSerializar(){
+  const acciones = [];
+  for(const paso of W2_FLUJO.pasos){
+    const tipo = paso.tipo;
+    const valor = (paso.valor || '').trim();
+    if(tipo === 'mensaje' || tipo === 'pregunta'){
+      if(!valor) continue;
+      const a = { tipo, valor };
+      if(tipo === 'pregunta') a.guardar = paso.guardar || 'nota';
+      acciones.push(a);
+    } else if(tipo === 'opciones'){
+      const ops = (paso.opciones || [])
+        .map(o => ({ texto: (o.texto || '').trim(), ir: parseInt(o.ir || 0, 10) || 0 }))
+        .filter(o => o.texto);
+      if(ops.length < 2) continue;
+      acciones.push({ tipo, valor, opciones: ops });
+    } else if(tipo === 'etiqueta'){
+      if(!valor) continue;
+      acciones.push({ tipo, valor });
+    } else if(tipo === 'humano' || tipo === 'ia'){
+      acciones.push({ tipo, valor: '' });
+    }
+  }
+  return acciones;
+}
+
+async function w2AuGuardar(){
+  const nombre = document.getElementById('w2-au-nombre').value.trim();
+  if(!nombre){ toast('Ponle un nombre al flujo.'); return; }
+  const disparador = document.getElementById('w2-au-disparador').value;
+  const palabras = document.getElementById('w2-au-palabras').value
+    .split(',').map(p => p.trim()).filter(Boolean);
+  if(disparador === 'palabra' && !palabras.length){ toast('Escribe al menos una palabra que lo dispare.'); return; }
+  const acciones = w2FlujoSerializar();
+  if(!acciones.length){ toast('Agrega al menos un paso con contenido.'); return; }
+  const body = { nombre, numero_id: document.getElementById('w2-au-numero').value || null,
+                 disparador, palabras, acciones, activa: true };
+  const editando = W2_FLUJO.editandoId;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/automatizaciones' + (editando ? '/' + editando : ''), {
+      method: editando ? 'PATCH' : 'POST',
+      headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo guardar.'); return; }
+    toast(editando ? 'Flujo actualizado.' : 'Flujo guardado — ya está trabajando.');
+    w2AuCancelarEdicion();
+    await w2AuCargarLista();
+  }catch(e){ toast('No se pudo guardar (sin conexión).'); }
+}
+
+function w2AuCancelarEdicion(){
+  W2_FLUJO = { editandoId: null, pasos: [] };
+  document.getElementById('w2-au-nombre').value = '';
+  document.getElementById('w2-au-palabras').value = '';
+  document.getElementById('w2-au-numero').value = '';
+  document.getElementById('w2-au-disparador').value = 'palabra';
+  document.getElementById('w2-au-titulo').textContent = 'Nuevo flujo';
+  document.getElementById('w2-au-guardar-btn').textContent = 'Guardar flujo';
+  document.getElementById('w2-au-cancelar').hidden = true;
+  w2AuCambioDisparador();
+  w2FlujoAgregarPaso();
+}
+
+let W2_AU_LISTA = [];
+
+function w2AuEditar(id){
+  const a = W2_AU_LISTA.find(x => x.id === id);
+  if(!a) return;
+  W2_FLUJO = {
+    editandoId: id,
+    pasos: (a.acciones || []).map(x => ({
+      tipo: x.tipo, valor: x.valor || '', guardar: x.guardar || 'nota',
+      opciones: (x.opciones || []).map(o => ({ texto: o.texto || '', ir: o.ir || 0 })),
+    })),
+  };
+  document.getElementById('w2-au-nombre').value = a.nombre || '';
+  document.getElementById('w2-au-numero').value = a.numero_id || '';
+  document.getElementById('w2-au-disparador').value = a.disparador || 'palabra';
+  document.getElementById('w2-au-palabras').value = (a.palabras || []).join(', ');
+  document.getElementById('w2-au-titulo').textContent = 'Editando: ' + (a.nombre || 'flujo');
+  document.getElementById('w2-au-guardar-btn').textContent = 'Guardar cambios';
+  document.getElementById('w2-au-cancelar').hidden = false;
+  w2AuCambioDisparador();
+  w2FlujoRender();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function w2AuResumen(a){
+  const numero = W2_NUMEROS.find(n => n.id === a.numero_id);
+  const donde = numero ? (numero.alias || numero.display_number) : 'Todos los números';
+  const cuando = a.disparador === 'nuevo'
+    ? 'Cuando escribe alguien por primera vez'
+    : a.disparador === 'nuevo_3m'
+      ? 'Cuando escribe un cliente nuevo'
+      : 'Cuando el mensaje contiene: ' + (a.palabras || []).join(', ');
+  const nombres = { mensaje:'mensaje', pregunta:'pregunta', opciones:'menú',
+                    etiqueta:'etiqueta', humano:'pasármela a mí', ia:'dársela a la IA' };
+  const pasos = (a.acciones || []).map(x => nombres[x.tipo] || x.tipo).join(' → ');
+  const usos = a.veces_usada ? ` · Se ha usado ${a.veces_usada} ${a.veces_usada === 1 ? 'vez' : 'veces'}` : '';
+  return `${donde} · ${cuando} → ${pasos}${usos}`;
+}
+
+async function w2AuCargarLista(){
+  const cont = document.getElementById('w2-au-lista');
+  let autos = [];
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/automatizaciones', { headers: w2Auth() });
+    const d = await r.json();
+    autos = d.automatizaciones || [];
+  }catch(e){}
+  W2_AU_LISTA = autos;
+  if(!autos.length){
+    cont.innerHTML = '<div class="bk-hint">Todavía no tienes flujos. Crea el primero arriba.</div>';
+    return;
+  }
+  cont.innerHTML = autos.map(a => `
+    <div class="w2-cp-row">
+      <div class="w2-cp-row__info">
+        <div class="w2-cp-row__nombre">${w2Esc(a.nombre)}</div>
+        <div class="w2-cp-row__sub">${w2Esc(w2AuResumen(a))}</div>
+      </div>
+      <button class="bk-btn bk-btn--ghost bk-btn--sm" onclick="w2AuEditar('${a.id}')">Editar</button>
+      <label class="bk-switch" title="Encender o apagar este flujo">
+        <input type="checkbox" ${a.activa ? 'checked' : ''} onchange="w2AuToggle('${a.id}', this.checked)"/>
+        <span class="bk-switch__track"></span>
+      </label>
+      <button class="w2-au-quitar" title="Eliminar flujo" onclick="w2AuEliminar('${a.id}', '${w2Esc(a.nombre)}')">×</button>
+    </div>`).join('');
+}
+
+async function w2AuToggle(id, activa){
+  try{
+    await fetch(API_BASE + '/whatsapp2/automatizaciones/' + id, {
+      method:'PATCH', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ activa })
+    });
+    toast(activa ? 'Flujo encendido.' : 'Flujo apagado.');
+  }catch(e){ toast('No se pudo cambiar (sin conexión).'); }
+}
+
+async function w2AuEliminar(id, nombre){
+  if(!confirm('Se va a eliminar el flujo "' + nombre + '". ¿Seguro?')) return;
+  try{
+    await fetch(API_BASE + '/whatsapp2/automatizaciones/' + id, { method:'DELETE', headers: w2Auth() });
+    await w2AuCargarLista();
+  }catch(e){ toast('No se pudo eliminar (sin conexión).'); }
+}
+
+/* ── Campañas ─────────────────────────────────────────────── */
+let W2_CP_PLANTILLAS = [];
+let W2_CP_POLL = null;
+
+function w2AbrirTabCampanas(){
+  const sel = document.getElementById('w2-cp-numero');
+  sel.innerHTML = W2_NUMEROS.map(n => `<option value="${n.id}">${n.alias || n.display_number || 'Número'}</option>`).join('');
+  if(W2_NUMEROS.length){ w2CampCambioNumero(); }
+  else{
+    document.getElementById('w2-cp-audiencia-hint').textContent = 'Conecta un número primero.';
+    document.getElementById('w2-cp-plantilla').innerHTML = '';
+  }
+  w2CampCargarHistorial();
+}
+
+async function w2CampCambioNumero(){
+  await Promise.all([w2CampCargarEtiquetas(), w2CampCargarPlantillasAprobadas()]);
+  w2CampActualizarAudiencia();
+}
+
+async function w2CampCargarEtiquetas(){
+  const sel = document.getElementById('w2-cp-audiencia');
+  const actual = sel.value;
+  let etiquetas = [];
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/etiquetas', { headers: w2Auth() });
+    const d = await r.json();
+    etiquetas = d.etiquetas || [];
+  }catch(e){}
+  sel.innerHTML = '<option value="">Todos mis contactos de este número</option>'
+    + etiquetas.map(t => `<option value="${w2Esc(t)}">Solo con la etiqueta: ${w2Esc(t)}</option>`).join('');
+  if(etiquetas.includes(actual)) sel.value = actual;
+}
+
+async function w2CampCargarPlantillasAprobadas(){
+  const numero_id = document.getElementById('w2-cp-numero').value;
+  const sel = document.getElementById('w2-cp-plantilla');
+  if(!numero_id){ sel.innerHTML = ''; return; }
+  sel.innerHTML = '<option value="">Cargando…</option>';
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/plantillas?numero_id=' + numero_id, { headers: w2Auth() });
+    const d = await r.json();
+    W2_CP_PLANTILLAS = (d.plantillas || []).filter(p => p.estatus === 'APPROVED');
+    sel.innerHTML = W2_CP_PLANTILLAS.length
+      ? W2_CP_PLANTILLAS.map(p => `<option value="${w2Esc(p.nombre)}|${w2Esc(p.idioma)}">${w2Esc(p.nombre)}</option>`).join('')
+      : '<option value="">No hay plantillas aprobadas para este número</option>';
+  }catch(e){ sel.innerHTML = '<option value="">No se pudieron cargar</option>'; }
+  w2CampCambioPlantilla();
+}
+
+function w2CampCambioPlantilla(){
+  const [nombre] = (document.getElementById('w2-cp-plantilla').value || '').split('|');
+  const p = W2_CP_PLANTILLAS.find(x => x.nombre === nombre);
+  const prev = document.getElementById('w2-cp-preview');
+  const varsCont = document.getElementById('w2-cp-variables');
+  if(!p){ prev.hidden = true; varsCont.innerHTML = ''; return; }
+  prev.hidden = false;
+  prev.textContent = p.cuerpo || '—';
+  const cuantas = new Set(((p.cuerpo || '').match(/\{\{(\d+)\}\}/g) || [])).size;
+  varsCont.innerHTML = '';
+  for(let i = 1; i <= cuantas; i++){
+    varsCont.innerHTML += `
+      <div class="bk-field">
+        <label class="bk-label" for="w2-cp-var-${i}">Valor para {{${i}}}</label>
+        <input class="bk-input" id="w2-cp-var-${i}" placeholder="Escribe {nombre} para poner el nombre de cada persona"/>
+      </div>`;
+  }
+}
+
+let W2_CP_AUD_TIMER = null;
+function w2CampActualizarAudiencia(){
+  clearTimeout(W2_CP_AUD_TIMER);
+  W2_CP_AUD_TIMER = setTimeout(async () => {
+    const numero_id = document.getElementById('w2-cp-numero').value;
+    const hint = document.getElementById('w2-cp-audiencia-hint');
+    const btn = document.getElementById('w2-cp-enviar');
+    if(!numero_id){ hint.textContent = 'Conecta un número primero.'; btn.disabled = true; return; }
+    hint.textContent = 'Calculando audiencia…';
+    try{
+      const r = await fetch(API_BASE + '/whatsapp2/campanas/audiencia', {
+        method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+        body: JSON.stringify({ numero_id, etiqueta: document.getElementById('w2-cp-audiencia').value || null })
+      });
+      const d = await r.json();
+      const total = d.total || 0;
+      btn.disabled = total === 0;
+      hint.textContent = total === 0
+        ? 'No hay contactos en esa audiencia todavía.'
+        : `Le llegará a ${total} contacto${total === 1 ? '' : 's'}.`
+          + (total > (d.tope || 250) ? ` Pasa del tope de ${d.tope} por campaña — segmenta con una etiqueta.` : '');
+    }catch(e){ hint.textContent = 'No se pudo calcular la audiencia.'; }
+  }, 250);
+}
+
+async function w2CampEnviar(){
+  const numero_id = document.getElementById('w2-cp-numero').value;
+  const [plantilla, idioma] = (document.getElementById('w2-cp-plantilla').value || '').split('|');
+  const nombre = document.getElementById('w2-cp-nombre').value.trim();
+  if(!numero_id){ toast('Conecta un número primero.'); return; }
+  if(!plantilla){ toast('Elige una plantilla aprobada.'); return; }
+  if(!nombre){ toast('Ponle un nombre a la campaña.'); return; }
+  const variables = [];
+  for(let i = 1; i <= 10; i++){
+    const inp = document.getElementById('w2-cp-var-' + i);
+    if(!inp) break;
+    variables.push(inp.value.trim());
+  }
+  if(variables.some(v => !v)){ toast('Llena todas las variables de la plantilla.'); return; }
+  const hint = document.getElementById('w2-cp-audiencia-hint').textContent;
+  if(!confirm('Se va a enviar la campaña "' + nombre + '". ' + hint + ' ¿Seguro?')) return;
+  const btn = document.getElementById('w2-cp-enviar');
+  btn.disabled = true;
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/campanas', {
+      method:'POST', headers:{ 'Content-Type':'application/json', ...w2Auth() },
+      body: JSON.stringify({ numero_id, nombre, plantilla, idioma: idioma || 'es_MX',
+                             variables, etiqueta: document.getElementById('w2-cp-audiencia').value || null })
+    });
+    const d = await r.json();
+    if(!r.ok){ toast(d.detail || 'No se pudo enviar la campaña.'); btn.disabled = false; return; }
+    toast('Campaña en camino — se envía en segundo plano.');
+    document.getElementById('w2-cp-nombre').value = '';
+    await w2CampCargarHistorial();
+  }catch(e){ toast('No se pudo enviar (sin conexión).'); }
+  btn.disabled = false;
+}
+
+async function w2CampCargarHistorial(){
+  const cont = document.getElementById('w2-cp-historial');
+  let campanas = [];
+  try{
+    const r = await fetch(API_BASE + '/whatsapp2/campanas', { headers: w2Auth() });
+    const d = await r.json();
+    campanas = d.campanas || [];
+  }catch(e){}
+  if(!campanas.length){
+    cont.innerHTML = '<div class="bk-hint">Aquí van a aparecer tus campañas enviadas.</div>';
+  }else{
+    cont.innerHTML = campanas.map(c => {
+      const enviando = c.estado === 'enviando';
+      const sub = [
+        c.plantilla ? 'Plantilla ' + w2Esc(c.plantilla) : '',
+        c.etiqueta ? 'Etiqueta: ' + w2Esc(c.etiqueta) : 'Todos los contactos',
+        `${c.enviados || 0} de ${c.total || 0} enviados` + ((c.fallidos || 0) ? ` · ${c.fallidos} fallaron` : '')
+      ].filter(Boolean).join(' · ');
+      return `
+        <div class="w2-cp-row">
+          <div class="w2-cp-row__info">
+            <div class="w2-cp-row__nombre">${w2Esc(c.nombre)}</div>
+            <div class="w2-cp-row__sub">${sub}</div>
+          </div>
+          <span class="bk-badge">${enviando ? 'Enviando…' : 'Terminada'}</span>
+        </div>`;
+    }).join('');
+  }
+  clearInterval(W2_CP_POLL);
+  if(campanas.some(c => c.estado === 'enviando')){
+    W2_CP_POLL = setInterval(() => {
+      if(W2_TAB !== 'campanas' || document.hidden){ clearInterval(W2_CP_POLL); return; }
+      w2CampCargarHistorial();
+    }, 5000);
+  }
+}
+
+/* ── Arranque ─────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', async () => {
+  w2AplicarAvanzado();
+  await w2CargarNumeros();
+
+  // Enlaces directos: ?c=<conversacion_id>#chats (push) y ?tel=<digitos> (Contactos)
+  const _qs = new URLSearchParams(location.search);
+  const idDeep = _qs.get('c');
+  const telDeep = (_qs.get('tel') || '').replace(/\D/g, '');
+  if(idDeep){
+    w2IrATab('chats');
+    if(W2_CONVS.some(c => c.id === idDeep)) await w2AbrirConversacion(idDeep);
+  } else if(telDeep){
+    w2IrATab('chats');
+    // Empatamos por los últimos 10 dígitos (con o sin lada 52 guardada)
+    const suf = telDeep.slice(-10);
+    const conv = W2_CONVS.find(c => {
+      const wid = String((c.wa2_contactos || {}).wa_id || '').replace(/\D/g, '');
+      return wid && wid.slice(-10) === suf;
+    });
+    if(conv){
+      await w2AbrirConversacion(conv.id);
+    } else {
+      // Aún no hay conversación con este número: lo dejamos en el buscador
+      // para que se vea el estado vacío, y explicamos por qué.
+      const buscar = document.getElementById('w2-buscar');
+      if(buscar){ buscar.value = suf; w2RenderLista(); }
+      toast('Aún no hay conversación con este número. Puede escribirte él primero, o mándale una plantilla aprobada.');
+    }
+  } else if(location.hash === '#entrenamiento'){
+    w2IrATab('entrenamiento');
+  }
+
+  // Refresco silencioso de la bandeja cada 12s (nuevos mensajes / IA respondiendo)
+  W2_POLL = setInterval(() => {
+    if(W2_TAB !== 'chats' || document.hidden) return;
+    w2CargarConversaciones();
+    w2RefrescarMensajes();   // solo baja lo nuevo, no vuelve a cargar el chat entero
+  }, 12000);
+});
+</script>
+</body>
+</html>

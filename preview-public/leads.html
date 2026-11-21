@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Leads · Broquer</title>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+/* Leads ahora es Clientes, un módulo propio otra vez (antes vivía como la
+   pestaña Pipeline de Contactos). Esta página solo redirige, para no
+   romper enlaces guardados, el menú de otros módulos o marcadores viejos. */
+.redir-wrap {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 60vh; gap: 14px; text-align: center; padding: 40px 24px;
+  color: var(--mute); font-size: var(--fs-sm);
+}
+.redir-wrap a { color: var(--ink); font-weight: 600; }
+</style>
+<link rel="stylesheet" href="/staging-mobile-fields.css"/>
+<script src="/staging-network-audit.js" defer></script>
+</head>
+<body data-app="clientes">
+<div class="redir-wrap">
+  <p>Leads ahora se llama Clientes.</p>
+  <p>Redirigiendo… si no avanza, <a href="clientes.html" id="redir-link">entra aquí</a>.</p>
+</div>
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var id = params.get('id') || params.get('contacto');
+  var destino = 'clientes.html' + (id ? '?id=' + encodeURIComponent(id) : '');
+  var link = document.getElementById('redir-link');
+  if (link) link.href = destino;
+  window.location.replace(destino);
+})();
+</script>
+<script src="app-shell.js" defer></script>
+</body>
+</html>

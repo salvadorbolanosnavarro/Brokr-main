@@ -1,0 +1,110 @@
+[
+  {
+    "project_id": "tymhlvawnqadqgwnpruk",
+    "rows": [
+      {
+        "snapshot_checks": [
+          {
+            "row_count": 7,
+            "table_name": "auth.identities",
+            "immutable_md5": "850f1d0ce91de342d62bd0acfdd658f1"
+          },
+          {
+            "row_count": 9,
+            "table_name": "auth.mfa_amr_claims",
+            "immutable_md5": "4f3628e067055e887bc301c95cd8e091"
+          },
+          {
+            "row_count": 21,
+            "table_name": "auth.refresh_tokens",
+            "immutable_md5": "fd65e809ac7f86428bd0fdd32dce696e"
+          },
+          {
+            "row_count": 9,
+            "table_name": "auth.sessions",
+            "immutable_md5": "b56883dcd7c269b5b1bcd6e32ce19ff9"
+          },
+          {
+            "row_count": 7,
+            "table_name": "auth.users",
+            "immutable_md5": "94ba61abeebd742f86560212fd8ffc8e"
+          },
+          {
+            "row_count": 98,
+            "table_name": "public.module_sessions",
+            "immutable_md5": "8f087cdda66144fa218a1fb5b19e9ea5"
+          },
+          {
+            "row_count": 7,
+            "table_name": "public.organizacion_miembros",
+            "immutable_md5": "ea1fc81692438a43808e4d9a4d8311fb"
+          },
+          {
+            "row_count": 6,
+            "table_name": "public.organizaciones",
+            "immutable_md5": "b10ee69f67ad93b01e119bd46e9e7d6b"
+          },
+          {
+            "row_count": 7,
+            "table_name": "public.usuarios",
+            "immutable_md5": "2faa75717f57d0ece536f6aa9dfd0e3c"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "project_id": "hdpstaqcswrdcrozcxrq",
+    "rows": [
+      {
+        "snapshot_checks": [
+          {
+            "row_count": 7,
+            "table_name": "auth.identities",
+            "immutable_md5": "850f1d0ce91de342d62bd0acfdd658f1"
+          },
+          {
+            "row_count": 9,
+            "table_name": "auth.mfa_amr_claims",
+            "immutable_md5": "4f3628e067055e887bc301c95cd8e091"
+          },
+          {
+            "row_count": 21,
+            "table_name": "auth.refresh_tokens",
+            "immutable_md5": "fd65e809ac7f86428bd0fdd32dce696e"
+          },
+          {
+            "row_count": 9,
+            "table_name": "auth.sessions",
+            "immutable_md5": "b56883dcd7c269b5b1bcd6e32ce19ff9"
+          },
+          {
+            "row_count": 7,
+            "table_name": "auth.users",
+            "immutable_md5": "94ba61abeebd742f86560212fd8ffc8e"
+          },
+          {
+            "row_count": 98,
+            "table_name": "public.module_sessions",
+            "immutable_md5": "8f087cdda66144fa218a1fb5b19e9ea5"
+          },
+          {
+            "row_count": 7,
+            "table_name": "public.organizacion_miembros",
+            "immutable_md5": "ea1fc81692438a43808e4d9a4d8311fb"
+          },
+          {
+            "row_count": 6,
+            "table_name": "public.organizaciones",
+            "immutable_md5": "b10ee69f67ad93b01e119bd46e9e7d6b"
+          },
+          {
+            "row_count": 7,
+            "table_name": "public.usuarios",
+            "immutable_md5": "2faa75717f57d0ece536f6aa9dfd0e3c"
+          }
+        ]
+      }
+    ]
+  }
+]

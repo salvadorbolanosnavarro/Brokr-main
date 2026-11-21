@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Soporte — Broquer</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="apple-touch-icon" href="isotipo-black.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.hdr {
+  background: var(--ink);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.hdr img {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+.hdr-badge {
+  font-family: var(--font-mono);
+  font-size:var(--fs-h3);
+  letter-spacing: 0.02em;
+
+  color: rgba(255,255,255,0.45);
+}
+
+/* ── Hero ────────────────────────────────────────────────────── */
+.hero {
+  background: var(--ink);
+  padding: 48px 24px 56px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 800;
+  color: var(--paper);
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
+  line-height: 1.15;
+}
+.hero p {
+  font-size: var(--fs-sm);
+  color: rgba(255,255,255,0.55);
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ── Contenedor principal ────────────────────────────────────── */
+.wrap {
+  max-width: var(--form-max, 760px);
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+/* ── Sección ─────────────────────────────────────────────────── */
+.section {
+  margin-bottom: 48px;
+}
+.section-label {
+  font-family: var(--font-mono);
+  font-size:var(--fs-h3);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+
+  color: var(--mute);
+  margin-bottom: 6px;
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size:var(--fs-h3);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+  line-height: 1.3;
+}
+
+/* ── Tarjeta de contacto ─────────────────────────────────────── */
+.contact-card {
+  background: var(--bone);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  padding: 24px 28px;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+.contact-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r);
+  background: var(--forest-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.contact-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--forest);
+  fill: none;
+}
+.contact-body {}
+.contact-label {
+  font-size:var(--fs-h3);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+
+  color: var(--mute);
+  margin-bottom: 4px;
+}
+.contact-value {
+  font-size:var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.contact-value a {
+  color: var(--forest);
+  text-decoration: none;
+}
+.contact-value a:hover { text-decoration: underline; }
+.contact-btn {
+  margin: 12px 0 4px; padding: 10px 20px; border-radius: var(--r-pill);
+  background: var(--sky-blue); color: var(--paper); border: 1px solid var(--sky-blue);
+  font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
+}
+.contact-note {
+  font-size: var(--fs-sm);
+  color: var(--mute);
+  line-height: 1.5;
+}
+
+/* ── FAQ ─────────────────────────────────────────────────────── */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.faq-item {
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.faq-item + .faq-item { margin-top: 2px; }
+.faq-q {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 16px 20px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  line-height: 1.4;
+  transition: background var(--dur) var(--ease);
+}
+.faq-q:hover { background: var(--paper-2); }
+.faq-chevron {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  stroke: var(--mute-2);
+  fill: none;
+  transition: transform var(--dur) var(--ease);
+}
+.faq-item.open .faq-chevron { transform: rotate(180deg); }
+.faq-a {
+  display: none;
+  padding: 0 20px 16px;
+  font-size: var(--fs-sm);
+  color: var(--mute);
+  line-height: 1.65;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.faq-item.open .faq-a { display: block; }
+
+/* ── Módulos grid ────────────────────────────────────────────── */
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.mod-pill {
+  background: var(--bone);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mod-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--forest);
+  flex-shrink: 0;
+}
+.mod-name {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-3);
+  line-height: 1.3;
+}
+
+/* ── Divider ─────────────────────────────────────────────────── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 0 0 48px;
+}
+
+/* ── Footer ──────────────────────────────────────────────────── */
+.footer {
+  background: var(--paper-2);
+  border-top: 1px solid var(--line);
+  padding: 28px 24px;
+  text-align: center;
+}
+.footer p {
+  font-size: var(--fs-xs);
+  color: var(--mute);
+  line-height: 1.7;
+}
+.footer a {
+  color: var(--mute);
+  text-decoration: none;
+}
+.footer a:hover { color: var(--ink); }
+
+@media (max-width: 480px) {
+  .hdr { padding: 16px 20px; }
+  .hero { padding: 36px 20px 44px; }
+  .wrap { padding: 32px 20px 64px; }
+  .contact-card { flex-direction: column; gap: 14px; }
+  .modules-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+<link rel="stylesheet" href="/staging-mobile-fields.css"/>
+<script src="/staging-network-audit.js" defer></script>
+</head>
+<body>
+
+<!-- Header -->
+<header class="hdr">
+  <img src="logo-broquer-blanco.png" alt="Broquer"/>
+  <span class="hdr-badge">Centro de soporte</span>
+</header>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>¿En qué podemos ayudarte?</h1>
+  <p>Soporte oficial de Broquer para agentes inmobiliarios. Respondemos en menos de 24 horas hábiles.</p>
+</div>
+
+<!-- Contenido -->
+<div class="wrap">
+
+  <!-- Contacto -->
+  <div class="section">
+    <div class="section-label">Contacto</div>
+    <div class="section-title">Escríbenos directamente</div>
+    <div class="contact-card">
+      <div class="contact-icon">
+        <svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+      </div>
+      <div class="contact-body">
+        <div class="contact-label">Correo de soporte</div>
+        <div class="contact-value"><a href="mailto:hola@broquer.app">hola@broquer.app</a></div>
+        <button type="button" class="contact-btn" data-soporte-abrir>Enviar mensaje a soporte</button>
+        <div class="contact-note">Tiempo de respuesta: menos de 24 horas hábiles (lunes a viernes, 9:00–18:00 CST). Para incidencias urgentes relacionadas con pagos o acceso a la cuenta, escribe "URGENTE" al inicio de tu mensaje.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- Módulos -->
+  <div class="section">
+    <div class="section-label">La plataforma</div>
+    <div class="section-title">¿Qué incluye Broquer?</div>
+    <div class="modules-grid">
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Calculadora de ISR</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Finanzas</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Estimación de valor (AVM)</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Asistente IA Broq</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Generación de contratos</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Anuncios en Facebook</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Mis Inmuebles</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Gestión de contactos</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Fichas técnicas (PDF)</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Cumplimiento PLD</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Integración EasyBroker</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Editor de imágenes</div></div>
+      <div class="mod-pill"><div class="mod-dot"></div><div class="mod-name">Solicitud de arrendamiento</div></div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- FAQ -->
+  <div class="section">
+    <div class="section-label">Preguntas frecuentes</div>
+    <div class="section-title">Respuestas rápidas</div>
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿Cómo funciona el módulo de Finanzas?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">En <strong>Finanzas</strong> registras tus ingresos y gastos, los ligas a propiedades para ver la utilidad real de cada operación, y llevas tus cuentas (banco, efectivo, tarjeta). <strong>Todo es editable en cualquier momento</strong>: montos, fechas, categorías y ligas; los saldos se recalculan solos. Broq puede leer la foto de un ticket y proponerte el movimiento, y cuando marcas una propiedad como vendida o rentada con su comisión, Finanzas te propone registrarla como ingreso. El informe del periodo que elijas se descarga en PDF con la identidad de Broquer, y el detalle en CSV para tu contador. El módulo es informativo: no sustituye tu contabilidad fiscal ni a tu contador.</div>
+      </div>
+
+      <div class="faq-item" id="pago-meta-whatsapp">
+        <button class="faq-q" onclick="toggle(this)">
+          A partir del 1 de octubre, ¿WhatsApp me va a cobrar? ¿Qué tengo que hacer?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">
+          Sí, pero el cobro es de <strong>Meta (el dueño de WhatsApp), no de Broquer</strong>, y no está incluido en tu suscripción. Y no te alarmes: para la mayoría de agentes son unos cuantos cientos de pesos al mes, no algo que vaya a desbalancear tu negocio. Lo urgente de verdad es la fecha del método de pago (abajo).<br><br>
+          <strong>Cómo funcionan las ventanas.</strong> Cuando un prospecto te escribe, se abre una <strong>ventana de servicio de 24 horas</strong> desde su último mensaje; dentro de ella puedes contestar lo que quieras en texto libre — eso es lo que hace Recepción, y lo que tú escribes desde la bandeja de Broquer. Hasta ahora esos mensajes eran gratis sin límite. A partir del <strong>1 de octubre de 2026</strong>, siguen gratis los primeros <strong>1,000 mensajes de servicio por número al mes</strong>; de ahí en adelante cada uno cuesta según el tarifario de Meta para tu país (en México, del orden de <strong>$0.14 MXN por mensaje</strong> — cifra de referencia, puede cambiar). Si la ventana ya se cerró y necesitas retomar el contacto, se usa una plantilla aprobada: "utilidad" para avisos transaccionales (más barata) o "marketing" para campañas (bastante más cara). Los mensajes que tú mandas a mano desde la app de WhatsApp Business de tu celular <strong>siguen siendo gratis siempre</strong>, sin ventana y sin cuota — eso no pasa por la Cloud API conectada a Broquer.<br><br>
+          <strong>Truco para pagar menos:</strong> si le vas a contestar algo tú mismo a un cliente conocido o vas a mandar un mensaje suelto que no necesita que quede en la bandeja como gestión de Recepción, hazlo desde el WhatsApp de tu celular en vez de la bandeja de Broquer — te ahorras ese mensaje del contador mensual, sin ningún costo para ti.<br><br>
+          Lo urgente: Meta exige que tu número tenga un <strong>método de pago cargado directamente en tu propio Administrador comercial de Meta</strong> a más tardar el <strong>30 de septiembre de 2026</strong>. Si no lo tienes para esa fecha, Meta puede dejar de entregar tus mensajes el 1 de octubre — sin que Broquer pueda hacer nada al respecto, porque esa cuenta de WhatsApp Business es tuya, no de Broquer.<br><br>
+          <strong>Cómo agregarlo (te toma 2 minutos):</strong>
+          <ol style="margin:8px 0 0 20px;padding:0;">
+            <li style="margin-bottom:6px;">Entra a <strong>business.facebook.com</strong> (Administrador comercial) con la misma cuenta de Facebook/Meta con la que conectaste tu número a Broquer.</li>
+            <li style="margin-bottom:6px;">Ve a <strong>Configuración del negocio → Pagos</strong> (o, dentro del <strong>Administrador de WhatsApp</strong>, entra a tu cuenta de WhatsApp Business y busca <strong>Facturación</strong>).</li>
+            <li style="margin-bottom:6px;">Agrega una tarjeta de crédito o débito válida.</li>
+            <li>Confirma que quede activa como método de pago de esa cuenta de WhatsApp Business antes del 30 de septiembre.</li>
+          </ol><br>
+          Broquer no participa en ese cobro, no ve ni guarda los datos de tu tarjeta ahí capturados, y esa gestión es responsabilidad tuya directamente frente a Meta. Puedes leer el detalle completo, con más ejemplos en pesos y más consejos para ahorrar, en nuestro <a href="blog.html?art=whatsapp-cobro-meta-octubre-2026">artículo del blog</a>, y el texto legal en el <a href="legal.html#whatsapp">Anexo de WhatsApp</a> de los Términos y Condiciones.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿Cómo controlo cuándo contesta la IA de WhatsApp?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">En <strong>WhatsApp → Recepción IA</strong> eliges el modo de cada número: <strong>encendida por default</strong> (contesta todos los chats), <strong>apagada por default</strong> (no contesta nada) o <strong>solo clientes nuevos</strong> (contesta únicamente a números que nunca te han escrito o que llevan más de tres meses sin hacerlo — el plazo lo puedes cambiar). Además, cada chat tiene su propio control con tres posiciones: Auto, Encendida y Apagada. Si enciendes la IA en un chat, contesta ahí aunque el modo del número esté apagado.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          Respondí un chat yo mismo y la IA dejó de contestar, ¿por qué?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Es a propósito: en cuanto tú respondes a mano (desde Broquer o desde el WhatsApp de tu celular), la IA se hace a un lado en ese chat para que no contesten dos "personas" al mismo prospecto. En <strong>WhatsApp → Recepción IA</strong> eliges si se hace a un lado para siempre (hasta que la vuelvas a encender en ese chat) o solo por un rato: 30 minutos, 1 hora, 8 horas o 24 horas. También puedes desactivar ese comportamiento. Para reactivarla en un chat, abre la conversación y pon el control de IA en Auto o Encendida.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿Qué es un flujo de WhatsApp y en qué se diferencia de la IA?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Un flujo (en <strong>WhatsApp → Flujos</strong>) ejecuta al pie de la letra los pasos que tú dibujaste: enviar mensajes exactos, hacer preguntas y guardar las respuestas en la ficha del contacto, mostrar menús de opciones y, al final, pasarte la conversación a ti o dejársela a la IA. Como no improvisa, nunca se equivoca. La IA de Recepción, en cambio, conversa libremente con tu entrenamiento y tu catálogo. Se complementan: el flujo da certeza absoluta en lo repetitivo y la IA maneja la conversación abierta.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿Cómo cancelo mi suscripción?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Puedes cancelar tu suscripción en cualquier momento desde la sección <strong>Mi perfil → Suscripción</strong> dentro de la app, o enviando un correo a <a href="mailto:hola@broquer.app">hola@broquer.app</a>. Tu acceso se mantiene activo hasta el fin del período pagado.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          Olvidé mi contraseña. ¿Cómo la recupero?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">En la pantalla de inicio de sesión, toca <strong>¿Olvidaste tu contraseña?</strong> e ingresa tu correo registrado. Recibirás un enlace para restablecerla en pocos minutos. Revisa también tu carpeta de spam.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿La app funciona sin conexión a internet?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Broquer requiere conexión a internet para funcionar, ya que la mayoría de sus herramientas (asistente de IA, AVM, generación de documentos) dependen de procesamiento en la nube. Algunas vistas previamente cargadas pueden consultarse brevemente sin conexión.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿Cómo solicito una factura (CFDI)?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Para solicitar tu CFDI 4.0 escribe a <a href="mailto:hola@broquer.app">hola@broquer.app</a> antes del último día hábil del mes indicando tu RFC, razón social, uso de CFDI y correo de recepción. Las facturas se emiten mensualmente.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿Mis datos y los de mis clientes están seguros?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Sí. Broquer almacena toda la información en servidores con cifrado en tránsito (TLS) y en reposo. Cada cuenta está completamente aislada y nunca compartimos datos con terceros con fines comerciales. Consulta nuestro <a href="legal.html">Aviso de Privacidad</a> para más detalle.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿Cómo conecto mi cuenta de EasyBroker?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Ve a <strong>Mi perfil → Integraciones</strong> y pega tu API Key de EasyBroker. La encontrarás en tu cuenta de EasyBroker bajo <em>Configuración → API</em>. Una vez conectada, puedes importar tus propiedades publicadas a Mis Inmuebles con un solo toque.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          Tengo un cobro que no reconozco. ¿Qué hago?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Escríbenos de inmediato a <a href="mailto:hola@broquer.app">hola@broquer.app</a> con el asunto "URGENTE — Cargo no reconocido" indicando el monto, fecha y últimos 4 dígitos de tu tarjeta. Investigamos y respondemos en menos de 24 horas hábiles.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          Ya tengo cuenta en Broquer. ¿Puedo unirme al equipo de una empresa?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Sí, sin borrar ni recrear nada. El dueño de la empresa te envía una invitación desde su módulo de <strong>Equipo</strong>; abres el link, entras con tu cuenta de siempre y con un toque quedas dentro. Si aún no tienes cuenta, el mismo link te guía a crearla con el correo de la invitación y, al confirmar tu correo, regresas automáticamente a la invitación para aceptarla. Solo puedes pertenecer a una organización a la vez, y la invitación únicamente funciona con el correo al que fue enviada.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          Si me uno a una empresa, ¿qué pasa con mi inventario y mis contactos?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Depende de cómo te invitaron, y la propia invitación te lo dice antes de aceptar. Si el dueño marcó <strong>"Puede entrar con su información"</strong>, tu inventario y tus contactos se integran a la empresa para trabajar en conjunto, bajo los permisos que el dueño configure. Si no lo marcó, entras con cuenta limpia y tu información queda guardada en pausa en tu cuenta individual: no se comparte con la empresa ni se pierde. Puedes leer el detalle en nuestros <a href="legal.html">Términos y condiciones</a>.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          Soy dueño de una empresa. ¿Qué controlo sobre mi equipo?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Desde el módulo <strong>Equipo</strong> decides todo: a quién invitas dentro de tus lugares contratados, si cada invitado entra con su información o con cuenta limpia, y los permisos de cada miembro (por ejemplo, ver teléfonos de propietarios o comisiones). También puedes dar de baja a un miembro en cualquier momento: pierde el acceso al instante y lo que integró a la empresa se queda en la empresa. Solo tú o un administrador pueden eliminar registros de la organización.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿Qué es el sello "Certificado NOM-151" que veo en algunos documentos firmados?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Es una capa adicional y opcional, no un requisito. Tu firma electrónica en Broquer (trazo + código de verificación por WhatsApp o correo + bitácora completa de IP, hora y dispositivo) ya es válida por sí misma bajo los artículos 89 a 114 del Código de Comercio, y un documento queda "completo" en cuanto todas las partes firman. Cuando además hay un Proveedor de Servicios de Certificación (PSC) acreditado por la Secretaría de Economía contratado, Broquer le manda ese mismo PDF final para que emita su propia Constancia de Conservación NOM-151 sobre él. Si esa constancia se emitió, verás el folio del PSC y el badge "Certificado NOM-151" al verificar el documento por su folio; si no aparece, el documento sigue siendo válido igual, simplemente no tiene (todavía) ese sello extra.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggle(this)">
+          ¿En qué países está disponible Broquer?
+          <svg class="faq-chevron" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-a">Broquer está disponible actualmente en México. Nos encontramos en proceso de expansión a otros países de América Latina. Si tienes interés desde otro país, escríbenos a <a href="mailto:hola@broquer.app">hola@broquer.app</a>.</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <p>
+    Broquer — Salvador Bolaños Navarro · Morelia, Michoacán, México<br/>
+    <a href="mailto:hola@broquer.app">hola@broquer.app</a> ·
+    <a href="legal.html">Aviso de privacidad</a> ·
+    <a href="legal.html">Términos y condiciones</a>
+  </p>
+  <p style="margin-top:6px;">© 2025 Broquer. Todos los derechos reservados.</p>
+</footer>
+
+<script>
+function toggle(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+/* Abrir y desplazar a una pregunta si se llega con #id-de-la-pregunta */
+(function(){
+  const id = location.hash.replace('#', '');
+  if (!id) return;
+  const item = document.getElementById(id);
+  if (!item || !item.classList.contains('faq-item')) return;
+  item.classList.add('open');
+  item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+})();
+</script>
+<script src="soporte-form.js" defer></script>
+</body>
+</html>

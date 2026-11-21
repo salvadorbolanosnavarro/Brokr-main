@@ -1,0 +1,12 @@
+QA · Solicitudes fetch/XHR observadas
+https://tymhlvawnqadqgwnpruk.supabase.co/rest/v1/usuarios
+https://brokr-main-staging.up.railway.app/config/public
+https://brokr-main-staging.up.railway.app/org
+https://brokr-main-staging.up.railway.app/subscription/status
+https://tymhlvawnqadqgwnpruk.supabase.co/rest/v1/wa2_conversaciones
+https://tymhlvawnqadqgwnpruk.supabase.co/rest/v1/tareas
+https://brokr-main-staging.up.railway.app/supervision/contador
+https://tymhlvawnqadqgwnpruk.supabase.co/rest/v1/organizacion_categorias
+https://tymhlvawnqadqgwnpruk.supabase.co/rest/v1/propiedades
+https://brokr-main-staging.up.railway.app/buzon/contador
+https://brokr-main-staging.up.railway.app/telemetria/sesion-modulo

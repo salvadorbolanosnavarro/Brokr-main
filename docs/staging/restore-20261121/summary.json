@@ -1,0 +1,74 @@
+{
+  "backup_at_utc": "2026-11-21T07:05:17Z",
+  "tables": 124,
+  "exact_complete_data_hash_matches": 115,
+  "additional_snapshot_time_immutable_hash_matches": 9,
+  "snapshot_checks_match": true,
+  "schema_comparisons": {
+    "columns": {
+      "count": 1759,
+      "missing": 0,
+      "extra": 0,
+      "changed": 0
+    },
+    "policies": {
+      "count": 196,
+      "missing": 0,
+      "extra": 0,
+      "changed": 0
+    },
+    "functions": {
+      "count": 780,
+      "missing": 0,
+      "extra": 0,
+      "changed": 0
+    },
+    "triggers": {
+      "count": 33,
+      "missing": 0,
+      "extra": 0,
+      "changed": 0
+    },
+    "constraints": {
+      "count": 381,
+      "missing": 0,
+      "extra": 0,
+      "changed": 0
+    },
+    "indexes": {
+      "count": 454,
+      "missing": 0,
+      "extra": 0,
+      "changed": 0
+    },
+    "rls": {
+      "count": 124,
+      "missing": 0,
+      "extra": 0,
+      "changed": 0
+    },
+    "extensions": {
+      "count": 6,
+      "missing": 0,
+      "extra": 0,
+      "changed": 0
+    },
+    "roles": {
+      "count": 30,
+      "missing": 0,
+      "extra": 0,
+      "changed": 0
+    }
+  },
+  "storage_object_metadata_rows": 5,
+  "storage_bytes_in_physical_backup": false,
+  "rls_checks": {
+    "B2_own_property": 1,
+    "B2_other_owner_rows": 0,
+    "A2_visible_B2_existing_property": 0
+  },
+  "inventory_sha256": {
+    "source-inventory.json": "77804bfd3e457cb06796c06495b41613e126e149f092a4482dab70fe6e6bd70e",
+    "restored-inventory.json": "b75ca417d3ecfe4f327a7e46d43c10c5681c1f70f12354eb8287390d21b155b5"
+  }
+}

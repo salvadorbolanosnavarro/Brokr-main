@@ -1,0 +1,605 @@
+// Broquer · Ficha — las piezas que comparten Clientes, Directorio e Inmuebles.
+//
+// Los tres módulos abren el mismo tipo de pantalla de detalle, y hasta ahora
+// cada uno traía su propia copia del menú de estado y del feed de historial,
+// con tres juegos de clases que se fueron separando entre sí. Aquí vive la
+// mecánica común; el CSS correspondiente está en brokr-theme.css (bloque
+// "FICHA") y cada módulo pone lo suyo: qué datos pinta y a qué tabla escribe.
+
+/* ══════════════════════════════════════════════════════════════════
+   Menú anclado a un botón
+   Se dibuja en <body> con position:fixed porque la ficha tiene
+   contenedores con overflow y un popover absoluto dentro de ellos se
+   recorta (y así tampoco hereda el z-index de su fila).
+   ══════════════════════════════════════════════════════════════════ */
+let _bkMenuAbierto = null;   // { caja, anchor }
+
+const BK_ICONO_CHECK = '<svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+const BK_CHEVRON = '<svg class="bk-pill__chev" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>';
+
+function bkEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function bkCerrarMenu() {
+  if (!_bkMenuAbierto) return;
+  const { caja, anchor } = _bkMenuAbierto;
+  _bkMenuAbierto = null;
+  caja.remove();
+  if (anchor) anchor.setAttribute('aria-expanded', 'false');
+  document.removeEventListener('keydown', _bkMenuTecla, true);
+}
+
+function bkHayMenuAbierto() { return !!_bkMenuAbierto; }
+
+function _bkMenuTecla(ev) {
+  if (!_bkMenuAbierto) return;
+  const items = Array.from(_bkMenuAbierto.caja.querySelectorAll('.bk-menu__item:not([disabled])'));
+  const i = items.indexOf(document.activeElement);
+  if (ev.key === 'Escape') {
+    ev.preventDefault();
+    const a = _bkMenuAbierto.anchor;
+    bkCerrarMenu();
+    if (a) a.focus();
+  } else if (ev.key === 'ArrowDown') {
+    ev.preventDefault();
+    (items[i + 1] || items[0]).focus();
+  } else if (ev.key === 'ArrowUp') {
+    ev.preventDefault();
+    (items[i - 1] || items[items.length - 1]).focus();
+  } else if (ev.key === 'Tab') {
+    bkCerrarMenu();
+  }
+}
+
+// items: [{ id, etiqueta, nota?, color?, activo?, peligro?, separa? }]
+function bkAbrirMenu(anchor, items, onElegir) {
+  const yaEra = _bkMenuAbierto && _bkMenuAbierto.anchor === anchor;
+  bkCerrarMenu();
+  if (yaEra) return;                      // segundo clic en el mismo botón: cierra
+
+  const caja = document.createElement('div');
+  caja.className = 'bk-menu bk-menu--anclado';
+  caja.setAttribute('role', 'menu');
+  caja.innerHTML = items.map((it, i) => `
+    ${it.separa ? '<div class="bk-menu__sep"></div>' : ''}
+    <button type="button" role="menuitem" data-i="${i}"
+            class="bk-menu__item${it.activo ? ' is-on' : ''}${it.peligro ? ' bk-menu__item--danger' : ''}">
+      ${it.color ? `<span class="bk-punto" style="background:${it.color}"></span>` : ''}
+      <span class="bk-menu__txt">${bkEsc(it.etiqueta)}${it.nota ? `<small>${bkEsc(it.nota)}</small>` : ''}</span>
+      <span class="bk-menu__check">${it.activo ? BK_ICONO_CHECK : ''}</span>
+    </button>`).join('');
+  document.body.appendChild(caja);
+
+  const r = anchor.getBoundingClientRect();
+  const alto = caja.offsetHeight;
+  const ancho = Math.max(caja.offsetWidth, r.width);
+  const cabeAbajo = r.bottom + alto + 8 <= window.innerHeight;
+  caja.style.minWidth = r.width + 'px';
+  caja.style.top = (cabeAbajo ? r.bottom + 6 : Math.max(8, r.top - alto - 6)) + 'px';
+  caja.style.left = Math.min(Math.max(8, r.left), window.innerWidth - ancho - 8) + 'px';
+
+  anchor.setAttribute('aria-expanded', 'true');
+  _bkMenuAbierto = { caja, anchor };
+
+  caja.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.bk-menu__item');
+    if (!btn) return;
+    const it = items[Number(btn.dataset.i)];
+    bkCerrarMenu();
+    if (it) onElegir(it.id);
+  });
+  document.addEventListener('keydown', _bkMenuTecla, true);
+  const activo = caja.querySelector('.bk-menu__item.is-on') || caja.querySelector('.bk-menu__item');
+  if (activo) activo.focus();
+}
+
+document.addEventListener('mousedown', (ev) => {
+  if (!_bkMenuAbierto) return;
+  if (ev.target.closest('.bk-menu--anclado') || ev.target.closest('[data-bk-menu]')) return;
+  bkCerrarMenu();
+});
+window.addEventListener('resize', bkCerrarMenu);
+document.addEventListener('scroll', bkCerrarMenu, true);
+
+/* ══════════════════════════════════════════════════════════════════
+   Bitácora — la línea de tiempo del registro
+   ══════════════════════════════════════════════════════════════════ */
+const BK_BITA_ICONOS = {
+  nota:             '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.86 4.49l1.69-1.69a1.88 1.88 0 112.65 2.65L6.83 19.82a4.5 4.5 0 01-1.9 1.13l-2.68.8.8-2.69a4.5 4.5 0 011.13-1.9L16.86 4.5z"/></svg>',
+  archivo:          '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17.5 8.5l-7.1 7.1a2.5 2.5 0 003.5 3.5l7.1-7.1a4.5 4.5 0 00-6.4-6.4l-7.1 7.1a6.5 6.5 0 009.2 9.2"/></svg>',
+  cambio_estatus:   '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16l-4-4 4-4m-4 4h18M17 8l4 4-4 4"/></svg>',
+  tarea_completada: '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+  alta:             '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM19 8v6M22 11h-6"/></svg>',
+  operacion:        '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.59a1 1 0 01.7.29l4.42 4.42a1 1 0 01.29.7V19a2 2 0 01-2 2z"/></svg>',
+};
+const BK_BITA_TITULOS = {
+  nota: 'Nota', archivo: 'Archivos', cambio_estatus: 'Cambio de estatus',
+  tarea_completada: 'Tarea completada', alta: 'Alta', operacion: 'Operación',
+};
+
+function bkDiaEtiqueta(d) {
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const dia = new Date(d); dia.setHours(0, 0, 0, 0);
+  const difDias = Math.round((hoy - dia) / 86400000);
+  if (difDias === 0) return 'Hoy';
+  if (difDias === 1) return 'Ayer';
+  const opts = { day: 'numeric', month: 'long' };
+  if (dia.getFullYear() !== hoy.getFullYear()) opts.year = 'numeric';
+  return dia.toLocaleDateString('es-MX', opts);
+}
+
+function bkHora(iso) {
+  try { return new Date(iso).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }); }
+  catch { return ''; }
+}
+
+// El renglón ya dice de qué tipo es el evento; el texto guardado suele
+// repetir ese prefijo ("Tarea completada: Llamar a…"). Se quita para no
+// leerlo dos veces.
+function bkSinPrefijo(tipo, texto) {
+  const prefijos = {
+    tarea_completada: /^Tarea completada:\s*/i,
+    cambio_estatus: /^(Etapa|Estatus):\s*/i,
+  };
+  const p = prefijos[tipo];
+  return p ? String(texto || '').replace(p, '') : (texto || '');
+}
+
+// entradas: [{ tipo, texto, fecha, adjuntos? }] — ya ordenadas o no.
+// titulos: mapa opcional para renombrar el encabezado de un tipo.
+function bkRenderBitacora(entradas, titulos) {
+  const lista = entradas.slice().sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  const nombres = Object.assign({}, BK_BITA_TITULOS, titulos || {});
+  let html = '';
+  let diaActual = '';
+  lista.forEach(e => {
+    const dia = bkDiaEtiqueta(e.fecha);
+    if (dia !== diaActual) {
+      diaActual = dia;
+      html += `<div class="bk-bita__dia">${bkEsc(dia)}</div>`;
+    }
+    html += bkItemBitacora({
+      id: e.id,
+      tipo: e.tipo,
+      titulo: nombres[e.tipo] || 'Actividad',
+      texto: bkSinPrefijo(e.tipo, e.texto),
+      hora: bkHora(e.fecha),
+      adjuntos: e.adjuntos,
+      categorias: e.categorias,
+      editadoEn: e.editado_en,
+      sup: e.sup,
+    });
+  });
+  return html;
+}
+
+// Editar/eliminar solo aplica a notas y archivos escritos a mano — los
+// demás tipos (alta, cambio de etapa, tarea completada) son un registro
+// automático de lo que pasó, no algo que tenga sentido "corregir".
+const BK_TIPOS_EDITABLES = ['nota', 'archivo'];
+
+// En Broquer para Empresas solo el dueño o un administrador borra notas.
+// Cada página resuelve el permiso con /org: cPuedeEliminar (contactos y
+// clientes) o puedeEliminar (propiedades). Sin permiso resuelto, no se borra.
+function bkPuedeBorrar() {
+  if (typeof cPuedeEliminar !== 'undefined') return cPuedeEliminar === true;
+  if (typeof puedeEliminar !== 'undefined') return puedeEliminar === true;
+  return false;
+}
+
+function bkItemBitacora({ id, tipo, titulo, texto, hora, adjuntos, categorias, editadoEn, sup }) {
+  const adj = (typeof haRenderAdjuntos === 'function') ? haRenderAdjuntos(adjuntos) : '';
+  const cats = (categorias && categorias.length)
+    ? '<div class="tke-chips" style="margin-top:6px">' +
+      categorias.map(n => '<span class="tke-chip" style="cursor:default">' + bkEsc(n) + '</span>').join('') +
+      '</div>'
+    : '';
+  // Un comentario urgente de supervisión solo lo corrige quien lo escribió.
+  const editable = id && BK_TIPOS_EDITABLES.includes(tipo) &&
+    (!sup || sup.autor === _bkSup.yo) &&
+    typeof bkEditarNota === 'function' && typeof bkEliminarNota === 'function';
+  const acciones = editable
+    ? `<div class="bk-bita__acciones">
+        ${editadoEn ? '<span class="bk-hint" title="Editada">(editada)</span>' : ''}
+        <button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="bkEditarNota('${bkEsc(String(id))}')">Editar</button>
+        ${bkPuedeBorrar() ? `<button type="button" class="bk-btn bk-btn--quiet bk-btn--sm" onclick="bkEliminarNota('${bkEsc(String(id))}')">Eliminar</button>` : ''}
+      </div>`
+    : '';
+  return `<article class="bk-bita__item${sup ? ' bk-bita__item--urgente' : ''}">
+    <span class="bk-bita__ico bk-bita__ico--${sup ? 'urgente' : bkEsc(tipo)}">${sup ? BK_ICO_URGENTE : (BK_BITA_ICONOS[tipo] || BK_BITA_ICONOS.nota)}</span>
+    <div class="bk-bita__cuerpo">
+      <header class="bk-bita__head">
+        <span class="bk-bita__tipo">${sup ? 'Urgente de supervisión' : bkEsc(titulo)}</span>
+        <time class="bk-bita__hora">${bkEsc(hora)}</time>
+      </header>
+      ${texto ? `<p class="bk-bita__txt">${bkEsc(texto)}</p>` : ''}
+      ${sup ? bkSupEstado(id, sup) : ''}
+      ${cats}
+      ${acciones}
+      ${adj}
+    </div>
+  </article>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Piezas sueltas de la ficha
+   ══════════════════════════════════════════════════════════════════ */
+
+// Un dato del bloque de resumen. `valor` puede traer HTML (ligas).
+function bkDato(label, valor, ancho) {
+  if (!valor) return '';
+  return `<div class="bk-dato${ancho ? ' bk-dato--ancho' : ''}">
+    <span class="bk-dato__lbl">${bkEsc(label)}</span>
+    <span class="bk-dato__val">${valor}</span>
+  </div>`;
+}
+
+// Deja un botón/enlace de contacto habilitado o apagado de verdad (no con
+// opacidad simulada): sin dato no navega y sale del orden de tabulación.
+function bkAccion(el, activo, href) {
+  if (!el) return;
+  el.href = activo ? href : '#';
+  el.setAttribute('aria-disabled', activo ? 'false' : 'true');
+  el.tabIndex = activo ? 0 : -1;
+  el.onclick = activo ? null : (ev) => { ev.preventDefault(); };
+}
+
+// Contador de una pestaña: se esconde cuando vale cero.
+function bkContador(id, n) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = n;
+  el.hidden = !n;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Buscador con sugerencias en vivo — reemplaza los <select> con cientos
+   de opciones en orden alfabético, sin filtro, por un campo de texto
+   que filtra mientras se escribe (mismo mecanismo que ya traía el
+   buscador de propiedades de Clientes, generalizado para cualquier
+   lista: contactos, propiedades, lo que sea).
+
+   opciones = {
+     filtro(item, q)  → true/false si "item" coincide con la búsqueda q
+     render(item)     → { titulo, sub } para pintar la sugerencia
+     vacioTexto       → texto cuando no hay nada que ofrecer
+     limite           → máximo de sugerencias (default 8)
+   }
+   Devuelve { onInput(disponibles), onKeydown(ev), manejarClick(target),
+              cerrarSiClickAfuera(target) } — mismo contrato que el
+   buscador de propiedades original, para no tener que tocar quien ya
+   lo usaba.
+   ══════════════════════════════════════════════════════════════════ */
+function bkCrearBuscador(inputId, hiddenId, cajaId, opciones) {
+  const { filtro, render, vacioTexto, limite } = opciones;
+  const tope = limite || 8;
+  let sugCache = [];
+  let hl = -1;
+  const inputEl = () => document.getElementById(inputId);
+  const hiddenEl = () => document.getElementById(hiddenId);
+  const cajaEl = () => document.getElementById(cajaId);
+
+  function filtrar(q, disponibles) {
+    q = (q || '').toLowerCase().trim();
+    if (!q) return disponibles.slice(0, tope);
+    return disponibles.filter(item => filtro(item, q)).slice(0, tope);
+  }
+  function pintar(lista, disponibles) {
+    sugCache = lista;
+    hl = -1;
+    const caja = cajaEl();
+    if (!lista.length) {
+      caja.innerHTML = '<div class="prop-sugerencia prop-sugerencia--vacio">' +
+        (disponibles.length ? 'Sin coincidencias' : (vacioTexto || 'Nada para elegir')) + '</div>';
+      caja.hidden = false;
+      return;
+    }
+    caja.innerHTML = lista.map((item, i) => {
+      const { titulo, sub } = render(item);
+      return `<button type="button" class="prop-sugerencia" data-idx="${i}">
+        <span class="prop-sugerencia__n">${bkEsc(titulo || 'Sin nombre')}</span>
+        ${sub ? `<span class="prop-sugerencia__d">${bkEsc(sub)}</span>` : ''}
+      </button>`;
+    }).join('');
+    caja.hidden = false;
+  }
+  function onInput(disponibles) {
+    hiddenEl().value = '';
+    pintar(filtrar(inputEl().value, disponibles), disponibles);
+  }
+  function elegir(idx) {
+    const item = sugCache[idx];
+    if (!item) return null;
+    hiddenEl().value = item.id;
+    inputEl().value = render(item).titulo || '';
+    cajaEl().hidden = true;
+    return item;
+  }
+  function resaltar() {
+    const caja = cajaEl();
+    Array.from(caja.querySelectorAll('.prop-sugerencia[data-idx]')).forEach((el, i) => {
+      el.classList.toggle('is-hl', i === hl);
+      if (i === hl) el.scrollIntoView({ block: 'nearest' });
+    });
+  }
+  function onKeydown(ev) {
+    const caja = cajaEl();
+    if (!caja || caja.hidden) return;
+    const n = sugCache.length;
+    if (ev.key === 'ArrowDown' && n) { ev.preventDefault(); hl = Math.min(hl + 1, n - 1); resaltar(); }
+    else if (ev.key === 'ArrowUp' && n) { ev.preventDefault(); hl = Math.max(hl - 1, 0); resaltar(); }
+    else if (ev.key === 'Enter') { ev.preventDefault(); elegir(hl >= 0 ? hl : 0); }
+    else if (ev.key === 'Escape') { caja.hidden = true; }
+  }
+  function manejarClick(target) {
+    const btn = target.closest('.prop-sugerencia[data-idx]');
+    if (btn && cajaEl().contains(btn)) { elegir(Number(btn.dataset.idx)); return true; }
+    return false;
+  }
+  function cerrarSiClickAfuera(target) {
+    if (!target.closest('#' + inputId) && !target.closest('#' + cajaId)) cajaEl().hidden = true;
+  }
+  return { onInput, onKeydown, manejarClick, cerrarSiClickAfuera, elegir };
+}
+
+// Atajo: buscador de propiedades por título/colonia/ciudad/tipo — el caso
+// más común (Tareas, notas, filtros de "propiedad de interés"…).
+function bkBuscadorPropiedades(inputId, hiddenId, cajaId, vacioTexto) {
+  return bkCrearBuscador(inputId, hiddenId, cajaId, {
+    vacioTexto,
+    filtro: (p, q) => ((p.titulo||'') + ' ' + (p.colonia||'') + ' ' + (p.ciudad||'') + ' ' + (p.tipo||'')).toLowerCase().includes(q),
+    render: (p) => ({
+      titulo: p.titulo || 'Sin título',
+      sub: (typeof propSubtitulo === 'function') ? propSubtitulo(p) : (p.clave_interna || p.colonia || ''),
+    }),
+  });
+}
+
+// Atajo: buscador de contactos por nombre/teléfono/correo.
+function bkBuscadorContactos(inputId, hiddenId, cajaId, vacioTexto) {
+  return bkCrearBuscador(inputId, hiddenId, cajaId, {
+    vacioTexto,
+    filtro: (c, q) => ((c.nombre||'') + ' ' + (c.telefono||'') + ' ' + (c.email||'')).toLowerCase().includes(q),
+    render: (c) => ({ titulo: c.nombre || 'Sin nombre', sub: c.telefono || c.email || '' }),
+  });
+}
+
+/* ── Guardar cambios de un contacto, comprobando que se guardaron ──
+   Antes se mandaba el PATCH con "return=minimal": si el cliente era de un
+   compañero, la base (RLS) no actualizaba nada, respondía 200 igual y la
+   pantalla decía "Etapa: Descartado" aunque al recargar volvía a la de antes.
+   Ahora se pide la fila de vuelta; si no se actualizó ninguna, lo hace el
+   servidor (que revisa permisos del equipo: asignado, admin o "ver contactos
+   del equipo"). Si tampoco puede, se reporta como error, nunca como éxito. */
+async function bkPatchContacto(id, fields) {
+  const sb = window.brokrSb;
+  const r = await sb.fetch('rest/v1/contactos?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+    body: JSON.stringify(fields),
+  });
+  if (!r.ok) throw new Error('Error ' + r.status);
+  const filas = await r.json().catch(() => []);
+  if (Array.isArray(filas) && filas.length) return;
+
+  // El cliente es de otro (lo creó alguien más y me lo asignaron, o lo veo
+  // por el permiso del equipo): el servidor revisa permisos y guarda sin
+  // cambiar al creador. Solo etapa/probabilidad → /etapa; lo demás → general.
+  const soloEtapa = Object.keys(fields).every(k => ['estatus', 'probabilidad', 'updated_at'].includes(k));
+  const tok = await sb.ensureToken();
+  const cuerpo = {};
+  if (soloEtapa) {
+    if ('estatus' in fields) cuerpo.estatus = fields.estatus;
+    if ('probabilidad' in fields) cuerpo.probabilidad = fields.probabilidad;
+  } else {
+    Object.assign(cuerpo, fields);
+  }
+  const r2 = await fetch((window.API_BASE || 'https://brokr-main-staging.up.railway.app') + '/org/contactos/' +
+    encodeURIComponent(id) + (soloEtapa ? '/etapa' : ''), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+    body: JSON.stringify(cuerpo),
+  });
+  if (!r2.ok) {
+    const j = await r2.json().catch(() => ({}));
+    throw new Error(j.detail || ('Error ' + r2.status));
+  }
+}
+
+/* Guardar el formulario "Nuevo / Editar cliente". Un cliente nuevo se
+   inserta con quien lo crea como dueño. Uno existente se ACTUALIZA sin
+   mandar user_id: antes se reenviaba la fila completa con user_id = quien
+   guardaba, así que la base lo rechazaba si el cliente era de otro (aunque
+   estuviera asignado a quien editaba) y, cuando un admin lo editaba, el
+   cliente pasaba a ser del admin sin que nadie lo notara. */
+async function bkGuardarContacto(contacto, existe) {
+  if (existe) {
+    const campos = Object.assign({}, contacto);
+    ['id', 'user_id', 'org_id', 'asignado_a', 'created_at'].forEach(k => delete campos[k]);
+    await bkPatchContacto(contacto.id, campos);
+    return;
+  }
+  const sb = window.brokrSb;
+  const uid = typeof _userId === 'function' ? await _userId() : null;
+  if (!uid) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+  const r = await sb.fetch('rest/v1/contactos?on_conflict=id', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(Object.assign({}, contacto, { user_id: uid })),
+  });
+  if (!r.ok) throw new Error('Supabase: ' + r.status + ' ' + await r.text().catch(() => ''));
+  return r.json();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Anterior / siguiente — recorrer la lista sin cerrar la ficha
+   Al abrir la ficha desde el tablero o la lista se toma una foto del
+   orden que se ve en pantalla (con los filtros puestos). Las flechas
+   caminan sobre esa foto, así que cambiar de etapa al cliente actual no
+   lo mueve de lugar a media vuelta. Teclado: ← y →.
+   ══════════════════════════════════════════════════════════════════ */
+let _bkNav = null;   // { ids, i, abrir }
+
+const BK_ICO_ANT = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>';
+const BK_ICO_SIG = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>';
+
+// id: el que se acaba de abrir. ordenVisible(): ids en el orden de la
+// pantalla. abrir(id): abre otro sin cerrar la ficha.
+function bkFichaNav(id, ordenVisible, abrir) {
+  const ov = document.getElementById('detail-ov');
+  const bar = ov && ov.querySelector('.bk-ficha__bar');
+  if (!bar) return;
+  let nav = document.getElementById('bk-ficha-nav');
+  if (!nav) {
+    nav = document.createElement('div');
+    nav.id = 'bk-ficha-nav';
+    nav.className = 'bk-ficha__nav';
+    nav.innerHTML =
+      `<button type="button" class="bk-icon-btn bk-icon-btn--sm" onclick="bkFichaNavIr(-1)" title="Anterior (←)" aria-label="Anterior">${BK_ICO_ANT}</button>` +
+      '<span class="bk-ficha__nav-pos" aria-live="polite"></span>' +
+      `<button type="button" class="bk-icon-btn bk-icon-btn--sm" onclick="bkFichaNavIr(1)" title="Siguiente (→)" aria-label="Siguiente">${BK_ICO_SIG}</button>`;
+    bar.insertBefore(nav, bar.lastElementChild);
+  }
+  id = String(id);
+  const yaAbierta = ov.classList.contains('is-open');
+  if (!yaAbierta || !_bkNav || !_bkNav.ids.includes(id)) {
+    _bkNav = { ids: ordenVisible().map(String), abrir };
+  }
+  _bkNav.i = _bkNav.ids.indexOf(id);
+  const n = _bkNav.ids.length;
+  nav.hidden = _bkNav.i < 0 || n < 2;
+  if (nav.hidden) return;
+  const [ant, sig] = nav.querySelectorAll('button');
+  ant.disabled = _bkNav.i === 0;
+  sig.disabled = _bkNav.i === n - 1;
+  nav.querySelector('.bk-ficha__nav-pos').textContent = (_bkNav.i + 1) + ' de ' + n;
+}
+
+function bkFichaNavIr(paso) {
+  if (!_bkNav || _bkNav.i < 0) return;
+  const j = _bkNav.i + paso;
+  if (j < 0 || j >= _bkNav.ids.length) return;
+  bkCerrarMenu();
+  _bkNav.abrir(_bkNav.ids[j]);
+}
+
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+  if (ev.altKey || ev.ctrlKey || ev.metaKey || ev.shiftKey || bkHayMenuAbierto()) return;
+  const ov = document.getElementById('detail-ov');
+  if (!ov || !ov.classList.contains('is-open')) return;
+  const t = ev.target;
+  if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+  // Otro modal encima de la ficha (editar, confirmar) se queda con las flechas
+  if (document.querySelector('.overlay.open, .cdel-overlay.is-open')) return;
+  ev.preventDefault();
+  bkFichaNavIr(ev.key === 'ArrowLeft' ? -1 : 1);
+});
+
+/* ══════════════════════════════════════════════════════════════════
+   Urgente de supervisión — el dueño o un admin deja en la bitácora una
+   nota urgente para el agente del cliente (routers/supervision.py). Las
+   columnas de esa marca solo las escribe el backend; aquí se pinta la
+   marca, la opción en el editor de notas y el botón "Marcar como atendido".
+   ══════════════════════════════════════════════════════════════════ */
+const BK_ICO_URGENTE = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008M10.3 3.86L1.82 18a1.5 1.5 0 001.29 2.25h17.78A1.5 1.5 0 0022.18 18L13.7 3.86a1.5 1.5 0 00-2.6 0z"/></svg>';
+let _bkSup = { yo: null, esSup: false };
+let _bkSupListo = null;
+
+async function bkSupApi(ruta, opts) {
+  const sb = window.brokrSb;
+  const tok = sb && sb.ensureToken ? await sb.ensureToken() : null;
+  if (!tok) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+  const r = await fetch((window.API_BASE || 'https://brokr-main-staging.up.railway.app') + ruta, Object.assign({}, opts, {
+    headers: Object.assign({ Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, (opts || {}).headers),
+  }));
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || ('Error ' + r.status));
+  return j;
+}
+
+// Quién soy y si superviso (owner/admin de una empresa). Una vez por página.
+function bkSupPreparar() {
+  if (!_bkSupListo) {
+    _bkSupListo = (async () => {
+      try { _bkSup.yo = typeof _userId === 'function' ? await _userId() : null; } catch {}
+      try {
+        const org = await bkSupApi('/org');
+        _bkSup.esSup = org.es_empresa === true && org.es_admin === true;
+      } catch {}
+    })();
+  }
+  return _bkSupListo;
+}
+
+function bkSupEstado(id, sup) {
+  if (sup.atendidoEn) {
+    return `<p class="bk-sup-estado is-ok">Atendido · ${bkEsc(bkDiaEtiqueta(sup.atendidoEn))}, ${bkEsc(bkHora(sup.atendidoEn))}</p>`;
+  }
+  const puede = id && (sup.para === _bkSup.yo || _bkSup.esSup);
+  return `<p class="bk-sup-estado">Pendiente de atender
+    ${puede ? `<button type="button" class="bk-btn bk-btn--sm" onclick="bkSupAtender('${bkEsc(String(id))}', this)">Marcar como atendido</button>` : ''}</p>`;
+}
+
+async function bkSupAtender(id, btn) {
+  if (btn) btn.disabled = true;
+  try {
+    await bkSupApi('/supervision/comentarios/' + encodeURIComponent(id) + '/atendido', { method: 'POST' });
+    if (typeof showToast === 'function') showToast('Marcado como atendido');
+    window.dispatchEvent(new Event('brokr-supervision-cambio'));
+    if (typeof cargarBitacora === 'function' && typeof detContacto !== 'undefined' && detContacto) cargarBitacora();
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    alert('No se pudo marcar como atendido.\n\n' + (e.message || e));
+  }
+}
+
+// La opción en el editor de notas. Solo la ve quien supervisa.
+function bkSupComposer() {
+  const comp = document.getElementById('f-composer');
+  if (!comp) return;
+  let fila = document.getElementById('f-nota-urgente-fila');
+  if (!fila) {
+    fila = document.createElement('label');
+    fila.id = 'f-nota-urgente-fila';
+    fila.className = 'bk-sup-check';
+    fila.innerHTML = '<input type="checkbox" id="f-nota-urgente"/>' +
+      '<span><strong>Urgente para el agente</strong> · le llega un aviso y queda pendiente hasta que lo atienda</span>';
+    comp.insertBefore(fila, comp.querySelector('.bk-composer__pie'));
+  }
+  document.getElementById('f-nota-urgente').checked = false;
+  fila.hidden = !_bkSup.esSup;
+  bkSupPreparar().then(() => { fila.hidden = !_bkSup.esSup; });
+}
+
+function bkSupMarcado() {
+  const el = document.getElementById('f-nota-urgente');
+  return !!(el && el.checked && _bkSup.esSup);
+}
+
+async function bkSupCrear(datos) {
+  const j = await bkSupApi('/supervision/comentarios', { method: 'POST', body: JSON.stringify(datos) });
+  window.dispatchEvent(new Event('brokr-supervision-cambio'));
+  return j.actividad;
+}
+
+// Lo que cada ficha pasa como `sup` al pintar su bitácora.
+function bkSupDeActividad(a) {
+  return a && a.urgente ? { para: a.para_usuario, autor: a.user_id, atendidoEn: a.atendido_en } : null;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Conteo del encabezado (Clientes y Directorio)
+   Con filtros activos el badge #count-badge dice "12 de 340"; sin
+   filtros, solo el total.
+   ══════════════════════════════════════════════════════════════════ */
+function cPintarConteo(filtrados, total) {
+  const badge = document.getElementById('count-badge');
+  if (!badge) return;
+  badge.textContent = filtrados === total ? total : filtrados + ' de ' + total;
+  badge.title = filtrados === total ? total + ' en total' : filtrados + ' con los filtros actuales, de ' + total + ' en total';
+  badge.style.display = total ? '' : 'none';
+}

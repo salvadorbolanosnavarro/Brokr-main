@@ -1,0 +1,1831 @@
+{
+  "mode": "HTTP audit with private A3 cookie, no browser state injection",
+  "passed": true,
+  "checked": 304,
+  "checks": [
+    {
+      "path": "404.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "Default@1x~universal~anyany-dark.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "Default@1x~universal~anyany.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "Default@2x~universal~anyany-dark.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "Default@2x~universal~anyany.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "Default@3x~universal~anyany-dark.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "Default@3x~universal~anyany.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "_TEMPLATE-modulo.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "_t.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "admin-archivos.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "admin-paises.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "admin.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "alertas.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "alertas.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "animacion-broquer.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "app-shell.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "appstore-badge.webp",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "archivos-seguros.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "auth-hero.jpg",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "aviso-privacidad.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "avm.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "bandeja.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "bk-api.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "blog.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "bolsa.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "brokr-theme-v2.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "brokr-theme.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "broq-icon.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "buscador.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "buzon.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "buzon.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "buzon.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "capacitor-bridge.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "categorias.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/404.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/Default@1x~universal~anyany-dark.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/Default@1x~universal~anyany.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/Default@2x~universal~anyany-dark.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/Default@2x~universal~anyany.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/Default@3x~universal~anyany-dark.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/Default@3x~universal~anyany.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/_TEMPLATE-modulo.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/_t.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/admin-archivos.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/admin-paises.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/admin.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/alertas.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/alertas.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/animacion-broquer.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/app-shell.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/appstore-badge.webp",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/archivos-seguros.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/auth-hero.jpg",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/aviso-privacidad.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/avm-runtime.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/avm.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/bandeja.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/bk-api.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/blog.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/bolsa.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brand/cecil-assistant.webp",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brand/cecil-icon.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brand/cecil-icon.svg",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brand/cecil-wordmark.webp",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brand/comision-facil-monogram-original.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brand/comision-facil-monogram.svg",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brand/comision-facil-wordmark-original.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brand/comision-facil-wordmark.svg",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brand/mas-cierres-monogram-original.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brand/mas-cierres-wordmark-original.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brand/staging-brand.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brokr-theme-v2.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/brokr-theme.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/broq-icon.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/buscador.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/buzon.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/buzon.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/buzon.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/capacitor-bridge.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/categorias.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/clientes-ficha.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/clientes.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/contactos-ficha.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/contactos.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/contratos-paises.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/contratos.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/correo.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/crm-ajustes-buzon.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/crm-ajustes.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/crm-ajustes.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/crm-plus.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/crm-plus.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/cumplimiento-aviso.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/cumplimiento-paises.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/cumplimiento.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/empresas.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/equipo.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/estadisticas-plus.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/estadisticas.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/expediente.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/facebook-ads.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/facebook-callback.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/favicon.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/favicon.svg",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ficha-comun.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ficha-manual.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ficha-requerimiento.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/filtro-fecha.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/finanzas-plus.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/finanzas.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/firmar.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/firmas.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/fonts/manrope-400.ttf",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/fonts/manrope-500.ttf",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/fonts/manrope-600.ttf",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/fonts/manrope-700.ttf",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/fonts/manrope-800.ttf",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/guia-agente.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/historial-adjuntos.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/home-design.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/icon-192.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/icon-512.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/image-cleaner.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/impuestos-reglas.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/impuestos.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/index.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/inmuebles-catalogo.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/isotipo-black.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/isotipo-broquer.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/isotipo.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/isr.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/landing.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/leads.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/legal-paises.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/legal.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/login.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/logo-broquer-blanco.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/logo-broquer.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/logo-inmobiliaria-navarro.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/logotipo-black.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/logotipo-brokr.svg",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/logotipo-broquer.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/logotipo-white.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/logotipo.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/manifest.json",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/meta-tech-provider-white.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/meta-tech-provider.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/mi-sitio-web.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/mi-sitio-web.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/mi-sitio.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/miniaturas-nuevas.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/mobile-inputs.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/paises.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/propiedades-cierre.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/propiedades-editor.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/propiedades-ficha.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/propiedades-lightbox.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/propiedades-plus.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/propiedades-plus.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/propiedades.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/quotes.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/registro.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/release.json",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/reset-password.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/robin.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/sidebar-interactions.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/sidebar-unification.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/sitio-engine.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/sitio.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/sitio.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/soporte-form.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/soporte.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/styles/app-layout.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/styles/mobile-inputs.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/styles/module-states.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/supervision.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/sw.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/tarea-nueva.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/tareas-calendario.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/tareas-calendario.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/tareas.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/actions.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/actions.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/application.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/components.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/components.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/date-picker.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/date-picker.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/fields.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/iconography.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/overlays.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/overlays.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/refinement.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui/tokens.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/ui-components.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/unirse.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/vendor/react-18.2.0/react-dom.production.min.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/vendor/react-18.2.0/react.production.min.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/verificador.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/verificar-firma.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/video.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/whatsapp-callback.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/whatsapp-chatgpt.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cecil/whatsapp.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "clientes-ficha.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "clientes.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "contactos-ficha.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "contactos.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "contratos-paises.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "contratos.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "correo.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "crm-ajustes-buzon.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "crm-ajustes.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "crm-ajustes.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "crm-plus.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "crm-plus.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cumplimiento-aviso.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cumplimiento-paises.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "cumplimiento.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "empresas.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "equipo.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "estadisticas-plus.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "estadisticas.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "expediente.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "facebook-ads.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "facebook-callback.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "favicon.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "favicon.svg",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "ficha-comun.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "ficha-manual.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "ficha-requerimiento.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "filtro-fecha.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "finanzas-plus.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "finanzas.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "firmar.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "firmas.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "guia-agente.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "historial-adjuntos.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "icon-192.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "icon-512.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "image-cleaner.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "impuestos-reglas.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "impuestos.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "index.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "inmuebles-catalogo.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "isotipo-black.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "isotipo-broquer.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "isotipo.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "isr.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "landing.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "leads.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "legal-paises.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "legal.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "login.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "logo-broquer-blanco.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "logo-broquer.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "logo-inmobiliaria-navarro.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "logotipo-black.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "logotipo-brokr.svg",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "logotipo-broquer.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "logotipo-white.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "logotipo.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "manifest.json",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "meta-tech-provider-white.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "meta-tech-provider.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "mi-sitio-web.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "mi-sitio-web.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "mi-sitio.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "miniaturas-nuevas.png",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "paises.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "preview-release.json",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "propiedades-cierre.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "propiedades-editor.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "propiedades-ficha.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "propiedades-lightbox.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "propiedades-plus.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "propiedades-plus.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "propiedades.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "quotes.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "registro.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "reset-password.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "robin.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "sidebar-interactions.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "sidebar-unification.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "sitio-engine.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "sitio.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "sitio.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "soporte-form.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "soporte.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "staging-network-audit.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "staging-pilot.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "supervision.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "sw.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "tarea-nueva.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "tareas-calendario.css",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "tareas-calendario.js",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "tareas.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "unirse.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "verificador.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "verificar-firma.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "video.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "whatsapp-callback.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "whatsapp-chatgpt.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    },
+    {
+      "path": "whatsapp.html",
+      "status": 200,
+      "hash_matches": true,
+      "no_production_reference": true
+    }
+  ]
+}

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/svg+xml" href="/cecil/brand/cecil-icon.svg"/>
+<link rel="apple-touch-icon" href="/cecil/brand/cecil-icon.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Completa tu perfil · Cecil</title>
+<meta name="theme-color" content="#FFFFFF"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); pantalla clara Canon -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 15% 10%, var(--sky-canvas), transparent 32%),
+    var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.reg-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-7) var(--sp-4);
+}
+.reg-shell {
+  width: min(100%, var(--form-max));
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+}
+.reg-brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100%;
+  padding: var(--sp-8);
+  overflow: hidden;
+  background: linear-gradient(145deg, var(--sky-navy-deep), var(--sky-navy) 62%, var(--sky-navy-mid));
+  color: var(--paper);
+}
+.reg-brand::after {
+  content: "";
+  position: absolute;
+  width: 17rem;
+  height: 17rem;
+  right: -8rem;
+  bottom: -8rem;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-on-navy, rgba(255,255,255,.16));
+  background: rgba(255,255,255,.04);
+}
+.reg-brand__logo {
+  width: 9.5rem;
+  height: auto;
+  position: relative;
+  z-index: 1;
+}
+.reg-brand__copy {
+  position: relative;
+  z-index: 1;
+  max-width: 22rem;
+}
+.reg-brand__eyebrow {
+  margin-bottom: var(--sp-3);
+  color: var(--sky-blue-lift);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.reg-brand h1 {
+  margin: 0;
+  color: var(--paper);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  letter-spacing: -.03em;
+}
+.reg-brand p {
+  margin: var(--sp-4) 0 0;
+  color: rgba(255,255,255,.76);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.reg-form {
+  padding: var(--sp-8);
+}
+.reg-form__head { margin-bottom: var(--sp-6); }
+.reg-form__head h2 {
+  margin: 0;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  letter-spacing: -.025em;
+}
+.reg-form__head p {
+  margin: var(--sp-2) 0 0;
+  color: var(--mute);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+.reg-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+.reg-field { margin-bottom: var(--sp-4); }
+.reg-field label {
+  display: block;
+  margin-bottom: var(--sp-2);
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+.reg-input {
+  width: 100%;
+  height: var(--h);
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: var(--shell);
+  color: var(--ink);
+  font: inherit;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.reg-input::placeholder { color: var(--mute-2); }
+.reg-input:focus {
+  outline: none;
+  border-color: var(--sky-blue);
+  background: var(--paper);
+  box-shadow: var(--focus);
+}
+.reg-hint {
+  margin-top: var(--sp-2);
+  color: var(--mute);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-xs);
+}
+.reg-legal {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin: var(--sp-2) 0 var(--sp-5);
+  cursor: pointer;
+}
+.reg-legal input {
+  width: 1.15rem;
+  margin-top: 2px;
+  flex: 0 0 auto;
+  accent-color: var(--sky-blue);
+}
+.reg-legal span {
+  color: var(--mute);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-xs);
+}
+.reg-legal a {
+  color: var(--sky-blue);
+  font-weight: 700;
+  text-underline-offset: 2px;
+}
+.reg-submit {
+  width: 100%;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.reg-submit:active:not(:disabled) { transform: translateY(1px); }
+.reg-submit:disabled { opacity: .42; cursor: not-allowed; }
+.reg-msg {
+  display: none;
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+.reg-msg.err {
+  display: block;
+  border-color: var(--danger-soft);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.reg-msg.ok {
+  display: block;
+  border-color: var(--success-soft);
+  background: var(--success-soft);
+  color: var(--success);
+}
+.reg-spin {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: var(--paper);
+  border-radius: var(--r-pill);
+  animation: reg-spin .7s linear infinite;
+}
+@keyframes reg-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 760px) {
+  .reg-wrap { padding: 0; place-items: stretch; }
+  .reg-shell {
+    width: 100%;
+    min-height: 100vh;
+    grid-template-columns: minmax(0, 1fr);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .reg-brand {
+    min-height: auto;
+    padding: var(--sp-6) var(--sp-5);
+  }
+  .reg-brand__logo { width: 8rem; }
+  .reg-brand__copy { margin-top: var(--sp-8); }
+  .reg-brand h1 { font-size: var(--fs-h2); line-height: var(--lh-h2); }
+  .reg-form { padding: var(--sp-6) var(--sp-5) var(--sp-8); }
+}
+@media (max-width: 520px) {
+  .reg-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation-duration: .01ms !important; }
+}
+</style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
+<link rel="stylesheet" href="/cecil/brand/staging-brand.css"><link rel="stylesheet" href="/cecil/ui/refinement.css"><script defer src="/cecil/ui/iconography.js"></script>
+<link rel="stylesheet" href="/staging-mobile-fields.css"/>
+<script src="/staging-network-audit.js" defer></script>
+</head>
+<body data-design-public="registro">
+<div class="reg-wrap">
+  <main class="reg-shell">
+    <section class="reg-brand" aria-label="Cecil">
+      <span class="bk-design-brand reg-brand__logo" role="img" aria-label="Cecil"><picture class="cf-brand-picture"><source media="(max-width:720px)" srcset="/cecil/brand/cecil-wordmark.webp"><img src="/cecil/brand/cecil-wordmark.webp" alt="Cecil"></picture></span>
+      <div class="reg-brand__copy">
+        <div class="reg-brand__eyebrow">Tu espacio de trabajo</div>
+        <h1>Todo listo para empezar.</h1>
+        <p>Completa tus datos para personalizar Cecil y entrar a tu operación inmobiliaria.</p>
+      </div>
+    </section>
+
+    <section class="reg-form">
+      <header class="reg-form__head">
+        <h2>Completa tu perfil</h2>
+        <p>Solo necesitamos un par de datos antes de llevarte al inicio.</p>
+      </header>
+
+      <div class="reg-msg" id="msg"></div>
+
+      <div class="reg-grid">
+        <div class="reg-field">
+          <label for="r-nombre">Nombre(s)</label>
+          <input class="reg-input" type="text" id="r-nombre" placeholder="Ej. Salvador" autocomplete="given-name"/>
+        </div>
+        <div class="reg-field">
+          <label for="r-apellidos">Apellidos</label>
+          <input class="reg-input" type="text" id="r-apellidos" placeholder="Ej. Bolaños" autocomplete="family-name"/>
+        </div>
+      </div>
+
+      <div class="reg-field" id="r-pais-campo">
+        <label for="r-pais">País donde trabajas</label>
+        <div class="reg-hint">Con esto ajustamos moneda, impuestos y documentos. No se puede cambiar después.</div>
+      </div>
+
+      <div class="reg-field">
+        <label for="r-telefono">Teléfono</label>
+        <input class="reg-input" type="tel" id="r-telefono" placeholder="Ej. 443 123 4567" autocomplete="tel"/>
+        <div class="reg-hint">Lo usaremos solo para soporte técnico.</div>
+      </div>
+
+      <label class="reg-legal">
+        <input type="checkbox" id="legal-check" onchange="toggleSaveBtn()"/>
+        <span>He leído y acepto los <a href="legal.html" target="_blank">Términos y condiciones</a>, el <a href="legal.html" target="_blank">Contrato de suscripción</a> y el <a href="legal.html" target="_blank">Aviso de privacidad</a> de Cecil.</span>
+      </label>
+
+      <button class="reg-submit" id="btn-save" onclick="guardar()" disabled>Continuar a Cecil</button>
+    </section>
+  </main>
+</div>
+
+<script src="paises.js"></script>
+<script>
+(function(){
+  var campo = document.getElementById('r-pais-campo');
+  if (!campo || !window.bkPaisSelector) return;
+  var t = document.getElementById('r-telefono');
+  var fijarLada = window.bkTelefonoLada ? bkTelefonoLada(t, bkPais()) : function(){};
+  function telEjemplo(c){ if (t) t.placeholder = 'Ej. ' + bkPaisCfg(c).telEjemplo; fijarLada(c); }
+  var sel = bkPaisSelector({ className: 'reg-input', onCambio: telEjemplo });
+  sel.id = 'r-pais';
+  campo.insertBefore(sel, campo.querySelector('.reg-hint'));
+  telEjemplo(sel.value);
+})();
+</script>
+<script>
+const SB_URL = 'https://tymhlvawnqadqgwnpruk.supabase.co';
+const SB_KEY = 'sb_publishable_oXqQTLbZh012xaO_6IRUcA_e6-C0fwi';
+
+function showMsg(t,type='err'){
+  const e = document.getElementById('msg');
+  e.textContent = t;
+  e.className = `reg-msg ${type}`;
+}
+
+async function guardar(){
+  const nombre    = document.getElementById('r-nombre').value.trim();
+  const apellidos = document.getElementById('r-apellidos').value.trim();
+  const telefono  = document.getElementById('r-telefono').value.trim();
+  const nombreCompleto = apellidos ? nombre + ' ' + apellidos : nombre;
+  if(!nombre){ showMsg('Ingresa tu nombre'); return; }
+  if(!apellidos){ showMsg('Ingresa tus apellidos'); return; }
+  if(!telefono){ showMsg('Ingresa tu teléfono'); document.getElementById('r-telefono').focus(); return; }
+
+  // Teléfono con lada de otro país: se pregunta antes de guardar.
+  const selPais = document.getElementById('r-pais');
+  if(selPais && window.bkTelefonoValido && !bkTelefonoValido(telefono, selPais.value)){
+    const cp = bkPaisCfg(selPais.value);
+    showMsg('El teléfono debe tener ' + cp.digitosTel + ' dígitos, o escríbelo con lada (ej. +' + cp.lada + ' …).');
+    document.getElementById('r-telefono').focus();
+    return;
+  }
+  if(selPais && window.bkPaisAvisoTelefono){
+    const elegido = await bkPaisAvisoTelefono(telefono, selPais.value);
+    if(!elegido){ document.getElementById('r-telefono').focus(); return; }
+    if(elegido !== selPais.value){
+      selPais.value = elegido;
+      selPais.dispatchEvent(new Event('change'));
+    }
+  }
+  // Se guarda con lada (+57…) para que el número diga de qué país es.
+  const tel = selPais && window.bkTelefonoE164 ? bkTelefonoE164(telefono, selPais.value) : telefono;
+
+  const token = sessionStorage.getItem('sb_token') || localStorage.getItem('sb_token');
+  const userRaw = sessionStorage.getItem('sb_user') || localStorage.getItem('sb_user') || '{}';
+  let user = {};
+  try { user = JSON.parse(userRaw) || {}; } catch(_) {}
+  if(!token || !user.id){ window.location.href = 'login.html'; return; }
+
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="reg-spin"></span>';
+
+  // El trigger SQL ya creó la fila en `usuarios`. Aquí solo actualizamos
+  // nombre + telefono. El rol queda en 'agente' por defecto.
+  // (Si necesitas convertir a alguien en admin/equipo, hazlo desde el
+  //  panel admin — NUNCA desde aquí.)
+  const r = await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}`, {
+    method: 'PATCH',
+    headers:{
+      'apikey': SB_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({
+      nombre: nombreCompleto,
+      telefono: tel
+    })
+  });
+
+  if(!r.ok){
+    // Fallback (raro): si la fila no existe, hacemos upsert
+    const r2 = await fetch(`${SB_URL}/rest/v1/usuarios`, {
+      method: 'POST',
+      headers:{
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({
+        id: user.id,
+        email: user.email,
+        nombre: nombreCompleto,
+        telefono: tel
+      })
+    });
+    if(!r2.ok){
+      const errText = await r2.text();
+      console.error('Supabase error:', r2.status, errText);
+      showMsg('No pudimos guardar tu perfil. Intenta de nuevo.');
+      btn.disabled = false;
+      btn.textContent = 'Continuar a Cecil';
+      return;
+    }
+  }
+
+  // País de la cuenta. Va aparte: si ya tenía uno, la base lo conserva.
+  try {
+    await fetch(`${SB_URL}/rest/v1/usuarios?id=eq.${user.id}`, {
+      method: 'PATCH',
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ pais: (function () {
+        var s = document.getElementById('r-pais');
+        if (s && window.bkPaisGuardar) bkPaisGuardar(s.value);
+        return s ? s.value : 'MX';
+      })() })
+    });
+  } catch (_) {}
+
+  showMsg('Perfil guardado.', 'ok');
+
+  // Promo con registro + pago inmediato (ej. AMPI/PIMAC): si venía pendiente,
+  // en vez de mandar a index.html disparamos el checkout real de Cecil y
+  // llevamos al cliente directo a la pantalla de pago de Stripe.
+  let promoPendiente = '';
+  try { promoPendiente = localStorage.getItem('promo_pendiente') || ''; } catch (_) {}
+  if (promoPendiente === 'ampi') {
+    try { localStorage.removeItem('promo_pendiente'); } catch (_) {}
+    try {
+      const rc = await fetch('https://brokr-main-staging.up.railway.app/subscription/checkout', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan_id: 'ampi',
+          promo_code: 'ampi2026',
+          success_url: window.location.origin + '/index.html?sub=ampi_ok',
+          cancel_url: window.location.origin + '/index.html'
+        })
+      });
+      const dc = await rc.json().catch(function () { return {}; });
+      if (rc.ok && dc.checkout_url) {
+        window.location.href = dc.checkout_url;
+        return;
+      }
+    } catch (_) {}
+  }
+
+  setTimeout(() => { window.location.href = 'index.html'; }, 700);
+}
+
+function toggleSaveBtn(){
+  const checked = document.getElementById('legal-check')?.checked;
+  const btn = document.getElementById('btn-save');
+  if(btn) btn.disabled = !checked;
+}
+
+// Pre-llenar campos si vienen del signup
+(function(){
+  const savedNombre   = sessionStorage.getItem('reg_nombre') || '';
+  const savedTelefono = sessionStorage.getItem('reg_telefono') || '';
+  if(savedNombre){
+    const parts = savedNombre.trim().split(' ');
+    const apellidos = parts.length > 1 ? parts.slice(1).join(' ') : '';
+    const nombre = parts[0] || '';
+    const nEl = document.getElementById('r-nombre');
+    const aEl = document.getElementById('r-apellidos');
+    if(nEl) nEl.value = nombre;
+    if(aEl) aEl.value = apellidos;
+    sessionStorage.removeItem('reg_nombre');
+  }
+  if(savedTelefono){
+    const tEl = document.getElementById('r-telefono');
+    if(tEl) tEl.value = savedTelefono;
+    sessionStorage.removeItem('reg_telefono');
+  }
+})();
+
+// Redirect si no hay sesión
+if(!(sessionStorage.getItem('sb_token') || localStorage.getItem('sb_token'))){
+  window.location.href = 'login.html';
+}
+</script>
+</body>
+</html>
