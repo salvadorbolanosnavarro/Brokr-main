@@ -37,7 +37,7 @@ def build(output, *, staging=False):
         raise ValueError('Design does not include the production base.')
     # Root app changes beyond this pilot must be explicitly integrated first.
     for ref in [BASE_REF, DESIGN_REF]: git('rev-parse', '--verify', ref+'^{commit}')
-    allowed_changes={'app-shell.js','main.py','core/config.py','routers/cecil_ui.py','ui/cecil-rollout.js','scripts/build_cecil_canary.py','tests/test_cecil_ui.py','tests/check_cecil_rollout.cjs','CECIL_PILOT.md'}
+    allowed_changes={'app-shell.js','main.py','core/config.py','routers/cecil_ui.py','ui/cecil-rollout.js','scripts/build_cecil_canary.py','tests/test_cecil_ui.py','tests/check_cecil_rollout.cjs','CECIL_PILOT.md','tests/check_cecil_pilot_state.cjs','.github/workflows/quality.yml','tests/golden/http_contract_effective.json'}
     changed=set(git('diff','--name-only',BASE_REF,'HEAD').decode().splitlines())
     if not staging and changed - allowed_changes:
         raise ValueError('Production advanced: integrate it into the design snapshot and update the pinned base before building.')
@@ -69,6 +69,9 @@ def build(output, *, staging=False):
                         marker='    if (!profile) return; // redirected to login/landing'
                         if marker not in text:raise ValueError('Missing shell authentication hook')
                         text=text.replace(marker,marker+"\n    const rollout=document.createElement('script');rollout.src='/ui/cecil-rollout.js';rollout.onload=()=>window.bkCecilRollout?.({api:API_BASE,token:getToken(),userId:profile.user.id});document.head.appendChild(rollout);",1)
+                    if relative==Path('propiedades.html'):
+                        # Approved modal footer is outside the form in this design.
+                        text=text.replace("const btn = form.querySelector('.pf-save-btn');", "const btn = e.submitter || form.querySelector('.pf-save-btn') || document.querySelector('.pf-save-btn[form=\"prop-form\"]');")
                     # Keep assets and relative navigation within the alternate build.
                     text=re.sub(r'(["\'])/(brand|ui|styles|fonts)/',r'\1/cecil/\2/',text)
                     text=text.replace("rollout.src='/cecil/ui/cecil-rollout.js'", "rollout.src='/ui/cecil-rollout.js'")

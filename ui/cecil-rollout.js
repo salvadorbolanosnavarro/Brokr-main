@@ -29,6 +29,18 @@
     if (!inside && preference(userId)) {
       location.replace(prefix + location.pathname.replace(/^\//, '') + location.search + location.hash); return;
     }
+    // Revoke the visual pilot while open; never clear the business session.
+    let checking=false;
+    async function refreshPilot(){
+      if(checking||document.hidden)return;checking=true;
+      try{
+        const r=await fetch(new URL(api,location.origin).href.replace(/\/$/,'')+'/ui/cecil',{headers:{Authorization:'Bearer '+token},cache:'no-store',signal:AbortSignal.timeout(6000)});
+        const d=r.ok?await r.json():null;
+        if(!d||d.enabled!==true||d.user_id!==userId){preference(userId,false);if(inside)leave(userId);else document.getElementById('cecil-rollout-controls')?.remove();}
+      }catch(_){if(inside)leave(userId);}finally{checking=false;}
+    }
+    setInterval(refreshPilot,15000);
+    document.addEventListener('visibilitychange',refreshPilot);
     const bar = document.createElement('aside'); bar.id = 'cecil-rollout-controls';
     bar.setAttribute('aria-label','Diseño de la aplicación');
     Object.assign(bar.style,{position:'fixed',bottom:'max(16px, env(safe-area-inset-bottom))',left:'16px',zIndex:'2147483000',maxWidth:'calc(100vw - 32px)',background:'#fff',color:'#191c1f',border:'1px solid #d5d9dd',borderRadius:'12px',padding:'12px',boxShadow:'0 4px 20px #0002',font:'14px/1.5 Arial,sans-serif'});

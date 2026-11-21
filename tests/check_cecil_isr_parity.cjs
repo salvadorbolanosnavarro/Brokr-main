@@ -2,7 +2,7 @@
 // Fixed synthetic INPC/UDIS fixtures make both engines use identical inputs.
 const fs=require('node:fs'),vm=require('node:vm'),cp=require('node:child_process'),assert=require('node:assert/strict');
 const baseline=cp.execFileSync('git',['show','dac7118c952deeda4f6b9160c05f19b0a42ca8a0:isr.html'],{encoding:'utf8'});
-const redesigned=fs.readFileSync('preview-public/isr.html','utf8');
+const redesigned=fs.readFileSync('preview-public/cecil/isr.html','utf8');
 const baseFields={'f-tipo':'terreno','f-venta':'2800000','f-compra':'1350000','f-mes-c':'11','f-anio-c':'2023','f-fecha-v':'2026-10-02','f-mej':'0','f-com':'112000','f-esc':'20000','f-forma-adq':'compra','f-copro':'no','f-pct-terreno':'20','f-pct-const':'80','f-pri':'si','f-exp':'no'};
 const cases=[['terreno',{}],['casa exenta',{'f-tipo':'casa','f-venta':'3850000','f-compra':'387352','f-mes-c':'12','f-anio-c':'2009'}],['casa sin exencion',{'f-tipo':'casa','f-venta':'15000000','f-pri':'no'}],['comercial',{'f-tipo':'comercial','f-venta':'12000000','f-compra':'4000000'}],['perdida',{'f-venta':'1000000','f-compra':'3000000'}],['copropiedad',{'f-tipo':'casa','f-venta':'15000000','f-copro':'si','f-pct-copro':'50','f-pri':'no'}]];
 async function run(html,fields){

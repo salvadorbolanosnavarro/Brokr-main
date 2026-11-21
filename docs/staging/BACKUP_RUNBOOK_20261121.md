@@ -29,3 +29,23 @@ No se accedió a producción. El proyecto staging confirmado es `tymhlvawnqadqgw
 6. Solo si hubo daño de datos, detener escrituras según el plan aprobado, documentar el punto de recuperación, validar respaldo, restaurar con el procedimiento ensayado y conciliar operaciones posteriores. El operador ejecuta; Salvador autoriza el impacto y la reapertura.
 
 Fuentes oficiales consultadas: https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore y https://supabase.com/docs/guides/platform/migrating-within-supabase/dashboard-restore . Documentan configuración adicional y copia separada de Storage. Este documento identifica límites de acceso y no afirma una restauración inexistente.
+
+
+## Comprobación adicional del Dashboard (staging solamente)
+
+Se abrió el proyecto **broquer-redesign-staging**, ref tymhlvawnqadqgwnpruk, Database → Backups → Scheduled backups. Hay copias físicas diarias COMPLETED. La más reciente visible es21/11/2026 07:05:17UTC (01:05:17 Ciudad de México). A3 se creó a las07:14:15UTC: restaurar esa copia encima del staging activo eliminaría A3 y los controles recién preparados. No se ejecutó esa restauración.
+
+Point in time muestra que es un add-on aún no activado. No se contrató. Restore to new project ofrece copiar schema, datos, índices, roles/permisos y usuarios; requiere reconfigurar Storage, Auth/API keys, Edge Functions, extensiones y réplicas. Se dejó sin confirmar y no se creó proyecto. El conector get_cost para un proyecto adicional de la organización verificada devuelve 10USD/mes (compute por horas, según la tarifa oficial) y recurrence monthly; se necesita aprobación expresa del coste y verificar el importe/moneda final del panel antes de crear un destino facturable. No se asumió autorización de gasto por el OK general de staging.
+
+Alternativa sin servicio cloud adicional: conexión privada de solo respaldo y un PostgreSQL/Supabase desechable compatible del operador; no existe aún en este entorno. No se pedirán contraseñas en el chat. El ensayo y su duración siguen pendientes; la existencia de copias COMPLETED no demuestra una restauración correcta.
+
+### Ruta por panel para el operador, cuando esté autorizado
+
+1. Abrir Supabase → organización Broquer → proyecto correcto por ref → Database → Backups.
+2. Scheduled backups: comprobar fecha, estado COMPLETED y que incluya los datos objetivo. Para ensayo, ir a Restore to new project y elegir la copia; el staging original permanece intacto.
+3. Revisar qué se copia y qué se reconfigura. Antes de Continue/confirmación final, revisar coste, nombre/ref, región y destinatario. No seleccionar producción ni activar PITR como parte de este ensayo.
+4. Registrar hora de inicio en UTC y hora de finalización cuando el nuevo proyecto esté saludable. Usar esas marcas para medir restauración administrada; no equivale al tiempo de hacer el respaldo, que fue automático y no se midió.
+5. Verificar los objetos, permisos, datos y acceso del clon; copiar y comprobar Storage por separado. Solo entonces calificar el ensayo como OK.
+6. En producción se haría el mismo procedimiento después de autorización explícita y respaldo previo verificable, con el UUID/refs de producción comprobados por el operador. No usar las fechas ni tiempos de staging como garantía de producción.
+
+Tarifa oficial comprobada el21/11/2026: https://supabase.com/pricing — Micro10USD/mes, facturación de compute por horas. La cotización del conector no autoriza contratarlo ni incluye posibles consumos extra.

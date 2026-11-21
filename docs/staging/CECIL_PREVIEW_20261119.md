@@ -1,3 +1,5 @@
+> Estado posterior y límites actuales: ver CECIL_CLOSURE_20261121.md. El preview ahora ensaya Broquer en raíz y Cecil en /cecil/ con flag exclusivo A3; la auditoría vigente es304 archivos HTTP. Este informe conserva las pruebas anteriores del19/11.
+
 # Cecil staging: publicación y cobertura — 19 noviembre 2026
 
 Preview real: https://work-cecil-staging-preview-2.broquer-staging.pages.dev
