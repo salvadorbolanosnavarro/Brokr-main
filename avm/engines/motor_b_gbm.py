@@ -54,7 +54,9 @@ class MotorB:
             # cuantílico: el valor central (Huber) las respeta; los cuantiles
             # solo dan la forma del rango.
             p["monotone_constraints"] = _monotone_vector()
-            p["monotone_constraints_method"] = "advanced"
+            # "advanced" deja violaciones minúsculas (probado); "intermediate"
+            # cumple la restricción exacta.
+            p["monotone_constraints_method"] = "intermediate"
         if objetivo == "huber":
             p["alpha"] = S.B_HUBER_ALPHA
         if objetivo == "quantile":

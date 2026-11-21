@@ -30,8 +30,8 @@ def metricas(estimado, real, bajo=None, alto=None, emitido=None) -> dict:
     med = float(np.median(r))
     out.update({
         "mdape": round(100 * float(np.median(np.abs(r - 1))), 2),
-        "pe10": round(100 * float(np.mean(np.abs(r - 1) <= 0.10)), 1),
-        "pe20": round(100 * float(np.mean(np.abs(r - 1) <= 0.20)), 1),
+        "pe10": round(100 * float(np.mean(np.abs(r - 1) <= 0.10 + 1e-9)), 1),
+        "pe20": round(100 * float(np.mean(np.abs(r - 1) <= 0.20 + 1e-9)), 1),
         "sesgo": round(med, 3),
         "cod": round(100 * float(np.mean(np.abs(r - med))) / med, 2),
         "prd": round(float(np.mean(r)) / (float(est[ok].sum()) / float(rea[ok].sum())), 3),

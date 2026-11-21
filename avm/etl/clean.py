@@ -23,7 +23,7 @@ PRECIO_MIN_VENTA = {"casa": 250_000, "depto": 250_000, "terreno": 50_000, "local
 M2_RANGO = {"casa": (25, 3000), "depto": (20, 1500), "local": (8, 5000), "terreno": (40, 200_000)}
 PM2_RANGO = {"casa": (2_000, 200_000), "depto": (4_000, 250_000), "local": (2_000, 300_000), "terreno": (80, 80_000)}
 RE_PREVENTA = re.compile(r"\bpre[\s-]?venta\b|\bentrega en\b|\ben construcci[oó]n\b", re.I)
-RE_RENTA = re.compile(r"\b(renta|arriendo|alquiler)\b", re.I)
+RE_RENTA = re.compile(r"\b(?:renta|arriendo|alquiler)\b", re.I)
 MAD_K = 3.0
 
 

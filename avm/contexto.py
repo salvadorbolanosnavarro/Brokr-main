@@ -10,6 +10,8 @@ anuncios y sujetos.
 """
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from sklearn.neighbors import BallTree
@@ -77,7 +79,9 @@ class Contexto:
             if faltan:
                 _, vec = self._arbol_ref.query(np.radians(pts[ok]), k=min(5, len(self.ref)))
                 for c in faltan:
-                    med = np.nanmedian(self.ref[c].to_numpy(float)[vec], axis=1)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)   # columna toda vacía → NaN
+                        med = np.nanmedian(self.ref[c].to_numpy(float)[vec], axis=1)
                     col = out.columns.get_loc(c)
                     actual = out.iloc[np.flatnonzero(ok), col].to_numpy(float)
                     out.iloc[np.flatnonzero(ok), col] = np.where(np.isnan(actual), med, actual)
