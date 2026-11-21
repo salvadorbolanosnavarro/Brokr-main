@@ -31,14 +31,14 @@ assert ref not in ' '.join(c[dst].values()),'Never restore over live staging'
 PY
 mkdir -p "$artifact_dir"
 started=$(date +%s)
-pg_dump "service=$source_service" --format=custom --no-owner --no-acl --file "$artifact_dir/database.dump"
+pg_dump "service=$source_service" --format=custom --file "$artifact_dir/database.dump"
 pg_dumpall --database="service=$source_service" --roles-only --no-role-passwords > "$artifact_dir/roles.sql"
 backup_finished=$(date +%s)
 pg_restore --list "$artifact_dir/database.dump" > "$artifact_dir/contents.txt"
 # A compatible, isolated Supabase/Postgres destination is a prerequisite. Roles,
 # required extensions, auth/storage schemas and service settings must be prepared.
 # Fail on first restore error; never clean/drop an existing database implicitly.
-pg_restore --dbname="service=$target_service" --no-owner --no-acl --exit-on-error --single-transaction "$artifact_dir/database.dump"
+pg_restore --dbname="service=$target_service" --exit-on-error --single-transaction "$artifact_dir/database.dump"
 restore_finished=$(date +%s)
 python3 - "$artifact_dir" "$started" "$backup_finished" "$restore_finished" <<'PY'
 import hashlib,json,sys

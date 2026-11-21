@@ -6,7 +6,7 @@ No se accedió a producción. El proyecto staging confirmado es `tymhlvawnqadqgw
 
 - Operador: administrador de la base designado por Salvador (o el agente, cuando se disponga de la conexión privada y destino de ensayo autorizados). Salvador aprueba cualquier intervención futura de producción. No se requieren llaves en el chat.
 - Herramienta de respaldo lógico: PostgreSQL17 `pg_dump` formato custom y `pg_dumpall --roles-only --no-role-passwords`. Alternativa oficial administrada: Supabase CLI `supabase db dump` para roles, schema y datos, usando Docker. No intercambiar los dos formatos de restauración.
-- Restauración del custom dump: PostgreSQL17 `pg_restore` sobre un destino aislado compatible, `--exit-on-error`, transacción y sin `--clean` implícito. Roles/extensiones se preparan antes. No declarar éxito solo porque terminó el comando: verificar después contenido y comportamiento.
+- Restauración del custom dump: PostgreSQL17 `pg_restore` sobre un destino aislado compatible, `--exit-on-error`, transacción, preservando ownership/ACL con los roles preparados, y sin `--clean` implícito. Roles/extensiones se preparan antes. No declarar éxito solo porque terminó el comando: verificar después contenido y comportamiento.
 - Duración: se medirá en el ensayo, por separado para exportación, transferencia, restauración, Storage y validación. Nunca usar los26MB de staging como tiempo de recuperación de producción. RTO/RPO quedan pendientes de medición y de confirmar la política de backups/PITR del plan de producción.
 
 ## Ensayo exclusivamente de staging
