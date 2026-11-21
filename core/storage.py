@@ -22,7 +22,7 @@ _BUCKET = re.compile(r"^[A-Za-z0-9._-]+$")
 # sql-manual/20261106-archivos-privados.sql; ya se tratan como privados aquí.
 PRIVATE_BUCKETS = frozenset({
     "firmas", "pld-expedientes", "fin-comprobantes", "machotes-contrato",
-    "adjuntos-historial", "wa-media",
+    "adjuntos-historial", "wa-media", "avm-modelos",
 })
 CACHE_PRIVADO = "private, no-store, max-age=0"
 

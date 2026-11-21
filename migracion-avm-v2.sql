@@ -11,6 +11,7 @@
 --   avm_index           índice de precios por zona y trimestre (SHF, etc.)
 --   avm_predictions     bitácora de cada estimado, para auditar contra cierres
 --   avm_text_cache      caché de lo que el LLM extrajo de cada descripción
+--   bucket avm-modelos  (privado) para guardar las versiones del modelo
 --
 -- NO ROMPE NADA. Solo crea tablas nuevas (if not exists). Se puede correr dos
 -- veces. Todas con RLS activo y sin políticas: solo el backend (service key)
@@ -185,6 +186,16 @@ create table if not exists avm_text_cache (
   modelo           text,
   creado_en        timestamptz not null default now()
 );
+
+-- ── Bucket privado para los artefactos del modelo (joblib) ───────────────────
+do $$
+begin
+  if to_regclass('storage.buckets') is not null then
+    insert into storage.buckets (id, name, public)
+    values ('avm-modelos', 'avm-modelos', false)
+    on conflict (id) do nothing;
+  end if;
+end $$;
 
 -- ── RLS: solo service key ────────────────────────────────────────────────────
 alter table avm_listings       enable row level security;
