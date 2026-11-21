@@ -1,0 +1,7 @@
+{
+  "_nota": "Vida útil total en años por tipo y calidad. Editable.",
+  "casa":   {"economica": 50, "media": 60, "residencial": 70, "residencial_plus": 70},
+  "depto":  {"economica": 50, "media": 60, "residencial": 70, "residencial_plus": 70},
+  "local":  {"economica": 40, "media": 50, "residencial": 60, "residencial_plus": 60},
+  "terreno": {"economica": 1, "media": 1, "residencial": 1, "residencial_plus": 1}
+}

@@ -1,0 +1,8 @@
+{
+  "_nota": "Coeficiente de Heidecke por estado de conservación en escala Broquer (5 = excelente / nuevo, 1 = malo). Tomado de la tabla clásica de Heidecke: 5 ~ estado 1 (nuevo), 4 ~ estado 2 (normal), 3 ~ estado 2.5, 2 ~ estado 3.5 (reparaciones sencillas a importantes), 1 ~ estado 4 (reparaciones importantes).",
+  "5": 0.0,
+  "4": 0.025,
+  "3": 0.081,
+  "2": 0.332,
+  "1": 0.526
+}
