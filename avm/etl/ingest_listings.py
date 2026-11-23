@@ -134,14 +134,18 @@ def por_dar_de_baja(vivos: list[dict], ahora: datetime, dias: int = DIAS_BAJA) -
 
 
 async def _geocodificar_lote(anuncios: list[dict], ciudad: str, estado: str) -> None:
-    from ..service import geocodificar
+    from ..service import UbicacionAmplia, geocodificar
     cache: dict[str, tuple | None] = {}
     for a in anuncios:
         if a.get("lat") is not None:
             continue
         texto = f"{a.get('ubicacion') or ''}, {ciudad}, {estado}, México".strip(", ")
         if texto not in cache:
-            cache[texto] = await geocodificar(texto)
+            try:
+                cache[texto] = await geocodificar(texto)
+            except UbicacionAmplia:
+                cache[texto] = None      # solo la ciudad: no sirve como ubicación
+
         g = cache[texto]
         if g:
             a["lat"], a["lon"] = g[0], g[1]

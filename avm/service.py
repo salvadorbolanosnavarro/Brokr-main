@@ -59,25 +59,75 @@ class Servicio:
 servicio = Servicio()
 
 
+FINDPLACE_URL = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
+# Resultados que solo ubican una ciudad o estado: no sirven para valuar.
+TIPOS_DEMASIADO_AMPLIOS = {"locality", "administrative_area_level_1", "administrative_area_level_2",
+                           "administrative_area_level_3", "country", "postal_town", "colloquial_area"}
+TIPOS_EXACTOS = {"street_address", "premise", "subpremise"}
+
+
+class UbicacionAmplia(Exception):
+    """La dirección solo identifica una ciudad o estado."""
+
+
+def _precision(tipos: set[str], location_type: str = "") -> str:
+    if location_type == "ROOFTOP" or tipos & TIPOS_EXACTOS:
+        return "exacta"
+    return "aproximada"
+
+
+def _es_amplia(tipos: set[str]) -> bool:
+    return bool(tipos) and tipos <= (TIPOS_DEMASIADO_AMPLIOS | {"political"})
+
+
 async def geocodificar(direccion: str) -> tuple[float, float, str] | None:
-    """Dirección → (lat, lon, precisión). Usa la llave de Google que ya tiene
-    el módulo de colonias. ROOFTOP = exacta; lo demás, aproximada."""
+    """Dirección → (lat, lon, precisión) con la llave de Google del módulo de
+    colonias. Primero Geocoding; si esa API no está habilitada en la llave o no
+    encuentra nada, Places (la misma API que ya usa el buscador de colonias).
+    Lanza UbicacionAmplia si lo escrito es solo una ciudad."""
     if not settings.google_places_key or not direccion.strip():
         return None
-    try:
-        async with httpx.AsyncClient(timeout=8) as client:
-            r = await client.get(GEOCODE_URL, params={"address": direccion, "region": "mx", "language": "es",
+    texto = direccion.strip()
+    if "mex" not in texto.lower():
+        texto += ", México"
+    amplia = False
+    async with httpx.AsyncClient(timeout=8) as client:
+        try:
+            r = await client.get(GEOCODE_URL, params={"address": texto, "region": "mx", "language": "es",
                                                       "key": settings.google_places_key})
-        data = r.json()
-        if data.get("status") != "OK" or not data.get("results"):
-            return None
-        res = data["results"][0]
-        loc = res["geometry"]["location"]
-        precision = "exacta" if res["geometry"].get("location_type") == "ROOFTOP" else "aproximada"
-        return float(loc["lat"]), float(loc["lng"]), precision
-    except Exception as exc:      # pragma: no cover - red
-        log.info("Geocodificación falló: %s", exc)
-        return None
+            data = r.json()
+            if data.get("status") == "OK" and data.get("results"):
+                res = data["results"][0]
+                tipos = set(res.get("types") or [])
+                if _es_amplia(tipos):
+                    amplia = True
+                else:
+                    loc = res["geometry"]["location"]
+                    return float(loc["lat"]), float(loc["lng"]), _precision(tipos, res["geometry"].get("location_type", ""))
+            else:
+                log.info("Geocoding sin resultado (%s); se intenta Places", data.get("status"))
+        except Exception as exc:      # pragma: no cover - red
+            log.info("Geocoding falló: %s", exc)
+        try:
+            r = await client.get(FINDPLACE_URL, params={"input": texto, "inputtype": "textquery", "language": "es",
+                                                        "fields": "geometry,types",
+                                                        "key": settings.google_places_key})
+            data = r.json()
+            cands = data.get("candidates") or []
+            if data.get("status") == "OK" and cands:
+                tipos = set(cands[0].get("types") or [])
+                if _es_amplia(tipos):
+                    amplia = True
+                else:
+                    loc = cands[0]["geometry"]["location"]
+                    return float(loc["lat"]), float(loc["lng"]), _precision(tipos)
+            else:
+                log.info("Places sin resultado (%s)", data.get("status"))
+        except Exception as exc:      # pragma: no cover - red
+            log.info("Places falló: %s", exc)
+    if amplia:
+        raise UbicacionAmplia(direccion)
+    return None
 
 
 def _num(v: Any):
