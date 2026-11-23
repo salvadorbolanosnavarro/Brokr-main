@@ -1,5 +1,5 @@
 {
-  "count": 357,
+  "count": 358,
   "operations": [
     {
       "body": false,
@@ -3363,6 +3363,15 @@
       "responses": [
         "200",
         "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/ui/cecil",
+      "responses": [
+        "200"
       ]
     },
     {
