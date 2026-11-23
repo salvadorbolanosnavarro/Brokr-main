@@ -1,5 +1,5 @@
 {
-  "count": 358,
+  "count": 361,
   "operations": [
     {
       "body": false,
@@ -478,6 +478,35 @@
         "path:token!"
       ],
       "path": "/avm-pdf/{token}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/avm/v2/cierre",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/avm/v2/estado",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/avm/v2/estimar",
       "responses": [
         "200",
         "422"

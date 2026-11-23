@@ -495,6 +495,14 @@ app.include_router(buscador_propiedades_router)
 from routers.avm_nearby import router as avm_nearby_router
 app.include_router(avm_nearby_router)
 
+# AVM Broquer v2 (paquete avm/). Import defensivo: si faltan lightgbm u otra
+# dependencia del modelo, el resto del backend sigue vivo.
+try:
+    from routers.avm_v2 import router as avm_v2_router
+    app.include_router(avm_v2_router)
+except Exception as _e:
+    print(f"[avm-v2] No se pudo montar el router: {_e}")
+
 # Limpieza y edición de imágenes inmobiliarias.
 from routers.image_cleaner import router as image_cleaner_router
 app.include_router(image_cleaner_router)

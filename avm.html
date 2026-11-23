@@ -350,6 +350,37 @@
   max-width: var(--form-max);
   margin: 0 auto;
 }
+    /* ── AVM Broquer v2 (solo con AVM_V2=true en staging; ver avm-v2.js) ── */
+    .avm2-raiz { padding-bottom: 0; }
+    .avm2-nota { font-size: var(--fs-xs); color: var(--mute); margin: -6px 0 12px; line-height: 1.45; }
+    .avm2-row .field { min-width: 0; }
+    /* 16 px en campos: iOS no hace zoom al enfocar. */
+    .avm2-card .field input, .avm2-card .field select { font-size: var(--fs-body) !important; }
+    .avm2-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 14px; }
+    .avm2-chip { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--line);
+      border-radius: var(--r-pill); background: var(--paper-2); font-size: var(--fs-xs); color: var(--ink); cursor: pointer; }
+    .avm2-chip input { width: 16px; height: 16px; accent-color: var(--sky-blue); }
+    .avm2-oculto { display: none; }
+    .avm2-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .avm2-valor { font-size: var(--fs-h2); font-weight: 800; color: var(--ink); letter-spacing: -0.01em; }
+    .avm2-barra { position: relative; height: 10px; border-radius: var(--r-pill); background: var(--forest-soft); border: 1px solid var(--line); }
+    .avm2-marca { position: absolute; top: -5px; width: 4px; height: 18px; margin-left: -2px; border-radius: var(--r-pill); background: var(--sky-blue); }
+    .avm2-extremos { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: var(--mute); margin: 6px 0 12px; }
+    .avm2-motor { display: grid; grid-template-columns: 1fr auto 48px; gap: 8px; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
+    .avm2-motor:last-of-type { border-bottom: none; }
+    .avm2-motor-n { color: var(--ink); }
+    .avm2-motor-v { font-weight: 700; color: var(--ink); }
+    .avm2-motor-p { text-align: right; color: var(--mute); font-size: var(--fs-xs); }
+    .avm2-motivo { font-size: var(--fs-xs); color: var(--mute); margin: -4px 0 6px; }
+    .avm2-lista { padding-left: 18px; font-size: var(--fs-sm); color: var(--ink); line-height: 1.5; }
+    .avm2-lista li { margin-bottom: 6px; }
+    .avm2-comp { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--line); text-decoration: none; }
+    .avm2-comp:last-child { border-bottom: none; }
+    .avm2-comp-p { font-weight: 700; color: var(--sky-blue); font-size: var(--fs-sm); }
+    .avm2-comp-d { font-size: var(--fs-xs); color: var(--mute); }
+    .avm2-pie { font-size: var(--fs-caption); color: var(--mute); text-align: center; margin: 4px 0 18px; }
+    @media (max-width: 420px) { .avm2-row { flex-wrap: wrap; } .avm2-row .field { flex: 1 1 40%; } }
+
 @media (max-width: 720px) {
   .avm-header { padding-left: 16px; padding-right: 16px; }
   .avm-tabs { padding: 0 16px; gap: var(--sp-4); }
@@ -460,6 +491,7 @@ input:focus, select:focus, textarea:focus {
 </head>
 <body data-app="avm">
 
+  <div id="avm-v2-raiz" class="avm-body avm2-raiz" hidden style="max-width:var(--page-max, 760px);margin:0 auto"></div>
   <div id="root" style="max-width:var(--page-max, 760px);margin:0 auto;padding:0 var(--pad-x, 36px)"></div>
   <script type="text/babel">
     const { useState, useMemo, useCallback, useRef, useEffect } = React;
@@ -1230,6 +1262,8 @@ input:focus, select:focus, textarea:focus {
     const root = ReactDOM.createRoot(document.getElementById("root"));
     root.render(<AVM />);
   </script>
+  <script src="bk-api.js" defer></script>
+  <script src="avm-v2.js" defer></script>
   <script src="app-shell.js" defer></script>
   <script src="avm-runtime.js" defer></script>
 </body>
