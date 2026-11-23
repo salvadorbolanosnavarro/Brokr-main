@@ -40,6 +40,16 @@
     return s;
   }
 
+  // La sugerencia puede ser un negocio ("Judo Chapultepec, 8 de Septiembre,
+  // Chapultepec Sur, Morelia, Mich., México"): la colonia es la parte que va
+  // justo antes de la ciudad, no el nombre del lugar.
+  function coloniaDe(c) {
+    var partes = String(c.display || '').split(',').map(function (x) { return x.trim(); });
+    var i = c.ciudad ? partes.indexOf(c.ciudad) : -1;
+    if (i >= 1) return partes[i - 1];
+    return null;
+  }
+
   function formulario(raiz) {
     var card = el('div', 'avm-card avm2-card');
     var cab = el('div', 'card-label', 'AVM Broquer v2 · prueba interna');
@@ -72,7 +82,7 @@
             var b = el('button', 'avm2-sug-op', c.display || c.nombre); b.type = 'button';
             b.addEventListener('click', function () {
               dir.value = c.display || c.nombre;
-              punto = { lat: c.latitud, lon: c.longitud, colonia: c.nombre };
+              punto = { lat: c.latitud, lon: c.longitud, colonia: coloniaDe(c) };
               sug.classList.add('avm2-oculto');
             });
             sug.appendChild(b);
@@ -177,7 +187,16 @@
         d.descuento_negociacion_pct + ' % de negociación típica de la zona.'));
     } else {
       cabeza.appendChild(sello); card.appendChild(cabeza);
-      card.appendChild(el('p', 'avm2-nota', 'La incertidumbre es demasiado alta para dar un valor. Se recomienda visitar el inmueble.'));
+      // Explicar en palabras por qué no hay valor y qué lo resolvería.
+      var vals = ['A', 'B', 'C'].map(function (k) { return d.motores[k]; })
+        .filter(function (m) { return m && m.calculado; }).map(function (m) { return m.valor; });
+      var txt = 'No damos un número porque la incertidumbre es demasiado alta';
+      if (vals.length >= 2) {
+        txt += ': los métodos no coinciden entre sí (van de ' + dinero(Math.min.apply(null, vals)) + ' a ' +
+          dinero(Math.max.apply(null, vals)) + ')';
+      }
+      txt += '. Esto se corrige con más anuncios y cierres reales en la zona; mientras tanto, conviene visitar el inmueble.';
+      card.appendChild(el('p', 'avm2-nota', txt));
     }
     salida.appendChild(card);
 
@@ -196,7 +215,7 @@
 
     if (d.explicacion && d.explicacion.length) {
       var ex = el('div', 'avm-card avm2-card');
-      ex.appendChild(el('div', 'card-label', 'Por qué este valor'));
+      ex.appendChild(el('div', 'card-label', d.emitido ? 'Por qué este valor' : 'Qué influye en este inmueble'));
       var ul = el('ul', 'avm2-lista');
       d.explicacion.forEach(function (t) { ul.appendChild(el('li', null, t)); });
       ex.appendChild(ul);

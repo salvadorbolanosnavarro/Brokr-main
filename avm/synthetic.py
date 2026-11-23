@@ -5,6 +5,11 @@ Sirve para dos cosas y para nada más:
 2. Ejercitar el pipeline completo (limpieza → dedupe → entrenamiento →
    validación → reporte) mientras no haya datos reales en avm_listings.
 
+Con geografia_real=True (la demo de staging), los anuncios se reparten sobre
+las AGEB reales de cada ciudad y el nivel de precios de cada zona sigue su NSE
+real del Censo 2020 (avm/config/demo_agebs.csv). Los precios siguen siendo
+inventados; solo la geografía es real.
+
 El valor "real" de cada inmueble se genera con el enfoque físico más una prima
 de ubicación, así que los tres motores tienen algo que aprender. Los precios de
 oferta llevan sobreprecio y ruido; los cierres, solo ruido pequeño. NUNCA se usa
@@ -68,8 +73,30 @@ def _indice_rows(rng) -> list[dict]:
     return rows
 
 
+def _agebs_reales(ciudad: str) -> pd.DataFrame | None:
+    """AGEB reales de la ciudad (avm/config/demo_agebs.csv) o None."""
+    from .settings import CONFIG_DIR
+    ruta = CONFIG_DIR / "demo_agebs.csv"
+    if not ruta.exists():
+        return None
+    df = pd.read_csv(ruta, dtype={"cvegeo": str})
+    df = df[(df["ciudad"] == ciudad) & df["viviendas"].fillna(0).gt(0)].dropna(subset=["lat", "lon", "nse_score"])
+    return df.reset_index(drop=True) if len(df) >= 30 else None
+
+
+def agebs_contexto() -> pd.DataFrame | None:
+    """Tabla de contexto AGEB para que el sujeto de la demo tome el NSE real
+    de su zona (mismo formato que avm_context_ageb)."""
+    from .settings import CONFIG_DIR
+    ruta = CONFIG_DIR / "demo_agebs.csv"
+    if not ruta.exists():
+        return None
+    return pd.read_csv(ruta, dtype={"cvegeo": str})
+
+
 def generar(n_por_ciudad: int = 2500, semilla: int = 11, duplicados: float = 0.06,
-            outliers: float = 0.015, n_cierres_por_ciudad: int = 160) -> MercadoSintetico:
+            outliers: float = 0.015, n_cierres_por_ciudad: int = 160,
+            geografia_real: bool = False) -> MercadoSintetico:
     rng = np.random.default_rng(semilla)
     indice = _indice_rows(rng)
     from .indice import IndicePrecios
@@ -79,13 +106,25 @@ def generar(n_por_ciudad: int = 2500, semilla: int = 11, duplicados: float = 0.0
 
     frames = []
     for nombre, (lat0, lon0, p_terr, p_depto, zona) in CIUDADES_SINT.items():
-        f = _campo(rng, lat0, lon0)
         n = n_por_ciudad
-        lat = lat0 + rng.normal(0, 0.03, n)
-        lon = lon0 + rng.normal(0, 0.035, n)
-        campo = f(lat, lon)
+        agebs = _agebs_reales(nombre) if geografia_real else None
+        ctx_real = None
+        if agebs is not None:
+            # Anuncios donde hay vivienda real (peso = viviendas de la AGEB),
+            # a ~150 m del centroide; el precio de la zona sigue su NSE real.
+            idx_a = rng.choice(len(agebs), n, p=(agebs["viviendas"] / agebs["viviendas"].sum()).to_numpy())
+            ctx_real = agebs.iloc[idx_a].reset_index(drop=True)
+            lat = ctx_real["lat"].to_numpy() + rng.normal(0, 0.0013, n)
+            lon = ctx_real["lon"].to_numpy() + rng.normal(0, 0.0013, n)
+            campo = np.clip(0.2 * (ctx_real["nse_score"].to_numpy() - 4) + rng.normal(0, 0.05, n), -0.7, 0.7)
+        else:
+            f = _campo(rng, lat0, lon0)
+            lat = lat0 + rng.normal(0, 0.03, n)
+            lon = lon0 + rng.normal(0, 0.035, n)
+            campo = f(lat, lon)
         tipo = rng.choice(["casa", "depto", "terreno", "local"], n, p=[0.58, 0.25, 0.12, 0.05])
-        nse = np.clip(4 + 3.2 * campo + rng.normal(0, 0.5, n), 1, 7)
+        nse = (ctx_real["nse_score"].to_numpy() if ctx_real is not None
+               else np.clip(4 + 3.2 * campo + rng.normal(0, 0.5, n), 1, 7))
         calidad_idx = np.clip(np.round((nse - 1) / 6 * 3 + rng.normal(0, 0.4, n)), 0, 3).astype(int)
         calidad = np.array(["economica", "media", "residencial", "residencial_plus"])[calidad_idx]
 
@@ -152,10 +191,15 @@ def generar(n_por_ciudad: int = 2500, semilla: int = 11, duplicados: float = 0.0
             "lat": lat, "lon": lon, "precision_ubicacion": "exacta",
             "fecha_alta": fecha_alta.normalize(), "fecha_baja": fecha_baja,
             "ultimo_visto": [min(fb, FECHA_FIN) if pd.notna(fb) else FECHA_FIN for fb in fecha_baja],
-            "nse_score": np.round(nse, 2), "escolaridad_prom": np.round(7 + 1.2 * nse + rng.normal(0, 0.5, n), 2),
-            "pct_auto": np.clip(20 + 10 * nse + rng.normal(0, 5, n), 0, 100),
-            "pct_internet": np.clip(25 + 10 * nse + rng.normal(0, 5, n), 0, 100),
-            "pct_computadora": np.clip(10 + 9 * nse + rng.normal(0, 5, n), 0, 100),
+            "nse_score": np.round(nse, 2),
+            "escolaridad_prom": (ctx_real["escolaridad_prom"].to_numpy() if ctx_real is not None
+                                 else np.round(7 + 1.2 * nse + rng.normal(0, 0.5, n), 2)),
+            "pct_auto": (ctx_real["pct_auto"].to_numpy() if ctx_real is not None
+                         else np.clip(20 + 10 * nse + rng.normal(0, 5, n), 0, 100)),
+            "pct_internet": (ctx_real["pct_internet"].to_numpy() if ctx_real is not None
+                             else np.clip(25 + 10 * nse + rng.normal(0, 5, n), 0, 100)),
+            "pct_computadora": (ctx_real["pct_computadora"].to_numpy() if ctx_real is not None
+                                else np.clip(10 + 9 * nse + rng.normal(0, 5, n), 0, 100)),
             "densidad_hab_km2": np.clip(rng.lognormal(np.log(7000), 0.5, n), 200, 40000),
             "escuelas": rng.poisson(3 + nse, n), "hospitales": rng.poisson(1, n),
             "supermercados": rng.poisson(0.5 + 0.3 * nse, n), "bancos": rng.poisson(0.3 * nse, n),

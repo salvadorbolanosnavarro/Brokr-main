@@ -111,9 +111,10 @@ def delta_extra_por_dias(comparables: list[dict]) -> float:
 
 # ── Conformal Mondrian ──────────────────────────────────────────────────────
 class ConformalMondrian:
-    """Conformalized Quantile Regression (Romano et al. 2019) por grupos.
-    Puntaje E_i = max(q10_i − y_i, y_i − q90_i); el ajuste Q es el cuantil
-    ⌈(n+1)(1−α)⌉/n de E en el grupo. Intervalo = [q10 − Q, q90 + Q]."""
+    """Conformal Mondrian normalizado por grupos (ciudad × segmento).
+    Puntaje E_i = |ln real_i − ln V_i| / escala_i; Q = cuantil ⌈(n+1)(1−α)⌉/n
+    de E en el grupo. Rango = V · exp(± Q · escala). Garantiza la cobertura
+    del 80 % en cada grupo y deja que el ancho dependa del caso."""
 
     def __init__(self, alpha: float = 1 - S.COBERTURA_OBJETIVO, n_min: int = S.CONFORMAL_MIN_GRUPO):
         self.alpha, self.n_min = alpha, n_min
@@ -124,8 +125,8 @@ class ConformalMondrian:
         nivel = min(1.0, math.ceil((n + 1) * (1 - self.alpha)) / n)
         return float(np.quantile(e, nivel, method="higher"))
 
-    def ajustar(self, y, q10, q90, ciudad, segmento) -> "ConformalMondrian":
-        df = pd.DataFrame({"e": np.maximum(np.asarray(q10) - np.asarray(y), np.asarray(y) - np.asarray(q90)),
+    def ajustar(self, y, ln_v, escala, ciudad, segmento) -> "ConformalMondrian":
+        df = pd.DataFrame({"e": np.abs(np.asarray(y, float) - np.asarray(ln_v, float)) / np.asarray(escala, float),
                            "ciudad": list(ciudad), "segmento": list(segmento)})
         df = df[np.isfinite(df["e"])]
         self.q = {("_global", "_global"): self._cuantil(df["e"].to_numpy())} if len(df) else {}
@@ -183,12 +184,16 @@ class ResultadoEnsamble:
     advertencias: list[str] = field(default_factory=list)
     valor_calculado: float | None = None     # aunque no se emita (para calibrar y auditar)
     rango_calculado: tuple[float, float] | None = None
+    escala: float | None = None
 
 
 def ensamblar(valores: dict[str, float | None], sigmas: dict[str, float], q_b: dict | None, m2: float,
               conformal_q: float, delta: float, delta_n: int, valor_c: float | None) -> ResultadoEnsamble:
     """valores: valor total por motor (oferta, a fecha de valuación) o None.
-    q_b: cuantiles de ln(precio/m2) del Motor B {0.1, 0.5, 0.9}."""
+    q_b: cuantiles del Motor B; se conservan en la salida interna, pero el
+    rango usa la escala del caso (ver abajo): en la validación los cuantiles de
+    B no distinguían casos seguros de dudosos (cobertura de 63-67 % entre los
+    emitidos), y una casa donde los tres motores coinciden salía "Sin valor"."""
     disponibles = {k: v for k, v in valores.items() if v and v > 0}
     adv: list[str] = []
     if not disponibles:
@@ -198,21 +203,21 @@ def ensamblar(valores: dict[str, float | None], sigmas: dict[str, float], q_b: d
     ln_v = sum(pesos[k] * math.log(disponibles[k]) for k in pesos) + math.log(1 - delta)
     valor = math.exp(ln_v)
 
-    rango, ancho = None, None
-    if q_b and all(q in q_b for q in (0.1, 0.5, 0.9)):
-        lo = q_b[0.1] - conformal_q
-        hi = q_b[0.9] + conformal_q
-        mid = q_b[0.5]
-        ancho = (math.exp(hi) - math.exp(lo)) / math.exp(mid)
-        # El rango se centra en el valor final conservando la forma calibrada.
-        rango = (valor * math.exp(lo - mid), valor * math.exp(hi - mid))
-    else:
-        # Sin Motor B no hay rango calibrado: se usa la dispersión de σ.
-        s = min(sigmas[k] for k in disponibles)
-        z = 1.2816
-        rango = (valor * math.exp(-z * s), valor * math.exp(z * s))
-        ancho = math.exp(z * s) - math.exp(-z * s)
-        adv.append("Rango aproximado: el modelo estadístico no pudo calcular para este inmueble.")
+    # Escala de incertidumbre del caso: el error típico del mejor motor en la
+    # zona, más cuánto discrepan los motores entre sí en ESTE inmueble. Si los
+    # tres coinciden, el rango se angosta; si no coinciden, se abre.
+    sigma_min = min(sigmas[k] for k in disponibles)
+    lns = {k: math.log(v) for k, v in disponibles.items()}
+    media = sum(pesos[k] * lns[k] for k in pesos)
+    disp = math.sqrt(sum(pesos[k] * (lns[k] - media) ** 2 for k in pesos))
+    escala = math.sqrt(sigma_min ** 2 + disp ** 2)
+    # conformal_q es el multiplicador calibrado (conformal Mondrian sobre
+    # cierres) para cobertura del 80 %; sin calibrar, el normal (1.2816).
+    z = conformal_q if conformal_q and conformal_q > 0 else 1.2816
+    rango = (valor * math.exp(-z * escala), valor * math.exp(z * escala))
+    ancho = math.exp(z * escala) - math.exp(-z * escala)
+    if len(disponibles) == 1:
+        adv.append("Solo un método pudo calcular: el rango es más amplio.")
 
     nivel = nivel_confianza(ancho)
     if valor_c and valor_c > 0:
@@ -227,4 +232,4 @@ def ensamblar(valores: dict[str, float | None], sigmas: dict[str, float], q_b: d
         adv.append("El rango es demasiado amplio para emitir un valor: se recomienda visita al inmueble.")
     return ResultadoEnsamble(emitido, valor if emitido else None, rango if emitido else None, nivel, ancho,
                              pesos, delta, delta_n, valores, adv, valor_calculado=valor,
-                             rango_calculado=rango)
+                             rango_calculado=rango, escala=escala)

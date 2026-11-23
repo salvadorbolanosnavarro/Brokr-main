@@ -35,9 +35,11 @@ class Servicio:
                 # Solo staging: modelo de demostración con datos sintéticos,
                 # marcado como tal en cada respuesta.
                 from . import pipeline, synthetic
-                m = await asyncio.to_thread(synthetic.generar, 1500)
+                m = await asyncio.to_thread(synthetic.generar, 2500, 11, 0.06, 0.015, 160, True)
+                ageb = synthetic.agebs_contexto()
                 modelo, _ = await asyncio.to_thread(pipeline.entrenar, m.listings, m.closings, m.indice,
-                                                    synthetic.FECHA_FIN, "sinteticos", None, 300)
+                                                    synthetic.FECHA_FIN, "sinteticos",
+                                                    {"ageb": ageb} if ageb is not None else None, 300)
                 met = {"nota": "demo sintética"}
             self.modelo, self.metricas = modelo, met or {}
             self.estado = "listo" if modelo is not None else "sin_modelo"

@@ -117,7 +117,15 @@ async def estado():
         info = _servicio().info()
     except Exception as exc:      # dependencias del modelo ausentes
         info = {"estado": "no_disponible", "detalle": str(exc)[:120]}
-    return {"activo": settings.avm_v2_enabled, **info}
+    from core.legacy_main_config import legacy_main_settings
+    # Solo sí/no: qué fuentes de datos reales están listas (nunca las llaves).
+    fuentes = {
+        "ubicacion_google": bool(settings.google_places_key),
+        "anuncios_firecrawl": bool(legacy_main_settings.firecrawl_api_key),
+        "lectura_descripciones": bool(settings.groq_api_key or settings.anthropic_api_key),
+        "recoleccion_diaria": bool(settings.avm_v2_jobs),
+    }
+    return {"activo": settings.avm_v2_enabled, **info, "fuentes": fuentes}
 
 
 @router.post("/estimar")

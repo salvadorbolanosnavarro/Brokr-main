@@ -215,7 +215,7 @@ def ensamblar_oof(oof: pd.DataFrame, sigma: TablaSigma, delta: TablaDelta,
             d, n = 0.0, 0
         cq = conformal.ajuste(r["ciudad"], seg) if conformal else 0.0
         e = ensamblar(valores, sig, {0.1: r["q10"], 0.5: r["q50"], 0.9: r["q90"]}, m2, cq, d, n, valores["C"])
-        out.append({"id": r["id"], "ens_valor": e.valor, "ens_valor_calc": e.valor_calculado,
+        out.append({"id": r["id"], "ens_valor": e.valor, "ens_valor_calc": e.valor_calculado, "ens_escala": e.escala,
                     "ens_bajo_calc": e.rango_calculado[0] if e.rango_calculado else np.nan,
                     "ens_alto_calc": e.rango_calculado[1] if e.rango_calculado else np.nan, "ens_bajo": e.rango[0] if e.rango else np.nan,
                     "ens_alto": e.rango[1] if e.rango else np.nan, "emitido": e.emitido,
@@ -226,20 +226,16 @@ def ensamblar_oof(oof: pd.DataFrame, sigma: TablaSigma, delta: TablaDelta,
 
 
 def calibrar_conformal(oof_ens: pd.DataFrame, cierres_eval: pd.DataFrame | None) -> ConformalMondrian:
-    """Calibra el ancho del rango sobre el ensamble. Con ≥ 30 cierres se usa el
-    precio de cierre (lo que importa); si no, el precio de oferta."""
+    """Calibra el multiplicador del rango sobre el ensamble. Con ≥ 30 cierres
+    se usa el precio de cierre (lo que importa); si no, el precio de oferta."""
     cm = ConformalMondrian()
     if cierres_eval is not None and len(cierres_eval) >= 30:
         d = cierres_eval[cierres_eval["ens_valor_calc"].notna()]
-        ln_v = np.log(d["ens_valor_calc"])
-        real = np.log(d["real_aj"])
+        ln_v, real = np.log(d["ens_valor_calc"]), np.log(d["real_aj"])
     else:
         d = oof_ens[oof_ens["valor_crudo"].notna()]
-        ln_v = np.log(d["valor_crudo"])
-        real = np.log(d["precio_aj"])
-    lo = ln_v + (d["q10"] - d["q50"])
-    hi = ln_v + (d["q90"] - d["q50"])
-    return cm.ajustar(real, lo, hi, d["ciudad"], d["segmento"])
+        ln_v, real = np.log(d["valor_crudo"]), np.log(d["precio_aj"])
+    return cm.ajustar(real, ln_v, d["ens_escala"], d["ciudad"], d["segmento"])
 
 
 def cierres_ajustados(cierres: pd.DataFrame, base: pd.DataFrame, indice: IndicePrecios, fecha_valuacion) -> pd.DataFrame:
