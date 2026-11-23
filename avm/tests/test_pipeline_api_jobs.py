@@ -118,3 +118,14 @@ def test_api_validaciones(cliente):
 def test_api_estado(cliente):
     d = cliente.get("/avm/v2/estado").json()
     assert d["estado"] == "listo" and d["datos"] == "sinteticos" and "activo" in d
+
+
+def test_api_solo_ciudad_pide_colonia(cliente, monkeypatch):
+    import routers.avm_v2 as api
+
+    async def amplia(_):
+        return "amplia"
+    monkeypatch.setattr(api, "geocodificar", amplia)
+    r = cliente.post("/avm/v2/estimar", json={"direccion": "morelia", "tipo": "casa", "m2_construidos": 278},
+                     headers={"Authorization": "Bearer ok"})
+    assert r.status_code == 422 and "colonia" in r.json()["detail"]

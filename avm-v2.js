@@ -50,7 +50,37 @@
     var dir = el('input'); dir.type = 'text'; dir.name = 'direccion'; dir.autocomplete = 'street-address';
     dir.placeholder = 'Calle y número, colonia, ciudad';
     var f1 = el('div', 'field-row'); f1.appendChild(campo('Tipo', tipo)); card.appendChild(f1);
-    var f2 = el('div', 'field-row'); f2.appendChild(campo('Dirección *', dir)); card.appendChild(f2);
+    var f2 = el('div', 'field-row'); var cDir = campo('Dirección *', dir); f2.appendChild(cDir); card.appendChild(f2);
+    // Sugerencias de colonias (mismo buscador que el formulario de abajo).
+    // Al elegir una se mandan sus coordenadas y no hace falta geocodificar.
+    var sug = el('div', 'avm2-sug avm2-oculto'); cDir.appendChild(sug);
+    var punto = null, espera = null, consulta = 0;
+    dir.addEventListener('input', function () {
+      punto = null;
+      clearTimeout(espera);
+      var t = dir.value.trim();
+      if (t.length < 3) { sug.classList.add('avm2-oculto'); return; }
+      espera = setTimeout(async function () {
+        var mia = ++consulta;
+        try {
+          var r = await fetch(BASE + '/api/colonias?texto=' + encodeURIComponent(t) + '&pais=MX');
+          var d = await r.json();
+          if (mia !== consulta) return;
+          var lista = (d && d.colonias || []).filter(function (c) { return c.latitud && c.longitud; }).slice(0, 6);
+          sug.textContent = '';
+          lista.forEach(function (c) {
+            var b = el('button', 'avm2-sug-op', c.display || c.nombre); b.type = 'button';
+            b.addEventListener('click', function () {
+              dir.value = c.display || c.nombre;
+              punto = { lat: c.latitud, lon: c.longitud, colonia: c.nombre };
+              sug.classList.add('avm2-oculto');
+            });
+            sug.appendChild(b);
+          });
+          sug.classList.toggle('avm2-oculto', lista.length === 0);
+        } catch (_) { sug.classList.add('avm2-oculto'); }
+      }, 300);
+    });
 
     var m2c = numero('m2_construidos', '150'), m2t = numero('m2_terreno', '160');
     var f3 = el('div', 'field-row avm2-row');
@@ -102,6 +132,7 @@
         amenidades: { cajones: num(caj) }
       };
       AMENIDADES.forEach(function (a) { cuerpo.amenidades[a[0]] = !!amen.querySelector('input[name=' + a[0] + ']').checked; });
+      if (punto) { cuerpo.lat = punto.lat; cuerpo.lon = punto.lon; cuerpo.colonia = punto.colonia; }
       if (!cuerpo.direccion) { err.textContent = 'Escribe la dirección.'; err.classList.remove('avm2-oculto'); return; }
       btn.disabled = true; btn.textContent = 'Calculando…';
       try {

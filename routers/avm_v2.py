@@ -38,9 +38,16 @@ def _repo():
     return repo
 
 
+MSG_AMPLIA = "Esa dirección solo ubica la ciudad. Escribe al menos la colonia (mejor calle y número) o elige una sugerencia."
+
+
 async def geocodificar(direccion: str):
-    from avm.service import geocodificar as _g
-    return await _g(direccion)
+    """None si no se encontró; 'amplia' si solo se ubicó la ciudad."""
+    from avm.service import UbicacionAmplia, geocodificar as _g
+    try:
+        return await _g(direccion)
+    except UbicacionAmplia:
+        return "amplia"
 
 
 class Amenidades(BaseModel):
@@ -127,6 +134,8 @@ async def estimar(req: EstimarRequest, request: Request):
     lat, lon, precision = req.lat, req.lon, "exacta"
     if lat is None or lon is None:
         geo = await geocodificar(req.direccion or "")
+        if geo == "amplia":
+            raise HTTPException(422, MSG_AMPLIA)
         if not geo:
             raise HTTPException(422, "No pude ubicar esa dirección. Prueba con calle, número, colonia y ciudad.")
         lat, lon, precision = geo
@@ -173,7 +182,7 @@ async def capturar_cierre(req: CierreRequest, request: Request):
     fila.pop("direccion", None)
     if (req.lat is None or req.lon is None) and req.direccion:
         geo = await geocodificar(req.direccion)
-        if geo:
+        if geo and geo != "amplia":
             fila["lat"], fila["lon"] = geo[0], geo[1]
     if not fila.get("municipio") and fila.get("lat") is not None:
         try:
