@@ -58,9 +58,18 @@ async def _bajar(url: str, timeout: float = 600) -> bytes:
 
 def _csv_de_zip(contenido: bytes, patron: str, **kw) -> pd.DataFrame:
     z = zipfile.ZipFile(io.BytesIO(contenido))
-    nombre = next(n for n in z.namelist() if patron in n and n.endswith(".csv"))
-    with z.open(nombre) as f:
-        return pd.read_csv(f, **kw)
+    # El CSV más grande de la carpeta: algunos estados traen además una
+    # bitácora de cambios en la misma carpeta.
+    candidatos = [i for i in z.infolist() if patron in i.filename and i.filename.endswith(".csv")]
+    nombre = max(candidatos, key=lambda i: i.file_size).filename
+    try:
+        with z.open(nombre) as f:
+            return pd.read_csv(f, **kw)
+    except UnicodeDecodeError:
+        # INEGI publica algunos estados en UTF-8 y otros en latin-1.
+        kw["encoding"] = "latin-1"
+        with z.open(nombre) as f:
+            return pd.read_csv(f, **kw)
 
 
 def censo_ageb(df: pd.DataFrame, cve_mun: list[str]) -> pd.DataFrame:

@@ -84,7 +84,7 @@ def escribir(listings, cierres, indice_rows, fv, datos: str, ctx_tablas=None, ro
     if datos == "sinteticos":
         aviso = ("> ⚠️ **Estos resultados son con datos SINTÉTICOS.** Todavía no hay anuncios ni cierres reales en "
                  "`avm_listings` / `avm_closings`. El mercado sintético (`avm/synthetic.py`) tiene una verdad conocida "
-                 "y sirve para comprobar que el pipeline completo funciona y que la validación no hace trampa. "
+                 "y sirve para comprobar que el pipeline completo funciona (la geografía sí es real: zonas y nivel socioeconómico del Censo 2020) y que la validación no hace trampa. "
                  "**No dicen nada de la precisión real en Morelia o Guadalajara.** Cuando haya datos, este reporte se "
                  "regenera solo cada mes con el reentrenamiento.\n")
     md = [f"# AVM Broquer v2 — Reporte de validación\n",
@@ -162,9 +162,10 @@ def main():
         escribir(datos["listings"], datos["closings"], datos["indice"], fv, "reales", datos["contexto"], a.rounds, modelo)
     else:
         from .. import synthetic, pipeline as P
-        m = synthetic.generar(a.n)
-        modelo, _ = P.entrenar(m.listings, m.closings, m.indice, synthetic.FECHA_FIN, "sinteticos", rounds=a.rounds)
-        escribir(m.listings, m.closings, m.indice, synthetic.FECHA_FIN, "sinteticos", rounds=a.rounds, modelo_final=modelo)
+        m = synthetic.generar(a.n, geografia_real=True)
+        ctx = {"ageb": synthetic.agebs_contexto()}
+        modelo, _ = P.entrenar(m.listings, m.closings, m.indice, synthetic.FECHA_FIN, "sinteticos", ctx, a.rounds)
+        escribir(m.listings, m.closings, m.indice, synthetic.FECHA_FIN, "sinteticos", ctx, a.rounds, modelo)
     print(f"Escrito {REPORTE}")
 
 

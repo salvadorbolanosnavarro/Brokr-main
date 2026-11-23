@@ -15,15 +15,14 @@ def test_pesos_inverso_varianza():
 
 
 def test_motor_ausente_se_excluye_y_renormaliza():
-    q = {0.1: math.log(19_000), 0.5: math.log(20_000), 0.9: math.log(21_000)}
-    r = ensamblar({"A": 2e6, "B": 3e6, "C": None}, {"A": 0.1, "B": 0.1, "C": 0.1}, q, 100, 0.0, 0.0, 0, None)
+    r = ensamblar({"A": 2e6, "B": 3e6, "C": None}, {"A": 0.1, "B": 0.1, "C": 0.1}, None, 100, 0.0, 0.0, 0, None)
     assert set(r.pesos) == {"A", "B"} and sum(r.pesos.values()) == pytest.approx(1.0)
-    assert r.valor == pytest.approx(math.sqrt(2e6 * 3e6))   # media geométrica con pesos iguales
+    assert r.valor_calculado == pytest.approx(math.sqrt(2e6 * 3e6))   # media geométrica con pesos iguales
+    assert not r.emitido   # difieren 50 %: no hay certeza para dar un número
 
 
 def test_formula_ln_v_con_delta():
-    q = {0.1: math.log(19_500), 0.5: math.log(20_000), 0.9: math.log(20_500)}
-    r = ensamblar({"A": 2e6, "B": 2e6, "C": 2e6}, {"A": 0.1, "B": 0.2, "C": 0.3}, q, 100, 0.0, 0.06, 20, 2e6)
+    r = ensamblar({"A": 2e6, "B": 2e6, "C": 2e6}, {"A": 0.05, "B": 0.1, "C": 0.2}, None, 100, 0.0, 0.06, 20, 2e6)
     assert r.valor == pytest.approx(2e6 * (1 - 0.06))
 
 
@@ -51,16 +50,24 @@ def test_niveles_de_confianza():
 
 
 def test_mas_de_40_no_emite():
-    q = {0.1: math.log(14_000), 0.5: math.log(20_000), 0.9: math.log(28_000)}
-    r = ensamblar({"B": 2e6}, {"A": .1, "B": .1, "C": .1}, q, 100, 0.0, 0.0, 0, None)
+    # Un solo motor con error típico alto en la zona → rango > 40 %
+    r = ensamblar({"B": 2e6}, {"A": .3, "B": .3, "C": .3}, None, 100, 0.0, 0.0, 0, None)
     assert not r.emitido and r.valor is None and "visita" in " ".join(r.advertencias)
 
 
+def test_motores_que_coinciden_angostan_el_rango():
+    sig = {"A": .05, "B": .05, "C": .05}
+    junto = ensamblar({"A": 2.0e6, "B": 2.02e6, "C": 1.98e6}, sig, None, 100, 0.0, 0.0, 0, None)
+    lejos = ensamblar({"A": 1.5e6, "B": 2.0e6, "C": 2.8e6}, sig, None, 100, 0.0, 0.0, 0, None)
+    assert junto.ancho_relativo < lejos.ancho_relativo
+    assert junto.confianza == "Alta" and junto.rango[0] < junto.valor < junto.rango[1]
+
+
 def test_fisico_muy_distinto_baja_un_nivel():
-    q = {0.1: math.log(19_000), 0.5: math.log(20_000), 0.9: math.log(21_000)}   # ancho 10 % → Alta
-    base = ensamblar({"B": 2e6}, {"A": .1, "B": .1, "C": .1}, q, 100, 0.0, 0.0, 0, None)
+    sig = {"A": .04, "B": .04, "C": .5}
+    base = ensamblar({"B": 2e6}, sig, None, 100, 0.0, 0.0, 0, None)
     assert base.confianza == "Alta"
-    r = ensamblar({"B": 2e6}, {"A": .1, "B": .1, "C": .1}, q, 100, 0.0, 0.0, 0, 3e6)
+    r = ensamblar({"B": 2e6}, sig, None, 100, 0.0, 0.0, 0, 3e6)
     assert r.confianza == "Media"
 
 
@@ -68,23 +75,22 @@ def test_conformal_mondrian_cobertura_80():
     rng = np.random.default_rng(1)
     n = 4000
     ciudad = rng.choice(["A", "B"], n)
-    escala = np.where(ciudad == "A", 0.05, 0.20)        # B es mucho más incierta
-    y = rng.normal(0, escala)
-    q10 = np.full(n, -0.06)
-    q90 = np.full(n, 0.06)                               # cuantiles mal calibrados a propósito
+    real = rng.normal(0, np.where(ciudad == "A", 0.05, 0.20))   # B es mucho más incierta
+    escala = np.full(n, 0.06)                                  # escala mal calibrada a propósito
+    ln_v = np.zeros(n)
     seg = np.array(["s"] * n)
     cal = slice(0, 2000)
-    cm = ConformalMondrian().ajustar(y[cal], q10[cal], q90[cal], ciudad[cal], seg[cal])
+    cm = ConformalMondrian().ajustar(real[cal], ln_v[cal], escala[cal], ciudad[cal], seg[cal])
     for c in ("A", "B"):
         m = (ciudad == c)
         m[:2000] = False
         Q = cm.ajuste(c, "s")
-        cobertura = np.mean((y[m] >= q10[m] - Q) & (y[m] <= q90[m] + Q))
+        cobertura = np.mean(np.abs(real[m]) <= Q * escala[m])
         assert 0.76 <= cobertura <= 0.84, (c, cobertura)
 
 
 def test_conformal_respaldo_global():
-    cm = ConformalMondrian(n_min=50).ajustar([0.0] * 30, [-0.1] * 30, [0.1] * 30, ["X"] * 30, ["s"] * 30)
+    cm = ConformalMondrian(n_min=50).ajustar([0.0] * 30, [0.0] * 30, [0.1] * 30, ["X"] * 30, ["s"] * 30)
     assert cm.ajuste("X", "s") == cm.ajuste("_global", "_global")
     assert ConformalMondrian.from_dict(cm.to_dict()).q == cm.q
 
