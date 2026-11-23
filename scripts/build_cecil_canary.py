@@ -33,7 +33,7 @@ def build(output):
         raise ValueError('Design does not include the production base.')
     # Root app changes beyond this pilot must be explicitly integrated first.
     for ref in [BASE_REF, DESIGN_REF]: git('rev-parse', '--verify', ref+'^{commit}')
-    allowed_changes={'app-shell.js','main.py','core/config.py','routers/cecil_ui.py','ui/cecil-rollout.js','scripts/build_cecil_canary.py','tests/test_cecil_ui.py','tests/check_cecil_rollout.cjs','CECIL_PILOT.md','tests/check_cecil_pilot_state.cjs','.github/workflows/quality.yml','tests/golden/http_contract_effective.json'}
+    allowed_changes={'app-shell.js','main.py','core/config.py','routers/cecil_ui.py','ui/cecil-rollout.js','scripts/build_cecil_canary.py','scripts/cecil_mobile_fields.css','tests/test_cecil_ui.py','tests/check_cecil_rollout.cjs','CECIL_PILOT.md','tests/check_cecil_pilot_state.cjs','.github/workflows/quality.yml','tests/golden/http_contract_effective.json'}
     changed=set(git('diff','--name-only',BASE_REF,'HEAD').decode().splitlines())
     if changed - allowed_changes:
         raise ValueError('Production advanced: integrate it into the design snapshot and update the pinned base before building.')
@@ -62,6 +62,14 @@ def build(output):
                     text=path.read_text()
                     if path.suffix in {'.html','.js','.json','.svg'} and relative.parts[0]!='brand':text=brand.brand_asset(str(relative),text)
                     if relative==Path('app-shell.js'):
+                        # Exact mobile fix approved in PR220: size before focus,
+                        # retain native pinch, remove the legacy scale reset.
+                        text, removed = re.subn(
+                            r'/\* ── Guarda de escala en iOS .*?(?=/\* ── El teclado de iPhone)',
+                            '/* Mobile fields prevent focus auto-zoom; native pinch zoom remains enabled. */\n\n',
+                            text, count=1, flags=re.S)
+                        if removed != 1:
+                            raise ValueError('Missing legacy pinch-zoom guard: review the approved transformation')
                         marker='    if (!profile) return; // redirected to login/landing'
                         if marker not in text:raise ValueError('Missing shell authentication hook')
                         text=text.replace(marker,marker+"\n    const rollout=document.createElement('script');rollout.src='/ui/cecil-rollout.js';rollout.onload=()=>window.bkCecilRollout?.({api:API_BASE,token:getToken(),userId:profile.user.id});document.head.appendChild(rollout);",1)
@@ -71,10 +79,21 @@ def build(output):
                     # Keep assets and relative navigation within the alternate build.
                     text=re.sub(r'(["\'])/(brand|ui|styles|fonts)/',r'\1/cecil/\2/',text)
                     text=text.replace("rollout.src='/cecil/ui/cecil-rollout.js'", "rollout.src='/ui/cecil-rollout.js'")
-                    if path.suffix=='.html':pages.append(str(relative))
+                    if path.suffix=='.html':
+                        def mobile_meta(match):
+                            def content(value):
+                                parts = [part.strip() for part in value.group(2).split(',')
+                                         if part.strip().split('=')[0].strip().lower()
+                                         not in {'maximum-scale', 'minimum-scale', 'user-scalable'}]
+                                return value.group(1) + ','.join(parts) + value.group(3)
+                            return re.sub(r'(content=["\'])(.*?)(["\'])', content, match.group(0), flags=re.I)
+                        text = re.sub(r'<meta\b[^>]*name=["\']viewport["\'][^>]*>', mobile_meta, text, flags=re.I)
+                        text = text.replace('</head>', '<link rel="stylesheet" href="/cecil/mobile-fields.css"/>\n</head>', 1)
+                        pages.append(str(relative))
                     target.write_text(text)
                 else:target.write_bytes(path.read_bytes())
             brand.write_brand_artwork(source,output)
+            (output/'mobile-fields.css').write_bytes((ROOT/'scripts/cecil_mobile_fields.css').read_bytes())
             (output/'release.json').write_text(json.dumps({'production_base':git('rev-parse',BASE_REF).decode().strip(),'design':git('rev-parse',DESIGN_REF).decode().strip(),'mode':'real-services','pages':pages},indent=2))
         except Exception:
             import shutil
