@@ -6,6 +6,10 @@ name: Sincronizar main a staging
 on:
   push:
     branches: [main]
+  # Ensayo en cada PR hacia main: integra el resultado del merge del PR en
+  # staging y corre todas las pruebas, sin subir nada ni tocar avisos.
+  pull_request:
+    branches: [main]
   workflow_dispatch:
     inputs:
       fuente:
@@ -18,7 +22,7 @@ on:
         default: false
 
 concurrency:
-  group: sync-main-a-staging
+  group: sync-main-a-staging${{ github.event_name == 'pull_request' && format('-pr-{0}', github.event.number) || '' }}
   cancel-in-progress: false
 
 permissions:
@@ -28,8 +32,8 @@ permissions:
 env:
   STAGING_BRANCH: work/redesign-preview-20261003
   ISSUE_TITLE: "Sincronización main → staging detenida"
-  SOURCE_BRANCH: ${{ inputs.fuente || 'main' }}
-  DRY_RUN: ${{ inputs.ensayo && 'true' || 'false' }}
+  SOURCE_BRANCH: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.number) || inputs.fuente || 'main' }}
+  DRY_RUN: ${{ (github.event_name == 'pull_request' || inputs.ensayo) && 'true' || 'false' }}
 
 jobs:
   sync:
