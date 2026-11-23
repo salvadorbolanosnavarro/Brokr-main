@@ -129,3 +129,35 @@ def test_api_solo_ciudad_pide_colonia(cliente, monkeypatch):
     r = cliente.post("/avm/v2/estimar", json={"direccion": "morelia", "tipo": "casa", "m2_construidos": 278},
                      headers={"Authorization": "Bearer ok"})
     assert r.status_code == 422 and "colonia" in r.json()["detail"]
+
+
+def test_api_entrenar_solo_admin_y_datos(cliente, monkeypatch):
+    import routers.avm_v2 as api
+    from fastapi import HTTPException
+    import core.admin
+
+    async def no_admin(request):
+        raise HTTPException(403, "Acceso denegado.")
+    monkeypatch.setattr(core.admin, "require_admin", no_admin)
+    h = {"Authorization": "Bearer ok"}
+    assert cliente.post("/avm/v2/entrenar", headers=h).status_code == 403
+
+    async def resumen(usar_cache=True):
+        return {"ciudades": {"Morelia": {"anuncios_utiles": 50, "anuncios_totales": 60, "cierres": 2}},
+                "anuncios_utiles": 50, "cierres": 2, "minimo_para_entrenar": 300, "minimo_por_ciudad": 100,
+                "minimo_cierres_calibrar": 30}
+    monkeypatch.setattr("avm.entrenamiento.resumen_datos", resumen)
+    d = cliente.get("/avm/v2/datos", headers=h).json()
+    assert d["es_admin"] is False and d["anuncios_utiles"] == 50
+
+    async def si_admin(request):
+        return "u"
+    monkeypatch.setattr(core.admin, "require_admin", si_admin)
+    r = cliente.post("/avm/v2/entrenar", headers=h)
+    assert r.status_code == 409 and "300" in r.json()["detail"]
+
+
+def test_api_cierre_exige_ubicacion(cliente):
+    r = cliente.post("/avm/v2/cierre", json={"tipo": "casa", "precio_cierre": 3e6, "fecha_cierre": "2026-11-01",
+                                             "m2_construidos": 150}, headers={"Authorization": "Bearer ok"})
+    assert r.status_code == 422

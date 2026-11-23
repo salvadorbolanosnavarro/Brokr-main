@@ -108,6 +108,16 @@ class CierreRequest(BaseModel):
     colonia: Optional[str] = Field(None, max_length=120)
     notas: Optional[str] = Field(None, max_length=1000)
 
+    @model_validator(mode="after")
+    def _ubicacion(self):
+        if (self.lat is None or self.lon is None) and not self.direccion and not self.municipio:
+            raise ValueError("Indica la dirección del inmueble vendido.")
+        if self.tipo == "terreno" and not self.m2_terreno:
+            raise ValueError("Para terreno indica los m² de terreno.")
+        if self.tipo != "terreno" and not self.m2_construidos:
+            raise ValueError("Indica los m² de construcción.")
+        return self
+
 
 @router.get("/estado")
 async def estado():
@@ -205,11 +215,64 @@ async def capturar_cierre(req: CierreRequest, request: Request):
         log.warning("No se guardó el cierre: %s", exc)
         raise HTTPException(500, "No se pudo guardar el cierre. ¿Ya se corrió migracion-avm-v2.sql?") from None
     from avm.settings import segmento
+    try:
+        from avm import entrenamiento
+        entrenamiento._cache_resumen.clear()
+    except Exception:
+        pass
     seg = segmento(req.precio_cierre)
     descuento = None
     if req.precio_oferta_inicial:
         descuento = round(100 * (1 - req.precio_cierre / req.precio_oferta_inicial), 1)
     return {"ok": True, "id": guardado.get("id"), "segmento": seg, "descuento_pct": descuento}
+
+
+async def _es_admin(request: Request) -> bool:
+    from core.admin import require_admin
+    try:
+        await require_admin(request)
+        return True
+    except HTTPException:
+        return False
+
+
+@router.get("/datos")
+async def datos(request: Request):
+    """Cuántos anuncios útiles y cierres hay por ciudad, si alcanza para
+    entrenar con datos reales y cómo va el último entrenamiento."""
+    await require_user_id(request)
+    try:
+        from avm import entrenamiento
+        resumen = await entrenamiento.resumen_datos()
+    except Exception as exc:
+        log.warning("Resumen de datos AVM v2 falló: %s", exc)
+        raise HTTPException(503, "No se pudieron leer los datos del modelo.") from None
+    return {**resumen, "es_admin": await _es_admin(request), "entrenamiento": dict(entrenamiento.estado),
+            "modelo": _servicio().info()}
+
+
+@router.post("/entrenar")
+async def entrenar(request: Request):
+    """Solo administradores. Arranca el entrenamiento con datos reales en
+    segundo plano (tarda minutos); el avance se consulta en GET /avm/v2/entrenar."""
+    from core.admin import require_admin
+    await require_admin(request)
+    from avm import entrenamiento
+    if entrenamiento.estado.get("estado") == "entrenando":
+        raise HTTPException(409, "Ya hay un entrenamiento en curso.")
+    resumen = await entrenamiento.resumen_datos(usar_cache=False)
+    if resumen["anuncios_utiles"] < entrenamiento.MIN_ANUNCIOS:
+        raise HTTPException(409, f"Todavía hay {resumen['anuncios_utiles']} anuncios útiles; se necesitan "
+                                 f"{entrenamiento.MIN_ANUNCIOS}. Deja correr la recolección diaria unos días más.")
+    asyncio.create_task(entrenamiento.entrenar_con_datos_reales(origen="manual"))
+    return {"iniciado": True}
+
+
+@router.get("/entrenar")
+async def estado_entrenamiento(request: Request):
+    await require_user_id(request)
+    from avm import entrenamiento
+    return dict(entrenamiento.estado)
 
 
 @router.on_event("startup")

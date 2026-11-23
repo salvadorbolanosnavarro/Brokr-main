@@ -371,7 +371,7 @@
     .avm2-barra { position: relative; height: 10px; border-radius: var(--r-pill); background: var(--forest-soft); border: 1px solid var(--line); }
     .avm2-marca { position: absolute; top: -5px; width: 4px; height: 18px; margin-left: -2px; border-radius: var(--r-pill); background: var(--sky-blue); }
     .avm2-extremos { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: var(--mute); margin: 6px 0 12px; }
-    .avm2-motor { display: grid; grid-template-columns: 1fr auto 48px; gap: 8px; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
+    .avm2-motor { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
     .avm2-motor:last-of-type { border-bottom: none; }
     .avm2-motor-n { color: var(--ink); }
     .avm2-motor-v { font-weight: 700; color: var(--ink); }
@@ -383,6 +383,16 @@
     .avm2-comp:last-child { border-bottom: none; }
     .avm2-comp-p { font-weight: 700; color: var(--sky-blue); font-size: var(--fs-sm); }
     .avm2-comp-d { font-size: var(--fs-xs); color: var(--mute); }
+    .avm2-sep { margin-top: 10px; }
+    .avm2-plegable summary { cursor: pointer; list-style: none; margin-bottom: 0; }
+    .avm2-plegable summary::-webkit-details-marker { display: none; }
+    .avm2-plegable summary::after { content: "+"; margin-left: auto; font-size: var(--fs-sm); color: var(--mute); }
+    .avm2-plegable[open] summary { margin-bottom: 12px; }
+    .avm2-plegable[open] summary::after { content: "−"; }
+    .avm2-card .field textarea { width: 100%; padding: 9px 11px; font-size: var(--fs-body) !important; background: var(--paper-2);
+      border: 1px solid var(--line); border-radius: var(--r); color: var(--ink); outline: none; resize: vertical; }
+    .avm2-card .field input[type=date] { min-height: 42px; }
+    .avm2-card .alert, .avm2-entreno .alert { margin-bottom: 12px; }
     .avm2-pie { font-size: var(--fs-caption); color: var(--mute); text-align: center; margin: 4px 0 18px; }
     @media (max-width: 420px) { .avm2-row { flex-wrap: wrap; } .avm2-row .field { flex: 1 1 40%; } }
 
