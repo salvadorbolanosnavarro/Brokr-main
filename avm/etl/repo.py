@@ -77,8 +77,11 @@ async def cargar_todo() -> dict:
     listings = listings_a_df(await leer_todo("avm_listings", {"operacion": "eq.venta"}))
     closings = pd.DataFrame(await leer_todo("avm_closings"))
     if not closings.empty:
-        for c in ("precio_oferta_inicial", "precio_cierre"):
-            closings[c] = pd.to_numeric(closings[c], errors="coerce")
+        for c in ("precio_oferta_inicial", "precio_cierre", "m2_construidos", "m2_terreno", "lat", "lon",
+                  "recamaras", "banos", "edad_anios", "conservacion"):
+            if c in closings:
+                closings[c] = pd.to_numeric(closings[c], errors="coerce")
+        closings["fecha_cierre"] = pd.to_datetime(closings["fecha_cierre"], errors="coerce")
         closings["ciudad"] = closings["municipio"]
     indice = await leer_todo("avm_index", orden="trimestre")
     ageb = pd.DataFrame(await leer_todo("avm_context_ageb", orden="cvegeo"))
@@ -87,6 +90,12 @@ async def cargar_todo() -> dict:
         ageb = ageb.rename(columns={})
         ageb["rezago_num"] = ageb["rezago_coneval"].astype(str).str.lower().map(
             {"muy bajo": 0, "bajo": 1, "medio": 2, "alto": 3, "muy alto": 4})
+    if ageb.empty:
+        # Sin avm_context_ageb cargada: AGEB reales del Censo 2020 que viajan
+        # con el código (avm/config/demo_agebs.csv), mismas variables.
+        from ..synthetic import agebs_contexto
+        respaldo = agebs_contexto()
+        ageb = respaldo if respaldo is not None else ageb
     return {"listings": listings, "closings": closings, "indice": indice,
             "contexto": {"ageb": ageb if not ageb.empty else None, "poi": poi if not poi.empty else None}}
 

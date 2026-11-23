@@ -1,5 +1,5 @@
 {
-  "count": 360,
+  "count": 363,
   "operations": [
     {
       "body": false,
@@ -491,6 +491,33 @@
       "responses": [
         "200",
         "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/avm/v2/datos",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/avm/v2/entrenar",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [],
+      "path": "/avm/v2/entrenar",
+      "responses": [
+        "200"
       ]
     },
     {

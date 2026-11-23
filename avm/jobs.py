@@ -83,35 +83,20 @@ async def semanal() -> dict:
 
 
 async def mensual() -> dict:
-    from . import pipeline as P
-    from .etl import repo
-    from .eval import run_report, validate as V
-    from .service import servicio
-    datos = await repo.cargar_todo()
-    if datos["listings"].empty:
-        return {"omitido": "sin anuncios"}
-    fv = pd.Timestamp(datetime.now(TZ_MX).date())
-    modelo, _ = await asyncio.to_thread(P.entrenar, datos["listings"], datos["closings"], datos["indice"], fv,
-                                        "reales", datos["contexto"])
-    cc = await asyncio.to_thread(V.contra_cierres, datos["listings"], datos["closings"], datos["indice"], fv,
-                                 datos["contexto"])
-    if cc is None:   # sin cierres: se mide contra el hold-out temporal de oferta
-        h = await asyncio.to_thread(V.holdout_temporal, datos["listings"], datos["closings"], datos["indice"], fv,
-                                    datos["contexto"])
-        met = V.resumen(h["oferta"])["global"]
-    else:
-        met = V.resumen(cc)["global"]
-    promover, motivo = registry.decidir_promocion(met, servicio.metricas, S.PROMOCION_MAX_EMPEORA_PTS)
-    registry.guardar_local(modelo, met)
-    await registry.subir(modelo, met)
-    if promover:
-        registry.apuntar_local(modelo.version, met)
-        await registry.promover_remoto(modelo.version, met)
-        servicio.reemplazar(modelo, met)
-    await asyncio.to_thread(run_report.escribir, datos["listings"], datos["closings"], datos["indice"], fv, "reales",
-                            datos["contexto"], S.B_ROUNDS, modelo)
-    log.info("Reentreno mensual %s: %s (%s)", modelo.version, "promovido" if promover else "NO promovido", motivo)
-    return {"version": modelo.version, "promovido": promover, "motivo": motivo, "metricas": met}
+    """Reentreno mensual: mismo proceso que el botón "Entrenar ahora", más el
+    REPORTE.md completo. Si el MdAPE empeora > 2 puntos, no se promueve."""
+    from .entrenamiento import entrenar_con_datos_reales
+    res = await entrenar_con_datos_reales(origen="mensual")
+    if res.get("ok"):
+        from . import pipeline as P  # noqa: F401
+        from .etl import repo
+        from .eval import run_report
+        from .service import servicio
+        datos = await repo.cargar_todo()
+        fv = pd.Timestamp(datetime.now(TZ_MX).date())
+        await asyncio.to_thread(run_report.escribir, datos["listings"], datos["closings"], datos["indice"], fv,
+                                "reales", datos["contexto"], S.B_ROUNDS, servicio.modelo)
+    return res
 
 
 TRABAJOS = {"diario": diario, "semanal": semanal, "mensual": mensual}

@@ -136,6 +136,7 @@ class ModeloAVM:
             "comparables": res_a.comparables if res_a.ok else [],
             "explicacion": explicacion, "advertencias": ens.advertencias,
             "version": self.version, "datos": self.datos,
+            "_valor_calc": ens.valor_calculado, "_escala": ens.escala,
             "_q": res_b.q if res_b.ok else None, "_ln_valores": {k: (math.log(v) if v else None) for k, v in valores.items()},
         }
 
@@ -280,7 +281,10 @@ def evaluar_cierres_oof(oof: pd.DataFrame, cierres: pd.DataFrame | None, base: p
     cierres de OTROS folds (el cierre evaluado nunca entra en su propio δ)."""
     if cierres is None or cierres.empty or oof is None or "listing_id" not in cierres:
         return None
-    c = cierres_ajustados(cierres.dropna(subset=["listing_id"]), base, indice, fv)
+    ligados = cierres.dropna(subset=["listing_id"])
+    if ligados.empty:          # cierres capturados a mano: se miden aparte
+        return None
+    c = cierres_ajustados(ligados, base, indice, fv)
     c = c[["listing_id", "real_aj", "precio_oferta_inicial", "precio_cierre"]].copy()
     c["listing_id"] = c["listing_id"].astype(int)
     c = c.merge(oof, left_on="listing_id", right_on="id", how="inner")
