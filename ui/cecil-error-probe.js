@@ -9,6 +9,13 @@
       button.disabled=true;status.textContent='Comprobando recepción…';
       try {
         const S=window.Sentry;
+        if(S && !S.getClient && !S.getCurrentHub && S.onLoad){
+          await new Promise((resolve,reject)=>{
+            const timer=setTimeout(()=>reject(Error('SDK timeout')),8000);
+            S.onLoad(()=>{clearTimeout(timer);resolve();});
+            S.forceLoad?.();
+          });
+        }
         const client=S?.getClient?.() || S?.getCurrentHub?.().getClient?.();
         if(!client?.on || !S?.captureEvent || !S?.withScope)throw Error('SDK unavailable');
         const eventId=crypto.randomUUID().replaceAll('-','');
