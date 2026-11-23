@@ -49,5 +49,9 @@
     Object.assign(button.style,{minHeight:'44px',font:'600 14px Arial,sans-serif',padding:'10px 16px',background:inside?'#fff':'#ff9257',border:'1px solid #d5d9dd',borderRadius:'8px',cursor:'pointer'});
     button.onclick=()=>{preference(userId,!inside);location.assign(inside?original():prefix+location.pathname.replace(/^\//,'')+location.search+location.hash);};
     bar.append(button);document.body.append(bar);
+    if(inside){
+      const probe=document.createElement('script');probe.src='/ui/cecil-error-probe.js';
+      probe.onload=()=>window.bkCecilErrorProbe?.(bar);document.head.append(probe);
+    }
   };
 })();

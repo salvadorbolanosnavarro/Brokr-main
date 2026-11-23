@@ -17,8 +17,8 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 DESIGN_REF = '086fd40e7953439eceb17822abca7e29aea4bd8e'  # Approved staging snapshot with main #216.
 BASE_REF = 'dac7118c952deeda4f6b9160c05f19b0a42ca8a0'
-EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf'}
-FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor'}
+EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.gif', '.mp4', '.webm'}
+FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor', 'videos'}
 
 
 def git(*args):
@@ -34,6 +34,7 @@ def build(output):
     # Root app changes beyond this pilot must be explicitly integrated first.
     for ref in [BASE_REF, DESIGN_REF]: git('rev-parse', '--verify', ref+'^{commit}')
     allowed_changes={'app-shell.js','main.py','core/config.py','routers/cecil_ui.py','ui/cecil-rollout.js','scripts/build_cecil_canary.py','scripts/cecil_mobile_fields.css','tests/test_cecil_ui.py','tests/check_cecil_rollout.cjs','CECIL_PILOT.md','tests/check_cecil_pilot_state.cjs','.github/workflows/quality.yml','tests/golden/http_contract_effective.json'}
+    allowed_changes.update({'scripts/build_pages_pilot.py','.github/workflows/pages-pilot.yml','ui/cecil-error-probe.js','tests/check_cecil_error_probe.cjs'})
     changed=set(git('diff','--name-only',BASE_REF,'HEAD').decode().splitlines())
     if changed - allowed_changes:
         raise ValueError('Production advanced: integrate it into the design snapshot and update the pinned base before building.')

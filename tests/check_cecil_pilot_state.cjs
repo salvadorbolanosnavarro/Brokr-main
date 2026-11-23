@@ -3,7 +3,7 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 async function check(path,enabled=true){
  let preference=new Map([['sb_token','unchanged-session']]),listeners={},timers=[],nodes=new Map(),redirects=[];
  const location={pathname:path,search:'?qa=pilot',hash:'#section',origin:'https://example.test',replace:v=>redirects.push(v),assign:v=>redirects.push(v)};
- const document={hidden:false,getElementById:id=>nodes.get(id),addEventListener:(name,fn)=>listeners[name]=fn,body:{append:n=>nodes.set(n.id,n)},createElement:tag=>({tag,style:{},children:[],append(...args){this.children.push(...args)},setAttribute(){},remove(){nodes.delete(this.id)}})};
+ const document={hidden:false,head:{append(){}},getElementById:id=>nodes.get(id),addEventListener:(name,fn)=>listeners[name]=fn,body:{append:n=>nodes.set(n.id,n)},createElement:tag=>({tag,style:{},children:[],append(...args){this.children.push(...args)},setAttribute(){},remove(){nodes.delete(this.id)}})};
  const context={window:{},document,location,URL,AbortSignal,localStorage:{getItem:k=>preference.get(k),setItem:(k,v)=>preference.set(k,v)},setInterval:fn=>timers.push(fn),fetch:async()=>({ok:true,json:async()=>({enabled,user_id:'owner'})})};
  vm.createContext(context);vm.runInContext(fs.readFileSync('ui/cecil-rollout.js','utf8'),context);
  await context.window.bkCecilRollout({api:'https://staging.test',token:'private-test',userId:'owner'});

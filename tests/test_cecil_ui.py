@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from routers import cecil_ui as pilot
 from scripts.build_cecil_canary import build
+from scripts.build_pages_pilot import package
 
 class PilotTests(unittest.TestCase):
     def setUp(self):
@@ -21,6 +22,9 @@ class PilotTests(unittest.TestCase):
 
     def test_pilot_state_machine_preserves_session(self):
         subprocess.run(['node','tests/check_cecil_pilot_state.cjs'],cwd=Path(__file__).resolve().parents[1],check=True,capture_output=True)
+
+    def test_error_probe_requires_transport_acceptance_and_strips_private_data(self):
+        subprocess.run(['node','tests/check_cecil_error_probe.cjs'],cwd=Path(__file__).resolve().parents[1],check=True,capture_output=True)
 
     def test_default_off_and_empty_list_fail_closed(self):
         self.assertFalse(self.state().json()['enabled'])
@@ -36,6 +40,22 @@ class PilotTests(unittest.TestCase):
 
     def test_no_session_rejected(self):
         r=self.client.get('/ui/cecil');self.assertEqual(r.status_code,401)
+
+    def test_pages_artifact_keeps_original_and_excludes_backend(self):
+        root=Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as d:
+            output=Path(d)/'pages';package(output)
+            for page in root.glob('*.html'):
+                if not page.name.startswith('_'):
+                    self.assertEqual((output/page.name).read_bytes(),page.read_bytes())
+            self.assertTrue((output/'cecil/index.html').exists())
+            self.assertTrue((output/'ui/cecil-rollout.js').exists())
+            self.assertTrue((output/'intro.mp4').exists())
+            self.assertFalse((output/'main.py').exists())
+            self.assertFalse((output/'core').exists())
+            self.assertFalse((output/'tests').exists())
+            self.assertFalse(list(output.rglob('*.sql')))
+            self.assertFalse((output/'production-pilot-private').exists())
 
     def test_build_preserves_real_endpoints_and_excludes_demo(self):
         with tempfile.TemporaryDirectory() as d:
