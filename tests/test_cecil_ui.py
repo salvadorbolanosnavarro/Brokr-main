@@ -1,4 +1,5 @@
 import asyncio
+import os
 import subprocess
 import tempfile
 import unittest
@@ -10,6 +11,13 @@ from fastapi.testclient import TestClient
 from routers import cecil_ui as pilot
 from scripts.build_cecil_canary import build
 from scripts.build_pages_pilot import package
+
+# The production builder refuses to run when the checkout differs from its pinned
+# base (protection against shipping an outdated design). The staging sync tests
+# a main+staging merge, which always differs; it sets this variable and runs
+# these two tests separately on the untouched main tree. Quality never sets it.
+COMBINED_STAGING_TREE = os.environ.get('CECIL_BUILD_TREE') == 'staging-combined'
+SKIP_COMBINED = unittest.skipIf(COMBINED_STAGING_TREE, 'production build guard runs on the main tree, not main+staging')
 
 class PilotTests(unittest.TestCase):
     def setUp(self):
@@ -41,6 +49,7 @@ class PilotTests(unittest.TestCase):
     def test_no_session_rejected(self):
         r=self.client.get('/ui/cecil');self.assertEqual(r.status_code,401)
 
+    @SKIP_COMBINED
     def test_pages_artifact_keeps_original_and_excludes_backend(self):
         root=Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory() as d:
@@ -57,6 +66,7 @@ class PilotTests(unittest.TestCase):
             self.assertFalse(list(output.rglob('*.sql')))
             self.assertFalse((output/'production-pilot-private').exists())
 
+    @SKIP_COMBINED
     def test_build_preserves_real_endpoints_and_excludes_demo(self):
         with tempfile.TemporaryDirectory() as d:
             output=Path(d)/'cecil';build(output)
