@@ -49,7 +49,6 @@ except Exception:
 # Pillow
 
 
-from routers.cecil_ui import router as cecil_ui_router
 from routers.admin_usage import router as admin_usage_router
 from routers.account_delete import router as account_delete_router
 from routers.avm_legacy import router as avm_legacy_router
@@ -259,7 +258,6 @@ app.include_router(create_chat_claude_router(lambda: {
     "_track_anthropic": _track_anthropic,
     "SHAARK_SYSTEM_PROMPT": SHAARK_SYSTEM_PROMPT,
 }))
-app.include_router(cecil_ui_router)
 app.include_router(facebook_qa_selfcheck_router)
 app.include_router(facebook_create_ad_router)
 
