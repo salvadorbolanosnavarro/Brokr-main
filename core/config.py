@@ -127,6 +127,8 @@ class Settings:
     # en la lista) o "estricto" (solo la lista). Ver core/cors.py.
     cors_modo: str = "observar"
     cors_origenes_extra: str = ""
+    cecil_ui_enabled: bool = False
+    cecil_ui_user_ids: str = ""
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -140,6 +142,8 @@ class Settings:
         wa2_meta_app_secret = os.getenv("META_APP_SECRET", "")
 
         return cls(
+            cecil_ui_enabled=_env_bool("CECIL_UI_ENABLED"),
+            cecil_ui_user_ids=os.getenv("CECIL_UI_USER_IDS", ""),
             supabase_url=supabase_url,
             supabase_anon_key=supabase_anon_key,
             supabase_service_key=supabase_service_key,

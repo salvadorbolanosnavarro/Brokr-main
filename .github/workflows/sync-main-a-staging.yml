@@ -6,10 +6,23 @@ name: Sincronizar main a staging
 on:
   push:
     branches: [main]
+  # Ensayo en cada PR hacia main: integra el resultado del merge del PR en
+  # staging y corre todas las pruebas, sin subir nada ni tocar avisos.
+  pull_request:
+    branches: [main]
   workflow_dispatch:
+    inputs:
+      fuente:
+        description: "Rama a integrar (main salvo para ensayos)"
+        default: main
+        required: true
+      ensayo:
+        description: "Ensayo: prueba la integración sin subir a staging ni tocar avisos"
+        type: boolean
+        default: false
 
 concurrency:
-  group: sync-main-a-staging
+  group: sync-main-a-staging${{ github.event_name == 'pull_request' && format('-pr-{0}', github.event.number) || '' }}
   cancel-in-progress: false
 
 permissions:
@@ -19,6 +32,8 @@ permissions:
 env:
   STAGING_BRANCH: work/redesign-preview-20261003
   ISSUE_TITLE: "Sincronización main → staging detenida"
+  SOURCE_BRANCH: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.number) || inputs.fuente || 'main' }}
+  DRY_RUN: ${{ (github.event_name == 'pull_request' || inputs.ensayo) && 'true' || 'false' }}
 
 jobs:
   sync:
@@ -31,18 +46,26 @@ jobs:
           ref: ${{ env.STAGING_BRANCH }}
           fetch-depth: 0
 
+      - name: Validar fuente
+        run: |
+          if [ "$DRY_RUN" != "true" ] && [ "$SOURCE_BRANCH" != "main" ]; then
+            echo "Solo un ensayo puede integrar una rama distinta de main." >&2
+            exit 1
+          fi
+
       - name: Integrar main
         id: merge
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          if git merge-base --is-ancestor origin/main HEAD; then
+          git fetch origin "$SOURCE_BRANCH"
+          git update-ref refs/sync/source FETCH_HEAD
+          if git merge-base --is-ancestor refs/sync/source HEAD; then
             echo "Staging ya tiene todo main."
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if ! git merge --no-edit -m "Integra de main: $(git log -1 --format=%s origin/main)" origin/main; then
+          if ! git merge --no-edit -m "Integra de main: $(git log -1 --format=%s refs/sync/source)" refs/sync/source; then
             git diff --name-only --diff-filter=U > conflictos.txt
             git merge --abort
             exit 1
@@ -62,6 +85,9 @@ jobs:
         if: steps.merge.outputs.changed == 'true'
         env:
           BROQUER_STAGING_MODE: demo
+          # El constructor de producción de Cecil se niega a correr sobre un
+          # árbol distinto a su base fijada; se prueba abajo sobre main limpio.
+          CECIL_BUILD_TREE: staging-combined
         run: |
           python -m pip install --disable-pip-version-check -r requirements-ci.txt
           python -m compileall -q core routers scripts main.py limites.py push.py whatsapp.py admin_consola.py migrar_fotos.py
@@ -72,8 +98,22 @@ jobs:
           python scripts/check_staging_build.py
           python scripts/build_staging.py
 
-      - name: Subir a staging
+      # Mismas pruebas del constructor de producción que corre Quality, sobre el
+      # árbol exacto de la fuente (sin staging), para no perder la protección
+      # contra versiones desactualizadas.
+      - name: Probar constructor de producción sobre la fuente
         if: steps.merge.outputs.changed == 'true'
+        run: |
+          git worktree add --detach ../fuente refs/sync/source
+          cd ../fuente
+          if [ -f tests/test_cecil_ui.py ]; then
+            python -m unittest -v tests.test_cecil_ui
+          else
+            echo "La fuente no incluye el constructor de Cecil."
+          fi
+
+      - name: Subir a staging
+        if: steps.merge.outputs.changed == 'true' && env.DRY_RUN != 'true'
         run: |
           for intento in 1 2 3; do
             git push origin "HEAD:${STAGING_BRANCH}" && exit 0
@@ -83,7 +123,7 @@ jobs:
           exit 1
 
       - name: Cerrar aviso anterior
-        if: success()
+        if: success() && env.DRY_RUN != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -91,7 +131,7 @@ jobs:
             while read -r n; do gh issue close "$n" --comment "Resuelto: staging ya integra main."; done
 
       - name: Avisar que se detuvo
-        if: failure()
+        if: failure() && env.DRY_RUN != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
