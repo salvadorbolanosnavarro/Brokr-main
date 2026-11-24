@@ -92,6 +92,11 @@
       <!-- Colombia -->
       <label class="imp-check imp-oculto" data-solo="CO"><input type="checkbox" id="imp-reinvierte"/> <span>El dinero de la venta irá a una cuenta AFC/AVC o a pagar el crédito hipotecario del inmueble</span></label>
       <div class="bk-field imp-oculto" data-solo="CO">
+        <label class="bk-label" for="imp-avaluo">Avalúo catastral (opcional)</label>
+        <input class="bk-input" id="imp-avaluo" type="text" inputmode="decimal" placeholder="0"/>
+        <div class="imp-hint">Si el precio es menor, la venta se declara por el avalúo (art. 90 del Estatuto Tributario).</div>
+      </div>
+      <div class="bk-field imp-oculto" data-solo="CO">
         <label class="bk-label" for="imp-uvt">Valor de la UVT</label>
         <input class="bk-input" id="imp-uvt" type="text" inputmode="decimal"/>
       </div>
@@ -123,7 +128,9 @@
 
       <div class="imp-acciones">
         <button type="button" class="bk-btn bk-btn--forest" id="imp-calc">Calcular</button>
+        <a class="bk-btn bk-btn--ghost" href="impuestos-avanzada.html">Calculadora avanzada</a>
       </div>
+      <div class="imp-hint">¿Varios dueños, usufructo, nuda propiedad, herencias o compras en distintas fechas? Usa la calculadora avanzada.</div>
     </form>
 
     <section class="bk-card bk-card--pad bk-card--raise" id="imp-res" aria-live="polite">
@@ -158,6 +165,17 @@ document.addEventListener('DOMContentLoaded', function () {
     var dec = m ? m[1] : '';
     var ent = (m ? v.slice(0, -m[0].length) : v).replace(/[.,]/g, '');
     return Number(ent + (dec ? '.' + dec : '')) || 0;
+  }
+
+  // Índices y factores (ICM, UVT con decimales): aquí "1.120" es 1,12 y no mil
+  // ciento veinte. Antes pasaban por num(), que trata 3 dígitos tras el punto
+  // como miles: un ICM de 1.120 se volvía 1120 y el costo se multiplicaba por mil.
+  function dec(id) {
+    var v = String(g(id).value || '').replace(/[^\d.,]/g, '');
+    if (v.indexOf(',') !== -1 && v.indexOf('.') !== -1) {
+      v = v.lastIndexOf(',') > v.lastIndexOf('.') ? v.replace(/\./g, '').replace(',', '.') : v.replace(/,/g, '');
+    } else v = v.replace(',', '.');
+    return Number(v) || 0;
   }
 
   function moneda() {
@@ -211,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
       venta: num('imp-venta'), costo: num('imp-costo'), mejoras: num('imp-mejoras'),
       fechaCompra: g('imp-fcompra').value, fechaVenta: g('imp-fventa').value,
       casaHabitacion: g('imp-casa').checked, reinvierte: g('imp-reinvierte').checked,
-      uvt: num('imp-uvt'), uit: num('imp-uit'), icm: num('imp-icm'),
+      uvt: num('imp-uvt'), uit: num('imp-uit'), icm: dec('imp-icm'), avaluo: num('imp-avaluo'),
       moneda: moneda(), valorUf: num('imp-uf'), ufUsadas: num('imp-ufusadas'),
     });
     ultimo = r;
