@@ -15,8 +15,10 @@ import tarfile
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-DESIGN_REF = '086fd40e7953439eceb17822abca7e29aea4bd8e'  # Approved staging snapshot with main #216.
-BASE_REF = 'dac7118c952deeda4f6b9160c05f19b0a42ca8a0'
+# Approved staging snapshot 086fd40 (with main #216) + only the tax fix of #231,
+# kept on branch cecil/diseno-impuestos. Previous: design 086fd40, base dac7118.
+DESIGN_REF = 'df2fb751419481bff9057f9dd6c4b0e22b79a68f'
+BASE_REF = '99b71ee3e690ae0367b41ea5b7dc681dec445776'
 EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.gif', '.mp4', '.webm'}
 FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor', 'videos'}
 

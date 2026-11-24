@@ -326,6 +326,7 @@
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
     'impuestos':    'Calculadora de impuestos por venta de inmuebles del país de la cuenta',
+    'impuestos-avanzada': 'Calculadora avanzada de impuestos por venta: varios titulares, usufructo, nuda propiedad, herencias y no residentes',
     'finanzas':     'Finanzas — ingresos, gastos, cuentas, rentabilidad por propiedad y reportes descargables',
     'image-cleaner':'Editor de imágenes — limpieza con IA',
     'video':        'Video — recorrido en video armado con las fotos de la ficha, para reels, stories y feed',
@@ -348,6 +349,7 @@
     'cumplimiento':  { title:'Cumplimiento',           sub:'El expediente de identificación de cada cliente, el control de umbrales y los avisos a la UIF, en un solo lugar.' },
     'firmas':        { title:'Firma electrónica',      sub:'Manda el contrato, cada parte firma desde su celular y te regresa con constancia.' },
     'avm':           { title:'Estimación de valor',    sub:'Avalúo automático con comparables de tu zona.' },
+    'impuestos-avanzada': { title:'Calculadora avanzada', sub:'Varios titulares, usufructo y nuda propiedad, herencias y adquisiciones en distintas fechas.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
     'impuestos':     { title:'Impuestos por venta',    sub:'Lo que paga quien vende un inmueble, con las reglas de tu país.' },
@@ -1418,6 +1420,8 @@ body[data-app="verificador"] .top-header { display: none !important; }
   const activeKey = (document.body.getAttribute('data-app') || 'home').toLowerCase();
   // Pantallas que viven dentro de otro módulo del menú.
   const NAV_ALIAS = { 'crm-ajustes': 'contactos', alertas: 'contactos' };
+  // La calculadora avanzada vive dentro del módulo de impuestos del país (ISR o Impuestos).
+  NAV_ALIAS['impuestos-avanzada'] = window.bkPaisCfg ? bkPaisCfg().impuesto.modulo : 'isr';
   const navKey = NAV_ALIAS[activeKey] || activeKey;
   const activeMod = MODS.find(m => m.key === activeKey) || MODS[0];
 
@@ -4117,6 +4121,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   const BK_PREMIUM_ACTIONS = {
     'isr.html':            ['#calc-btn'],
     'impuestos.html':      ['#imp-calc'],
+    'impuestos-avanzada.html': ['#av-calc'],
     'avm.html':            ['#btn-analizar-ia'],
     'image-cleaner.html':  ['#btn-clean'],
     'contratos.html':      ['#gen-btn'],

@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>Broquer — Calculadora avanzada de impuestos</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<meta name="theme-color" content="#05203C"/><!-- AUDIT-EXEMPT-LINE: meta no acepta var(); espejo de --sky-navy -->
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  /* Calculadora avanzada: varios titulares, usufructo / nuda propiedad,
+     adquisiciones en distintas fechas. Reglas en impuestos-avanzada.js. */
+  .av-scroll { padding: var(--sp-6) var(--sp-7, 28px) var(--sp-8); max-width: 1180px; margin: 0 auto; }
+  @media (max-width: 720px) { .av-scroll { padding: var(--sp-4) var(--sp-3) var(--sp-8); } }
+  .av-stack > * + * { margin-top: var(--sp-5); }
+  .av-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--sp-3); }
+  .av-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--sp-3); flex-wrap: wrap; }
+  .av-h { font-size: var(--fs-h3); margin: var(--sp-2) 0 var(--sp-3); }
+  .av-hint { font-size: var(--fs-xs, var(--fs-sm)); color: var(--mute); margin-top: var(--sp-1); line-height: var(--lh); }
+  .av-check { display: flex; gap: var(--sp-2); align-items: flex-start; font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; margin: var(--sp-2) 0; }
+  .av-check input { margin-top: 3px; }
+  .av-presets { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
+  .av-tit { border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--sp-4); background: var(--paper-2); }
+  .av-tit + .av-tit { margin-top: var(--sp-4); }
+  .av-tit-h { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+  .av-tit-h strong { font-family: var(--font-display); font-size: var(--fs-body); }
+  .av-tramo { border-top: 1px dashed var(--line-2); padding-top: var(--sp-3); margin-top: var(--sp-3); }
+  .av-tramo-h { display: flex; justify-content: space-between; align-items: center; font-size: var(--fs-sm); font-weight: 700; color: var(--ink-2); margin-bottom: var(--sp-2); }
+  .av-x { background: none; border: 0; color: var(--mute); cursor: pointer; font-size: var(--fs-sm); padding: var(--sp-1) var(--sp-2); min-height: 0 !important; }
+  .av-x:hover { color: var(--danger); }
+  .av-cobertura { font-size: var(--fs-sm); color: var(--ink-2); margin-top: var(--sp-3); }
+  .av-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sp-3); margin: var(--sp-3) 0 var(--sp-4); }
+  .av-kpi { border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--sp-3) var(--sp-4); background: var(--bone); }
+  .av-kpi span { display: block; font-size: var(--fs-xs, var(--fs-sm)); color: var(--mute); }
+  .av-kpi b { display: block; font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 800; letter-spacing: -.02em; margin-top: var(--sp-1); font-variant-numeric: tabular-nums; }
+  .av-tabla { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+  .av-tabla td { padding: var(--sp-2) 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .av-tabla td:last-child { text-align: right; white-space: nowrap; padding-left: var(--sp-3); font-variant-numeric: tabular-nums; }
+  .av-tabla tr.sub td { font-weight: 700; }
+  .av-tabla tr.nota td { color: var(--mute); font-weight: 600; padding-top: var(--sp-3); }
+  .av-tabla tr.tot td { font-weight: 800; color: var(--sky-navy); border-bottom: 0; }
+  .av-res-tit { border-top: 1px solid var(--line); padding-top: var(--sp-4); margin-top: var(--sp-4); }
+  .av-res-tit h3 { font-size: var(--fs-body); margin: 0 0 var(--sp-2); display: flex; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; }
+  .av-avisos { margin: var(--sp-3) 0 0; padding-left: var(--sp-5); font-size: var(--fs-sm); color: var(--ink-2); line-height: var(--lh); }
+  .av-avisos li + li { margin-top: var(--sp-1); }
+  .av-legal { margin-top: var(--sp-4); font-size: var(--fs-sm); color: var(--mute); line-height: var(--lh); }
+  .av-acciones { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-4); }
+  .av-oculto { display: none !important; }
+  .av-form .bk-btn { white-space: normal; max-width: 100%; }
+  .av-estado { font-size: var(--fs-sm); color: var(--mute); margin-top: var(--sp-2); min-height: 1.4em; }
+  @media print {
+    .av-form, .av-acciones, .bk-sidebar, .bk-topbar { display: none !important; }
+  }
+</style>
+</head>
+<body data-app="impuestos-avanzada">
+
+<div class="av-scroll av-stack">
+
+  <form class="av-form av-stack" id="av-form" onsubmit="event.preventDefault()">
+
+    <!-- 1. Operación -->
+    <section class="bk-card bk-card--pad bk-card--raise">
+      <div class="av-head">
+        <div>
+          <span class="bk-eyebrow" id="av-eyebrow">Calculadora avanzada</span>
+          <h2 class="av-h" id="av-titulo">Impuestos por venta, con varios titulares</h2>
+        </div>
+        <a class="bk-btn bk-btn--ghost" id="av-simple" href="impuestos.html">Calculadora simple</a>
+      </div>
+      <p class="av-hint" style="margin-top:0">Para copropiedad, sociedad conyugal, usufructo y nuda propiedad, herederos, partes compradas en distintas fechas y vendedores que no residen en el país. Cada titular calcula su impuesto sobre su parte.</p>
+
+      <div class="av-grid" style="margin-top:var(--sp-4)">
+        <div class="bk-field av-oculto" data-solo="AR CL">
+          <label class="bk-label" for="av-moneda">Moneda de la operación</label>
+          <select class="bk-select" id="av-moneda"></select>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="av-precio">Precio total del inmueble (100%)</label>
+          <input class="bk-input" id="av-precio" type="text" inputmode="decimal" placeholder="0"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="av-fventa">Fecha de firma</label>
+          <input class="bk-input" id="av-fventa" type="date"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="av-tipo">Tipo de inmueble</label>
+          <select class="bk-select" id="av-tipo">
+            <option value="casa">Casa o departamento</option>
+            <option value="terreno">Terreno</option>
+            <option value="comercial">Local, oficina o bodega</option>
+          </select>
+        </div>
+        <div class="bk-field av-oculto" data-solo="MX">
+          <label class="bk-label" for="av-pctterreno">% del valor que es terreno</label>
+          <input class="bk-input" id="av-pctterreno" type="text" inputmode="decimal" value="20"/>
+          <div class="av-hint">Sácalo del avalúo o la boleta predial. La construcción se deprecia 3% al año.</div>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="av-avaluo" id="av-avaluo-l">Avalúo o valor de referencia (opcional)</label>
+          <input class="bk-input" id="av-avaluo" type="text" inputmode="decimal" placeholder="0"/>
+        </div>
+      </div>
+
+      <div class="av-grid" style="margin-top:var(--sp-3)">
+        <div class="bk-field">
+          <label class="bk-label" for="av-comision">Comisión de esta venta (con impuestos)</label>
+          <input class="bk-input" id="av-comision" type="text" inputmode="decimal" placeholder="0"/>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="av-gventa">Otros gastos de esta venta</label>
+          <input class="bk-input" id="av-gventa" type="text" inputmode="decimal" placeholder="0"/>
+          <div class="av-hint">Avalúo, honorarios, certificados. Se reparten entre los titulares según su parte.</div>
+        </div>
+        <label class="av-check av-oculto" data-solo="CO"><input type="checkbox" id="av-deducirventa"/> <span>Restar la comisión y los gastos de venta a la utilidad (confírmalo con tu contador)</span></label>
+        <label class="av-check av-oculto" data-solo="CL"><input type="checkbox" id="av-subdivision"/> <span>Departamento acogido a ley de pisos o lote de subdivisión (plazo mínimo de 4 años)</span></label>
+      </div>
+
+      <!-- Valores del país -->
+      <div class="av-grid" style="margin-top:var(--sp-3)">
+        <div class="bk-field av-oculto" data-solo="MX">
+          <label class="bk-label" for="av-udi">Valor de la UDI el día de la firma</label>
+          <input class="bk-input" id="av-udi" type="text" inputmode="decimal" placeholder="Se consulta a Banxico"/>
+        </div>
+        <div class="bk-field av-oculto" data-solo="MX">
+          <label class="bk-label" for="av-isai">Tasa de ISAI del municipio (%)</label>
+          <input class="bk-input" id="av-isai" type="text" inputmode="decimal" value="3"/>
+          <div class="av-hint">Va de 2% a 5% según el municipio (en CDMX es progresiva).</div>
+        </div>
+        <div class="bk-field av-oculto" data-solo="CO">
+          <label class="bk-label" for="av-uvt">Valor de la UVT</label>
+          <input class="bk-input" id="av-uvt" type="text" inputmode="decimal"/>
+        </div>
+        <div class="bk-field av-oculto" data-solo="CO">
+          <label class="bk-label" for="av-notariales">Derechos notariales (%)</label>
+          <input class="bk-input" id="av-notariales" type="text" inputmode="decimal" value="0,3"/>
+        </div>
+        <div class="bk-field av-oculto" data-solo="CO">
+          <label class="bk-label" for="av-registro">Impuesto de registro (%)</label>
+          <input class="bk-input" id="av-registro" type="text" inputmode="decimal" value="1"/>
+        </div>
+        <div class="bk-field av-oculto" data-solo="CO">
+          <label class="bk-label" for="av-dregistro">Derechos de registro (%)</label>
+          <input class="bk-input" id="av-dregistro" type="text" inputmode="decimal" value="0,5"/>
+        </div>
+        <div class="bk-field av-oculto" data-solo="PE">
+          <label class="bk-label" for="av-uit">Valor de la UIT</label>
+          <input class="bk-input" id="av-uit" type="text" inputmode="decimal"/>
+        </div>
+        <div class="bk-field av-oculto" data-solo="AR">
+          <label class="bk-label" for="av-sellos">Impuesto de sellos (%)</label>
+          <input class="bk-input" id="av-sellos" type="text" inputmode="decimal" value="0"/>
+        </div>
+        <div class="bk-field av-oculto" data-solo="AR">
+          <label class="bk-label" for="av-escribania">Honorarios de escribanía (%)</label>
+          <input class="bk-input" id="av-escribania" type="text" inputmode="decimal" value="1,5"/>
+        </div>
+        <div class="bk-field av-oculto" data-solo="CL">
+          <label class="bk-label" for="av-uf">Valor de la UF (en pesos)</label>
+          <input class="bk-input" id="av-uf" type="text" inputmode="decimal" placeholder="Ej. 39.500"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Titulares -->
+    <section class="bk-card bk-card--pad bk-card--raise">
+      <span class="bk-eyebrow">Quién vende</span>
+      <h2 class="av-h">Titulares y sus derechos</h2>
+      <p class="av-hint" style="margin-top:0">Empieza con un caso típico y ajústalo:</p>
+      <div class="av-presets">
+        <button type="button" class="bk-btn bk-btn--ghost" data-preset="uno">Un solo dueño</button>
+        <button type="button" class="bk-btn bk-btn--ghost" data-preset="conyugal">Matrimonio 50/50</button>
+        <button type="button" class="bk-btn bk-btn--ghost" data-preset="usufructo">Usufructo + 2 nudos propietarios</button>
+        <button type="button" class="bk-btn bk-btn--ghost" data-preset="reserva">Venta de nuda propiedad con reserva de usufructo</button>
+        <button type="button" class="bk-btn bk-btn--ghost" data-preset="herederos">3 herederos</button>
+      </div>
+
+      <div id="av-usuf" class="av-oculto" style="margin-top:var(--sp-4)">
+        <div class="av-grid">
+          <div class="bk-field">
+            <label class="bk-label" for="av-usuf-metodo">Cómo se valora el usufructo</label>
+            <select class="bk-select" id="av-usuf-metodo">
+              <option value="pais">Regla del país</option>
+              <option value="manual">Proporción del avalúo o pactada</option>
+              <option value="edad">Por edad (referencia comparada)</option>
+            </select>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="av-usuf-tipo">Tipo de usufructo</label>
+            <select class="bk-select" id="av-usuf-tipo">
+              <option value="vitalicio">Vitalicio</option>
+              <option value="temporal">Temporal (por años)</option>
+            </select>
+          </div>
+          <div class="bk-field av-oculto" id="av-usuf-anios-f">
+            <label class="bk-label" for="av-usuf-anios">Años que le quedan al usufructo</label>
+            <input class="bk-input" id="av-usuf-anios" type="text" inputmode="decimal"/>
+          </div>
+          <div class="bk-field av-oculto" id="av-usuf-pct-f">
+            <label class="bk-label" for="av-usuf-pct">Valor del usufructo (% del inmueble)</label>
+            <input class="bk-input" id="av-usuf-pct" type="text" inputmode="decimal" value="50"/>
+          </div>
+        </div>
+        <div class="av-hint" id="av-usuf-fund"></div>
+      </div>
+
+      <div id="av-titulares" style="margin-top:var(--sp-4)"></div>
+      <div class="av-acciones" style="margin-top:var(--sp-3)">
+        <button type="button" class="bk-btn bk-btn--ghost" id="av-add">+ Agregar titular</button>
+      </div>
+      <div class="av-cobertura" id="av-cobertura"></div>
+    </section>
+
+    <div class="av-acciones">
+      <button type="button" class="bk-btn bk-btn--forest" id="av-calc">Calcular</button>
+      <button type="button" class="bk-btn bk-btn--ghost" id="av-limpiar">Empezar de nuevo</button>
+    </div>
+    <div class="av-estado" id="av-estado" aria-live="polite"></div>
+  </form>
+
+  <!-- 3. Resultado -->
+  <section class="bk-card bk-card--pad bk-card--raise av-oculto" id="av-res" aria-live="polite">
+    <span class="bk-eyebrow">Resultado estimado</span>
+    <h2 class="av-h" id="av-res-titulo">Impuestos de la operación</h2>
+    <div class="av-kpis" id="av-kpis"></div>
+    <ul class="av-avisos" id="av-avisos-op"></ul>
+    <div id="av-res-titulares"></div>
+    <div class="av-res-tit av-oculto" id="av-comprador-box">
+      <h3>Lo que paga el comprador</h3>
+      <table class="av-tabla"><tbody id="av-comprador"></tbody></table>
+    </div>
+    <p class="av-legal">Estimación para preparar la operación. El cálculo definitivo lo hace el notario o escribano con los documentos originales; las tasas y valores cambian cada año. Revísalo con un contador antes de firmar.</p>
+    <div class="av-acciones">
+      <button type="button" class="bk-btn bk-btn--ghost" id="av-copiar">Copiar resumen</button>
+      <button type="button" class="bk-btn bk-btn--ghost" onclick="window.print()">Imprimir o guardar PDF</button>
+    </div>
+  </section>
+</div>
+
+<script src="paises.js" defer></script>
+<script src="impuestos-avanzada.js" defer></script>
+<script src="app-shell.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var g = function (id) { return document.getElementById(id); };
+  var API = window.API_BASE || 'https://api.broquer.app';
+  var CLAVE = 'bk_imp_avanzada_borrador';
+  var ultimo = null;
+  var titulares = [];
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  // Montos: "1.234.567,89" y "1,234,567.89".
+  function monto(v) {
+    v = String(v || '').replace(/[^\d.,]/g, '');
+    var m = v.match(/[.,](\d{1,2})$/);
+    var ent = (m ? v.slice(0, -m[0].length) : v).replace(/[.,]/g, '');
+    return Number(ent + (m ? '.' + m[1] : '')) || 0;
+  }
+  // Índices, factores y porcentajes: "1.120" es 1,12.
+  function decimal(v) {
+    v = String(v || '').replace(/[^\d.,]/g, '');
+    if (v.indexOf(',') !== -1 && v.indexOf('.') !== -1)
+      v = v.lastIndexOf(',') > v.lastIndexOf('.') ? v.replace(/\./g, '').replace(',', '.') : v.replace(/,/g, '');
+    else v = v.replace(',', '.');
+    return Number(v) || 0;
+  }
+  function pais() { return window.bkPais ? bkPais() : 'MX'; }
+  function cfg() { return window.bkPaisCfg ? bkPaisCfg() : { moneda: 'MXN', locale: 'es-MX', nombre: 'México', impuesto: { nombre: 'ISR' } }; }
+  function moneda() { var c = pais(); return (c === 'AR' || c === 'CL') ? g('av-moneda').value : cfg().moneda; }
+  function fmt(v) {
+    if (v === null || v === undefined) return '—';
+    var neg = v < 0, a = Math.abs(v);
+    var s = window.bkDinero ? bkDinero(a, moneda()) : a.toLocaleString(cfg().locale, { maximumFractionDigits: 0 });
+    return neg ? '− ' + s : s;
+  }
+
+  /* ── Textos por país ── */
+  var TXT = {
+    MX: { factor: 'Factor INPC (vacío = se consulta a Banxico)', costo: 'Costo de adquisición', casa: 'Es su casa habitación (vive ahí)',
+          usada: 'Ya usó la exención en los últimos 3 años', avaluo: 'Avalúo (opcional)', simple: 'isr.html' },
+    CO: { factor: 'Factor de reajuste fiscal (art. 73 ET)', costo: 'Costo fiscal de esa parte', casa: 'Es su casa o apartamento de habitación',
+          avaluo: 'Avalúo catastral (opcional)', simple: 'impuestos.html' },
+    PE: { factor: 'Índice de corrección monetaria (ICM)', costo: 'Costo de esa parte', casa: 'Es su casa habitación',
+          avaluo: 'Autoavalúo (opcional)', simple: 'impuestos.html' },
+    AR: { factor: 'Factor de actualización por IPC', costo: 'Costo de esa parte', casa: 'Es su casa-habitación',
+          avaluo: 'Valuación fiscal (opcional)', simple: 'impuestos.html' },
+    CL: { factor: 'Factor de reajuste por IPC', costo: 'Costo de esa parte', casa: '',
+          avaluo: 'Avalúo fiscal (opcional)', simple: 'impuestos.html' },
+  };
+  function txt() { return TXT[pais()] || TXT.MX; }
+
+  /* ── Modelo de titulares ── */
+  function tramo(o) { return Object.assign({ fecha: '', forma: 'compra', pct: 100, costo: '', mejoras: '', gastosAdq: '', factor: '', viejosPesos: false }, o || {}); }
+  function titular(o) {
+    return Object.assign({ nombre: '', derecho: 'pleno', cuota: 100, edad: '', residente: true, representante: false,
+      casaHabitacion: false, exencionUsada: false, reinvierte: false, habitual: false, otrosInmuebles: false,
+      relacionado: false, ufUsadas: '', tasaMarginal: '', tramos: [tramo()] }, o || {});
+  }
+  var PRESETS = {
+    uno: function () { return [titular({ nombre: 'Vendedor' })]; },
+    conyugal: function () { return [titular({ nombre: 'Cónyuge 1', cuota: 50 }), titular({ nombre: 'Cónyuge 2', cuota: 50 })]; },
+    usufructo: function () { return [
+      titular({ nombre: 'Usufructuaria', derecho: 'usufructo', cuota: 100, edad: 75, casaHabitacion: true }),
+      titular({ nombre: 'Nudo propietario 1', derecho: 'nuda', cuota: 50, tramos: [tramo({ forma: 'donacion' })] }),
+      titular({ nombre: 'Nudo propietario 2', derecho: 'nuda', cuota: 50, tramos: [tramo({ forma: 'donacion' })] })]; },
+    reserva: function () { return [titular({ nombre: 'Vendedor (se queda el usufructo)', derecho: 'nuda', cuota: 100 })]; },
+    herederos: function () { return [1, 2, 3].map(function (i) {
+      return titular({ nombre: 'Heredero ' + i, cuota: 33.3333, tramos: [tramo({ forma: 'herencia' })] }); }); },
+  };
+
+  function campo(id, label, valor, extra) {
+    return '<div class="bk-field"><label class="bk-label" for="' + id + '">' + label + '</label>' +
+      '<input class="bk-input" id="' + id + '" type="' + ((extra && extra.type) || 'text') + '"' +
+      ((extra && extra.type === 'date') ? '' : ' inputmode="decimal"') + ' value="' + esc(valor) + '"' +
+      ((extra && extra.ph) ? ' placeholder="' + esc(extra.ph) + '"' : '') + '/>' +
+      ((extra && extra.hint) ? '<div class="av-hint">' + extra.hint + '</div>' : '') + '</div>';
+  }
+  function check(id, label, on) {
+    return '<label class="av-check"><input type="checkbox" id="' + id + '"' + (on ? ' checked' : '') + '/> <span>' + label + '</span></label>';
+  }
+
+  function pintar() {
+    var c = pais(), T = txt();
+    var html = titulares.map(function (t, i) {
+      var p = 't' + i;
+      var opc = function (v, l, sel) { return '<option value="' + v + '"' + (sel === v ? ' selected' : '') + '>' + l + '</option>'; };
+      var h = '<div class="av-tit" data-i="' + i + '">' +
+        '<div class="av-tit-h"><strong>' + esc(t.nombre || 'Titular ' + (i + 1)) + '</strong>' +
+        (titulares.length > 1 ? '<button type="button" class="av-x" data-quitar="' + i + '">Quitar</button>' : '') + '</div>' +
+        '<div class="av-grid">' +
+        '<div class="bk-field"><label class="bk-label" for="' + p + '-nombre">Nombre</label><input class="bk-input" id="' + p + '-nombre" type="text" value="' + esc(t.nombre) + '"/></div>' +
+        '<div class="bk-field"><label class="bk-label" for="' + p + '-derecho">Derecho que vende</label><select class="bk-select" id="' + p + '-derecho">' +
+          opc('pleno', 'Pleno dominio', t.derecho) + opc('nuda', 'Nuda propiedad', t.derecho) + opc('usufructo', 'Usufructo', t.derecho) + opc('uso', 'Uso y habitación', t.derecho) + '</select></div>' +
+        campo(p + '-cuota', 'Cuota de ese derecho (%)', t.cuota, { hint: 'Ej. 50 si es dueño de la mitad.' }) +
+        (t.derecho === 'usufructo' || t.derecho === 'uso' ? campo(p + '-edad', 'Edad del usufructuario', t.edad) : '') +
+        '</div><div class="av-grid">' +
+        check(p + '-noresidente', 'No reside en ' + esc(cfg().nombre), !t.residente) +
+        (c === 'MX' && !t.residente ? check(p + '-representante', 'Tiene representante en México y avalúo (opción del 35% de la ganancia)', t.representante) : '') +
+        (T.casa ? check(p + '-casa', T.casa, t.casaHabitacion) : '') +
+        (c === 'MX' ? check(p + '-usada', T.usada, t.exencionUsada) : '') +
+        (c === 'CO' ? check(p + '-reinvierte', 'El dinero irá a una cuenta AFC/AVC o al crédito hipotecario', t.reinvierte) : '') +
+        (c === 'PE' ? check(p + '-otros', 'Tiene otros inmuebles', t.otrosInmuebles) + check(p + '-habitual', 'Es su tercera venta o más en el año (habitualidad)', t.habitual) : '') +
+        (c === 'CL' ? check(p + '-relacionado', 'El comprador es una persona relacionada', t.relacionado) : '') +
+        '</div><div class="av-grid">' +
+        (c === 'CL' ? campo(p + '-ufusadas', 'UF del tope de 8.000 ya usadas', t.ufUsadas) : '') +
+        (c === 'CL' || c === 'CO' ? campo(p + '-marginal', 'Su tasa marginal de renta (%)', t.tasaMarginal, { hint: c === 'CL' ? 'Para comparar con el 10% y para lo que no cumple el plazo.' : 'Para la parte que tuvo menos de 2 años.' }) : '') +
+        '</div>';
+      t.tramos.forEach(function (k, j) {
+        var q = p + '-k' + j;
+        h += '<div class="av-tramo"><div class="av-tramo-h"><span>Adquisición ' + (j + 1) + '</span>' +
+          (t.tramos.length > 1 ? '<button type="button" class="av-x" data-quitar-tramo="' + i + ':' + j + '">Quitar</button>' : '') + '</div>' +
+          '<div class="av-grid">' +
+          campo(q + '-fecha', c === 'MX' ? 'Fecha (del causante o donante si fue gratuita)' : 'Fecha de adquisición', k.fecha, { type: 'date' }) +
+          '<div class="bk-field"><label class="bk-label" for="' + q + '-forma">Cómo la adquirió</label><select class="bk-select" id="' + q + '-forma">' +
+            opc('compra', 'Compra', k.forma) + opc('herencia', 'Herencia o legado', k.forma) + opc('donacion', 'Donación', k.forma) +
+            opc('adjudicacion', 'Adjudicación (divorcio, disolución)', k.forma) + opc('consolidacion', 'Consolidación del usufructo', k.forma) +
+            opc('construccion', 'Construcción propia', k.forma) + '</select></div>' +
+          (t.tramos.length > 1 ? campo(q + '-pct', '% de su parte que viene de aquí', k.pct) : '') +
+          campo(q + '-costo', T.costo, k.costo, { ph: '0' }) +
+          campo(q + '-mejoras', 'Mejoras comprobables', k.mejoras, { ph: '0' }) +
+          (c !== 'CL' ? campo(q + '-gastos', 'Gastos de esa adquisición', k.gastosAdq, { ph: '0', hint: c === 'MX' ? 'Notario, ISAI y derechos que pagó al comprar.' : 'Notaría, registro e impuestos que pagó al comprar.' }) : '') +
+          campo(q + '-factor', T.factor, k.factor, { ph: c === 'MX' ? 'Automático' : '1' }) +
+          '</div>' +
+          (c === 'MX' && k.fecha && k.fecha < '1993-01-01' ? check(q + '-viejos', 'El costo está en viejos pesos (se divide entre 1,000)', k.viejosPesos) : '') +
+          '</div>';
+      });
+      h += '<div class="av-acciones" style="margin-top:var(--sp-3)"><button type="button" class="bk-btn bk-btn--ghost" data-tramo="' + i + '">+ Otra adquisición en otra fecha</button></div></div>';
+      return h;
+    }).join('');
+    g('av-titulares').innerHTML = html;
+    var desm = titulares.some(function (t) { return t.derecho !== 'pleno'; });
+    g('av-usuf').classList.toggle('av-oculto', !desm);
+    actualizarUsufructo();
+    cobertura();
+  }
+
+  // Lee el DOM al modelo (antes de repintar o calcular).
+  function leer() {
+    titulares.forEach(function (t, i) {
+      var p = 't' + i, v = function (id) { var el = g(p + id); return el ? el.value : undefined; };
+      var ch = function (id, prev) { var el = g(p + id); return el ? el.checked : prev; };
+      if (!g(p + '-nombre')) return;
+      t.nombre = v('-nombre'); t.derecho = v('-derecho'); t.cuota = decimal(v('-cuota'));
+      if (v('-edad') !== undefined) t.edad = decimal(v('-edad'));
+      t.residente = !ch('-noresidente', !t.residente);
+      t.representante = ch('-representante', t.representante);
+      t.casaHabitacion = ch('-casa', t.casaHabitacion); t.exencionUsada = ch('-usada', t.exencionUsada);
+      t.reinvierte = ch('-reinvierte', t.reinvierte); t.otrosInmuebles = ch('-otros', t.otrosInmuebles);
+      t.habitual = ch('-habitual', t.habitual); t.relacionado = ch('-relacionado', t.relacionado);
+      if (v('-ufusadas') !== undefined) t.ufUsadas = v('-ufusadas');
+      if (v('-marginal') !== undefined) t.tasaMarginal = v('-marginal');
+      t.tramos.forEach(function (k, j) {
+        var q = '-k' + j;
+        k.fecha = v(q + '-fecha') || ''; k.forma = v(q + '-forma') || 'compra';
+        if (v(q + '-pct') !== undefined) k.pct = decimal(v(q + '-pct'));
+        k.costo = v(q + '-costo'); k.mejoras = v(q + '-mejoras');
+        if (v(q + '-gastos') !== undefined) k.gastosAdq = v(q + '-gastos');
+        k.factor = v(q + '-factor'); k.viejosPesos = ch(q + '-viejos', k.viejosPesos);
+      });
+    });
+  }
+
+  function escenarioUsufructo() {
+    return { metodo: g('av-usuf-metodo').value, tipo: g('av-usuf-tipo').value,
+             anios: decimal(g('av-usuf-anios').value), pct: decimal(g('av-usuf-pct').value) };
+  }
+  function actualizarUsufructo() {
+    var u = escenarioUsufructo();
+    g('av-usuf-anios-f').classList.toggle('av-oculto', u.tipo !== 'temporal');
+    g('av-usuf-pct-f').classList.toggle('av-oculto', u.metodo !== 'manual');
+    var usuf = titulares.filter(function (t) { return t.derecho === 'usufructo' && t.edad; })[0];
+    if (usuf) u.edad = usuf.edad;
+    if (window.BK_IMP_AVANZADA) {
+      var v = BK_IMP_AVANZADA.valorUsufructo(pais(), u);
+      g('av-usuf-fund').textContent = 'Usufructo ' + Math.round(v.pct * 10000) / 100 + '% · nuda propiedad ' + Math.round((1 - v.pct) * 10000) / 100 + '%. ' + v.fundamento + '.';
+    }
+  }
+  function cobertura() {
+    var prop = 0, goce = 0;
+    titulares.forEach(function (t) {
+      var c = Number(t.cuota) || 0;
+      if (t.derecho === 'pleno') { prop += c; goce += c; }
+      if (t.derecho === 'nuda') prop += c;
+      if (t.derecho === 'usufructo') goce += c;
+    });
+    var r = function (x) { return Math.round(x * 100) / 100; };
+    g('av-cobertura').textContent = 'Propiedad cubierta: ' + r(prop) + '%' +
+      (titulares.some(function (t) { return t.derecho !== 'pleno'; }) ? ' · Usufructo cubierto: ' + r(goce) + '%' : '') +
+      (Math.abs(prop - 100) > 0.05 ? ' — no suma 100%: se calcula solo lo que venden estos titulares.' : '');
+  }
+
+  /* ── México: INPC y UDIS de Banxico (mismos servicios que isr.html) ── */
+  function getJSON(url) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) return r.json().catch(function () { return {}; }).then(function (e) { throw new Error(e.detail || ('No disponible: ' + url)); });
+      return r.json();
+    });
+  }
+  function inpc(anio, mes) { return getJSON(API + '/api/inpc/' + anio + '/' + mes).then(function (d) { return d.valor; }); }
+  function prepararMX(fventa) {
+    var fv = fventa.split('-').map(Number);
+    var mAnt = fv[1] - 1, aAnt = fv[0];
+    if (mAnt < 1) { mAnt = 12; aAnt -= 1; }
+    var trabajos = [];
+    var pVenta = inpc(aAnt, mAnt);
+    titulares.forEach(function (t) {
+      t.tramos.forEach(function (k) {
+        if (decimal(k.factor) || !k.fecha) return;
+        var fa = k.fecha.split('-').map(Number);
+        if (fa[0] < 1982) return;
+        trabajos.push(Promise.all([inpc(fa[0], fa[1]), pVenta]).then(function (x) {
+          k.factorAuto = Math.max(1, Math.floor(x[1] / x[0] * 10000) / 10000);
+        }));
+      });
+    });
+    var udi = decimal(g('av-udi').value) ? Promise.resolve(decimal(g('av-udi').value))
+      : getJSON(API + '/api/udis/' + fventa).then(function (d) { g('av-udi').value = String(d.valor); return d.valor; });
+    trabajos.push(udi);
+    return Promise.all(trabajos);
+  }
+
+  function escenario() {
+    return {
+      precio: monto(g('av-precio').value), fechaVenta: g('av-fventa').value, tipo: g('av-tipo').value,
+      pctTerreno: decimal(g('av-pctterreno').value), avaluo: monto(g('av-avaluo').value),
+      comision: monto(g('av-comision').value), gastosVenta: monto(g('av-gventa').value),
+      deducirGastosVenta: g('av-deducirventa').checked, subdivision: g('av-subdivision').checked,
+      moneda: moneda(), udi: decimal(g('av-udi').value), tasaIsai: g('av-isai').value === '' ? '' : decimal(g('av-isai').value),
+      uvt: monto(g('av-uvt').value), uit: monto(g('av-uit').value), valorUf: monto(g('av-uf').value),
+      notariales: decimal(g('av-notariales').value), registro: decimal(g('av-registro').value), derechosRegistro: decimal(g('av-dregistro').value),
+      sellos: decimal(g('av-sellos').value), escribania: decimal(g('av-escribania').value),
+      usufructo: escenarioUsufructo(),
+      titulares: titulares.map(function (t) {
+        return Object.assign({}, t, {
+          ufUsadas: decimal(t.ufUsadas), tasaMarginal: t.tasaMarginal === '' ? '' : decimal(t.tasaMarginal),
+          tramos: t.tramos.map(function (k) {
+            return { fecha: k.fecha, forma: k.forma, pct: decimal(k.pct), costo: monto(k.costo), mejoras: monto(k.mejoras),
+                     gastosAdq: monto(k.gastosAdq), factor: decimal(k.factor) || k.factorAuto || 0, viejosPesos: k.viejosPesos };
+          }),
+        });
+      }),
+    };
+  }
+
+  function guardar() {
+    try { localStorage.setItem(CLAVE, JSON.stringify({ pais: pais(), titulares: titulares })); } catch (_) {}
+  }
+
+  function calcular() {
+    leer();
+    var c = pais();
+    if (!monto(g('av-precio').value)) { g('av-estado').textContent = 'Escribe el precio del inmueble.'; return; }
+    if (!g('av-fventa').value) { g('av-estado').textContent = 'Escribe la fecha de firma.'; return; }
+    guardar();
+    var listo = Promise.resolve(''), estado = g('av-estado');
+    if (c === 'MX') {
+      estado.textContent = 'Consultando INPC y UDIS en Banxico…';
+      g('av-calc').disabled = true;
+      listo = prepararMX(g('av-fventa').value).then(function () { return ''; }, function (err) {
+        return 'No se pudo consultar Banxico (' + err.message + '). Escribe el factor de cada adquisición y la UDI a mano.';
+      });
+    }
+    listo.then(function (msg) {
+      g('av-calc').disabled = false;
+      estado.textContent = msg;
+      var r = BK_IMP_AVANZADA.calcular(c, escenario());
+      ultimo = r;
+      mostrar(r);
+    });
+  }
+
+  function filas(lineas) {
+    return lineas.map(function (l) {
+      return '<tr' + (l.tipo ? ' class="' + l.tipo + '"' : '') + '><td>' + esc(l.l) + '</td><td>' + (l.tipo === 'nota' ? '' : fmt(l.v)) + '</td></tr>';
+    }).join('');
+  }
+  function mostrar(r) {
+    g('av-res').classList.remove('av-oculto');
+    g('av-res-titulo').textContent = cfg().impuesto.nombre + ' · ' + cfg().nombre;
+    var netos = r.titulares.reduce(function (s, x) { return x.neto === null ? s : s + x.neto; }, 0);
+    g('av-kpis').innerHTML =
+      '<div class="av-kpi"><span>Valor de lo que se vende</span><b>' + fmt(r.vendido) + '</b></div>' +
+      '<div class="av-kpi"><span>Impuestos de los vendedores</span><b>' + (r.totalVendedores === null ? 'Incompleto' : fmt(r.totalVendedores)) + '</b></div>' +
+      '<div class="av-kpi"><span>Les queda a los vendedores</span><b>' + fmt(netos) + '</b></div>' +
+      (r.comprador.length ? '<div class="av-kpi"><span>Impuestos y gastos del comprador</span><b>' + fmt(r.totalComprador) + '</b></div>' : '');
+    var av = (r.usufructo ? ['Usufructo valuado en ' + Math.round(r.usufructo.pct * 10000) / 100 + '%: ' + r.usufructo.fundamento + '.'] : []).concat(r.avisos);
+    g('av-avisos-op').innerHTML = av.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('');
+    g('av-res-titulares').innerHTML = r.titulares.map(function (x) {
+      return '<div class="av-res-tit"><h3><span>' + esc(x.titular.nombre) + '</span><span>' + (x.impuesto === null ? 'Falta un dato' : fmt(x.impuesto)) + '</span></h3>' +
+        '<table class="av-tabla"><tbody>' + filas(x.lineas) +
+        '<tr class="sub"><td>Le queda después de impuestos, comisión y gastos</td><td>' + fmt(x.neto) + '</td></tr></tbody></table>' +
+        (x.avisos.length ? '<ul class="av-avisos">' + x.avisos.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>' : '') + '</div>';
+    }).join('');
+    g('av-comprador-box').classList.toggle('av-oculto', !r.comprador.length);
+    g('av-comprador').innerHTML = filas(r.comprador);
+    g('av-res').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function preparar() {
+    var c = pais(), p = (window.BK_IMP_AVANZADA && BK_IMP_AVANZADA.PARAMETROS[c]) || {};
+    document.querySelectorAll('[data-solo]').forEach(function (el) {
+      el.classList.toggle('av-oculto', el.dataset.solo.split(' ').indexOf(c) === -1);
+    });
+    g('av-eyebrow').textContent = 'Calculadora avanzada · ' + cfg().nombre;
+    g('av-titulo').textContent = cfg().impuesto.nombre + ' con varios titulares';
+    g('av-avaluo-l').textContent = txt().avaluo;
+    g('av-simple').href = txt().simple;
+    var monedas = c === 'CL' ? ['CLP', 'UF'] : c === 'AR' ? ['USD', 'ARS'] : [];
+    var sel = g('av-moneda');
+    if (monedas.length && sel.dataset.pais !== c) {
+      sel.innerHTML = monedas.map(function (m) { return '<option value="' + m + '">' + m + '</option>'; }).join('');
+      sel.dataset.pais = c;
+    }
+    if (p.uvt && !g('av-uvt').value) g('av-uvt').value = p.uvt.toLocaleString(cfg().locale);
+    if (p.uit && !g('av-uit').value) g('av-uit').value = p.uit.toLocaleString(cfg().locale);
+    if (!g('av-fventa').value) g('av-fventa').value = new Date().toISOString().slice(0, 10);
+    if (!titulares.length) {
+      try {
+        var b = JSON.parse(localStorage.getItem(CLAVE) || 'null');
+        if (b && b.pais === c && b.titulares && b.titulares.length) titulares = b.titulares.map(function (t) { return titular(Object.assign({}, t, { tramos: (t.tramos || []).map(tramo) })); });
+      } catch (_) {}
+      if (!titulares.length) titulares = PRESETS.uno();
+    }
+    pintar();
+  }
+
+  /* ── Eventos ── */
+  g('av-titulares').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b) return;
+    leer();
+    if (b.dataset.quitar !== undefined) titulares.splice(+b.dataset.quitar, 1);
+    else if (b.dataset.tramo !== undefined) {
+      var t = titulares[+b.dataset.tramo];
+      if (t.tramos.length === 1) t.tramos[0].pct = 50;
+      t.tramos.push(tramo({ pct: t.tramos.length === 1 ? 50 : 0 }));
+    } else if (b.dataset.quitarTramo !== undefined) {
+      var ij = b.dataset.quitarTramo.split(':');
+      var tt = titulares[+ij[0]]; tt.tramos.splice(+ij[1], 1);
+      if (tt.tramos.length === 1) tt.tramos[0].pct = 100;
+    } else return;
+    pintar();
+  });
+  g('av-titulares').addEventListener('change', function (ev) {
+    // Cambiar el derecho, la residencia o una fecha muestra u oculta campos.
+    if (/-(derecho|noresidente)$/.test(ev.target.id) || (pais() === 'MX' && /-fecha$/.test(ev.target.id))) { leer(); pintar(); }
+    else { leer(); cobertura(); actualizarUsufructo(); }
+  });
+  g('av-titulares').addEventListener('input', function (ev) {
+    if (/-cuota$/.test(ev.target.id)) { leer(); cobertura(); }
+  });
+  document.querySelectorAll('[data-preset]').forEach(function (b) {
+    b.addEventListener('click', function () { titulares = PRESETS[b.dataset.preset](); pintar(); });
+  });
+  g('av-add').addEventListener('click', function () { leer(); titulares.push(titular({ cuota: 0 })); pintar(); });
+  ['av-usuf-metodo', 'av-usuf-tipo', 'av-usuf-anios', 'av-usuf-pct'].forEach(function (id) {
+    g(id).addEventListener('input', actualizarUsufructo);
+    g(id).addEventListener('change', actualizarUsufructo);
+  });
+  g('av-fventa').addEventListener('change', function () { g('av-udi').value = ''; titulares.forEach(function (t) { t.tramos.forEach(function (k) { delete k.factorAuto; }); }); });
+  g('av-calc').addEventListener('click', calcular);
+  g('av-limpiar').addEventListener('click', function () {
+    titulares = PRESETS.uno();
+    try { localStorage.removeItem(CLAVE); } catch (_) {}
+    g('av-res').classList.add('av-oculto');
+    pintar();
+  });
+  g('av-copiar').addEventListener('click', function () {
+    if (!ultimo) return;
+    var out = [cfg().impuesto.nombre + ' — calculadora avanzada Broquer', 'Valor vendido: ' + fmt(ultimo.vendido),
+               'Impuestos de los vendedores: ' + (ultimo.totalVendedores === null ? 'incompleto' : fmt(ultimo.totalVendedores))];
+    ultimo.titulares.forEach(function (x) {
+      out.push('', x.titular.nombre + ': ' + (x.impuesto === null ? 'falta un dato' : fmt(x.impuesto)));
+      x.lineas.forEach(function (l) { out.push('  ' + l.l + (l.tipo === 'nota' ? '' : ': ' + fmt(l.v))); });
+    });
+    if (ultimo.comprador.length) { out.push('', 'Comprador:'); ultimo.comprador.forEach(function (l) { out.push('  ' + l.l + ': ' + fmt(l.v)); }); }
+    try { navigator.clipboard.writeText(out.join('\n')); } catch (_) {}
+    if (window.toast) toast('Resumen copiado.', 'success');
+  });
+
+  preparar();
+  document.addEventListener('bk:pais', function () { titulares = []; preparar(); if (ultimo) g('av-res').classList.add('av-oculto'); });
+});
+</script>
+</body>
+</html>
