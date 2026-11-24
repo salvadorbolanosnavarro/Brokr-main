@@ -781,9 +781,24 @@ html, body {
       </div></div>
     </div>
 
-    <!-- Hidden defaults: el agente ya no llena exención aquí — se muestra como leyenda en resultados -->
-    <select id="f-pri" style="display:none"><option value="si" selected>Sí</option></select>
-    <select id="f-exp" style="display:none"><option value="nose" selected>No lo sé</option></select>
+    <!-- Exención de casa habitación (art. 93 fr. XIX). Antes estaba oculta con
+         "No lo sé" fijo, así que la calculadora NUNCA aplicaba la exención aunque
+         el vendedor viviera ahí. El valor por defecto sigue siendo conservador. -->
+    <div class="card anim d4" id="sec-exencion">
+      <div class="card-label">Exención de casa habitación <span class="card-label-opt">art. 93 fr. XIX LISR</span></div>
+      <div class="row1"><div class="field">
+        <label for="f-exp">¿Es la casa habitación del vendedor y no ha usado esta exención en los últimos 3 años?</label>
+        <select id="f-exp">
+          <option value="nose" selected>No lo sé — calcular sin exención</option>
+          <option value="no">Sí — vive ahí y no la ha usado</option>
+          <option value="si">No — ya la usó en los últimos 3 años</option>
+        </select>
+        <span class="field-hint">Exenta la venta hasta 700,000 UDIS del <strong>precio</strong> (no de la ganancia). Si el precio es mayor, solo grava la ganancia del excedente. El notario pedirá comprobantes de domicilio (credencial INE, recibos) a nombre del vendedor.</span>
+      </div></div>
+      <select id="f-pri" style="display:none"><option value="si" selected>Sí</option><option value="no">No</option></select>
+    </div>
+
+    <div class="field-hint" style="margin:0 0 12px">¿Varios dueños, usufructo y nuda propiedad, herederos o partes compradas en distintas fechas? <a href="impuestos-avanzada.html" style="color:var(--forest-2);font-weight:700">Abre la calculadora avanzada →</a></div>
 
     <!-- Botón -->
     <button id="calc-btn" class="btn-calc anim d6" onclick="calcISR()">
@@ -986,15 +1001,37 @@ function getAnosTranscurridos(mesC, anioC, mesV, anioV) {
 }
 
 function getTablaISR(anioVenta) { if(anioVenta<=2024) return TABLA_ISR_2024; if(anioVenta===2025) return TABLA_ISR_2025; return TABLA_ISR; }
+// Art. 126 LISR: el pago provisional que calcula y entera el notario NO usa la
+// tarifa anual. Usa la del art. 96 "sumando las cantidades ... que resulten para
+// cada uno de los meses del año en que se efectúe la enajenación": tarifa mensual
+// × número de mes de la firma. La tarifa mensual es la anual ÷ 12, así que la
+// acumulada al mes m es la anual × m/12 (en diciembre coincide con la anual).
+// Antes se usaba siempre la anual, lo que SUBESTIMABA el ISR de las ventas
+// firmadas antes de diciembre (una venta en marzo usa la tarifa de 3 meses).
+function getTarifaAlMes(anioVenta, mesVenta) {
+  const m = Math.max(1, Math.min(12, parseInt(mesVenta) || 12));
+  return getTablaISR(anioVenta).map((t, i) => ({
+    li: i === 0 ? 0.01 : Math.round(t.li / 12 * m * 100) / 100,
+    ls: t.ls === Infinity ? Infinity : Math.round(t.ls / 12 * m * 100) / 100,
+    cf: Math.round(t.cf / 12 * m * 100) / 100,
+    tasa: t.tasa,
+  }));
+}
 function calcTablaProgresiva(tabla, base) {
   if (base<=0) return 0;
-  for (const t of tabla) { if (base>=t.li && base<=t.ls) return t.cf+(base-t.li)*t.tasa; }
-  return 0;
+  // Se busca el último renglón cuyo límite inferior no rebase la base: así los
+  // centavos entre el límite superior de un renglón y el inferior del siguiente
+  // (ej. 10,135.115) no devuelven 0.
+  let fila = tabla[0];
+  for (const t of tabla) { if (base>=t.li) fila=t; }
+  return fila.cf+Math.max(0,base-fila.li)*fila.tasa;
 }
 
 function onTipoChange() {
   const v = g('f-tipo').value;
   const ivaN=g('iva-note'); if(ivaN) ivaN.style.display = v==='comercial'?'block':'none';
+  const sex = g('sec-exencion');
+  if (sex) sex.style.display = v==='casa'?'block':'none';
   const stc = g('sec-terreno-const');
   if (stc) stc.style.display = v==='terreno'?'none':'block';
 }
@@ -1243,19 +1280,26 @@ async function calcISR() {
   let baseGrav=0,isrTotal=0,exenta=false,exentaParcial=false;
   let ganAcum=0,isrAcum=0,tasaEfec=0,nota='';
 
+  // Art. 93 fr. XIX inciso a) LISR: el tope de 700,000 UDIS se compara contra la
+  // CONTRAPRESTACIÓN (el precio que recibe este vendedor), NO contra la ganancia.
+  // Si el precio rebasa el tope, solo grava la ganancia del excedente: las
+  // deducciones se toman "en la proporción que resulte de dividir el excedente
+  // entre el monto de la contraprestación obtenida". Antes se comparaba la
+  // ganancia contra el tope, lo que exentaba de más en ventas caras.
+  let propGravada=1;
   if (ganTotal<=0) {
     nota='Pérdida fiscal — sin ISR. Deducible en declaración anual (art. 121 LISR).';
   } else if (tipo==='casa') {
     const pri=g('f-pri').value, exp=g('f-exp').value;
     if (pri==='si'&&exp==='no') {
-      if (ganTotal<=LIMITE_EX){exenta=true;nota='Exención total — ganancia dentro de 700,000 UDIS ('+fmt(LIMITE_EX)+'). Art. 93 fr. XIX LISR.';}
-      else{exentaParcial=true;baseGrav=ganTotal-LIMITE_EX;nota='Exención parcial: primeros '+fmt(LIMITE_EX)+' libres. Solo grava el excedente.';}
+      if (venta<=LIMITE_EX){exenta=true;nota='Exención total — el precio ('+fmt(venta)+') no rebasa 700,000 UDIS ('+fmt(LIMITE_EX)+'). Art. 93 fr. XIX LISR.';}
+      else{exentaParcial=true;propGravada=(venta-LIMITE_EX)/venta;baseGrav=ganTotal*propGravada;nota='Exención parcial: el precio rebasa 700,000 UDIS ('+fmt(LIMITE_EX)+'). Grava solo la ganancia del excedente: '+fmt(venta-LIMITE_EX)+' ÷ '+fmt(venta)+' = '+(propGravada*100).toFixed(2)+'% de la ganancia (art. 93 fr. XIX).';}
     } else if (exp==='si'){baseGrav=ganTotal;nota='Exención no aplicable: ya utilizada en los últimos 3 años (art. 93 fr. XIX LISR).';}
     else{baseGrav=ganTotal;nota=exp==='nose'?'No confirmada exención — verificar historial con el vendedor.':'No califica como casa habitación principal.';}
   } else { baseGrav=ganTotal; }
 
   if (baseGrav>0) {
-    const tabla=getTablaISR(anioV);
+    const tabla=getTarifaAlMes(anioV, mesV);
     ganAcum=baseGrav/anios;
     isrAcum=calcTablaProgresiva(tabla,ganAcum);
     tasaEfec=ganAcum>0?isrAcum/ganAcum:0;
@@ -1278,7 +1322,7 @@ async function calcISR() {
     ivaMonto=ivaBase*0.16;
   }
 
-  _isrData={tipo,formaAdq,pctCopro,venta,compra,compraCapturada,reconversion,aniosDeprec,costoAct,costoFinal,pisoAplicado,depPct,mej,mejA,com,esc,deducTotal,deducFinal,ganTotal,factor,factorINPC,factorTabla,factorUsado,inpcAdq,inpcVenta,mesC,anioC,mesV,anioV,mesEnajINPC,anioEnajINPC,inpcVentaFallback,inpcVentaMesSolicitado,inpcVentaAnioSolicitado,mN,baseGrav,ganAcum,isrAcum,isrTotal,isrFederal,isrEstatal,anios,tasaEfec,tasaEfecPct,exenta,exentaParcial,nota,preAnio1981,LIMITE_EX,debugTerreno,ivaBase,ivaMonto};
+  _isrData={propGravada,tipo,formaAdq,pctCopro,venta,compra,compraCapturada,reconversion,aniosDeprec,costoAct,costoFinal,pisoAplicado,depPct,mej,mejA,com,esc,deducTotal,deducFinal,ganTotal,factor,factorINPC,factorTabla,factorUsado,inpcAdq,inpcVenta,mesC,anioC,mesV,anioV,mesEnajINPC,anioEnajINPC,inpcVentaFallback,inpcVentaMesSolicitado,inpcVentaAnioSolicitado,mN,baseGrav,ganAcum,isrAcum,isrTotal,isrFederal,isrEstatal,anios,tasaEfec,tasaEfecPct,exenta,exentaParcial,nota,preAnio1981,LIMITE_EX,debugTerreno,ivaBase,ivaMonto};
   renderResult(_isrData);
 }
 
@@ -1337,13 +1381,13 @@ function renderResult(d) {
   bd+=`<div class="br tot"><span class="bl">${d.ganTotal>=0?'Ganancia total':'Pérdida fiscal'}</span><span class="bv">${fmt(Math.abs(d.ganTotal))}</span></div>`;
 
   if(!d.exenta&&d.ganTotal>0&&d.exentaParcial){
-    bd+=`<div class="br sub"><span class="bl">Exención 700,000 UDIS</span><span class="bv">− ${fmt(d.LIMITE_EX)}</span></div>`;
+    bd+=`<div class="br sub"><span class="bl">Exención 700,000 UDIS sobre el precio (${fmt(d.LIMITE_EX)}) — grava ${(d.propGravada*100).toFixed(2)}% de la ganancia</span><span class="bv">− ${fmt(d.ganTotal-d.baseGrav)}</span></div>`;
     bd+=`<div class="br tot"><span class="bl">Base gravable</span><span class="bv">${fmt(d.baseGrav)}</span></div>`;
   }
   if(!d.exenta&&d.baseGrav>0){
     bd+=`<div class="br"><span class="bl">Años de tenencia (art. 120)</span><span class="bv">${d.anios}</span></div>`;
     bd+=`<div class="br sub"><span class="bl">Ganancia acumulable (÷ ${d.anios} años)</span><span class="bv">${fmt(d.ganAcum)}</span></div>`;
-    bd+=`<div class="br sub"><span class="bl">ISR s/ ganancia acumulable (art. 126 LISR)</span><span class="bv">${fmt(d.isrAcum)}</span></div>`;
+    bd+=`<div class="br sub"><span class="bl">ISR s/ ganancia acumulable — tarifa art. 96 acumulada a ${d.mN[d.mesV]} (${d.mesV} ${d.mesV===1?'mes':'meses'}, art. 126 LISR)</span><span class="bv">${fmt(d.isrAcum)}</span></div>`;
     bd+=`<div class="br sub"><span class="bl">Tasa efectiva</span><span class="bv">${(d.tasaEfec*100).toFixed(4)}%</span></div>`;
     bd+=`<div class="br tot"><span class="bl">ISR total (ISR acumulable × ${d.anios} años)</span><span class="bv">${fmt(d.isrTotal)}</span></div>`;
     bd+=`<div class="br"><span class="bl">ISR Entidad Federativa 5% (art. 127)</span><span class="bv">${fmt(d.isrEstatal)}</span></div>`;

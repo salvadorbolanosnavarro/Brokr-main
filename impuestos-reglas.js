@@ -41,16 +41,20 @@
     /* Colombia — ganancia ocasional (ET arts. 299-311-1, Ley 2277 de 2022). */
     CO: function (d) {
       var p = PARAMETROS.CO, uvt = n(d.uvt) || p.uvt;
-      var venta = n(d.venta), costo = n(d.costo) + n(d.mejoras);
+      // Art. 90 ET: el valor de enajenación no puede ser menor al avalúo catastral.
+      var porAvaluo = n(d.avaluo) > n(d.venta);
+      var venta = porAvaluo ? n(d.avaluo) : n(d.venta), costo = n(d.costo) + n(d.mejoras);
       var utilidad = Math.max(0, venta - costo);
       var t = anios(d.fechaCompra, d.fechaVenta);
       var retencion = venta * p.retencion;
       var lineas = [
-        { l: 'Precio de venta', v: venta },
+        { l: porAvaluo ? 'Valor de venta (avalúo catastral, art. 90 ET)' : 'Precio de venta', v: venta },
         { l: 'Costo fiscal (compra + mejoras)', v: -costo },
         { l: 'Utilidad', v: utilidad, tipo: 'sub' },
       ];
       var avisos = [];
+      if (porAvaluo) avisos.push('El precio es menor al avalúo catastral: se usa el avalúo como valor de venta (art. 90 del Estatuto Tributario).');
+      if (t === null) avisos.push('Escribe la fecha de compra: si tuviste el inmueble menos de 2 años no es ganancia ocasional sino renta ordinaria.');
       if (t !== null && t < 2) {
         avisos.push('Tuviste el inmueble menos de 2 años: la utilidad no es ganancia ocasional, se suma a tu renta ordinaria del año y paga con la tarifa progresiva (0% a 39%). Aquí solo se muestra la utilidad.');
         lineas.push({ l: 'Retención en la fuente en notaría (1% del precio, se descuenta en tu declaración)', v: retencion });
@@ -73,6 +77,7 @@
     /* Perú — renta de segunda categoría (LIR art. 2 y 36; 5% efectivo). */
     PE: function (d) {
       var p = PARAMETROS.PE, uit = n(d.uit) || p.uit;
+      var t = anios(d.fechaCompra, d.fechaVenta);
       var venta = n(d.venta);
       var icm = n(d.icm) || 1;
       var costo = n(d.costo) * icm + n(d.mejoras);
@@ -88,10 +93,13 @@
       if (antesDe(d.fechaCompra, '2004-01-01')) {
         impuesto = 0;
         avisos.unshift('Comprado antes del 1 de enero de 2004: la ganancia de una persona natural no está gravada.');
-      } else if (d.casaHabitacion) {
+      } else if (d.casaHabitacion && t !== null && t >= 2) {
         impuesto = 0;
-        avisos.unshift('La venta de tu casa habitación no paga impuesto a la renta. Debe haber sido tu vivienda y no haberse usado para un negocio; si tienes varias, solo una califica.');
+        avisos.unshift('La venta de tu casa habitación no paga impuesto a la renta (LIR art. 2 inc. c; Reglamento art. 1-A): la tuviste al menos 2 años. Si tienes varios inmuebles, solo califica el que queda como único después de vender los demás.');
       } else {
+        if (d.casaHabitacion) avisos.unshift(t === null
+          ? 'Escribe la fecha de compra: la casa habitación solo queda inafecta si la tuviste al menos 2 años (Reglamento LIR art. 1-A). Mientras tanto se calcula el 5%.'
+          : 'La tuviste menos de 2 años: aunque sea tu casa habitación, la ganancia paga el 5% (Reglamento LIR art. 1-A).');
         impuesto = ganancia * p.tasa;
       }
       lineas.push({ l: 'Impuesto a la renta (5% de la ganancia)', v: impuesto, tipo: 'tot' });
@@ -155,7 +163,13 @@
         lineas.push({ l: 'Impuesto', v: null, tipo: 'tot' });
         return { impuesto: null, base: mayor, lineas: lineas, avisos: avisos };
       }
-      if (!enUf && !uf) avisos.push('Escribe el valor de la UF para aplicar el tope de 8.000 UF.');
+      if (!enUf && !uf) {
+        // Sin el valor de la UF no se puede convertir el tope a pesos: antes se
+        // gravaba TODO el mayor valor al 10%, como si no existiera el tope.
+        avisos.push('Escribe el valor de la UF para aplicar el tope de 8.000 UF: sin él no se puede calcular cuánto queda exento.');
+        lineas.push({ l: 'Impuesto', v: null, tipo: 'tot' });
+        return { impuesto: null, base: mayor, lineas: lineas, avisos: avisos };
+      }
       var exento = Math.min(mayor, disponible);
       var exceso = mayor - exento;
       var impuesto = exceso * p.tasaUnica;
