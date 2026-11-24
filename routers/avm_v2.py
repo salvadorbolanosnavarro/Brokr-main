@@ -41,6 +41,13 @@ def _repo():
 MSG_AMPLIA = "Esa dirección solo ubica la ciudad. Escribe al menos la colonia (mejor calle y número) o elige una sugerencia."
 
 
+def _en_vivo_disponible() -> bool:
+    """El modo en vivo necesita el lector de portales (Firecrawl) y Google
+    para ubicar los anuncios."""
+    from core.legacy_main_config import legacy_main_settings
+    return bool(legacy_main_settings.firecrawl_api_key and settings.google_places_key)
+
+
 async def geocodificar(direccion: str):
     """None si no se encontró; 'amplia' si solo se ubicó la ciudad."""
     from avm.service import UbicacionAmplia, geocodificar as _g
@@ -135,7 +142,9 @@ async def estado():
         "lectura_descripciones": bool(settings.groq_api_key or settings.anthropic_api_key),
         "recoleccion_diaria": bool(settings.avm_v2_jobs),
     }
-    return {"activo": settings.avm_v2_enabled, **info, "fuentes": fuentes}
+    modo = "modelo" if info.get("datos") == "reales" else ("en_vivo" if _en_vivo_disponible() else
+                                                          ("demo" if info.get("datos") else "no_disponible"))
+    return {"activo": settings.avm_v2_enabled, **info, "modo": modo, "fuentes": fuentes}
 
 
 @router.post("/estimar")
@@ -147,8 +156,13 @@ async def estimar(req: EstimarRequest, request: Request):
         raise HTTPException(503, "El AVM v2 no está disponible en este servidor.") from None
     if servicio.modelo is None:
         await servicio.cargar()
-    if servicio.modelo is None:
-        raise HTTPException(503, "El modelo v2 todavía no está entrenado. Usa la opinión de valor actual mientras tanto.")
+    # Modelo entrenado con datos reales → respuesta en milisegundos. Si no lo
+    # hay, modo en vivo: anuncios reales leídos ahora mismo (tarda como el AVM
+    # actual). La demo sintética queda solo como último recurso.
+    modo = "modelo" if getattr(servicio.modelo, "datos", None) == "reales" else (
+        "en_vivo" if _en_vivo_disponible() else ("modelo" if servicio.modelo is not None else None))
+    if modo is None:
+        raise HTTPException(503, "El AVM v2 no tiene con qué calcular en este servidor. Usa la opinión de valor actual.")
     lat, lon, precision = req.lat, req.lon, "exacta"
     if lat is None or lon is None:
         geo = await geocodificar(req.direccion or "")
@@ -168,8 +182,18 @@ async def estimar(req: EstimarRequest, request: Request):
         "cajones": a.cajones, "regimen": a.regimen,
     }
     try:
-        resultado = await asyncio.to_thread(servicio.estimar, sujeto)
+        if modo == "en_vivo":
+            from avm import en_vivo
+            from avm.service import _limpiar_salida
+            resultado = _limpiar_salida(await en_vivo.estimar(sujeto))
+        else:
+            resultado = await asyncio.to_thread(servicio.estimar, sujeto)
+    except HTTPException:
+        raise
     except Exception as exc:
+        if type(exc).__name__ == "SinComparables":
+            raise HTTPException(422, "Hoy no encontré suficientes anuncios en venta parecidos en esa zona para "
+                                     "valuar. Prueba con la colonia de al lado o usa la opinión de valor actual.") from None
         log.exception("AVM v2 falló: %s", exc)
         raise HTTPException(500, "No se pudo calcular la estimación.") from None
     if precision == "aproximada":

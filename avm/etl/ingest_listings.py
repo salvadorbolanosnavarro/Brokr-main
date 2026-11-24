@@ -97,6 +97,44 @@ def parsear_bloque(page_text: str, tipo_hint: str | None = None) -> list[dict]:
     return [a for a in out if a["tipo"]]
 
 
+RE_JSONLD = re.compile(r"DATO ESTRUCTURADO JSON-LD \(alta confianza\): (.+)")
+
+
+def parsear_json_ld(page_text: str, url: str, tipo_hint: str | None) -> list[dict]:
+    """Páginas leídas sin Firecrawl traen el resumen JSON-LD del portal. Solo
+    se usa si la página es el detalle de UN anuncio (un único bloque con
+    precio y superficie): en listados no hay forma segura de separar datos."""
+    bloques = RE_JSONLD.findall(page_text or "")
+    if len(bloques) != 1 or not url.startswith("http"):
+        return []
+    kv = {}
+    for parte in bloques[0].split("; "):
+        if "=" in parte:
+            k, v = parte.split("=", 1)
+            kv[k.strip()] = v.strip()
+    precio_txt = kv.get("precio", "")
+    moneda = "USD" if "USD" in precio_txt.upper() else "MXN"
+    precio = _num(precio_txt.split(" ")[0]) if precio_txt else None
+    sup = _num(kv.get("superficie"))
+    if not precio or not sup:
+        return []
+    nombre = kv.get("nombre", "")
+    tipo = tipo_hint
+    for t, rx in RE_TIPO:
+        if rx.search(nombre):
+            tipo = t
+            break
+    if not tipo:
+        return []
+    return [{
+        "url": url.split("?")[0], "fuente": fuente_de(url), "tipo": tipo,
+        "operacion": "renta" if "renta" in nombre.lower() else "venta", "precio": precio, "moneda": moneda,
+        "m2_construidos": None if tipo == "terreno" else sup, "m2_terreno": sup if tipo == "terreno" else None,
+        "recamaras": None, "banos": None, "estacionamientos": None,
+        "ubicacion": kv.get("direccion", ""), "titulo": nombre,
+    }]
+
+
 def urls_portal(ciudad: dict, tipo: str, paginas: int = PAGINAS_POR_TIPO) -> list[str]:
     out = []
     i24, viv = TIPO_PORTAL[tipo]
