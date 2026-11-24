@@ -29,6 +29,15 @@ en `impuestos-reglas.js`. Los valores anuales (UVT, UIT, UF) se editan en la
 pantalla; los valores por defecto están en `PARAMETROS` y hay que actualizarlos
 cada año.
 
+**Calculadora avanzada** (`impuestos-avanzada.html`, reglas en
+`impuestos-avanzada.js`, para los 5 países): varios titulares, cada uno con su
+derecho (pleno dominio, nuda propiedad, usufructo, uso y habitación) y su
+cuota; adquisiciones en distintas fechas y formas (compra, herencia, donación,
+adjudicación, consolidación del usufructo); no residentes; avalúo de
+referencia; gastos de venta; impuestos del comprador. El usufructo se valora
+con la regla de cada país (MX 50%, CO art. 303 ET, CL Ley 16.271 por edad) o
+con la proporción pactada. Pruebas: `tests/test_impuestos_avanzada.py`.
+
 Fuera de México, Cumplimiento no genera avisos en XML: lleva el expediente
 del cliente (sin CURP), las operaciones con un **monto de alerta interna**
 que cada agencia ajusta, las operaciones inusuales y la bitácora. Los
