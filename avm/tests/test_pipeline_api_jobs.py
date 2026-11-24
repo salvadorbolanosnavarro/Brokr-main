@@ -161,3 +161,30 @@ def test_api_cierre_exige_ubicacion(cliente):
     r = cliente.post("/avm/v2/cierre", json={"tipo": "casa", "precio_cierre": 3e6, "fecha_cierre": "2026-11-01",
                                              "m2_construidos": 150}, headers={"Authorization": "Bearer ok"})
     assert r.status_code == 422
+
+
+def test_api_usa_en_vivo_sin_modelo_real(cliente, monkeypatch):
+    import routers.avm_v2 as api
+    from avm import en_vivo
+    monkeypatch.setattr(api, "_en_vivo_disponible", lambda: True)
+    llamado = {}
+
+    async def falso(sujeto):
+        llamado["si"] = True
+        return {"emitido": True, "valor": 3e6, "rango": (2.7e6, 3.3e6), "confianza": "Media", "ancho_relativo": 0.2,
+                "delta": 0.06, "delta_n": 0, "segmento": "residencial", "ciudad": "Morelia",
+                "motores": {k: {"nombre": k, "ok": k != "B", "valor": 3e6 if k != "B" else None, "peso": 0.5}
+                            for k in "ABC"},
+                "comparables": [], "explicacion": ["x"], "advertencias": [], "version": "v2-en-vivo",
+                "datos": "en_vivo", "anuncios_leidos": 14}
+    monkeypatch.setattr(en_vivo, "estimar", falso)
+    cuerpo = {"lat": 19.70, "lon": -101.19, "tipo": "casa", "m2_construidos": 160}
+    r = cliente.post("/avm/v2/estimar", json=cuerpo, headers={"Authorization": "Bearer ok"})
+    assert r.status_code == 200 and r.json()["datos"] == "en_vivo" and r.json()["anuncios_leidos"] == 14
+    assert llamado
+
+    async def vacio(sujeto):
+        raise en_vivo.SinComparables(0)
+    monkeypatch.setattr(en_vivo, "estimar", vacio)
+    r = cliente.post("/avm/v2/estimar", json=cuerpo, headers={"Authorization": "Bearer ok"})
+    assert r.status_code == 422 and "anuncios" in r.json()["detail"]

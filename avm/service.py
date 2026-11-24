@@ -17,6 +17,11 @@ log = logging.getLogger("broquer.avm_v2")
 GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 
 
+def _en_vivo_disponible() -> bool:
+    from core.legacy_main_config import legacy_main_settings
+    return bool(legacy_main_settings.firecrawl_api_key and settings.google_places_key)
+
+
 class Servicio:
     def __init__(self):
         self.modelo = None
@@ -31,7 +36,7 @@ class Servicio:
             modelo, met = await asyncio.to_thread(registry.cargar_local)
             if modelo is None:
                 modelo, met = await registry.descargar_actual()
-            if modelo is None and settings.avm_v2_demo:
+            if modelo is None and settings.avm_v2_demo and not _en_vivo_disponible():
                 # Solo staging: modelo de demostración con datos sintéticos,
                 # marcado como tal en cada respuesta.
                 from . import pipeline, synthetic
@@ -172,5 +177,6 @@ def _limpiar_salida(r: dict) -> dict:
         "advertencias": r["advertencias"],
         "version": r["version"],
         "datos": r["datos"],
+        "anuncios_leidos": r.get("anuncios_leidos"),
         "tipo_documento": "Opinión Comercial de Valor",
     }

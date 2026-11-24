@@ -7,6 +7,7 @@
 (function () {
   'use strict';
   var BASE = window.API_BASE || 'https://api.broquer.app';
+  var modoActual = null;
   var TIPOS = [['casa', 'Casa'], ['depto', 'Departamento'], ['terreno', 'Terreno'], ['local', 'Local comercial']];
   var CONSERVACION = [['5', 'Excelente / nueva'], ['4', 'Muy buena'], ['3', 'Buena'], ['2', 'Regular'], ['1', 'Mala']];
   var AMENIDADES = [['jardin', 'Jardín'], ['alberca', 'Alberca'], ['roof_garden', 'Roof garden'],
@@ -118,8 +119,10 @@
       cuerpo.textContent = '';
       var m = d.modelo || {};
       cuerpo.appendChild(el('p', 'avm2-nota', m.datos === 'reales'
-        ? 'Modelo en uso: datos reales (' + m.version + ').'
-        : 'Modelo en uso: demostración con precios inventados.'));
+        ? 'Modelo en uso: entrenado con datos reales (' + m.version + ').'
+        : (modoActual === 'en_vivo'
+          ? 'Hoy valúa en vivo con anuncios leídos al momento. Cada valuación guarda esos anuncios aquí abajo.'
+          : 'Modelo en uso: demostración con precios inventados.')));
       Object.keys(d.ciudades || {}).forEach(function (c) {
         var x = d.ciudades[c];
         var fila = el('div', 'avm2-motor');
@@ -265,7 +268,9 @@
     var card = el('div', 'avm-card avm2-card');
     var cab = el('div', 'card-label', 'AVM Broquer v2 · prueba interna');
     card.appendChild(cab);
-    card.appendChild(el('p', 'avm2-nota', 'Tres motores (comparables, modelo estadístico y enfoque físico) con rango y nivel de confianza. Solo visible en staging.'));
+    card.appendChild(el('p', 'avm2-nota', modoActual === 'en_vivo'
+      ? 'Hoy calcula en vivo: lee anuncios reales de la zona al momento y los compara (tarda 1 a 2 minutos). Cuando se entrene con datos reales responderá en segundos.'
+      : 'Tres motores (comparables, modelo estadístico y enfoque físico) con rango y nivel de confianza. Solo visible en staging.'));
 
     var tipo = selector('tipo', TIPOS, 'casa');
     var dir = el('input'); dir.type = 'text'; dir.name = 'direccion'; dir.autocomplete = 'street-address';
@@ -327,7 +332,7 @@
       var punto = ubic.punto();
       if (punto) { cuerpo.lat = punto.lat; cuerpo.lon = punto.lon; cuerpo.colonia = punto.colonia; }
       if (!cuerpo.direccion) { err.textContent = 'Escribe la dirección.'; err.classList.remove('avm2-oculto'); return; }
-      btn.disabled = true; btn.textContent = 'Calculando…';
+      btn.disabled = true; btn.textContent = modoActual === 'en_vivo' ? 'Leyendo anuncios de hoy… (1 a 2 min)' : 'Calculando…';
       try {
         var data = await window.bkApi('/avm/v2/estimar', { method: 'POST', json: cuerpo });
         pintar(salida, data);
@@ -345,6 +350,9 @@
     salida.textContent = '';
     if (d.datos === 'sinteticos') {
       salida.appendChild(el('div', 'alert warn', 'Modelo de demostración entrenado con datos sintéticos: no usar con clientes.'));
+    } else if (d.datos === 'en_vivo') {
+      salida.appendChild(el('div', 'alert success', 'Calculado en vivo con ' + (d.anuncios_leidos || 0) +
+        ' anuncios reales leídos hoy. El rango todavía no está calibrado con cierres.'));
     }
     var card = el('div', 'avm-card avm2-card');
     card.appendChild(el('div', 'card-label', d.tipo_documento || 'Opinión Comercial de Valor'));
@@ -431,6 +439,7 @@
       var r = await fetch(BASE + '/avm/v2/estado');
       var e = await r.json();
       if (!e || !e.activo) return;
+      modoActual = e.modo || null;
     } catch (_) { return; }
     raiz.hidden = false;
     formulario(raiz);
