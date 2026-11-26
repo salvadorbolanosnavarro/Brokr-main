@@ -127,6 +127,8 @@ class Settings:
     # en la lista) o "estricto" (solo la lista). Ver core/cors.py.
     cors_modo: str = "observar"
     cors_origenes_extra: str = ""
+    acm_recoleccion_enabled: bool = False
+    acm_recoleccion_hora: int = 3
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -140,6 +142,11 @@ class Settings:
         wa2_meta_app_secret = os.getenv("META_APP_SECRET", "")
 
         return cls(
+            # Recolección nocturna del ACM (routers/acm_datos.py): gasta
+            # crédito de búsqueda, Firecrawl e IA, así que viene APAGADA y se
+            # enciende en UNA sola instancia. Hora local (0-23) de la corrida.
+            acm_recoleccion_enabled=_env_bool("ACM_RECOLECCION_ACTIVA", default=False),
+            acm_recoleccion_hora=min(23, _env_nonnegative_int("ACM_RECOLECCION_HORA", 3)),
             supabase_url=supabase_url,
             supabase_anon_key=supabase_anon_key,
             supabase_service_key=supabase_service_key,
