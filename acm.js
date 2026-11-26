@@ -284,11 +284,11 @@
     var precios = e.precios || {}, dias = e.dias || {};
     html += '<div class="acm-sec"><h2>Estrategia de precio</h2><div class="acm-grid3">' + ESTRATEGIAS.map(function (x) {
       return '<div class="acm-est' + (e.elegida === x[0] ? ' is-on' : '') + '" data-elegir="' + x[0] + '"><div class="acm-est__n">' + x[1] + '</div>' +
-        '<div class="bk-input-affix" style="margin:var(--sp-2) 0"><span class="bk-input-affix__prefix">$</span><input class="bk-input" inputmode="decimal" data-precio="' + x[0] + '" value="' + (precios[x[0]] ? Math.round(precios[x[0]]) : '') + '"/></div>' +
+        '<div class="bk-input-affix" style="margin:var(--sp-2) 0"><input class="bk-input" inputmode="decimal" data-precio="' + x[0] + '" value="' + (precios[x[0]] ? Math.round(precios[x[0]]) : '') + '"/></div>' +
         '<div class="acm-sub">' + (dias[x[0]] ? 'Referencia: ~' + dias[x[0]] + ' días en el mercado' : 'Sin referencia de tiempo todavía') + '</div></div>';
     }).join('') + '</div>' +
       '<div class="bk-cluster" style="margin-top:var(--sp-3)"><label class="bk-check"><input type="checkbox" id="e-propio"' + (e.elegida === 'propio' ? ' checked' : '') + '/><span class="bk-check__box">' + TICK + '</span> Otro precio acordado</label>' +
-      '<div class="bk-input-affix"' + (e.elegida === 'propio' ? '' : ' hidden') + ' id="e-propio-wrap"><span class="bk-input-affix__prefix">$</span><input class="bk-input" inputmode="decimal" id="e-propio-precio" value="' + (e.elegida === 'propio' && e.precio_salida ? Math.round(e.precio_salida) : '') + '"/></div></div></div>';
+      '<div class="bk-input-affix"' + (e.elegida === 'propio' ? '' : ' hidden') + ' id="e-propio-wrap"><input class="bk-input" inputmode="decimal" id="e-propio-precio" value="' + (e.elegida === 'propio' && e.precio_salida ? Math.round(e.precio_salida) : '') + '"/></div></div></div>';
 
     html += '<div class="acm-sec acm-grid2"><div class="bk-field"><label class="bk-label" for="d-nota">Comentario para el propietario (aparece en el reporte)</label>' +
       '<textarea class="bk-textarea" id="d-nota" rows="4" maxlength="3000">' + esc(d.nota_propietario || '') + '</textarea></div>' +
