@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
-  <title>Broquer — AVM</title>
+  <title>Broquer — Análisis comparativo</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -835,10 +835,10 @@ input:focus, select:focus, textarea:focus {
           const pdfResp = await fetch(`${API}/avm-pdf/${data.token}`);
           if (!pdfResp.ok) throw new Error("No se pudo obtener el PDF");
           const blob = await pdfResp.blob();
-          const filename = data.filename || "Estimacion_Valor.pdf";
+          const filename = data.filename || "Analisis_Comparativo.pdf";
 
           if (window.broquerDeliverBlob) {
-            await window.broquerDeliverBlob(blob, filename, { type: 'application/pdf', title: 'Estimación de valor lista', text: 'Estimación de valor generada por Broquer' });
+            await window.broquerDeliverBlob(blob, filename, { type: 'application/pdf', title: 'Análisis comparativo listo', text: 'Análisis comparativo generado por Broquer' });
           } else {
             const blobUrl = URL.createObjectURL(blob);
             window.open(blobUrl, '_blank', 'noopener');
@@ -948,7 +948,7 @@ input:focus, select:focus, textarea:focus {
           )}
 
           <button id="btn-analizar-ia" className="btn-primary teal" onClick={analizar}>
-            Generar estimación de valor
+            Generar análisis comparativo
           </button>
         </div>
       );
@@ -996,7 +996,7 @@ input:focus, select:focus, textarea:focus {
             <div className="opinion-page">
 
               <div className="opinion-header-bar">
-                <div className="opinion-doc-title">Estimación de valor</div>
+                <div className="opinion-doc-title">Análisis comparativo</div>
                 <div className="opinion-meta">
                   <div>{new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}</div>
                 </div>
