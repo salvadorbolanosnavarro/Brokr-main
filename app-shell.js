@@ -301,7 +301,8 @@
     { key:'firmas',       href:'firmas.html',        label:'Firma electrónica',   group:'documentos',  icon:'pencil' },
     { key:'cumplimiento', href:'cumplimiento.html',  label:'Cumplimiento',        group:'documentos',  icon:'shield' },
     // Números.
-    { key:'acm',          href:'acm.html',           label:'Análisis comparativo', group:'numeros',    icon:'chart' },
+    // Oculto mientras se perfecciona; la página sigue en acm.html.
+    { key:'acm',          href:'acm.html',           label:'Análisis comparativo', group:'numeros',    icon:'chart', hidden:true },
     { key:'isr',          href:'isr.html',           label:'ISR',                 group:'numeros',     icon:'calculator' },
     { key:'impuestos',    href:'impuestos.html',     label:'Impuestos',           group:'numeros',     icon:'calculator' },
     { key:'finanzas',     href:'finanzas.html',      label:'Finanzas',            group:'numeros',     icon:'wallet' },
