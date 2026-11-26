@@ -4,7 +4,7 @@ Herramienta del **asesor**: arma el análisis de una propiedad en su mesa de tra
 
 ## Puesta en marcha
 
-1. **Base de datos:** correr `migracion-acm.sql` en Supabase → SQL Editor. Es idempotente y sólo crea tablas nuevas.
+1. **Base de datos:** correr `migracion-acm.sql` y después `migracion-acm-ubicacion.sql` en Supabase → SQL Editor, antes de desplegar. Son idempotentes.
 2. **Desplegar** el backend y el frontend. El módulo aparece en el menú como **Análisis comparativo** (grupo Números) y vive en `acm.html`. Reemplaza por completo a la antigua «Estimación de valor» (AVM), que se retiró: el asistente del chat también arma un ACM cuando le piden un análisis o una estimación de valor.
 3. **Opcional: recolección nocturna.** Viene apagada porque gasta crédito de búsqueda, Firecrawl e IA. Para encenderla, en **una sola** instancia (igual que el Buscador):
 
@@ -56,9 +56,18 @@ Usa las llaves de búsqueda web que ya tiene el servidor (búsqueda web, `FIRECR
 
 Conservación de la propiedad: excelente +5%, bueno 0, regular −7%, para remodelar −15%. El asesor también puede poner un ajuste general.
 
+### Zona: qué comparables entran solos al cálculo
+
+- **Sólo con ubicación confirmada:** la colonia tiene que venir en el propio anuncio (o en el registro de la cuenta). Un anuncio que no dice dónde está nunca se supone en la colonia buscada; se muestra con «Ubicación no confirmada en el anuncio», sin incluir.
+- **Radio que crece sólo si hace falta:** 1 km; si no hay al menos 5 comparables, 2 km; luego 3 km. Nada a más de 3 km entra solo; se muestra con «Fuera de la zona (X km)».
+- **Colonias hermanas:** Chapultepec Sur, Oriente y Norte son de la misma familia y cuentan como cercanas (≈ 900 m) aunque no haya coordenadas.
+- **Cierres reales de la cuenta:** radio mínimo de 2 km, porque su precio es el que realmente se pagó.
+- **Sin búsqueda «en toda la ciudad»:** la búsqueda en portales se limita a la colonia y sus colindantes.
+- El asesor siempre puede incluir a mano cualquier comparable de la lista.
+
 ## Limitaciones honestas
 
-- **Ubicación aproximada:** casi ningún anuncio trae coordenadas, así que se ubica en el centro de su colonia. La distancia se muestra como «≈».
+- **Ubicación aproximada:** casi ningún anuncio trae coordenadas, así que se ubica en el centro de la colonia que declara. La distancia se muestra como «≈». Si Google no encuentra la colonia (o sólo encuentra la ciudad), el anuncio queda sin ubicación en vez de ponerse en el centro de la ciudad.
 - **"Retirado" no siempre es "vendido":** un anuncio pasa a retirado si no aparece en las búsquedas de su zona durante 30 días, con al menos 3 recolecciones. Puede haberse vendido, rentado o simplemente dejado de anunciar. Por eso el grupo se llama «vendidos o retirados» y sólo los cierres de la cuenta se etiquetan como «Vendida».
 - **Arranque en frío:** la base empieza vacía. Las primeras semanas casi todo sale de la búsqueda en vivo (tarda hasta un minuto). Cada búsqueda deja la base más completa.
 - **Una moneda por análisis:** los comparables publicados en otra moneda se muestran pero no se incluyen en el cálculo.

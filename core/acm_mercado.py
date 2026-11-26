@@ -218,6 +218,41 @@ def _moneda(valor: Any, por_defecto: str) -> str:
     return por_defecto
 
 
+_CALLE = re.compile(r"^(calle|c\.|av\.?|avenida|blvd\.?|boulevard|bulevar|priv\.?|privada|circuito|cto\.?|andador|"
+                    r"cerrada|cda\.?|prol\.?|prolongacion|carretera|camino|retorno|paseo|#|no\.?\s*\d|\d)", re.I)
+_PREFIJO_COLONIA = re.compile(r"^(col\.?|colonia|fracc\.?|fraccionamiento|barrio)\s+", re.I)
+
+
+# Nunca son colonias: estados de México (y abreviaturas comunes) y el país.
+_NO_COLONIA = {normalizar(x) for x in (
+    "México", "Mexico", "MX", "Méx", "Aguascalientes", "Ags", "Baja California", "BC", "Baja California Sur", "BCS",
+    "Campeche", "Camp", "Chiapas", "Chis", "Chihuahua", "Chih", "Ciudad de México", "CDMX", "Coahuila", "Coah",
+    "Colima", "Col", "Durango", "Dgo", "Estado de México", "Edomex", "Edo Mex", "Guanajuato", "Gto", "Guerrero",
+    "Gro", "Hidalgo", "Hgo", "Jalisco", "Jal", "Michoacán", "Michoacán de Ocampo", "Mich", "Morelos", "Mor",
+    "Nayarit", "Nay", "Nuevo León", "NL", "Oaxaca", "Oax", "Puebla", "Pue", "Querétaro", "Qro", "Quintana Roo",
+    "QRoo", "San Luis Potosí", "SLP", "Sinaloa", "Sin", "Sonora", "Son", "Tabasco", "Tab", "Tamaulipas", "Tamps",
+    "Tlaxcala", "Tlax", "Veracruz", "Ver", "Yucatán", "Yuc", "Zacatecas", "Zac",
+)}
+
+
+def colonia_del_anuncio(ubicacion: str, titulo: str, zona: Dict[str, Any]) -> Optional[str]:
+    """La colonia que el PROPIO anuncio declara, o None. Nunca se supone la
+    colonia buscada: una página de resultados de una colonia trae anuncios
+    de toda la ciudad, y atribuírselos a la colonia buscada los hacía pasar
+    por cercanos (caso real: «Chapultepec Sur» comparado con otra zona)."""
+    excluir = {normalizar(zona.get(k)) for k in ("ciudad", "estado", "pais")} | _NO_COLONIA | {""}
+    for parte in str(ubicacion or "").split(","):
+        parte = _PREFIJO_COLONIA.sub("", parte.strip())
+        n = normalizar(parte)
+        if not n or n in excluir or n.isdigit() or re.fullmatch(r"(cp|c p)?\s*\d{5}", n) or _CALLE.match(parte):
+            continue
+        return parte[:120]
+    buscada = zona.get("colonia") or ""
+    if buscada and f" {normalizar(buscada)} " in f" {normalizar(titulo)} ":
+        return buscada
+    return None
+
+
 def comparable_desde_anuncio(
     anuncio: Dict[str, Any],
     *,
@@ -240,12 +275,7 @@ def comparable_desde_anuncio(
     liga = str(anuncio.get("url") or "").strip()
     if liga and url_pagina and not liga.startswith(("http://", "https://")):
         liga = urljoin(url_pagina, liga)
-    ubicacion = str(anuncio.get("ubicacion") or "")
-    colonia = zona.get("colonia") or ""
-    if ubicacion and zona.get("colonia") and normalizar(zona["colonia"]) not in normalizar(ubicacion):
-        # El anuncio dice otra ubicación: se guarda la primera parte (suele
-        # ser la colonia) para no atribuirlo a la colonia buscada.
-        colonia = ubicacion.split(",")[0].strip()[:120] or colonia
+    colonia = colonia_del_anuncio(str(anuncio.get("ubicacion") or ""), titulo, zona)
     c = {
         "fuente": "portal",
         "portal": portal or None,
@@ -261,7 +291,8 @@ def comparable_desde_anuncio(
         "banos": numero(anuncio.get("banos")),
         "estacionamientos": entero(anuncio.get("estacionamientos")),
         "antiguedad": entero(anuncio.get("antiguedad")),
-        "colonia": colonia or None,
+        "colonia": colonia,
+        "ubicacion_confirmada": bool(colonia),
         "ciudad": zona.get("ciudad") or None,
         "estado": zona.get("estado") or None,
         "pais": zona.get("pais") or "MX",
@@ -337,6 +368,8 @@ def comparable_desde_propiedad(p: Dict[str, Any], *, origen: str) -> Optional[Di
         "lat": lat if lat is not None and lng is not None else None,
         "lng": lng if lat is not None and lng is not None else None,
         "precision_ubicacion": "exacta" if lat is not None and lng is not None else "colonia",
+        # Registro de la cuenta: la colonia la capturó un asesor, no se supuso.
+        "ubicacion_confirmada": bool(p.get("colonia")) or (lat is not None and lng is not None),
         "foto_url": foto if isinstance(foto, str) and foto.startswith("https://") else None,
         "publicada_en": p.get("publicada_en") or p.get("created_at"),
         "estatus": "activo",

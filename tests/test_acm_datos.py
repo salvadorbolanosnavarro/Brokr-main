@@ -48,11 +48,21 @@ class MercadoTests(unittest.TestCase):
         c = mercado.comparable_desde_anuncio({"titulo": "Casa", "precio": "3450000", "m2_construccion": "150",
                                               "url": "/anuncio/1?utm=x"}, url_pagina="https://portal.mx/lista", zona=zona)
         self.assertEqual(c["url"], "https://portal.mx/anuncio/1")
-        self.assertEqual((c["tipo"], c["operacion"], c["colonia"]), ("casa", "venta", "Chapultepec"))
+        # El anuncio no dice su colonia: NO se le atribuye la buscada.
+        self.assertEqual((c["tipo"], c["operacion"], c["colonia"], c["ubicacion_confirmada"]), ("casa", "venta", None, False))
+        dice = mercado.comparable_desde_anuncio({"titulo": "Casa en Chapultepec con jardín", "precio": 3e6,
+                                                 "m2_construccion": 150}, zona=zona)
+        self.assertEqual((dice["colonia"], dice["ubicacion_confirmada"]), ("Chapultepec", True))
         self.assertIsNone(mercado.comparable_desde_anuncio({"precio": "3450000"}, zona=zona))       # sin m²
         self.assertIsNone(mercado.comparable_desde_anuncio({"precio": "9000", "m2_construccion": 100}, zona=zona))
         otra = mercado.comparable_desde_anuncio({"precio": 3e6, "m2_construccion": 100, "ubicacion": "Centro, Morelia"}, zona=zona)
         self.assertEqual(otra["colonia"], "Centro")
+        con_calle = mercado.comparable_desde_anuncio({"precio": 3e6, "m2_construccion": 100,
+                                                      "ubicacion": "Av. Camelinas 123, Col. Chapultepec Norte, Morelia"}, zona=zona)
+        self.assertEqual(con_calle["colonia"], "Chapultepec Norte")
+        solo_ciudad = mercado.comparable_desde_anuncio({"precio": 3e6, "m2_construccion": 100,
+                                                        "ubicacion": "Morelia, Michoacán"}, zona=zona)
+        self.assertFalse(solo_ciudad["ubicacion_confirmada"])
 
     def test_desde_propiedad_no_copia_datos_del_propietario(self):
         p = {"id": "p1", "tipo": "casa", "operacion": "venta", "precio": 3e6, "m2_construccion": 150,
@@ -141,7 +151,7 @@ class DatosTests(unittest.TestCase):
     def anuncio(self, precio, **extra):
         return {"fuente": "portal", "tipo": "casa", "operacion": "venta", "precio": precio, "moneda": "MXN",
                 "m2_construccion": 150, "recamaras": 3, "colonia": "Chapultepec", "ciudad": "Morelia",
-                "pais": "MX", "url": "https://portal.mx/a", **extra}
+                "pais": "MX", "url": "https://portal.mx/a", "ubicacion_confirmada": True, **extra}
 
     def test_guardar_inserta_actualiza_y_detecta_bajas(self):
         r = asyncio.run(datos.guardar_comparables([self.anuncio(3_450_000), self.anuncio(3_450_000)]))
@@ -159,6 +169,23 @@ class DatosTests(unittest.TestCase):
 
         r = asyncio.run(datos.guardar_comparables([self.anuncio(2_000_000)]))  # otro inmueble igualito
         self.assertEqual(r["nuevos"], 1)
+
+    def test_sin_colonia_no_se_ubica_ni_se_confirma(self):
+        asyncio.run(datos.guardar_comparables([self.anuncio(3e6, colonia=None, ubicacion_confirmada=False)]))
+        fila = self.db.tablas["mercado_comparables"][0]
+        self.assertIsNone(fila["lat"])
+        self.assertFalse(fila["ubicacion_confirmada"])
+        datos.coordenadas_colonia.assert_not_called()
+        c = datos._fila_a_comparable({**fila, "ubicacion_confirmada": None})
+        self.assertFalse(c["ubicacion_confirmada"])      # sin migración: nunca se presume confirmada
+
+    def test_geocodificacion_rechaza_el_centro_de_la_ciudad(self):
+        ciudad = {"types": ["locality", "political"], "address_components": [{"long_name": "Morelia", "types": ["locality"]}]}
+        colonia = {"types": ["neighborhood", "political"], "address_components": [{"long_name": "Morelia", "types": ["locality"]}]}
+        homonima = {"types": ["sublocality"], "address_components": [{"long_name": "Zamora", "types": ["locality"]}]}
+        self.assertFalse(datos.resultado_es_de_colonia(ciudad, "Morelia"))
+        self.assertTrue(datos.resultado_es_de_colonia(colonia, "Morelia"))
+        self.assertFalse(datos.resultado_es_de_colonia(homonima, "Morelia"))
 
     def test_lo_inutil_no_se_guarda(self):
         r = asyncio.run(datos.guardar_comparables([self.anuncio(3e6, m2_construccion=None), self.anuncio(None)]))
