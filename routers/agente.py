@@ -657,7 +657,7 @@ TOOLS_SCHEMA = [
     },
     {
         "name": "estimar_valor",
-        "description": "Estima el valor de un inmueble buscando comparables reales en internet y descarga el PDF. Tarda 30s–2min. Úsala cuando tengas colonia, tipo, operación y superficie.",
+        "description": "Arma el análisis comparativo de mercado (ACM) de un inmueble con comparables reales, rango y estrategia de precio, y lo abre para que el asesor lo revise y lo presente. Úsala cuando tengas colonia, ciudad, tipo, operación y superficie.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -791,18 +791,18 @@ TOOLS_SCHEMA = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "modulo": {"type": "string", "enum": ["isr", "avm", "contratos", "props", "ficha", "ficha-manual", "facebook-ads", "contactos", "image-cleaner", "whatsapp", "verificador"]}
+                "modulo": {"type": "string", "enum": ["isr", "acm", "contratos", "props", "ficha", "ficha-manual", "facebook-ads", "contactos", "image-cleaner", "whatsapp", "verificador"]}
             },
             "required": ["modulo"]
         }
     },
     {
         "name": "prellenar_formulario",
-        "description": "Abre un módulo con el formulario YA pre-llenado para que el usuario revise/edite antes de ejecutar. Útil cuando faltan datos opcionales o el usuario quiere afinar a mano. modulo: 'isr', 'avm' o 'contrato'.",
+        "description": "Abre un módulo con el formulario YA pre-llenado para que el usuario revise/edite antes de ejecutar. Útil cuando faltan datos opcionales o el usuario quiere afinar a mano. modulo: 'isr', 'acm' o 'contrato'.",
         "input_schema": {
             "type": "object",
             "properties": {
-                "modulo": {"type": "string", "enum": ["isr", "avm", "contrato"]},
+                "modulo": {"type": "string", "enum": ["isr", "acm", "contrato"]},
                 "datos": {"type": "object", "description": "Campos a pre-cargar."}
             },
             "required": ["modulo", "datos"]
@@ -836,7 +836,7 @@ def _to_client_action(name: str, args: dict) -> Optional[dict]:
         return {"tipo": "navegar", "modulo": args.get("modulo", "")}
     if name == "prellenar_formulario":
         modulo = args.get("modulo", ""); datos = args.get("datos", {})
-        tipo = {"isr": "llenar_isr", "avm": "llenar_avm", "contrato": "llenar_contrato"}.get(modulo)
+        tipo = {"isr": "llenar_isr", "acm": "llenar_acm", "contrato": "llenar_contrato"}.get(modulo)
         if not tipo:
             return None
         a = {"tipo": tipo}; a.update(datos); return a
@@ -855,7 +855,7 @@ _STEP_LABELS = {
     "agregar_comentario":     "Registrando el comentario…",
     "crear_tarea":            "Agregando la tarea…",
     "calcular_isr":           "Calculando el ISR y preparando el PDF…",
-    "estimar_valor":          "Buscando comparables y estimando el valor…",
+    "estimar_valor":          "Armando el análisis comparativo…",
     "generar_contrato":       "Generando el contrato…",
     "crear_contacto":         "Agregando el contacto a tu CRM…",
     "crear_inmueble":         "Creando el inmueble en tu cartera…",
@@ -899,7 +899,7 @@ CONOCIMIENTO DE LA APP (fuente de verdad para preguntas operativas):
 - Crear inmuebles: puedes hacerlo directo con crear_inmueble. Obligatorios: tipo, operación, precio y colonia; título se puede inferir con tipo + operación + colonia si el usuario no lo da. Ciudad y estado: usa los que diga el usuario; si no los da, pregúntalos (no inventes una ciudad). Moneda MXN y estatus activa por defecto.
 - Ficha técnica: si el inmueble ya está en cartera, busca la propiedad y genera la ficha con sus datos reales. Si no está en cartera, pide los datos mínimos y usa ficha manual.
 - ISR: usa calcular_isr con la misma lógica del módulo ISR cuando tengas precio y fecha de compra, precio y fecha de venta, tipo de inmueble, exención si aplica, mejoras, escrituración y comisión. Si el usuario no sabe mejoras/escrituración/comisión, usa 0 solo después de confirmarlo.
-- Análisis comparativo: usa estimar_valor con la lógica del módulo AVM cuando tengas colonia, tipo, operación y superficies disponibles; busca comparables reales y entrega PDF.
+- Análisis comparativo: usa estimar_valor cuando tengas colonia, ciudad, tipo, operación y superficie; arma el ACM con comparables reales y lo abre para que el asesor lo revise y lo presente al propietario.
 - Estadísticas y reportes: si el usuario pide leer estadísticas o crear un reporte, usa resumen_estadisticas; si pide un entregable, después genera un PDF con generar_reporte_estadisticas incluyendo hallazgos y recomendaciones.
 - Contratos: usa generar_contrato cuando tengas todos los datos obligatorios de partes, inmueble, monto y fechas. Si faltan varios datos, prellena el módulo para que el usuario revise.
 - Si te preguntan algo como "¿cómo puedo eliminar mi cuenta?", responde con esos pasos concretos; no inventes menús ni políticas.

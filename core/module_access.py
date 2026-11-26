@@ -13,7 +13,7 @@ TOGGLEABLE_MODULES: frozenset[str] = frozenset({
     "props", "contactos", "tareas", "estadisticas", "bolsa",
     "whatsapp", "leads", "correo",
     "contratos", "firmas", "cumplimiento",
-    "avm", "isr", "finanzas",
+    "acm", "isr", "finanzas",
     "image-cleaner", "ficha-manual", "facebook-ads", "video", "mi-sitio",
     "blog", "guia",
 })

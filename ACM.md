@@ -5,7 +5,7 @@ Herramienta del **asesor**: arma el análisis de una propiedad en su mesa de tra
 ## Puesta en marcha
 
 1. **Base de datos:** correr `migracion-acm.sql` en Supabase → SQL Editor. Es idempotente y sólo crea tablas nuevas.
-2. **Desplegar** el backend y el frontend. El módulo aparece en el menú como **Análisis comparativo** (grupo Números) y vive en `acm.html`. Reemplaza en el menú a la antigua «Estimación de valor» (AVM), que queda oculta pero sigue funcionando en `avm.html` y desde el chat.
+2. **Desplegar** el backend y el frontend. El módulo aparece en el menú como **Análisis comparativo** (grupo Números) y vive en `acm.html`. Reemplaza por completo a la antigua «Estimación de valor» (AVM), que se retiró: el asistente del chat también arma un ACM cuando le piden un análisis o una estimación de valor.
 3. **Opcional: recolección nocturna.** Viene apagada porque gasta crédito de búsqueda, Firecrawl e IA. Para encenderla, en **una sola** instancia (igual que el Buscador):
 
    ```bash
@@ -15,7 +15,7 @@ Herramienta del **asesor**: arma el análisis de una propiedad en su mesa de tra
 
    Un administrador de Broquer puede correrla al momento con `POST /acm/admin/recolectar`.
 
-Usa las mismas llaves que ya usa el AVM (búsqueda web, `FIRECRAWL_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_PLACES_KEY`). No requiere variables nuevas para funcionar.
+Usa las llaves de búsqueda web que ya tiene el servidor (búsqueda web, `FIRECRAWL_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_PLACES_KEY`). No requiere variables nuevas para funcionar.
 
 ## Cómo funciona
 
@@ -23,7 +23,7 @@ Usa las mismas llaves que ya usa el AVM (búsqueda web, `FIRECRAWL_API_KEY`, `AN
 |---|---|---|
 | Normalización | `core/acm_mercado.py` | Convierte anuncios a una forma única, lee el bloque estructurado de los portales sin IA y calcula la "huella" que deduplica un mismo inmueble publicado en varios portales |
 | Motor | `core/acm_calculo.py` | Similitud, ajustes, atípicos, rango (percentiles 25/50/75 ponderados), confianza, estrategia y datos de mercado. Determinista: la misma entrada da el mismo resultado |
-| Datos | `routers/acm_datos.py` | Base propia `mercado_comparables`, geocodificación de colonias con caché, búsqueda en vivo (reutiliza la del AVM y **guarda todo lo que encuentra**), inventario, Bolsa, cierres y recolección nocturna |
+| Datos | `routers/acm_datos.py` | Base propia `mercado_comparables`, geocodificación de colonias con caché, búsqueda en vivo (usa la búsqueda y lectura de portales de `routers/avm_websearch.py` y **guarda todo lo que encuentra**), inventario, Bolsa, cierres y recolección nocturna |
 | API | `routers/acm.py` | Mesa de trabajo, versiones, liga pública, PDF |
 | Reporte | `core/acm_reporte.py` | Un solo HTML para la liga y el PDF, con la marca del asesor |
 | Interfaz | `acm.html` + `acm.js` | Captura, mesa de trabajo y presentación |

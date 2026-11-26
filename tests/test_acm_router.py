@@ -121,7 +121,8 @@ class PlataformaTests(unittest.TestCase):
         shell = (ROOT / "app-shell.js").read_text(encoding="utf-8")
         self.assertIn("key:'acm',          href:'acm.html'", shell)
         self.assertIn("'acm':           { title:'Análisis comparativo'", shell)
-        self.assertIn("key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'numeros',     icon:'peso', hidden:true", shell)
+        self.assertNotIn("avm.html", shell)                              # AVM viejo retirado
+        self.assertFalse((ROOT / "avm.html").exists())
         html = (ROOT / "acm.html").read_text(encoding="utf-8")
         self.assertIn('data-app="acm"', html)
         self.assertIn('src="app-shell.js"', html)

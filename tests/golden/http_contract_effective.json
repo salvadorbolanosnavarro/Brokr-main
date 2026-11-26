@@ -1,5 +1,5 @@
 {
-  "count": 369,
+  "count": 361,
   "operations": [
     {
       "body": false,
@@ -423,26 +423,6 @@
       ]
     },
     {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/api/avm-claude",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/api/avm-websearch",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
       "body": false,
       "method": "GET",
       "params": [],
@@ -523,26 +503,6 @@
       ]
     },
     {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/api/comparables",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/api/comparables-cercanos",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
       "body": false,
       "method": "GET",
       "params": [
@@ -574,38 +534,6 @@
         "query:email"
       ],
       "path": "/auth/correo-existe",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/avm",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/avm-pdf",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": false,
-      "method": "GET",
-      "params": [
-        "path:token!"
-      ],
-      "path": "/avm-pdf/{token}",
       "responses": [
         "200",
         "422"
@@ -1407,16 +1335,6 @@
       "method": "POST",
       "params": [],
       "path": "/demo-live/accion",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/demo-live/avm",
       "responses": [
         "200",
         "422"
