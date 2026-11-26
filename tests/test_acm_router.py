@@ -120,7 +120,8 @@ class PlataformaTests(unittest.TestCase):
     def test_modulo_en_el_menu(self):
         shell = (ROOT / "app-shell.js").read_text(encoding="utf-8")
         self.assertIn("key:'acm',          href:'acm.html'", shell)
-        self.assertIn("'acm':           { title:'Análisis de mercado'", shell)
+        self.assertIn("'acm':           { title:'Análisis comparativo'", shell)
+        self.assertIn("key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'numeros',     icon:'peso', hidden:true", shell)
         html = (ROOT / "acm.html").read_text(encoding="utf-8")
         self.assertIn('data-app="acm"', html)
         self.assertIn('src="app-shell.js"', html)

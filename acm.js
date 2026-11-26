@@ -362,7 +362,7 @@
       if (!r.ok) { var err = {}; try { err = await r.json(); } catch (x) { /* sin detalle */ } throw new Error(err.detail || 'No se pudo generar el PDF.'); }
       var blob = await r.blob();
       var nombre = (/filename="([^"]+)"/.exec(r.headers.get('Content-Disposition') || '') || [])[1] || 'Analisis_de_mercado.pdf';
-      if (window.broquerDeliverBlob) await window.broquerDeliverBlob(blob, nombre, { type: 'application/pdf', title: 'Análisis de mercado listo', text: 'Análisis comparativo de mercado' });
+      if (window.broquerDeliverBlob) await window.broquerDeliverBlob(blob, nombre, { type: 'application/pdf', title: 'Análisis comparativo listo', text: 'Análisis comparativo de mercado' });
       else { var u = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = u; a.download = nombre; a.click(); setTimeout(function () { URL.revokeObjectURL(u); }, 3000); }
     } catch (e) { toast(e.message); }
     boton.disabled = false; boton.textContent = 'Descargar PDF';

@@ -1563,7 +1563,7 @@ async function descargarPDF() {
   /* ═══ AUDIT-EXEMPT: documento PDF autocontenido ═══
      Los tokens se inyectan desde brokr-theme.css vía _isrTokens(): este
      bloque ya no los duplica. Solo quedan los overrides propios del
-     impreso. Mismo sistema que Estimación de valor y Ficha técnica. ── */
+     impreso. Mismo sistema que Análisis comparativo y Ficha técnica. ── */
   :root{
     ${_isrTokens()};
     /* Overrides del documento: el papel es blanco, no el canvas de la app */
@@ -1697,7 +1697,7 @@ async function descargarPDF() {
   </div>
 </body></html>`;
 
-  // Descarga directa al dispositivo (mismo patrón que estimación de valor):
+  // Descarga directa al dispositivo (mismo patrón que análisis comparativo):
   // 1) POST /isr-pdf con el HTML → token
   // 2) GET /isr-pdf/{token} → blob
   // 3) <a download> sin menús intermedios

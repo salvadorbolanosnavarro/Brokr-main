@@ -5,7 +5,7 @@ Herramienta del **asesor**: arma el análisis de una propiedad en su mesa de tra
 ## Puesta en marcha
 
 1. **Base de datos:** correr `migracion-acm.sql` en Supabase → SQL Editor. Es idempotente y sólo crea tablas nuevas.
-2. **Desplegar** el backend y el frontend. El módulo aparece en el menú como **Análisis de mercado** (grupo Números) y vive en `acm.html`.
+2. **Desplegar** el backend y el frontend. El módulo aparece en el menú como **Análisis comparativo** (grupo Números) y vive en `acm.html`. Reemplaza en el menú a la antigua «Estimación de valor» (AVM), que queda oculta pero sigue funcionando en `avm.html` y desde el chat.
 3. **Opcional: recolección nocturna.** Viene apagada porque gasta crédito de búsqueda, Firecrawl e IA. Para encenderla, en **una sola** instancia (igual que el Buscador):
 
    ```bash

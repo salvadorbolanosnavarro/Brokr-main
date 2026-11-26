@@ -78,9 +78,11 @@ LARGE_FILE_MAX_BYTES = {
     # métodos en el "onload" del <script>, solo onLoad/forceLoad, y por
     # eso tiraba "Sentry.setTag is not a function" en cada carga. Bug
     # real corregido con una explicación de por qué, no deuda nueva.
-    # Bumped 247 bytes: entrada del módulo "Análisis de mercado" (acm) en
+    # Bumped 247 bytes: entrada del módulo "Análisis comparativo" (acm) en
     # MODS, CONTEXT_LABELS y PAGE_META — módulo de producto nuevo, no debt.
-    "app-shell.js": 260_937,
+    # Bumped 21 bytes: hidden:true en la entrada 'avm' — el ACM reemplaza a
+    # la Estimación de valor en el menú (pedido del usuario), no debt.
+    "app-shell.js": 260_958,
     "whatsapp.py": 223_594,
     "contratos.html": 156_081,
     # Bumped 5,747 bytes: los cambios de estatus, notas, comisión real y
