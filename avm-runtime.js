@@ -705,12 +705,12 @@ function AvmIA() {
       const pdfResp = await fetch(`${API}/avm-pdf/${data.token}`);
       if (!pdfResp.ok) throw new Error("No se pudo obtener el PDF");
       const blob = await pdfResp.blob();
-      const filename = data.filename || "Estimacion_Valor.pdf";
+      const filename = data.filename || "Analisis_Comparativo.pdf";
       if (window.broquerDeliverBlob) {
         await window.broquerDeliverBlob(blob, filename, {
           type: 'application/pdf',
-          title: 'Estimación de valor lista',
-          text: 'Estimación de valor generada por Broquer'
+          title: 'Análisis comparativo listo',
+          text: 'Análisis comparativo generado por Broquer'
         });
       } else {
         const blobUrl = URL.createObjectURL(blob);

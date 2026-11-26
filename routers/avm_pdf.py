@@ -169,7 +169,7 @@ def create_router(get_context):
   <div class="doc-head">
     <div>
       <div class="doc-head__brand">Broquer</div>
-      <div class="doc-head__title">Estimación de valor</div>
+      <div class="doc-head__title">Análisis comparativo</div>
     </div>
     <div class="doc-head__date">{fecha_hoy}</div>
   </div>
@@ -253,7 +253,7 @@ def create_router(get_context):
 
         token = str(uuid_mod.uuid4()).replace("-", "")[:16]
         colonia_slug = resultado.get("colonia", "propiedad").replace(" ", "_")[:20]
-        filename = f"Estimacion_Valor_{colonia_slug}_{time_mod.strftime('%Y%m%d')}.pdf"
+        filename = f"Analisis_Comparativo_{colonia_slug}_{time_mod.strftime('%Y%m%d')}.pdf"
         pdf_store[token] = (pdf_bytes, filename)
         if len(pdf_store) > 50:
             oldest = list(pdf_store.keys())[0]
