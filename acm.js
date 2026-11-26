@@ -7,7 +7,7 @@
   'use strict';
   var esc = window.bkEsc, api = window.bkApi, toast = window.bkToast;
   var raiz = document.getElementById('acm-root');
-  var S = { doc: null, tab: 'todos', abiertos: {}, enVuelo: false, pendiente: false, investigando: false, lista: null };
+  var S = { doc: null, tab: 'todos', abiertos: {}, enVuelo: false, pendiente: false, investigando: false, lista: null, verDescartados: false };
   var TIPOS = [['casa', 'Casa'], ['departamento', 'Departamento'], ['terreno', 'Terreno'], ['local', 'Local comercial'],
     ['oficina', 'Oficina'], ['bodega', 'Bodega'], ['otro', 'Otro']];
   var CONSERVACION = [['excelente', 'Excelente / como nuevo'], ['bueno', 'Bueno'], ['regular', 'Regular / requiere detalles'], ['remodelar', 'Para remodelar']];
@@ -105,6 +105,7 @@
         try {
           var d = await api('/api/colonias?texto=' + encodeURIComponent(txt) + '&ciudad=' + encodeURIComponent(g('n-ciudad').value) + '&pais=' + (window.bkPais ? window.bkPais() : 'MX'));
           var cols = (d && d.colonias) || [];
+          if (!g('n-sugs')) return;   // el asesor ya salió de la captura
           g('n-sugs').innerHTML = cols.map(function (c, i) { return '<button type="button" class="acm-sugs__op" data-i="' + i + '">' + esc(c.display || c.nombre) + '</button>'; }).join('');
           g('n-sugs').hidden = !cols.length;
           g('n-sugs').onclick = function (e) {
@@ -116,7 +117,7 @@
             sel.lat = c.latitud || null; sel.lng = c.longitud || null;
             g('n-sugs').hidden = true;
           };
-        } catch (e) { g('n-sugs').hidden = true; }
+        } catch (e) { if (g('n-sugs')) g('n-sugs').hidden = true; }
       }, 350);
     });
     // Precarga desde un inmueble del inventario: acm.html?propiedad=<id>
@@ -175,10 +176,18 @@
     if (!S.doc || S.doc.id !== id) {
       raiz.innerHTML = '<div class="bk-cargando">Cargando…</div>';
       try { S.doc = await api('/acm/' + encodeURIComponent(id)); } catch (e) { raiz.innerHTML = '<div class="bk-alert bk-alert--error">' + esc(e.message) + '</div>'; return; }
-      S.abiertos = {}; S.tab = 'todos';
+      S.abiertos = {}; S.tab = 'todos'; S.verDescartados = false;
     }
     pintarDoc();
-    if (S.investigarAlAbrir) { S.investigarAlAbrir = false; investigar(); }
+    // Pocos comparables en la zona: se busca en portales solo, una vez por
+    // análisis en esta sesión (cada búsqueda gasta créditos).
+    var clave = 'acm_investigado_' + id, yaBuscado = false;
+    try { yaBuscado = sessionStorage.getItem(clave) === '1'; } catch (e) { /* sin almacenamiento */ }
+    if (S.investigarAlAbrir || (S.doc.faltan_comparables && !yaBuscado)) {
+      S.investigarAlAbrir = false;
+      try { sessionStorage.setItem(clave, '1'); } catch (e) { /* sin almacenamiento */ }
+      investigar();
+    }
   }
 
   function filaComp(c, i, moneda) {
@@ -228,9 +237,16 @@
     var d = S.doc, r = d.resultado || {}, s = d.sujeto || {}, e = d.estrategia || {}, v = r.valor || {}, pm2 = r.precio_m2 || {};
     var moneda = r.moneda || s.moneda || 'MXN';
     var comps = d.comparables || [];
-    var conteo = { todos: comps.length, activo: 0, vendido: 0, bajas: 0 };
-    comps.forEach(function (c) { conteo[c.grupo] = (conteo[c.grupo] || 0) + 1; });
-    var visibles = comps.filter(function (c) { return S.tab === 'todos' || c.grupo === S.tab; });
+    // Lo de fuera de la zona (sin ubicación confirmada o a más de 3 km) no se
+    // mezcla con la lista: queda tras "Ver descartados", salvo que el asesor
+    // lo haya incluido a mano.
+    var descartado = function (c) { return c.fuera_zona && !c.incluido; };
+    var enZona = comps.filter(function (c) { return !descartado(c); });
+    var conteo = { todos: enZona.length, activo: 0, vendido: 0, bajas: 0 };
+    enZona.forEach(function (c) { conteo[c.grupo] = (conteo[c.grupo] || 0) + 1; });
+    var delTab = function (c) { return S.tab === 'todos' || c.grupo === S.tab; };
+    var visibles = enZona.filter(delTab);
+    var descartados = comps.filter(function (c) { return descartado(c) && delTab(c); });
     var comp = r.comparacion;
     var esperado = s.precio_esperado;
     var m = r.mercado || {};
@@ -292,7 +308,11 @@
         return '<button class="bk-tab' + (S.tab === t[0] ? ' is-active' : '') + '" type="button" role="tab" data-tab="' + t[0] + '">' + t[1] + ' <span class="bk-tab__n">' + (conteo[t[0]] || 0) + '</span></button>';
       }).join('') + '</div>' +
       (visibles.length ? visibles.map(function (c, i) { return filaComp(c, i, moneda); }).join('') :
-        '<div class="bk-empty"><div class="bk-empty__title">Sin comparables en este grupo</div><div class="bk-empty__text">Busca más en portales o agrega uno que conozcas.</div></div>') +
+        '<div class="bk-empty"><div class="bk-empty__title">Sin comparables de la zona en este grupo</div><div class="bk-empty__text">Busca más en portales o agrega uno que conozcas.</div></div>') +
+      (descartados.length ? '<button class="bk-btn bk-btn--quiet bk-btn--sm" type="button" data-accion="descartados">' +
+        (S.verDescartados ? 'Ocultar' : 'Ver') + ' ' + descartados.length + ' descartado' + (descartados.length === 1 ? '' : 's') +
+        ' (fuera de la zona o sin ubicación confirmada)</button>' +
+        (S.verDescartados ? descartados.map(function (c, i) { return filaComp(c, i, moneda); }).join('') : '') : '') +
       '</div>';
 
     var precios = e.precios || {}, dias = e.dias || {};
@@ -407,6 +427,7 @@
     if ((b = t.closest('[data-accion]'))) {
       var acc = b.dataset.accion;
       if (acc === 'investigar') investigar();
+      else if (acc === 'descartados') { S.verDescartados = !S.verDescartados; pintarDoc(); }
       else if (acc === 'agregar') abrirModal();
       else if (acc === 'pdf') descargarPdf(b);
       else if (acc === 'copiar') { var inp = document.getElementById('d-liga-url'); try { await navigator.clipboard.writeText(inp.value); toast('Liga copiada.'); } catch (x) { inp.select(); } }
