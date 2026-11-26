@@ -28,11 +28,6 @@ def _streaming_pdf(token: str):
     )
 
 
-@router.get("/avm-pdf/{token}")
-async def descargar_avm_pdf(token: str):
-    return _streaming_pdf(token)
-
-
 @router.get("/isr-pdf/{token}")
 async def descargar_isr_pdf(token: str):
     return _streaming_pdf(token)

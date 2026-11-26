@@ -1,5 +1,5 @@
 {
-  "count": 364,
+  "count": 361,
   "operations": [
     {
       "body": false,
@@ -8,6 +8,134 @@
       "path": "/",
       "responses": [
         "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:contacto_id",
+        "query:propiedad_id"
+      ],
+      "path": "/acm",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/acm",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [],
+      "path": "/acm/admin/recolectar",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:token!"
+      ],
+      "path": "/acm/ver/{token}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PUT",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}/actualizar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}/investigar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}/liga",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}/pdf",
+      "responses": [
+        "200",
+        "422"
       ]
     },
     {
@@ -295,26 +423,6 @@
       ]
     },
     {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/api/avm-claude",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/api/avm-websearch",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
       "body": false,
       "method": "GET",
       "params": [],
@@ -395,26 +503,6 @@
       ]
     },
     {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/api/comparables",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/api/comparables-cercanos",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
       "body": false,
       "method": "GET",
       "params": [
@@ -446,94 +534,6 @@
         "query:email"
       ],
       "path": "/auth/correo-existe",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/avm",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/avm-pdf",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": false,
-      "method": "GET",
-      "params": [
-        "path:token!"
-      ],
-      "path": "/avm-pdf/{token}",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/avm/v2/cierre",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": false,
-      "method": "GET",
-      "params": [],
-      "path": "/avm/v2/datos",
-      "responses": [
-        "200"
-      ]
-    },
-    {
-      "body": false,
-      "method": "GET",
-      "params": [],
-      "path": "/avm/v2/entrenar",
-      "responses": [
-        "200"
-      ]
-    },
-    {
-      "body": false,
-      "method": "POST",
-      "params": [],
-      "path": "/avm/v2/entrenar",
-      "responses": [
-        "200"
-      ]
-    },
-    {
-      "body": false,
-      "method": "GET",
-      "params": [],
-      "path": "/avm/v2/estado",
-      "responses": [
-        "200"
-      ]
-    },
-    {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/avm/v2/estimar",
       "responses": [
         "200",
         "422"
@@ -1335,16 +1335,6 @@
       "method": "POST",
       "params": [],
       "path": "/demo-live/accion",
-      "responses": [
-        "200",
-        "422"
-      ]
-    },
-    {
-      "body": true,
-      "method": "POST",
-      "params": [],
-      "path": "/demo-live/avm",
       "responses": [
         "200",
         "422"

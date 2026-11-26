@@ -26,7 +26,7 @@
       // el SDK real termine de cargar — es el patrón que Sentry documenta
       // para el Loader Script.
       Sentry.onLoad(function () {
-        // Etiqueta el módulo activo (ej. "isr", "avm") para filtrar en Sentry por página
+        // Etiqueta el módulo activo (ej. "isr", "acm") para filtrar en Sentry por página
         const mod = (document.body && document.body.dataset.app)
           ? document.body.dataset.app
           : (location.pathname.split('/').pop() || 'index').replace('.html', '');
@@ -103,7 +103,6 @@
     const AI_PATHS = [
       '/chat', '/chat-claude',
       '/agent', '/transcribir',
-      '/api/avm-claude', '/api/avm-websearch',
       '/contrato', '/contrato/analizar',
       '/ficha-manual/descripcion',
       '/images/clean',
@@ -290,7 +289,7 @@
     { key:'firmas',       href:'firmas.html',        label:'Firma electrónica',   group:'documentos',  icon:'pencil' },
     { key:'cumplimiento', href:'cumplimiento.html',  label:'Cumplimiento',        group:'documentos',  icon:'shield' },
     // Números.
-    { key:'avm',          href:'avm.html',           label:'Análisis comparativo', group:'numeros',     icon:'peso' },
+    { key:'acm',          href:'acm.html',           label:'Análisis comparativo', group:'numeros',    icon:'chart' },
     { key:'isr',          href:'isr.html',           label:'ISR',                 group:'numeros',     icon:'calculator' },
     { key:'impuestos',    href:'impuestos.html',     label:'Impuestos',           group:'numeros',     icon:'calculator' },
     { key:'finanzas',     href:'finanzas.html',      label:'Finanzas',            group:'numeros',     icon:'wallet' },
@@ -322,7 +321,7 @@
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
     'cumplimiento': 'Cumplimiento PLD/UIF — expediente único de identificación del cliente, umbrales de aviso, acumulación de operaciones, avisos al SPPLD y bitácora',
     'firmas':       'Firma electrónica — mandar contratos a firma de las partes, código de verificación, constancia de firma y verificación pública por folio',
-    'avm':          'Análisis comparativo AVM — avalúo de mercado automatizado',
+    'acm':          'Análisis comparativo de mercado — comparables, rango y estrategia de precio para presentar al propietario',
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
     'impuestos':    'Calculadora de impuestos por venta de inmuebles del país de la cuenta',
@@ -348,7 +347,7 @@
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
     'cumplimiento':  { title:'Cumplimiento',           sub:'El expediente de identificación de cada cliente, el control de umbrales y los avisos a la UIF, en un solo lugar.' },
     'firmas':        { title:'Firma electrónica',      sub:'Manda el contrato, cada parte firma desde su celular y te regresa con constancia.' },
-    'avm':           { title:'Análisis comparativo',    sub:'Avalúo automático con comparables de tu zona.' },
+    'acm':           { title:'Análisis comparativo',   sub:'Comparables, rango y estrategia de precio para presentarle al propietario.' },
     'impuestos-avanzada': { title:'Calculadora avanzada', sub:'Varios titulares, usufructo y nuda propiedad, herencias y adquisiciones en distintas fechas.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
@@ -419,7 +418,7 @@
     home:         [{l:_CICO('document')+'Contratos', m:'Generar un contrato'}, {l:_CICO('calculator')+'Calc. ISR', m:'Calcular ISR'}, {l:_CICO('tag')+'Fichas téc.', m:'Crear ficha técnica'}, {l:_CICO('building')+'Tus Inmuebles', m:'Ver tus inmuebles'}],
     contratos:    [{l:_CICO('pencil')+'Arrendamiento', m:'Genera un contrato de arrendamiento'}, {l:_CICO('handshake')+'Promesa', m:'Genera una promesa de compraventa'}, {l:_CICO('question')+'¿Cómo funciona?', m:'¿Qué tipos de contrato puedo generar?'}],
     cumplimiento: [{l:_CICO('shield')+'¿Genera aviso?', m:'¿Una operación de 900 mil pesos genera aviso?'}, {l:_CICO('users')+'Expediente', m:'¿Qué documentos necesito de un cliente persona moral?'}, {l:_CICO('question')+'Acumulación', m:'¿Cómo funciona la acumulación de 6 meses?'}],
-    avm:          [{l:_CICO('chart')+'Valuación', m:'Valúa una casa de 3 recámaras en'}, {l:_CICO('question')+'¿Cuánto vale?', m:'¿Cuánto vale una propiedad en esta colonia?'}, {l:_CICO('building')+'Comparables', m:'¿Cómo agrego comparables?'}],
+    acm:          [{l:_CICO('chart')+'Analizar', m:'Hazme un análisis comparativo de una casa de 3 recámaras en'}, {l:_CICO('question')+'Precio de salida', m:'¿Qué precio de salida le recomiendo al propietario?'}, {l:_CICO('building')+'Comparables', m:'¿Cómo agrego un comparable que conozco?'}],
     isr:          [{l:_CICO('calculator')+'Calc. ISR', m:'Calcula el ISR para una venta de'}, {l:_CICO('document')+'Descargar PDF', m:'Descarga el reporte de ISR'}, {l:_CICO('question')+'Exención', m:'¿Cuándo aplica la exención de casa habitación?'}],
     ficha:        [{l:_CICO('search')+'Buscar prop.', m:'Genera la ficha para la propiedad EB-'}, {l:_CICO('image')+'Con fotos', m:'¿Cómo se agregan fotos a la ficha?'}],
     'ficha-manual':[{l:_CICO('tag')+'Nueva ficha', m:'Crea una ficha para una casa de 3 recámaras en'}, {l:_CICO('pencil')+'Descripción', m:'Escribe una descripción atractiva para una propiedad en'}],
@@ -2041,8 +2040,8 @@ body[data-app="verificador"] .top-header { display: none !important; }
         break;
       }
       case 'llenar_isr':         stash('isr', ac);          location.href = (window.bkPaisCfg ? bkPaisCfg().impuesto.modulo : 'isr') + '.html'; break;
-      case 'llenar_avm':
-      case 'opinion_valor_web':  stash('avm', ac);          location.href = 'avm.html'; break;
+      case 'llenar_acm':
+      case 'opinion_valor_web':  stash('acm', ac);          location.href = 'acm.html#nuevo'; break;
       case 'llenar_contrato':    stash('contrato', ac);     location.href = 'contratos.html'; break;
       case 'crear_ficha':        // ficha.html eliminada → usar ficha-manual
       case 'crear_ficha_manual': stash('ficha_manual', ac); location.href = 'ficha-manual.html'; break;
@@ -2408,75 +2407,38 @@ body[data-app="verificador"] .top-header { display: none !important; }
     }
   }
 
-  /* ── Análisis comparativo + PDF directo, sin sacar al usuario del chat ── */
+  /* ── Análisis comparativo (ACM) desde el chat: lo arma y lo abre listo ── */
   async function estimarValorDirecto(ac) {
-    const bubble = _addAssistantBubble('Buscando comparables en internet… (esto puede tomar algunos minutos)');
+    const bubble = _addAssistantBubble('Armando el análisis comparativo…');
     try {
       const API = window.API_BASE || 'https://api.broquer.app';
-      const body = {
-        colonia: (ac.colonia || '').trim(),
-        tipo_inmueble: ac.tipo_inmueble || 'casa',
+      const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
+      const num = (v) => { const n = parseFloat(v); return isFinite(n) && n > 0 ? n : null; };
+      const sujeto = {
+        tipo: ac.tipo_inmueble || ac.tipo || 'casa',
         operacion: ac.operacion || 'venta',
-        m2_terreno: parseFloat(ac.m2_terreno) || 0,
-        m2_construccion: parseFloat(ac.m2_construccion) || 0,
-        recamaras: parseInt(ac.recamaras) || 0,
-        banos: parseFloat(ac.banos) || 0,
-        estacionamientos: parseInt(ac.estacionamientos) || 0,
-        condicion_terreno: ac.condicion_terreno || '',
-        ciudad: ac.ciudad || '',
-        comentarios: ac.comentarios || '',
+        colonia: (ac.colonia || '').trim(),
+        ciudad: (ac.ciudad || '').trim(),
+        estado: (ac.estado || '').trim(),
+        m2_construccion: num(ac.m2_construccion), m2_terreno: num(ac.m2_terreno),
+        recamaras: num(ac.recamaras), banos: num(ac.banos),
+        estacionamientos: num(ac.estacionamientos), antiguedad: num(ac.antiguedad),
       };
-      // 1) Pedir la estimación con comparables
-      const _tokAvm = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
-      const r1 = await fetch(API + '/api/avm-websearch', {
+      const r = await fetch(API + '/acm', {
         method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json' },
-                               _tokAvm ? { Authorization: 'Bearer ' + _tokAvm } : {}),
-        body: JSON.stringify(body),
+        headers: Object.assign({ 'Content-Type': 'application/json' }, tok ? { Authorization: 'Bearer ' + tok } : {}),
+        body: JSON.stringify({ sujeto }),
       });
-      const resultado = await r1.json();
-      if (!r1.ok) {
-        bubble.textContent = 'No pude completar la estimación: ' + (resultado.detail || 'error del servidor');
-        return;
-      }
-
-      // 2) Mostrar resumen breve en el chat
+      const doc = await r.json();
+      if (!r.ok) { bubble.textContent = 'No pude armar el análisis: ' + (doc.detail || 'error del servidor'); return; }
+      const v = (doc.resultado && doc.resultado.valor) || {};
       const fmt = (n) => '$' + Math.round(Number(n) || 0).toLocaleString('es-MX');
-      const ne = resultado.valor_estimado;
-      const lo = resultado.valor_minimo;
-      const hi = resultado.valor_maximo;
-      const vpm = resultado.valor_por_m2;
-      const nc = (resultado.comparables || []).length;
-      bubble.innerHTML =
-        '<strong>Estimación lista.</strong><br>' +
-        'Valor estimado: <strong>' + fmt(ne) + '</strong><br>' +
-        'Rango: ' + fmt(lo) + ' – ' + fmt(hi) +
-        (vpm > 0 ? ' · ' + fmt(vpm) + '/m²' : '') + '<br>' +
-        nc + ' comparables encontrados. Preparando PDF…';
-
-      // 3) Generar PDF
-      const r2 = await fetch(API + '/avm-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resultado, agente: 'Agente Broquer®' }),
-      });
-      const tokData = await r2.json();
-      if (!r2.ok) {
-        bubble.innerHTML += '<br>No pude generar el PDF: ' + (tokData.detail || 'error');
-        return;
-      }
-      // 4) Descargar el blob
-      const pdfResp = await fetch(API + '/avm-pdf/' + tokData.token);
-      if (!pdfResp.ok) {
-        bubble.innerHTML += '<br>No pude obtener el PDF (' + pdfResp.status + ').';
-        return;
-      }
-      const blob = await pdfResp.blob();
-      const filename = tokData.filename || ('Analisis_Comparativo_' + (body.colonia || 'inmueble') + '.pdf');
-      await deliverGeneratedFile(blob, filename, { type: 'application/pdf', title: 'Análisis comparativo listo', text: 'Análisis comparativo generado por Broquer' });
-      bubble.innerHTML += '<br>✓ <strong>PDF listo.</strong> Se abrió en pantalla para compartirlo o guardarlo.';
+      bubble.innerHTML = '<strong>Análisis comparativo listo.</strong><br>' +
+        (v.medio ? 'Rango de mercado: ' + fmt(v.bajo) + ' – ' + fmt(v.alto) + '<br>' : 'Aún hay pocos comparables; seguiré buscando en portales.<br>') +
+        'Te lo abro para que lo revises y se lo presentes al propietario.';
+      setTimeout(() => { location.href = 'acm.html#a/' + encodeURIComponent(doc.id); }, 900);
     } catch (e) {
-      bubble.textContent = 'No pude completar la estimación: ' + (e.message || e);
+      bubble.textContent = 'No pude armar el análisis: ' + (e.message || e);
     }
   }
 
@@ -4122,7 +4084,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     'isr.html':            ['#calc-btn'],
     'impuestos.html':      ['#imp-calc'],
     'impuestos-avanzada.html': ['#av-calc'],
-    'avm.html':            ['#btn-analizar-ia'],
+    'acm.html':            ['#n-ir'],
     'image-cleaner.html':  ['#btn-clean'],
     'contratos.html':      ['#gen-btn'],
     'ficha-manual.html':   ['#ai-btn', '#gen-ficha-btn', '#pdf-btn'],

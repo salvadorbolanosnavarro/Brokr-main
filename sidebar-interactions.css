@@ -11,12 +11,6 @@
 body[data-app="contactos"] .ftab.active,body[data-app="leads"] .ftab.active,body[data-app="tareas"] .tk-tab.active,body[data-app="estadisticas"] .ftab.active {
   border-bottom-color: var(--sky-blue) !important;
 }
-body[data-app="avm"] .avm-tab.active {
-  color: var(--ink) !important;
-  border-bottom-color: var(--sky-blue) !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
 
 /* Facebook's top-level navigation is a tab bar, not a segmented toggle. */
 body[data-app="facebook-ads"] .fa-tabs {
@@ -40,12 +34,6 @@ body[data-app="facebook-ads"] .fa-tab.active {
 /* ── Filter / preset chips ───────────────────────────────── */
 
 /* ── Card/radio selection ────────────────────────────────── */
-body[data-app="avm"] .comp-auto-card.selected {
-  background: var(--sky-canvas) !important;
-  border-color: var(--sky-blue) !important;
-  color: var(--ink) !important;
-  box-shadow: var(--focus) !important;
-}
 
 /* ── Field/search focus: blue, never ad-hoc black ────────── */
 body[data-app="tareas"] .tk-composer input[type="text"]:focus,body[data-app="facebook-ads"] .fa-field input:focus,body[data-app="facebook-ads"] .fa-field textarea:focus {

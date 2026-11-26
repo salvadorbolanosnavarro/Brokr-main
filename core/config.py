@@ -129,18 +129,8 @@ class Settings:
     cors_origenes_extra: str = ""
     cecil_ui_enabled: bool = False
     cecil_ui_user_ids: str = ""
-    # AVM Broquer v2 (paquete avm/, routers/avm_v2.py). Apagado por default:
-    # AVM_V2=true muestra la vista nueva (solo staging); AVM_V2_JOBS=true
-    # arranca ingesta/limpieza/recalibración/reentreno en ESA instancia.
-    avm_v2_enabled: bool = False
-    avm_v2_jobs: bool = False
-    # Solo staging: sin modelo entrenado, arma uno de demostración con datos
-    # sintéticos (cada respuesta lo marca datos="sinteticos").
-    avm_v2_demo: bool = False
-    avm_v2_model_dir: str = "/tmp/avm_v2_modelos"
-    avm_v2_bucket: str = "avm-modelos"
-    avm_v2_ciudades: str = "Morelia,Guadalajara"
-    groq_extract_model: str = "llama-3.3-70b-versatile"
+    acm_recoleccion_enabled: bool = False
+    acm_recoleccion_hora: int = 3
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -156,6 +146,11 @@ class Settings:
         return cls(
             cecil_ui_enabled=_env_bool("CECIL_UI_ENABLED"),
             cecil_ui_user_ids=os.getenv("CECIL_UI_USER_IDS", ""),
+            # Recolección nocturna del ACM (routers/acm_datos.py): gasta
+            # crédito de búsqueda, Firecrawl e IA, así que viene APAGADA y se
+            # enciende en UNA sola instancia. Hora local (0-23) de la corrida.
+            acm_recoleccion_enabled=_env_bool("ACM_RECOLECCION_ACTIVA", default=False),
+            acm_recoleccion_hora=min(23, _env_nonnegative_int("ACM_RECOLECCION_HORA", 3)),
             supabase_url=supabase_url,
             supabase_anon_key=supabase_anon_key,
             supabase_service_key=supabase_service_key,
@@ -235,13 +230,6 @@ class Settings:
             wa_tokens_accion=os.getenv("WA_TOKENS_ACCION", "").strip().lower(),
             cors_modo=os.getenv("CORS_MODO", "observar").strip().lower() or "observar",
             cors_origenes_extra=os.getenv("CORS_ORIGENES_EXTRA", "").strip(),
-            avm_v2_enabled=_env_bool("AVM_V2", default=False),
-            avm_v2_jobs=_env_bool("AVM_V2_JOBS", default=False),
-            avm_v2_demo=_env_bool("AVM_V2_DEMO", default=False),
-            avm_v2_model_dir=os.getenv("AVM_V2_MODEL_DIR", "/tmp/avm_v2_modelos").strip() or "/tmp/avm_v2_modelos",
-            avm_v2_bucket=os.getenv("AVM_V2_BUCKET", "avm-modelos").strip() or "avm-modelos",
-            avm_v2_ciudades=os.getenv("AVM_V2_CIUDADES", "Morelia,Guadalajara").strip(),
-            groq_extract_model=os.getenv("GROQ_EXTRACT_MODEL", "llama-3.3-70b-versatile").strip(),
             firmame_api_key=os.getenv("FIRMAME_API_KEY", "").strip(),
             firmame_base_url=os.getenv(
                 "FIRMAME_BASE_URL",

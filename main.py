@@ -57,12 +57,6 @@ except Exception:
 from routers.cecil_ui import router as cecil_ui_router
 from routers.admin_usage import router as admin_usage_router
 from routers.account_delete import router as account_delete_router
-from routers.avm_legacy import router as avm_legacy_router
-
-from routers.avm_claude import router as avm_claude_router
-
-from routers.avm_websearch import router as avm_websearch_router
-
 from core.facebook_tokens import FACEBOOK_REQUIRED_SCOPES
 from routers.facebook_connection_read import router as facebook_connection_read_router
 
@@ -181,7 +175,6 @@ from routers.facebook_create_ad import router as facebook_create_ad_router
 from routers.facebook_qa_selfcheck import router as facebook_qa_selfcheck_router
 from routers.chat_claude import create_router as create_chat_claude_router
 from routers.easybroker_migration import create_import_all_router
-from routers.avm_pdf import create_router as create_avm_pdf_router
 from routers.ficha_pdf import create_router as create_ficha_pdf_router
 from routers.solicitud_arrendamiento import create_router as create_solicitud_arrendamiento_router
 from routers.contact_file_import import create_router as create_contact_file_import_router
@@ -224,13 +217,6 @@ app.include_router(create_ficha_pdf_router(lambda: {
     "async_playwright": async_playwright,
     "_uuid": _uuid,
     "_pdf_store": _pdf_store,
-}))
-app.include_router(create_avm_pdf_router(lambda: {
-    "HTTPException": HTTPException,
-    "theme_css_for_pdf": theme_css_for_pdf,
-    "_pdf_store": _pdf_store,
-    "_uuid": _uuid,
-    "time": time,
 }))
 app.include_router(create_import_all_router(lambda: {
     "get_user_id_from_token": get_user_id_from_token,
@@ -478,11 +464,7 @@ app.include_router(news_router)
 from routers.ficha_manual import router as ficha_manual_router
 app.include_router(ficha_manual_router)
 
-# Comparables AVM vía Apify/Inmuebles24.
-from routers.avm_apify import router as avm_apify_router
-app.include_router(avm_apify_router)
-
-# Colonias AVM vía Google Places.
+# Autocompletado de colonias vía Google Places (captura del ACM).
 from routers.avm_places import router as avm_places_router
 app.include_router(avm_places_router)
 
@@ -490,18 +472,6 @@ app.include_router(avm_places_router)
 # listos enlaces de anuncios que le calzan.
 from routers.buscador_propiedades import router as buscador_propiedades_router
 app.include_router(buscador_propiedades_router)
-
-# Comparables AVM cercanos vía Supabase/PostGIS.
-from routers.avm_nearby import router as avm_nearby_router
-app.include_router(avm_nearby_router)
-
-# AVM Broquer v2 (paquete avm/). Import defensivo: si faltan lightgbm u otra
-# dependencia del modelo, el resto del backend sigue vivo.
-try:
-    from routers.avm_v2 import router as avm_v2_router
-    app.include_router(avm_v2_router)
-except Exception as _e:
-    print(f"[avm-v2] No se pudo montar el router: {_e}")
 
 # Limpieza y edición de imágenes inmobiliarias.
 from routers.image_cleaner import router as image_cleaner_router
@@ -675,6 +645,14 @@ app.include_router(supervision_router)
 from routers.cierres import router as cierres_router
 app.include_router(cierres_router)
 
+# Análisis comparativo de mercado: mesa de trabajo del asesor, reporte para
+# el propietario y base propia de comparables con recolección nocturna (ver
+# routers/acm.py y routers/acm_datos.py).
+from routers.acm import router as acm_router
+app.include_router(acm_router)
+from routers.acm_datos import router as acm_datos_router
+app.include_router(acm_datos_router)
+
 # Fase 7 · Sitio web de la inmobiliaria y del asesor: configuración, páginas,
 # dominio propio y páginas públicas renderizadas en servidor (routers/sitios.py).
 from routers.sitios import router as sitios_router, instalar_middleware as instalar_sitios_middleware
@@ -683,12 +661,6 @@ instalar_sitios_middleware(app)
 
 app.include_router(admin_usage_router)
 app.include_router(account_delete_router)
-app.include_router(avm_legacy_router)
-
-app.include_router(avm_claude_router)
-
-app.include_router(avm_websearch_router)
-
 app.include_router(facebook_connection_read_router)
 
 app.include_router(facebook_pages_router)

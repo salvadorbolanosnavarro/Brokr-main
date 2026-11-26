@@ -23,15 +23,6 @@ class FrontendCanonCompositionTests(unittest.TestCase):
         self.assertIn("border-bottom-color: var(--sky-blue);", normalized)
         self.assertIn("box-shadow: none;", normalized)
 
-    def test_avm_uses_neutral_app_header_and_tabs(self):
-        text = (ROOT / "avm.html").read_text(encoding="utf-8")
-        self.assertIn(MARKER, text)
-        normalized = text.split(MARKER, 1)[1].split("</style>", 1)[0]
-        self.assertIn(".avm-header {\n  background: var(--paper);", normalized)
-        self.assertIn(".avm-title {\n  color: var(--ink);", normalized)
-        self.assertIn(".avm-tabs {\n  background: var(--paper);", normalized)
-        self.assertIn("border-bottom-color: var(--sky-blue);", normalized)
-
 
 if __name__ == "__main__":
     unittest.main()

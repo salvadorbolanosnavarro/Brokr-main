@@ -1,7 +1,0 @@
-{
-  "_nota": "Costo de reposición nuevo (VRN) por m2 construido en MXN, valores de arranque 2026. Sustituir por la tabla de costos que use el equipo (p.ej. un catálogo paramétrico local). 'anio_base' sirve para avisar cuando la tabla envejece.",
-  "anio_base": 2026,
-  "casa":  {"economica": 9500, "media": 14000, "residencial": 20000, "residencial_plus": 28000},
-  "depto": {"economica": 10500, "media": 15500, "residencial": 22000, "residencial_plus": 31000},
-  "local": {"economica": 9000, "media": 13000, "residencial": 18000, "residencial_plus": 25000}
-}

@@ -14,13 +14,3 @@ cryptography
 pypdf
 lxml
 segno==1.6.6
-# AVM Broquer v2 (paquete avm/)
-numpy
-pandas
-scikit-learn
-lightgbm
-h3>=4
-shapely>=2
-rapidfuzz
-imagehash
-joblib
