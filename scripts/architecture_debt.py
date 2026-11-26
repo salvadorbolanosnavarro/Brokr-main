@@ -198,7 +198,10 @@ LARGE_FILE_MAX_BYTES = {
     # PSC contratado, que no afecta la validez de la firma ya recabada ni
     # genera responsabilidad de Broquer por sus actos u omisiones) — legal
     # real, no debt.
-    "legal.html": 116_939,
+    # Bumped 1,234 bytes: la cláusula 9.3 pasa del AVM retirado al ACM
+    # (cómo se arma el análisis y quién responde por lo que se presenta al
+    # propietario) — texto legal pedido por el usuario, no debt.
+    "legal.html": 118_173,
     # Nuevo en el inventario: el detalle de usuario de la Consola de admin
     # incorporó "Acceso completo fuera del equipo" y "Módulos habilitados
     # para esta cuenta" (PR #79), lo que cruzó admin.html el umbral de
