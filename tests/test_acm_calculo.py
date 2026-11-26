@@ -191,6 +191,15 @@ class ZonaTests(unittest.TestCase):
         self.assertTrue(sel["c90"]["incluido"])
         self.assertFalse(sel["c91"]["incluido"])
 
+    def test_marca_fuera_de_zona(self):
+        r = calc.calcular(self.SUJETO, [
+            comp(1, 3e6, colonia="Chapultepec Oriente"),                                  # cerca
+            comp(2, 3e6, lat=19.745, colonia="Lejana"),                                   # ~5 km
+            comp(3, 3e6, lat=None, lng=None, colonia=None, ubicacion_confirmada=False),   # sin ubicación
+            {**comp(4, 3e6, lat=None, lng=None, colonia=None), "origen": "manual"},       # manual: nunca fuera
+        ], None, HOY)
+        self.assertEqual([c["fuera_zona"] for c in r["comparables"]], [False, True, True, False])
+
     def test_el_radio_crece_solo_si_hace_falta(self):
         a_1500 = [comp(i, 3e6 + i * 1000, lat=19.70 + 0.0135, colonia="X") for i in range(6)]   # ~1.5 km
         sel = calc.seleccionar(self.SUJETO, a_1500, 5, HOY)

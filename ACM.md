@@ -63,6 +63,9 @@ Conservación de la propiedad: excelente +5%, bueno 0, regular −7%, para remod
 - **Colonias hermanas:** Chapultepec Sur, Oriente y Norte son de la misma familia y cuentan como cercanas (≈ 900 m) aunque no haya coordenadas.
 - **Cierres reales de la cuenta:** radio mínimo de 2 km, porque su precio es el que realmente se pagó.
 - **Sin búsqueda «en toda la ciudad»:** la búsqueda en portales se limita a la colonia y sus colindantes.
+- **Candidatos sólo de la zona:** la base, el inventario, la Bolsa y los cierres sólo aportan comparables con ubicación confirmada a 3 km o menos (antes la base llegaba a 6 km y el inventario/Bolsa a toda la ciudad).
+- **La lista muestra la zona:** lo de fuera queda tras «Ver descartados». Un ACM guardado antes de esta regla se recalcula una vez al abrirlo.
+- **Búsqueda automática:** al abrir un análisis con menos de 8 comparables en la zona se busca en portales solo, una vez por análisis en cada sesión.
 - El asesor siempre puede incluir a mano cualquier comparable de la lista.
 
 ## Limitaciones honestas

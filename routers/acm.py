@@ -230,7 +230,15 @@ async def _candidatos(ctx: Dict[str, Any], sujeto: Dict[str, Any]) -> Dict[str, 
     lista += await datos.comparables_de_cuenta(ctx, sujeto)
     if ctx["ve_cierres"]:
         lista += datos.comparables_de_cierres(cierres, sujeto)
+    # Inventario, Bolsa y cierres se leen por ciudad: aquí se quedan sólo los
+    # de la zona (ubicación confirmada y a 3 km o menos).
+    lista = [c for c in lista if _en_zona(sujeto, c)]
     return {"candidatos": lista, "descuento": calc.calibrar_descuento(cierres, sujeto["operacion"])}
+
+
+def _en_zona(sujeto: Dict[str, Any], comp: Dict[str, Any]) -> bool:
+    d = calc.distancia_comparable(sujeto, comp)
+    return d is not None and d <= calc.RADIOS_INCLUSION_M[-1]
 
 
 def _titulo(s: Dict[str, Any]) -> str:
@@ -240,8 +248,8 @@ def _titulo(s: Dict[str, Any]) -> str:
     return f"{tipo_label(s.get('tipo')) or 'Inmueble'} en {s['operacion']} · {lugar}"[:160]
 
 
-def _compatibles(sujeto: Dict[str, Any], comps: List[Dict[str, Any]]) -> int:
-    return sum(1 for c in comps if calc.compatible(sujeto, c))
+def _compatibles_en_zona(sujeto: Dict[str, Any], comps: List[Dict[str, Any]]) -> int:
+    return sum(1 for c in comps if calc.compatible(sujeto, c) and not c.get("fuera_zona"))
 
 
 def _publico_resultado(fila: Dict[str, Any]) -> Dict[str, Any]:
@@ -257,7 +265,7 @@ def _publico_resultado(fila: Dict[str, Any]) -> Dict[str, Any]:
         "origen_id": fila.get("origen_id"), "propiedad_id": fila.get("propiedad_id"),
         "contacto_id": fila.get("contacto_id"),
         "created_at": fila.get("created_at"), "updated_at": fila.get("updated_at"),
-        "faltan_comparables": _compatibles(sujeto, fila.get("comparables") or []) < calc.MIN_COMPARABLES_RADIO,
+        "faltan_comparables": _compatibles_en_zona(sujeto, fila.get("comparables") or []) < calc.MIN_COMPARABLES_RADIO,
     }
 
 
@@ -385,7 +393,32 @@ async def listar(request: Request, propiedad_id: Optional[str] = None, contacto_
 @router.get("/{acm_id}")
 async def obtener(acm_id: str, request: Request):
     ctx = await _ctx(request)
-    return _publico_resultado(await _analisis(ctx, acm_id))
+    fila = await _analisis(ctx, acm_id)
+    comps = fila.get("comparables") or []
+    if comps and any("fuera_zona" not in c for c in comps):
+        # ACM guardado antes de la regla de zona: se recalcula una vez para
+        # que lo de fuera de la zona quede marcado (y escondido). Conserva
+        # las decisiones del asesor y el "qué cambió" de una actualización.
+        sujeto, descuento = fila.get("sujeto") or {}, (fila.get("resultado") or {}).get("descuento")
+        calculo = calc.calcular(sujeto, comps, descuento)
+        # Lo lejano venía palomeado por la regla vieja, no por el asesor.
+        sacados = 0
+        for c in calculo["comparables"]:
+            if c.get("fuera_zona") and c.get("incluido"):
+                c["incluido"] = False
+                c["motivo"] = ("Ubicación no confirmada en el anuncio" if c.get("distancia_m") is None
+                               else f"Fuera de la zona ({c['distancia_m'] / 1000:.1f} km)")
+                sacados += 1
+        if sacados:
+            calculo = calc.calcular(sujeto, calculo["comparables"], descuento)
+        resultado = calculo["resultado"]
+        if (fila.get("resultado") or {}).get("comparacion"):
+            resultado["comparacion"] = fila["resultado"]["comparacion"]
+        cambios = {"comparables": calculo["comparables"], "resultado": resultado,
+                   "estrategia": _estrategia(fila.get("estrategia"), resultado), "updated_at": _ahora()}
+        await patch_rows("acm_analisis", {"id": f"eq.{fila['id']}"}, cambios)
+        fila = {**fila, **cambios}
+    return _publico_resultado(fila)
 
 
 class GuardarIn(BaseModel):
@@ -452,8 +485,9 @@ async def actualizar(acm_id: str, request: Request):
             conservados.append({**frescos[c["id"]], "incluido": c.get("incluido"),
                                 "ajustes": [a for a in c.get("ajustes") or [] if not a.get("auto")],
                                 "nota": c.get("nota")})
-        elif c.get("origen") == "mercado":
-            # Ya no aparece como vigente en la base: se marca retirado.
+        elif c.get("origen") == "mercado" and _en_zona(sujeto, c):
+            # De la zona y ya no aparece como vigente en la base: retirado.
+            # (Uno de fuera de la zona simplemente deja de listarse.)
             conservados.append({**c, "estatus": "retirado", "retirado_en": c.get("retirado_en") or _ahora(),
                                 "grupo": None})
     # Lo que ya no está confirmado en la zona sale del cálculo (sigue visible).

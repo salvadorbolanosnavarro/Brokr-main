@@ -50,6 +50,42 @@ class EntradaTests(unittest.TestCase):
         self.assertEqual((del_navegador["precios"]["rapido"], del_navegador["precio_salida"]), (5, 3_450_000))
         self.assertEqual(acm._estrategia({"elegida": "hackeo"}, resultado)["elegida"], "mercado")
 
+    def test_candidatos_solo_de_la_zona(self):
+        suj = {"tipo": "casa", "operacion": "venta", "colonia": "Chapultepec Sur", "lat": 19.70, "lng": -101.18}
+        self.assertTrue(acm._en_zona(suj, {"lat": 19.71, "lng": -101.18}))                     # ~1.1 km
+        self.assertFalse(acm._en_zona(suj, {"lat": 19.75, "lng": -101.18}))                    # ~5.5 km
+        self.assertTrue(acm._en_zona(suj, {"colonia": "Chapultepec Norte"}))                   # colonia hermana
+        self.assertFalse(acm._en_zona(suj, {"colonia": "Félix Ireta"}))                        # sin coordenadas, otra
+        self.assertFalse(acm._en_zona(suj, {"lat": 19.70, "lng": -101.18, "ubicacion_confirmada": False}))
+        doc = {"id": "x", "sujeto": {**suj, "m2_construccion": 150}, "comparables": [
+            {"tipo": "casa", "operacion": "venta", "precio": 3e6, "m2_construccion": 150, "fuera_zona": True}] * 9}
+        self.assertTrue(acm._publico_resultado(doc)["faltan_comparables"])   # 9 candidatos, ninguno en la zona
+
+    def test_acm_viejo_se_recalcula_al_abrir(self):
+        import asyncio
+        from unittest import mock
+
+        suj = {"tipo": "casa", "operacion": "venta", "colonia": "Chapultepec Sur", "lat": 19.70, "lng": -101.18,
+               "m2_construccion": 150, "moneda": "MXN"}
+        base = {"tipo": "casa", "operacion": "venta", "precio": 3e6, "m2_construccion": 150, "origen": "mercado",
+                "incluido": True, "ajustes": []}
+        fila = {"id": "a1", "user_id": "u1", "sujeto": suj, "resultado": {}, "estrategia": {}, "comparables": [
+            {**base, "id": "cerca", "lat": 19.701, "lng": -101.18},
+            {**base, "id": "lejos", "lat": 19.75, "lng": -101.18},
+            {**base, "id": "mio", "origen": "manual", "lat": 19.75, "lng": -101.18},
+        ]}
+        patch = mock.AsyncMock()
+        with mock.patch.object(acm, "_ctx", mock.AsyncMock(return_value={"user_id": "u1"})), \
+             mock.patch.object(acm, "_analisis", mock.AsyncMock(return_value=fila)), \
+             mock.patch.object(acm, "patch_rows", patch):
+            doc = asyncio.run(acm.obtener("a1", None))
+        por = {c["id"]: c for c in doc["comparables"]}
+        self.assertTrue(por["cerca"]["incluido"])
+        self.assertFalse(por["lejos"]["incluido"])
+        self.assertIn("Fuera de la zona", por["lejos"]["motivo"])
+        self.assertTrue(por["mio"]["incluido"])            # decisión del asesor: se respeta
+        patch.assert_awaited_once()
+
     def test_quien_puede_ver_un_acm(self):
         fila = {"user_id": "u1", "org_id": "o1"}
         self.assertTrue(acm._puede_ver({"user_id": "u1", "org_id": None, "es_admin": False}, fila))
