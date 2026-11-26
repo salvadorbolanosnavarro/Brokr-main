@@ -34,7 +34,7 @@ MODULOS_VALIDOS = {
     "props",
     "contactos",
     "contratos",
-    "avm",
+    "acm",
     "valor",
     "ficha",
     "ficha-manual",

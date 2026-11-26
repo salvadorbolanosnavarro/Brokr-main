@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 GATED = {
-    "routers/avm_websearch.py": "user_id = await require_paid_feature_access(request)",
+    "routers/acm.py": "uid = await require_paid_feature_access(request)",
     "routers/contracts_basic.py": "user_id = await require_paid_feature_access(request)",
     "routers/isr_pdf.py": "_uid = await require_paid_feature_access(request)",
     "routers/ficha_pdf.py": "_uid = await require_paid_feature_access(request)",

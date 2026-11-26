@@ -16,7 +16,6 @@ class SidebarInteractionLanguageTests(unittest.TestCase):
             'body[data-app="leads"] .ftab.active',
             'body[data-app="tareas"] .tk-tab.active',
             'body[data-app="estadisticas"] .ftab.active',
-            'body[data-app="avm"] .avm-tab.active',
             'body[data-app="facebook-ads"] .fa-tab.active',
         ):
             self.assertIn(selector, css)
@@ -30,7 +29,7 @@ class SidebarInteractionLanguageTests(unittest.TestCase):
 
     def test_card_radio_selections_share_focus_halo(self):
         css = (ROOT / "sidebar-interactions.css").read_text(encoding="utf-8")
-        self.assertIn('body[data-app="avm"] .tipo-btn.selected', css)
+        self.assertNotIn('body[data-app="avm"]', css)  # AVM retirado
         self.assertIn('body[data-app="video"] .vid-fmt.is-sel', css)
         self.assertIn('box-shadow: var(--focus) !important;', css)
 

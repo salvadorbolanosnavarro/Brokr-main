@@ -129,6 +129,8 @@ class Settings:
     cors_origenes_extra: str = ""
     cecil_ui_enabled: bool = False
     cecil_ui_user_ids: str = ""
+    acm_recoleccion_enabled: bool = False
+    acm_recoleccion_hora: int = 3
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -144,6 +146,11 @@ class Settings:
         return cls(
             cecil_ui_enabled=_env_bool("CECIL_UI_ENABLED"),
             cecil_ui_user_ids=os.getenv("CECIL_UI_USER_IDS", ""),
+            # Recolección nocturna del ACM (routers/acm_datos.py): gasta
+            # crédito de búsqueda, Firecrawl e IA, así que viene APAGADA y se
+            # enciende en UNA sola instancia. Hora local (0-23) de la corrida.
+            acm_recoleccion_enabled=_env_bool("ACM_RECOLECCION_ACTIVA", default=False),
+            acm_recoleccion_hora=min(23, _env_nonnegative_int("ACM_RECOLECCION_HORA", 3)),
             supabase_url=supabase_url,
             supabase_anon_key=supabase_anon_key,
             supabase_service_key=supabase_service_key,

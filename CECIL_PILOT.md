@@ -17,7 +17,7 @@ El piloto incorpora un workflow Pages pilot que prepara los archivos web origina
 
 ## Publicación y activación
 
-1. Confirmar que main permanece en la base 9378291 (26/nov/2026: integra el renombre «Estimación de valor» → «Análisis comparativo»; diseño 66a8ed2e = df2fb751 + solo ese renombre, rama cecil/diseno-impuestos; base anterior 99b71ee3); si avanzó, integrar y repetir pruebas. No desactivar la protección del constructor.
+1. Confirmar que main permanece en la base fbe7032 (26/nov/2026: integra el módulo ACM «Análisis comparativo» y retira el AVM viejo; diseño 7e68f7f5 = d5b6234c + solo ese retiro, rama cecil/diseno-impuestos; base anterior 0fc8733). Staging (work/redesign-preview-20261003) ya integra esta base en 9e3bc47, que además retira el AVM v2 que vivía sólo en staging; si main avanzó, integrar y repetir pruebas. No desactivar la protección del constructor.
 2. Preparar en Railway únicamente CECIL_UI_ENABLED=false y CECIL_UI_USER_IDS con el UUID real verificado de Salvador. No usar A3/B2 ni correo editable del cliente. No cambiar otras variables.
 3. Con los checks y la construcción Pages en verde, seleccionar GitHub Pages Source: GitHub Actions, conservando broquer.app y HTTPS.
 4. Fusionar PR217 a main con el SHA revisado y observar ambos despliegues. Mantener el flag apagado. Verificar Broquer habitual, /ui/cecil rechazando solicitudes sin sesión, artefacto Cecil real y ausencia de configuración staging.

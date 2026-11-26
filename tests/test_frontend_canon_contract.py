@@ -66,7 +66,7 @@ class FrontendCanonContractTests(unittest.TestCase):
             if re.search(r"(?m)^\s*:root\s*\{", source):
                 offenders.add(path.name)
         self.assertTrue(offenders.issubset(allowed), f"new module-local token roots detected: {sorted(offenders - allowed)}")
-        for migrated in ("isr.html", "avm.html", "contratos.html", "image-cleaner.html", "robin.html", "landing.html"):
+        for migrated in ("isr.html", "acm.html", "contratos.html", "image-cleaner.html", "robin.html", "landing.html"):
             self.assertNotIn(migrated, offenders, f"{migrated} UI must consume Canon directly")
 
     def test_shell_owned_sidebar_css_exists_only_in_shell(self):
@@ -80,7 +80,7 @@ class FrontendCanonContractTests(unittest.TestCase):
     def test_migrated_modules_use_shell_owned_chrome(self):
         for name in (
             "contactos.html", "leads.html", "isr.html", "propiedades.html",
-            "avm.html", "contratos.html", "image-cleaner.html",
+            "acm.html", "contratos.html", "image-cleaner.html",
         ):
             source = (ROOT / name).read_text(encoding="utf-8")
             self.assertNotIn("shell-replaced-sidebar", source, name)
@@ -88,14 +88,10 @@ class FrontendCanonContractTests(unittest.TestCase):
             self.assertNotIn(".app-sidebar__brand", source, name)
             self.assertIn('<script src="app-shell.js" defer></script>', source, name)
 
-    def test_avm_and_contratos_stay_on_direct_canon_tokens(self):
-        avm = (ROOT / "avm.html").read_text(encoding="utf-8")
+    def test_contratos_stays_on_direct_canon_tokens(self):
         contratos = (ROOT / "contratos.html").read_text(encoding="utf-8")
-        for source, name in ((avm, "avm.html"), (contratos, "contratos.html")):
-            self.assertIn('href="brokr-theme.css"', source, name)
-            self.assertNotIn("broquer-ui.css", source, name)
-        self.assertNotIn('--navy: var(--sky-navy) !important;', avm)
-        self.assertNotIn('--teal-glow:', avm)
+        self.assertIn('href="brokr-theme.css"', contratos)
+        self.assertNotIn("broquer-ui.css", contratos)
         self.assertNotRegex(contratos, r"(?m)^\s*:root\s*\{")
         self.assertNotIn("var(--tealp)", contratos)
 

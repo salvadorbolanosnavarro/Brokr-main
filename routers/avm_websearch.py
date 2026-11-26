@@ -1,4 +1,10 @@
-"""Controlled web-search AVM domain with SSRF-safe public page fetching."""
+"""Búsqueda web de anuncios inmobiliarios y lectura segura (SSRF) de páginas
+públicas de portales.
+
+La usan el ACM (routers/acm_datos.py) y el Buscador de propiedades
+(routers/buscador_propiedades.py). La valuación con IA que vivía aquí (el AVM
+viejo) se retiró: los valores los calcula core/acm_calculo.py.
+"""
 from __future__ import annotations
 
 import asyncio
@@ -6,31 +12,21 @@ from datetime import datetime, timedelta, timezone
 import json
 import math
 import re
-import time
 from typing import Any, Dict, List, Optional
 
 import httpx
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import HTTPException
 from pydantic import BaseModel
 
-from core.subscriptions import require_paid_feature_access
-from core.avm_fuentes import (
-    fuentes_publicas, pagina_leida, sanear_resultado, urls_no_consultadas, urls_permitidas,
-)
 from core.cache import cache_get, cache_set
 from core.config import settings
 from core.database import rest_url, service_headers
 from core.easybroker import normalize as _normalize_colonia
 from core.http import fetch_public_http_result
 from core.legacy_main_config import legacy_main_settings
-from core.paises import PAISES, PAIS_DEFAULT, datos_pais, pais_de_usuario
-from core.telemetry import _track_anthropic
-from limites import exigir_cupo, exigir_sesion
+from core.paises import PAISES, PAIS_DEFAULT, datos_pais
 
 
-router = APIRouter()
-ANTHROPIC_API_KEY = settings.anthropic_api_key
-ANTHROPIC_BASE = settings.anthropic_base
 GOOGLE_PLACES_KEY = settings.google_places_key
 
 
@@ -92,8 +88,7 @@ BLOCKED_FETCH_DOMAINS = {
 
 # Mensajes que ve la persona: sin nombres de herramientas ni proveedores (el
 # detalle técnico va a los logs de Railway con el prefijo [avm]).
-_MSG_NO_DISPONIBLE = "La opinión de valor no está disponible en este momento. Intenta más tarde."
-_MSG_REINTENTA = "No se pudo completar la opinión de valor. Intenta de nuevo en unos minutos."
+_MSG_NO_DISPONIBLE = "La búsqueda de comparables no está disponible en este momento. Intenta más tarde."
 
 FIRECRAWL_API_KEY = legacy_main_settings.firecrawl_api_key
 FIRECRAWL_CONCURRENCY = legacy_main_settings.firecrawl_concurrency
@@ -405,22 +400,10 @@ async def _avm_cache_store(url: str, colonia: str, ciudad: str, page_text: str) 
         pass
 
 
-def _today_mx() -> str:
-    return datetime.now().strftime("%d/%m/%Y")
-
-
 # Los montos en dólares son ~18 veces más chicos que en pesos mexicanos y
 # los de UF ~40.000 veces más chicos que en pesos chilenos: redondear a
 # miles un valor en UF lo destruye. La base se achica según la moneda.
 _DIVISOR_REDONDEO = {"USD": 10, "UF": 1000}
-
-
-def _round_mxn(n: float, base: int = 1000, moneda: str = "MXN") -> int:
-    base = max(1, base // _DIVISOR_REDONDEO.get(moneda, 1))
-    try:
-        return int(round(float(n) / base) * base)
-    except Exception:
-        return 0
 
 
 # Solo se leen anuncios de portales inmobiliarios. Antes cualquier dominio
@@ -831,65 +814,6 @@ async def _collect_search_candidates(req: AvmWebSearchRequest, colonias_vecinas:
     return {"queries": queries, "results": results, "providers_configured": providers_configured}
 
 
-def _extract_json_from_text(raw: str) -> Dict[str, Any]:
-    text = (raw or "").strip()
-
-    def _try(value: str):
-        try:
-            return json.loads(value)
-        except Exception:
-            return None
-
-    out = _try(text)
-    if out is not None:
-        return out
-
-    nofence = text
-    if "```" in nofence:
-        first = re.search(r"```(?:json|JSON)?", nofence)
-        if first:
-            inner = nofence[first.end():]
-            last = inner.rfind("```")
-            nofence = (inner[:last] if last != -1 else inner).strip()
-            out = _try(nofence)
-            if out is not None:
-                return out
-
-    for source in (nofence, text):
-        start = source.find("{")
-        if start == -1:
-            continue
-        depth, in_str, esc = 0, False, False
-        for index in range(start, len(source)):
-            char = source[index]
-            if in_str:
-                if esc:
-                    esc = False
-                elif char == "\\":
-                    esc = True
-                elif char == '"':
-                    in_str = False
-                continue
-            if char == '"':
-                in_str = True
-            elif char == "{":
-                depth += 1
-            elif char == "}":
-                depth -= 1
-                if depth == 0:
-                    out = _try(source[start:index + 1])
-                    if out is not None:
-                        return out
-                    break
-
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if match:
-        out = _try(match.group())
-        if out is not None:
-            return out
-    raise ValueError("No se encontro un objeto JSON valido en la respuesta del modelo.")
-
-
 def _extract_visible_text(html: str) -> str:
     try:
         from bs4 import BeautifulSoup
@@ -1018,128 +942,6 @@ def _advertencia_multi_listado(texto: str) -> str:
         "activas), también puedes usar ESE dato como comparable de baja "
         "confianza.\n\n"
     )
-
-
-def _parse_precio_mxn(raw: str) -> float | None:
-    """Convierte un texto tipo '$3,500,000' o '$3,500,000.00' a float. Solo
-    acepta el formato mexicano normal (comas de miles, punto opcional de
-    decimales) — un formato ambiguo se descarta en vez de arriesgar un
-    número diez veces más grande o más chico de lo real."""
-    s = raw.strip().lstrip("$").strip()
-    if re.fullmatch(r"[\d,]+(\.\d{1,2})?", s):
-        try:
-            return float(s.replace(",", ""))
-        except ValueError:
-            return None
-    return None
-
-
-def _estimacion_ultimo_recurso(paginas: List[Dict[str, Any]]) -> float | None:
-    """Red de seguridad final: si ni el modelo ni el resto del post-proceso
-    lograron un valor_estimado (a pesar de que el prompt ya le exige
-    sistemáticamente dar un número — ver reglas 13-14), se buscan precios
-    sueltos en todo el texto crudo recolectado y se usa la mediana como
-    aproximación muy tosca. Deliberadamente conservador: mejor una
-    referencia amplia y honesta que un "$0" o un error que no le sirve de
-    nada a un agente inmobiliario."""
-    precios = []
-    for pagina in paginas:
-        texto = pagina.get("page_text") or ""
-        for match in _PRECIO_MXN_RE.findall(texto):
-            valor = _parse_precio_mxn(match)
-            if valor and 200_000 <= valor <= 100_000_000:
-                precios.append(valor)
-    if not precios:
-        return None
-    precios.sort()
-    n = len(precios)
-    return precios[n // 2] if n % 2 else (precios[n // 2 - 1] + precios[n // 2]) / 2
-
-
-def _num(v: Any) -> float:
-    try:
-        return float(v)
-    except (TypeError, ValueError):
-        return 0.0
-
-
-def _precio_m2_de(comp: Dict[str, Any]):
-    """precio/m² de un comparable: prioriza el cálculo verificable
-    (precio ÷ superficie) sobre lo que haya reportado el modelo, y solo
-    usa el precio_m2 directo cuando no hay precio+superficie para
-    calcularlo — el caso normal de un indicador estadístico agregado, que
-    no corresponde a una sola propiedad y por eso no trae superficie.
-    Devuelve (precio_m2, corregido)."""
-    precio = _num(comp.get("precio"))
-    superficie = _num(comp.get("superficie_m2"))
-    calculado = (precio / superficie) if (precio > 0 and superficie > 0) else 0.0
-    if calculado > 0:
-        directo = _num(comp.get("precio_m2"))
-        corregido = directo > 0 and abs(directo - calculado) / calculado > 0.05
-        return calculado, corregido
-    return _num(comp.get("precio_m2")), False
-
-
-def _depurar_comparables(resultado: Dict[str, Any]) -> None:
-    """Filtro duro en código, independiente de si el modelo siguió sus
-    propias reglas al pie de la letra: un comparable sin ningún precio/m²
-    verificable (ni directo, ni calculable de precio + superficie) es
-    ruido — no importa qué tan real se vea el precio absoluto que trae, una
-    "casa" sin metros cuadrados no sirve para comparar nada — y uno con un
-    precio/m² muy alejado del resto probablemente sea un error de captura
-    o una promoción atípica. Ninguno de los dos debe presentársele al
-    cliente como si fuera un dato usable, así el modelo lo haya dejado
-    pasar en su propia respuesta."""
-    comparables = resultado.get("comparables") or []
-    descartados = list(resultado.get("comparables_descartados") or [])
-
-    def _descartar(comp, motivo):
-        comp["incluido_en_promedio"] = False
-        comp["motivo_inclusion_o_descarte"] = motivo
-        descartados.append({
-            "descripcion": comp.get("descripcion", ""),
-            "fuente": comp.get("fuente", ""),
-            "url": comp.get("url", ""),
-            "motivo": motivo,
-        })
-
-    validos = []
-    for comp in comparables:
-        pm2, corregido = _precio_m2_de(comp)
-        if pm2 <= 0:
-            _descartar(
-                comp,
-                "Descartado automáticamente: sin precio/m² verificable "
-                "(falta precio, superficie, o ambos).",
-            )
-            continue
-        if corregido:
-            comp["precio_m2"] = _round_mxn(pm2, 1)
-        comp["_pm2_calc"] = pm2
-        validos.append(comp)
-
-    if len(validos) >= 3:
-        precios_m2 = sorted(c["_pm2_calc"] for c in validos)
-        n = len(precios_m2)
-        mediana = precios_m2[n // 2] if n % 2 else (precios_m2[n // 2 - 1] + precios_m2[n // 2]) / 2
-        finales = []
-        for comp in validos:
-            pm2 = comp.pop("_pm2_calc")
-            if mediana and (pm2 < mediana * 0.4 or pm2 > mediana * 2.5):
-                _descartar(
-                    comp,
-                    f"Descartado automáticamente: precio/m² (${pm2:,.0f}) muy alejado de la "
-                    f"mediana de los demás comparables (${mediana:,.0f}/m²).",
-                )
-                continue
-            finales.append(comp)
-    else:
-        finales = validos
-        for comp in finales:
-            comp.pop("_pm2_calc", None)
-
-    resultado["comparables"] = finales
-    resultado["comparables_descartados"] = descartados
 
 
 _BLOQUEO_RE = re.compile(
@@ -1345,315 +1147,3 @@ def resumen_firecrawl(paginas: List[Dict[str, Any]], stats: Dict[str, Any]) -> D
     }
 
 
-def _subject_summary(req: AvmWebSearchRequest, tipo_label: str) -> str:
-    partes = [
-        f"{tipo_label} en {req.operacion.upper()}",
-        f"Ubicación: {req.colonia}, {req.ciudad}, {req.estado}",
-    ]
-    if req.m2_terreno > 0:
-        partes.append(
-            f"Terreno: {req.m2_terreno} m²"
-            + (f" ({req.condicion_terreno})" if req.condicion_terreno else "")
-        )
-    if req.m2_construccion > 0:
-        partes.append(f"Construcción: {req.m2_construccion} m²")
-    if req.recamaras > 0:
-        partes.append(f"Recámaras: {req.recamaras}")
-    if req.banos > 0:
-        partes.append(f"Baños: {req.banos}")
-    if req.estacionamientos > 0:
-        partes.append(f"Estacionamientos: {req.estacionamientos}")
-    if req.comentarios:
-        partes.append(f"Comentarios del usuario: {req.comentarios}")
-    return "\n".join(partes)
-
-
-async def _claude_extract_and_value(
-    req: AvmWebSearchRequest,
-    tipo_label: str,
-    evidence: List[Dict[str, Any]],
-    queries: List[str],
-    user_id: str = None,
-    colonias_vecinas: List[str] = (),
-) -> Dict[str, Any]:
-    if not ANTHROPIC_API_KEY:
-        print("[avm] falta ANTHROPIC_API_KEY", flush=True)
-        raise HTTPException(status_code=500, detail=_MSG_NO_DISPONIBLE)
-
-    es_terreno = req.tipo_inmueble == "terreno"
-    superficie_sujeto = req.m2_terreno if es_terreno else (req.m2_construccion or req.m2_terreno)
-    evidence_compact = []
-    for index, evidence_item in enumerate(evidence, 1):
-        evidence_compact.append({
-            "id": index,
-            "titulo": evidence_item.get("title", ""),
-            "url": evidence_item.get("url", ""),
-            "portal": evidence_item.get("portal", ""),
-            "snippet": evidence_item.get("snippet", ""),
-            # Sin estados técnicos ni nombres de herramientas: la IA no debe
-            # poder repetirlos en el resultado (ver core/avm_fuentes.py).
-            "lectura": "pagina_completa" if pagina_leida(evidence_item.get("fetch_status", "")) else "solo_resumen_del_buscador",
-            "texto_visible_limitado": evidence_item.get("page_text", "")[:MAX_PAGE_TEXT_CHARS]
-                .replace("DATO ESTRUCTURADO FIRECRAWL", "DATO ESTRUCTURADO DEL ANUNCIO"),
-        })
-
-    pais_cfg = datos_pais(req.pais)
-    if req.pais == PAIS_DEFAULT:
-        quien, moneda_regla = "mexicano", ""
-    else:
-        quien = f"que trabaja en {pais_cfg['nombre']}"
-        moneda_regla = (
-            f"\n17. El inmueble está en {pais_cfg['nombre']}. Expresa TODOS los montos (precio, precio_m2, "
-            f"valor_estimado, valor_minimo, valor_maximo, valor_por_m2) en {pais_cfg['moneda_avm']}. Si un "
-            "anuncio publica en otra moneda, conviértelo con un tipo de cambio razonable de la fecha y dilo "
-            "en una oración en advertencias. Usa la terminología local (barrio, distrito o comuna en vez de colonia)."
-        )
-    system_prompt = f"""Eres un analista valuador inmobiliario {quien}. Tu trabajo NO es inventar comparables: debes usar únicamente la evidencia web entregada por el servidor.
-
-Objetivo: limpiar, clasificar y calcular una estimación de valor por método comparativo de mercado.
-
-Reglas duras:
-1. No inventes precios, superficies, colonias ni URLs.
-2. Si un anuncio no muestra precio y superficie suficientes, márcalo como descartado.
-3. Si detectas que una misma propiedad aparece duplicada —incluso en portales distintos, por misma dirección/precio/superficie casi idénticos—, conserva una sola.
-4. No uses fotos, teléfonos, nombres de asesores ni datos personales.
-5. Prioriza comparables de la misma colonia/fraccionamiento. Si no hay suficientes, usa "colonias_colindantes_verificadas" en el mensaje del usuario si viene con nombres — son geográficamente contiguas de verdad (calculadas por geocodificación, no adivinadas), así que un comparable encontrado ahí cuenta como "zona adyacente" real para la regla 8, no como "submercado distinto". Sin esa lista, usa tu propio criterio de zonas adyacentes y similares.
-6. Para terrenos usa m² de terreno. Para casas/departamentos usa m² de construcción como base principal; si no hay construcción, descarta o márcalo como baja confianza.
-7. Aplica factor negociación de -5% a precios de oferta en venta. En renta usa -3% si aplica.
-8. Penaliza comparables sospechosos: anuncio viejo, datos incompletos, precio/m² extremo, ubicación poco clara, submercado distinto.
-9. Esta salida es una estimación de valor, no avalúo certificado.
-10. Cada "texto_visible_limitado" puede traer, antes del texto de la página, una línea "DATO ESTRUCTURADO JSON-LD (alta confianza): ..." o un bloque "ANUNCIOS ESTRUCTURADOS DE LA PÁGINA (alta confianza ...)" con un anuncio por línea (título, ubicación, precio, superficies y, si la hay, la url de ese anuncio). Son datos extraídos del propio código o render de la página (nunca inventados), mucho más confiables que el texto suelto de abajo. CADA LÍNEA del bloque es un anuncio distinto y cuenta como un comparable individual por separado: evalúa todas (no solo la primera), inclúyelas si son del mismo tipo de inmueble y operación y de una ubicación comparable, y descártalas con motivo si no. Si la línea trae url, usa esa url en el comparable; si no, usa la url de la página.
-11. Si una fuente trae "ADVERTENCIA AUTOMÁTICA: ... listado de resultados con varias propiedades...", esa página mezcla varios anuncios: usa sus anuncios estructurados (regla 10) o cada tarjeta del texto que traiga precio y superficie propios como comparables individuales distintos, pero NO cruces un precio de un anuncio con la superficie de otro. Si además trae un indicador agregado del portal (ej. "precio promedio/medio en X colonia: $Y", "rango de precios", "N propiedades activas"), puedes usarlo como comparable de baja confianza (descripción: "Indicador estadístico de mercado — no es un anuncio individual").
-12. Vuelve a sumar/promediar tú mismo los precio_m2 de los comparables que marques incluido_en_promedio antes de reportar valor_por_m2 — no arrastres un cálculo mental impreciso; verifica la aritmética.
-13. NUNCA dejes valor_estimado en 0 ni respondas que "no fue posible" generar una estimación — eso no le sirve de nada a un agente inmobiliario. Siempre entrega un número, usando en orden lo mejor disponible: (a) comparables individuales de la colonia; (b) comparables de zonas adyacentes/similares; (c) el indicador estadístico agregado del portal (regla 11) para la colonia o ciudad; (d) si de plano no hay NINGÚN precio en toda la evidencia (ni individual ni agregado), da tu mejor estimación razonada a partir de lo que sí sepas del tipo de inmueble y la zona, dejándolo explícito en advertencias. Cuanto más débil la evidencia, más ancho el rango (valor_minimo/valor_maximo) y más baja la nivel_confianza — pero siempre con un valor_estimado numérico. Reserva nivel_confianza='baja' + un rango amplio para estos casos; jamás una respuesta vacía.
-14. Si menos de 3 comparables individuales son útiles, aplica igualmente la regla 13 (rango conservador, nivel_confianza='baja') en vez de negarte a estimar.
-15. Tono de "advertencias" y "razon_confianza": son para un agente inmobiliario que se lo va a enseñar a su cliente, no una advertencia legal. Nada de MAYÚSCULAS tipo alarma ni acumular varios avisos de "esto no es un avalúo certificado" — eso ya va aparte en el campo "metodologia" del sistema, no lo repitas aquí. Explica en 1-2 oraciones, en tono profesional y directo, POR QUÉ la confianza es la que es, hablando del mercado (ej. "hay pocos locales de tamaño similar publicados en la colonia, así que el rango se apoya también en oferta de colonias vecinas") — sin sonar catastrófico. Baja confianza con un rango amplio es una estimación honesta, no un fracaso.
-16. Nunca menciones, en ningún campo (incluidas "recomendaciones"), cómo se obtuvo la información: ni herramientas, ni proveedores, ni buscadores, ni que algún portal o página no se pudo leer, no dio acceso, falló o estaba bloqueada, ni recomiendes "verificar en portales" por esa razón. Si una fuente solo trae "solo_resumen_del_buscador", úsala con lo que muestra y ya. En "url" de los comparables solo pon ligas que aparezcan en la evidencia. Habla del mercado, no del proceso.{moneda_regla}
-
-Responde ÚNICAMENTE JSON válido con esta estructura:
-{{
-  "valor_estimado": 0,
-  "valor_minimo": 0,
-  "valor_maximo": 0,
-  "valor_por_m2": 0,
-  "precio_m2_base": 0,
-  "nivel_confianza": "alta|media|baja",
-  "razon_confianza": "",
-  "resumen_ejecutivo": "",
-  "comparables": [
-    {{
-      "descripcion": "",
-      "superficie_m2": 0,
-      "precio": 0,
-      "precio_m2": 0,
-      "fuente": "",
-      "url": "",
-      "incluido_en_promedio": true,
-      "motivo_inclusion_o_descarte": ""
-    }}
-  ],
-  "comparables_descartados": [
-    {{"descripcion":"", "fuente":"", "url":"", "motivo":""}}
-  ],
-  "factores_ajuste": [
-    {{"factor":"", "descripcion":"", "porcentaje":0, "impacto":"positivo|negativo|neutro"}}
-  ],
-  "precio_m2_ajustado_calculo": "",
-  "analisis_zona": "",
-  "recomendaciones": [""],
-  "advertencias": "",
-  "fecha": "{_today_mx()}"
-}}
-"""
-
-    user_msg = {
-        "inmueble_sujeto": _subject_summary(req, tipo_label),
-        "superficie_relevante_sujeto_m2": superficie_sujeto,
-        "queries_utilizadas": queries,
-        "colonias_colindantes_verificadas": list(colonias_vecinas),
-        "evidencia_web": evidence_compact,
-        "instruccion_calculo": "Extrae comparables reales de la evidencia; calcula precio/m²; descarta duplicados/outliers; promedia solo incluidos; aplica ajustes; calcula valor estimado y rango.",
-    }
-
-    async with httpx.AsyncClient(timeout=180) as client:
-        response = await client.post(
-            f"{ANTHROPIC_BASE}/messages",
-            headers={
-                "x-api-key": ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": legacy_main_settings.anthropic_avm_model,
-                # Más anuncios por página → más comparables en la respuesta.
-                "max_tokens": 12000,
-                "temperature": 0.05,
-                "system": system_prompt,
-                "messages": [{"role": "user", "content": json.dumps(user_msg, ensure_ascii=False)}],
-            },
-        )
-
-    if response.status_code != 200:
-        print(f"[avm] error del modelo http_{response.status_code}: {response.text[:500]}", flush=True)
-        raise HTTPException(status_code=502, detail=_MSG_REINTENTA)
-
-    response_json = response.json()
-    _track_anthropic(
-        user_id,
-        "avm",
-        "/api/avm-websearch",
-        response_json,
-        modelo=response_json.get("model") or legacy_main_settings.anthropic_avm_model,
-    )
-    raw = ""
-    for block in response_json.get("content", []) or []:
-        if block.get("type") == "text":
-            raw += block.get("text", "")
-    try:
-        return _extract_json_from_text(raw)
-    except Exception:
-        print(f"[avm] el modelo no devolvió JSON válido: {raw[:700]}", flush=True)
-        raise HTTPException(status_code=502, detail=_MSG_REINTENTA)
-
-
-@router.post("/api/avm-websearch")
-async def avm_websearch(req: AvmWebSearchRequest, request: Request):
-    user_id = await require_paid_feature_access(request)
-    exigir_cupo(request, user_id)
-    exigir_sesion(request, user_id)
-    req.pais = await pais_de_usuario(user_id)
-    moneda = datos_pais(req.pais)["moneda_avm"]
-    tipo_labels = {
-        "casa": "Casa habitación", "departamento": "Departamento/Condominio",
-        "terreno": "Terreno", "local": "Local comercial",
-        "oficina": "Oficina", "bodega": "Bodega/Nave industrial",
-    }
-    tipo_label = tipo_labels.get(req.tipo_inmueble, req.tipo_inmueble)
-
-    colonias_vecinas = await _colonias_vecinas(req.latitud, req.longitud, req.colonia)
-
-    busqueda = await _collect_search_candidates(req, colonias_vecinas)
-    candidatos = busqueda["results"]
-    if not candidatos:
-        raise HTTPException(
-            status_code=404,
-            detail="No encontré anuncios comparables para esta zona. Prueba con otra colonia o una zona cercana.",
-        )
-
-    resumen_fc: Dict[str, Any] = {}
-    paginas = await _fetch_candidate_pages(candidatos, colonia=req.colonia, ciudad=req.ciudad, resumen=resumen_fc)
-    resultado = await _claude_extract_and_value(
-        req,
-        tipo_label,
-        paginas,
-        busqueda["queries"],
-        user_id=user_id,
-        colonias_vecinas=colonias_vecinas,
-    )
-
-    resultado["tipo_inmueble"] = tipo_label
-    resultado["operacion"] = req.operacion
-    resultado["colonia"] = req.colonia
-    resultado["ciudad"] = req.ciudad
-    resultado["estado"] = req.estado
-    resultado["m2_construccion"] = req.m2_construccion
-    resultado["m2_terreno"] = req.m2_terreno
-    resultado["recamaras"] = req.recamaras
-    resultado["banos"] = req.banos
-    resultado["condicion_terreno"] = req.condicion_terreno
-    resultado["pais"] = req.pais
-    resultado["moneda"] = moneda
-    resultado["timestamp"] = time.strftime("%Y-%m-%d %H:%M")
-    resultado["metodologia"] = "Búsqueda web por API configurada, lectura limitada de URLs públicas, extracción mínima de datos visibles, deduplicación y clasificación por IA, cálculo comparativo con ajustes."
-    # Solo las páginas que sí se consultaron, sin estados ni proveedores. El
-    # resumen técnico (resumen_fc) se queda en los logs de Railway.
-    resultado["fuentes_consultadas"] = fuentes_publicas(paginas)
-    resultado["queries_utilizadas"] = busqueda["queries"]
-    resultado["colonias_colindantes_verificadas"] = colonias_vecinas
-
-    try:
-        _depurar_comparables(resultado)
-    except Exception:
-        pass
-
-    try:
-        comps = [
-            comp for comp in resultado.get("comparables", [])
-            if comp.get("incluido_en_promedio") and comp.get("precio_m2")
-        ]
-        precios_m2_validos = []
-        for comp in comps:
-            try:
-                precios_m2_validos.append(float(comp["precio_m2"]))
-            except (TypeError, ValueError):
-                continue
-        promedio_codigo = (
-            sum(precios_m2_validos) / len(precios_m2_validos) if precios_m2_validos else None
-        )
-        if promedio_codigo and not resultado.get("precio_m2_base"):
-            resultado["precio_m2_base"] = _round_mxn(promedio_codigo, 100, moneda)
-
-        # Verificación aritmética: un LLM sumando/promediando muchos números
-        # en una sola respuesta es poco confiable. En vez de confiar a
-        # ciegas en el valor_por_m2 que reporta, se recalcula en código a
-        # partir de los propios comparables que el modelo marcó como
-        # incluidos; si el desvío es grande, se baja la confianza y se dice
-        # explícitamente por qué, en vez de entregar un número que ni el
-        # propio análisis del modelo respalda.
-        if promedio_codigo and resultado.get("valor_por_m2"):
-            try:
-                valor_m2_modelo = float(resultado["valor_por_m2"])
-                desvio = abs(valor_m2_modelo - promedio_codigo) / promedio_codigo
-                if desvio > 0.15:
-                    resultado["nivel_confianza"] = "baja"
-                    nota = (
-                        f"Verificación automática: el precio/m² reportado ({valor_m2_modelo:,.0f} {moneda}) "
-                        f"difiere {desvio * 100:.0f}% del promedio recalculado en código a partir de "
-                        f"los comparables incluidos ({promedio_codigo:,.0f} {moneda}/m²). Revisar manualmente "
-                        "antes de usarlo con un cliente."
-                    )
-                    resultado["advertencias"] = (str(resultado.get("advertencias") or "") + " " + nota).strip()
-            except (TypeError, ValueError, ZeroDivisionError):
-                pass
-
-        superficie = (
-            req.m2_terreno
-            if req.tipo_inmueble == "terreno"
-            else (req.m2_construccion or req.m2_terreno)
-        )
-        if superficie and resultado.get("valor_por_m2") and not resultado.get("valor_estimado"):
-            resultado["valor_estimado"] = _round_mxn(
-                float(resultado["valor_por_m2"]) * superficie, moneda=moneda
-            )
-        if resultado.get("valor_estimado"):
-            valor = float(resultado["valor_estimado"])
-            resultado["valor_minimo"] = resultado.get("valor_minimo") or _round_mxn(valor * 0.92, moneda=moneda)
-            resultado["valor_maximo"] = resultado.get("valor_maximo") or _round_mxn(valor * 1.08, moneda=moneda)
-    except Exception:
-        pass
-
-    # Red de seguridad final: el prompt ya le exige a Claude dar siempre un
-    # número (reglas 13-14), pero un modelo puede no cumplirlo. Si aun así
-    # llegamos aquí sin valor_estimado, es mejor una referencia amplia y
-    # honesta (mediana de precios sueltos en la evidencia cruda) que un "$0"
-    # o un error — eso último nunca le sirve de nada a un agente.
-    if not resultado.get("valor_estimado"):
-        ultimo_recurso = _estimacion_ultimo_recurso(paginas)
-        if ultimo_recurso:
-            valor = _round_mxn(ultimo_recurso, moneda=moneda)
-            resultado["valor_estimado"] = valor
-            resultado["valor_minimo"] = _round_mxn(valor * 0.7, moneda=moneda)
-            resultado["valor_maximo"] = _round_mxn(valor * 1.3, moneda=moneda)
-            resultado["nivel_confianza"] = "baja"
-            nota = (
-                "Estimación de último recurso: no se pudieron extraer comparables "
-                "confiables de la evidencia web; este monto es la mediana de los "
-                "precios detectados en las páginas consultadas, sin poder vincularlos "
-                "con certeza a la superficie del inmueble. Trátalo solo como una "
-                "referencia muy amplia y complementa con una revisión manual."
-            )
-            resultado["advertencias"] = (str(resultado.get("advertencias") or "") + " " + nota).strip()
-
-    # Lo que ve la persona: sin ligas de páginas no consultadas ni menciones
-    # de herramientas, proveedores o bloqueos (core/avm_fuentes.py).
-    return sanear_resultado(resultado, urls_no_consultadas(paginas), urls_permitidas(paginas))

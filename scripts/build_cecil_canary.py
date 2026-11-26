@@ -15,11 +15,11 @@ import tarfile
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-# Approved design df2fb75 (086fd40 + tax fix of #231) + only the module rename
-# "Estimación de valor" -> "Análisis comparativo" (base 9378291), kept on branch
-# cecil/diseno-impuestos. Previous: design df2fb75, base 99b71ee.
-DESIGN_REF = '66a8ed2ee0992155242464ea4cebc5fca1b3247f'
-BASE_REF = '9378291258e29d8287a332a94f7a0840b2fcdfee'
+# Approved design d5b6234 (66a8ed2 + ACM) + only the removal of the old AVM
+# (avm.html, avm-runtime.js and its compiler), kept on branch
+# cecil/diseno-impuestos. Previous: design d5b6234, base 0fc8733.
+DESIGN_REF = '7e68f7f5d2afc4d4fc95599f85f72790fb5cca59'
+BASE_REF = 'fbe703248b03c06648f19ee6e494dfc4de605c43'
 EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.gif', '.mp4', '.webm'}
 FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor', 'videos'}
 

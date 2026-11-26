@@ -11,8 +11,7 @@
 body[data-app="contactos"] .ftab.active,
 body[data-app="leads"] .ftab.active,
 body[data-app="tareas"] .tk-tab.active,
-body[data-app="estadisticas"] .ftab.active,
-body[data-app="avm"] .avm-tab.active {
+body[data-app="estadisticas"] .ftab.active {
   color: var(--ink) !important;
   border-bottom-color: var(--sky-blue) !important;
   background: transparent !important;
@@ -63,8 +62,6 @@ body[data-app="video"] .vid-ed-preset.is-sel {
 }
 
 /* ── Card/radio selection ────────────────────────────────── */
-body[data-app="avm"] .tipo-btn.selected,
-body[data-app="avm"] .comp-auto-card.selected,
 body[data-app="video"] .vid-ed-card.is-sel,
 body[data-app="video"] .vid-fmt.is-sel {
   background: var(--sky-canvas) !important;

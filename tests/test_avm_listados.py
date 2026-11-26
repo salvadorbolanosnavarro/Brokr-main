@@ -1,5 +1,5 @@
-"""AVM: páginas de listado rinden un comparable por anuncio, búsquedas más
-amplias y nada de ligas ni frases internas en lo que ve la persona.
+"""Búsqueda y lectura de portales (la usan el ACM y el Buscador): páginas de
+listado rinden un comparable por anuncio y búsquedas más amplias.
 
 Caso real que motivó esto: Firecrawl leyó 14 páginas sin errores y la
 estimación salió con solo 2 comparables."""
@@ -12,7 +12,6 @@ import unittest
 from unittest import mock
 
 import routers.avm_websearch as A
-from core import avm_fuentes as F
 
 
 LISTADO = {
@@ -149,54 +148,6 @@ class InmobiliariasLocalesTests(unittest.TestCase):
         ]
         for item in casos:
             self.assertFalse(A.parece_anuncio_inmobiliario(item), item["url"])
-
-
-class LigasYFrasesTests(unittest.TestCase):
-    PAGINAS = [
-        {"url": "https://www.inmuebles24.com/locales.html", "fetch_status": "ok_firecrawl",
-         "page_text": A.MARCA_ANUNCIOS + ":\n1) Local | precio=45000 | "
-                      "url=https://www.inmuebles24.com/propiedades/local-123.html\n"},
-        {"url": "https://www.lamudi.com.mx/locales", "fetch_status": "http_403__firecrawl_err",
-         "page_text": ""},
-    ]
-
-    def test_comparables_solo_con_ligas_consultadas(self):
-        res = {"comparables": [
-            {"descripcion": "a", "url": "https://www.inmuebles24.com/propiedades/local-123.html"},
-            {"descripcion": "b", "url": "https://www.inmuebles24.com/locales.html"},
-            {"descripcion": "c", "url": "https://www.lamudi.com.mx/locales"},
-            {"descripcion": "d", "url": "https://inventada.mx/anuncio"},
-        ]}
-        F.sanear_resultado(res, F.urls_no_consultadas(self.PAGINAS), F.urls_permitidas(self.PAGINAS))
-        urls = [c["url"] for c in res["comparables"]]
-        self.assertEqual(urls, ["https://www.inmuebles24.com/propiedades/local-123.html",
-                                "https://www.inmuebles24.com/locales.html", "", ""])
-
-    def test_pdf_sin_permitidas_no_cambia(self):
-        res = {"comparables": [{"descripcion": "d", "url": "https://otra.mx/x"}]}
-        F.sanear_resultado(res)
-        self.assertEqual(res["comparables"][0]["url"], "https://otra.mx/x")
-
-    def test_frase_real_del_pdf_se_quita(self):
-        res = {"recomendaciones": [
-            "Verificar directamente en portales (Inmuebles24, Lamudi, Mercado Libre) la oferta activa "
-            "de locales comerciales de 200–350 m² en el corredor García de León, ya que varios portales "
-            "no permitieron acceso completo durante la consulta.",
-            "El acceso independiente desde la calle es un atributo diferenciador.",
-        ]}
-        F.sanear_resultado(res)
-        self.assertEqual(res["recomendaciones"], ["El acceso independiente desde la calle es un atributo diferenciador."])
-
-    def test_vocabulario_vial_no_se_toca(self):
-        for t in ("Vialidad con acceso directo al periférico.",
-                  "La zona tiene acceso limitado al transporte público.",
-                  "El edificio no permite el acceso de mascotas."):
-            self.assertEqual(F.limpiar_texto(t), t)
-
-    def test_prompt_no_sugiere_hablar_de_bloqueos(self):
-        with open(A.__file__, encoding="utf-8") as fh:
-            fuente = fh.read()
-        self.assertNotIn("bloquearon el acceso directo", fuente)
 
 
 class FetchConListadoTests(unittest.TestCase):
