@@ -187,7 +187,8 @@
     var link = c.url ? '<a href="' + esc(c.url) + '" target="_blank" rel="noopener">' + esc(titulo) + '</a>' : esc(titulo);
     var chips = '<span class="bk-chip">' + esc(GRUPOS[c.grupo] || '') + '</span>' +
       (c.atipico ? '<span class="bk-chip bk-chip--warn">Precio atípico</span>' : '') +
-      (c.bajas_precio ? '<span class="bk-chip bk-chip--warn">Bajó de precio</span>' : '');
+      (c.bajas_precio ? '<span class="bk-chip bk-chip--warn">Bajó de precio</span>' : '') +
+      (!c.incluido && c.motivo ? '<span class="bk-chip bk-chip--warn">' + esc(c.motivo) + '</span>' : '');
     var precio = c.grupo === 'vendido' && c.precio_cierre ? c.precio_cierre : c.precio;
     var det = '';
     if (abierto) {

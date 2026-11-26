@@ -94,6 +94,8 @@ class SeleccionYCalculoTests(unittest.TestCase):
         lista.append(comp(97, 3_000_000, tipo="departamento"))               # otro tipo
         lista.append(comp(96, 3_000_000, m2c=400))                           # fuera de ±2x
         lista.append(comp(95, 3_100_000, origen="cierre", precio_cierre=3_050_000,
+                          lat=19.708, publicada_en="2026-03-01", fecha_cierre="2026-06-01"))
+        lista.append(comp(94, 3_000_000, origen="cierre", precio_cierre=2_900_000,
                           lat=19.75, publicada_en="2026-03-01", fecha_cierre="2026-06-01"))
         return lista
 
@@ -106,7 +108,10 @@ class SeleccionYCalculoTests(unittest.TestCase):
         atipico = next(c for c in sel if c["id"] == "c99")
         self.assertFalse(atipico["incluido"])
         self.assertTrue(atipico["atipico"])
-        self.assertTrue(next(c for c in sel if c["id"] == "c95")["incluido"])  # cierre real lejano entra
+        self.assertTrue(next(c for c in sel if c["id"] == "c95")["incluido"])   # cierre real de la zona entra
+        lejano = next(c for c in sel if c["id"] == "c94")                       # a 5.5 km: se ve, no se incluye
+        self.assertFalse(lejano["incluido"])
+        self.assertIn("Fuera de la zona", lejano["motivo"])
         self.assertLessEqual(sum(c["incluido"] for c in sel), calc.MAX_INCLUIDOS_INICIAL + calc.MAX_CIERRES_EXTRA)
 
     def test_calculo_es_determinista_y_coherente(self):
@@ -143,6 +148,55 @@ class SeleccionYCalculoTests(unittest.TestCase):
         r = calc.calcular(SUJETO, [], None, HOY)["resultado"]
         self.assertEqual(r["n_incluidos"], 0)
         self.assertIsNone(r["valor"]["bajo"])
+
+
+class ZonaTests(unittest.TestCase):
+    """Caso real: el asesor puso Chapultepec Sur y el análisis comparó con
+    colonias de otra zona de la ciudad."""
+
+    SUJETO = {**SUJETO, "colonia": "Chapultepec Sur"}
+
+    def test_familia_de_colonias(self):
+        self.assertEqual(calc.familia_colonia("Chapultepec Sur"), "chapultepec")
+        self.assertEqual(calc.familia_colonia("Col. Chapultepec Oriente"), "chapultepec")
+        self.assertEqual(calc.familia_colonia("Lomas de las Américas 2a Sección"), "lomas americas")
+        self.assertNotEqual(calc.familia_colonia("Félix Ireta"), calc.familia_colonia("Chapultepec Norte"))
+
+    def test_sin_ubicacion_confirmada_no_hay_cercania(self):
+        supuesto = comp(1, 3e6, lat=19.70, lng=-101.18, colonia="Chapultepec Sur", ubicacion_confirmada=False)
+        self.assertIsNone(calc.distancia_comparable(self.SUJETO, supuesto))
+        centro_ciudad = comp(2, 3e6, precision_ubicacion="ciudad", colonia="Otra")
+        self.assertIsNone(calc.distancia_comparable(self.SUJETO, centro_ciudad))
+        hermana = comp(3, 3e6, lat=None, lng=None, colonia="Chapultepec Oriente")
+        self.assertEqual(calc.distancia_comparable(self.SUJETO, hermana), calc.DISTANCIA_COLONIA_HERMANA_M)
+
+    def test_lo_lejano_y_lo_no_confirmado_no_entra_solo(self):
+        cerca = [comp(i, 3_000_000 + i * 40_000, lat=19.70 + i * 0.0015, colonia="Chapultepec Oriente") for i in range(6)]
+        otra_zona = [comp(50 + i, 2_000_000, lat=19.66, lng=-101.23, colonia="Tres Puentes") for i in range(8)]
+        sin_ubicacion = [comp(80 + i, 3_100_000, lat=None, lng=None, colonia=None, ubicacion_confirmada=False) for i in range(5)]
+        sel = calc.seleccionar(self.SUJETO, cerca + otra_zona + sin_ubicacion, 5, HOY)
+        incluidos = {c["id"] for c in sel if c["incluido"]}
+        self.assertEqual(incluidos, {f"c{i}" for i in range(6)})
+        for c in sel:
+            if c["id"] in incluidos:
+                continue
+            self.assertIn(c["motivo"], ("Ubicación no confirmada en el anuncio",) if c["distancia_m"] is None
+                          else (f"Fuera de la zona ({c['distancia_m'] / 1000:.1f} km)",))
+
+    def test_cierre_real_tiene_radio_minimo_de_2km(self):
+        cerca = [comp(i, 3e6 + i * 1000, lat=19.70 + i * 0.001, colonia="X") for i in range(6)]
+        cierre = comp(90, 3e6, origen="cierre", precio_cierre=3e6, lat=19.7135, colonia="Y")      # ~1.5 km
+        cierre_lejos = comp(91, 3e6, origen="cierre", precio_cierre=3e6, lat=19.73, colonia="Z")  # ~3.3 km
+        sel = {c["id"]: c for c in calc.seleccionar(self.SUJETO, cerca + [cierre, cierre_lejos], 5, HOY)}
+        self.assertTrue(sel["c90"]["incluido"])
+        self.assertFalse(sel["c91"]["incluido"])
+
+    def test_el_radio_crece_solo_si_hace_falta(self):
+        a_1500 = [comp(i, 3e6 + i * 1000, lat=19.70 + 0.0135, colonia="X") for i in range(6)]   # ~1.5 km
+        sel = calc.seleccionar(self.SUJETO, a_1500, 5, HOY)
+        self.assertTrue(all(c["incluido"] for c in sel))
+        a_5km = [comp(i, 3e6 + i * 1000, lat=19.745, colonia="X") for i in range(6)]
+        self.assertFalse(any(c["incluido"] for c in calc.seleccionar(self.SUJETO, a_5km, 5, HOY)))
 
 
 class MercadoTests(unittest.TestCase):
