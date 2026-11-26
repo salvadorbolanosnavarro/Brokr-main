@@ -28,7 +28,7 @@ GRUPOS = ("activo", "vendido", "bajas")
 CONSERVACION_PCT = {"excelente": 5.0, "bueno": 0.0, "regular": -7.0, "remodelar": -15.0}
 DESCUENTO_DEFECTO = {"venta": 5.0, "renta": 3.0}
 DIAS_VENCIDO = 180          # un anuncio activo con más días que esto entra a "bajas"
-RADIOS_BUSQUEDA_M = (700, 1500, 3000, 6000)
+RADIOS_BUSQUEDA_M = (700, 1500, 3000)   # nunca se buscan candidatos a más de 3 km
 MIN_COMPARABLES_RADIO = 8
 MAX_SELECCION = 24
 MAX_INCLUIDOS_INICIAL = 12
@@ -410,6 +410,10 @@ def preparar_comparable(sujeto: Dict[str, Any], comp: Dict[str, Any], descuento_
     c["ajustes"] = combinar_ajustes(ajustes_automaticos(sujeto, c, descuento_pct), c.get("ajustes"))
     c["ajuste_total_pct"] = total_ajustes(c["ajustes"])
     c["precio_m2_ajustado"] = round(pm2 * (1 + c["ajuste_total_pct"] / 100), 2) if pm2 and misma_moneda else None
+    # Fuera de la zona: sin ubicación confirmada o a más de 3 km. La pantalla
+    # lo esconde tras "Ver descartados"; uno manual nunca está fuera.
+    c["fuera_zona"] = c.get("origen") != "manual" and (
+        c.get("distancia_m") is None or c["distancia_m"] > RADIOS_INCLUSION_M[-1])
     if not misma_moneda:
         c["incluido"] = False
         c["motivo"] = f"Publicado en {c.get('moneda')}"

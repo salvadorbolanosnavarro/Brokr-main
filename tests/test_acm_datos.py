@@ -211,7 +211,7 @@ class DatosTests(unittest.TestCase):
                   "m2_construccion": 150, "ciudad": "Morelia", "colonia": "Chapultepec"}
         asyncio.run(datos.comparables_de_mercado(sujeto))
         radios = [p for t, p in self.db.consultas if t == "mercado_comparables"]
-        self.assertEqual(len(radios), 4)                                       # base vacía: llega a 6 km
+        self.assertEqual(len(radios), 3)                                       # base vacía: llega a 3 km, no más
         self.assertTrue(radios[0]["and"].startswith("(lat.gte."))
         self.assertIn("estatus.eq.retirado", radios[0]["or"])
 
