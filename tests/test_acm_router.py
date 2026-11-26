@@ -156,6 +156,9 @@ class PlataformaTests(unittest.TestCase):
     def test_modulo_en_el_menu(self):
         shell = (ROOT / "app-shell.js").read_text(encoding="utf-8")
         self.assertIn("key:'acm',          href:'acm.html'", shell)
+        self.assertIn("icon:'chart', hidden:true", shell)                # oculto mientras se perfecciona
+        for pagina in ("index.html", "guia-agente.html", "blog.html"):
+            self.assertNotIn("acm.html", (ROOT / pagina).read_text(encoding="utf-8"), pagina)
         self.assertIn("'acm':           { title:'Análisis comparativo'", shell)
         self.assertNotIn("avm.html", shell)                              # AVM viejo retirado
         self.assertFalse((ROOT / "avm.html").exists())

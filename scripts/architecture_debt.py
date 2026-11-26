@@ -82,7 +82,9 @@ LARGE_FILE_MAX_BYTES = {
     # MODS, CONTEXT_LABELS y PAGE_META — módulo de producto nuevo, no debt.
     # Baja 1,701 bytes: se retiró el AVM viejo (menú, chips y el flujo de
     # valuación + PDF del chat, que ahora arma un ACM). Deuda pagada.
-    "app-shell.js": 259_236,
+    # Bumped 82 bytes: hidden:true (con su comentario) en la entrada 'acm'
+    # mientras el módulo se perfecciona — pedido del usuario, no debt.
+    "app-shell.js": 259_318,
     "whatsapp.py": 223_594,
     "contratos.html": 156_081,
     # Bumped 5,747 bytes: los cambios de estatus, notas, comisión real y
