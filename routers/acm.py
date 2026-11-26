@@ -55,7 +55,7 @@ CAMPOS_COMPARABLE = (
     "m2_construccion", "m2_terreno", "recamaras", "banos", "estacionamientos", "antiguedad",
     "colonia", "ciudad", "lat", "lng", "precision_ubicacion", "distancia_m",
     "primera_vez", "ultima_vez", "publicada_en", "fecha_cierre", "retirado_en", "estatus",
-    "bajas_precio", "dias_mercado", "grupo", "incluido", "ajustes", "nota", "motivo",
+    "bajas_precio", "dias_mercado", "grupo", "incluido", "ajustes", "nota", "motivo", "ubicacion_confirmada",
 )
 CAMPOS_NUMERICOS = {"precio", "precio_inicial", "precio_cierre", "precio_publicacion", "m2_construccion",
                     "m2_terreno", "banos"}
@@ -175,7 +175,7 @@ def _limpiar_comparables(lista: Any) -> List[Dict[str, Any]]:
                 v = mercado.coordenada(v, 90)
             elif campo == "lng":
                 v = mercado.coordenada(v, 180)
-            elif campo == "incluido":
+            elif campo in ("incluido", "ubicacion_confirmada"):
                 v = bool(v)
             elif campo == "ajustes":
                 v = [
@@ -456,6 +456,15 @@ async def actualizar(acm_id: str, request: Request):
             # Ya no aparece como vigente en la base: se marca retirado.
             conservados.append({**c, "estatus": "retirado", "retirado_en": c.get("retirado_en") or _ahora(),
                                 "grupo": None})
+    # Lo que ya no está confirmado en la zona sale del cálculo (sigue visible).
+    for c in conservados:
+        if c.get("origen") == "manual" or not c.get("incluido"):
+            continue
+        d = calc.distancia_comparable(sujeto, c)
+        if d is None or d > calc.RADIOS_INCLUSION_M[-1]:
+            c["incluido"] = False
+            c["motivo"] = ("Ubicación no confirmada en el anuncio" if d is None
+                           else f"Fuera de la zona ({d / 1000:.1f} km)")
     ids = {c.get("id") for c in conservados}
     nuevos = calc.seleccionar(sujeto, [c for c in armado["candidatos"] if c.get("id") not in ids], armado["descuento"]["pct"])
     for c in nuevos:

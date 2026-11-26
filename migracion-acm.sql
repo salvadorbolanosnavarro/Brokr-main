@@ -63,6 +63,7 @@ create table if not exists public.mercado_comparables (
   lat                  double precision,
   lng                  double precision,
   precision_ubicacion  text not null default 'colonia', -- exacta | colonia | ciudad
+  ubicacion_confirmada boolean not null default false,  -- la colonia la dice el propio anuncio
   foto_url             text,
   primera_vez          timestamptz not null default now(),
   ultima_vez           timestamptz not null default now(),

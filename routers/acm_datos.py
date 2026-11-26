@@ -86,6 +86,24 @@ def clave_colonia(colonia: Any, ciudad: Any, pais: Any) -> str:
     return f"{mercado.normalizar(pais or 'MX')}|{mercado.normalizar(ciudad)}|{mercado.normalizar(colonia)}"
 
 
+_TIPOS_DEMASIADO_AMPLIOS = {"locality", "administrative_area_level_1", "administrative_area_level_2",
+                             "administrative_area_level_3", "country", "postal_town"}
+
+
+def resultado_es_de_colonia(resultado: Dict[str, Any], ciudad: str) -> bool:
+    """Google devuelve el centro de la ciudad cuando no encuentra la colonia:
+    eso no es una ubicación. Tampoco sirve una colonia homónima de otra ciudad."""
+    tipos = set(resultado.get("types") or []) - {"political"}
+    if not tipos or tipos <= _TIPOS_DEMASIADO_AMPLIOS:
+        return False
+    if ciudad:
+        lugares = [mercado.normalizar(c.get("long_name")) for c in resultado.get("address_components") or []
+                   if set(c.get("types") or []) & {"locality", "administrative_area_level_2"}]
+        if lugares and not any(mercado.normalizar(ciudad) in l or l in mercado.normalizar(ciudad) for l in lugares):
+            return False
+    return True
+
+
 async def coordenadas_colonia(colonia: str, ciudad: str, estado: str, pais: str = "MX") -> Optional[Tuple[float, float]]:
     """Centro aproximado de una colonia. Primero la caché en memoria, luego
     la tabla mercado_colonias_geo y al final Google Geocoding (una vez)."""
@@ -116,7 +134,7 @@ async def coordenadas_colonia(colonia: str, ciudad: str, estado: str, pais: str 
                         "key": settings.google_places_key},
             )
         resultados = r.json().get("results") or [] if r.status_code == 200 else []
-        if resultados:
+        if resultados and resultado_es_de_colonia(resultados[0], ciudad):
             loc = resultados[0].get("geometry", {}).get("location", {})
             lat, lng = mercado.coordenada(loc.get("lat"), 90), mercado.coordenada(loc.get("lng"), 180)
             if lat is not None and lng is not None:
@@ -141,7 +159,8 @@ async def _ubicar(comps: List[Dict[str, Any]]) -> None:
     """Coordenadas de colonia para los anuncios que no traen las suyas."""
     pendientes: Dict[str, Dict[str, Any]] = {}
     for c in comps:
-        if c.get("lat") is None and (c.get("colonia") or c.get("ciudad")):
+        # Sólo colonias que el anuncio declara: ubicar "la ciudad" no ubica nada.
+        if c.get("lat") is None and c.get("colonia") and c.get("ubicacion_confirmada") is not False:
             pendientes.setdefault(clave_colonia(c.get("colonia"), c.get("ciudad"), c.get("pais")), c)
     claves = list(pendientes)
     puntos = await asyncio.gather(*[
@@ -155,7 +174,7 @@ async def _ubicar(comps: List[Dict[str, Any]]) -> None:
             punto = por_clave.get(clave_colonia(c.get("colonia"), c.get("ciudad"), c.get("pais")))
             if punto:
                 c["lat"], c["lng"] = punto
-                c["precision_ubicacion"] = "colonia" if c.get("colonia") else "ciudad"
+                c["precision_ubicacion"] = "colonia"
 
 
 async def guardar_comparables(nuevos: List[Dict[str, Any]], *, ahora: Optional[datetime] = None) -> Dict[str, int]:
@@ -178,7 +197,7 @@ async def guardar_comparables(nuevos: List[Dict[str, Any]], *, ahora: Optional[d
         lote = candidatas[i:i + _LOTE_HUELLAS]
         existentes += await get_rows("mercado_comparables", {
             "huella": _in_textos(lote),
-            "select": "id,huella,precio,veces_visto,bajas_precio,url,foto_url,lat,lng,estatus",
+            "select": "id,huella,precio,veces_visto,bajas_precio,url,foto_url,lat,lng,estatus,ubicacion_confirmada",
         })
 
     conteo = {"nuevos": 0, "actualizados": 0, "bajas": 0}
@@ -205,6 +224,8 @@ async def guardar_comparables(nuevos: List[Dict[str, Any]], *, ahora: Optional[d
             for campo in ("url", "foto_url"):
                 if c.get(campo) and not fila.get(campo):
                     cambios[campo] = c[campo]
+            if c.get("ubicacion_confirmada") and not fila.get("ubicacion_confirmada"):
+                cambios["ubicacion_confirmada"] = True   # un anuncio que ahora sí dice su colonia
             if fila.get("lat") is None and c.get("lat") is not None:
                 cambios.update({"lat": c["lat"], "lng": c["lng"], "precision_ubicacion": c.get("precision_ubicacion") or "colonia"})
             await patch_rows("mercado_comparables", {"id": f"eq.{fila['id']}"}, cambios)
@@ -224,6 +245,7 @@ async def guardar_comparables(nuevos: List[Dict[str, Any]], *, ahora: Optional[d
             "estado": c.get("estado"), "pais": c.get("pais") or "MX",
             "lat": c.get("lat"), "lng": c.get("lng"),
             "precision_ubicacion": c.get("precision_ubicacion") or "colonia",
+            "ubicacion_confirmada": bool(c.get("ubicacion_confirmada")),
             "foto_url": c.get("foto_url"),
             "primera_vez": _iso(ahora), "ultima_vez": _iso(ahora), "veces_visto": 1,
         }
@@ -256,6 +278,8 @@ def _fila_a_comparable(f: Dict[str, Any]) -> Dict[str, Any]:
         "colonia": f.get("colonia"), "ciudad": f.get("ciudad"),
         "lat": mercado.coordenada(f.get("lat"), 90), "lng": mercado.coordenada(f.get("lng"), 180),
         "precision_ubicacion": f.get("precision_ubicacion") or "colonia",
+        # Sin la columna (migración pendiente) o en filas viejas: no confirmada.
+        "ubicacion_confirmada": f.get("ubicacion_confirmada") is True,
         "primera_vez": f.get("primera_vez"), "ultima_vez": f.get("ultima_vez"),
         "estatus": f.get("estatus") or "activo", "retirado_en": f.get("retirado_en"),
         "bajas_precio": f.get("bajas_precio") or 0,
@@ -456,7 +480,7 @@ async def investigar_en_vivo(sujeto: Dict[str, Any], user_id: Optional[str] = No
         recamaras=mercado.entero(sujeto.get("recamaras")) or 0,
         ciudad=sujeto.get("ciudad") or "", estado=sujeto.get("estado") or "",
         latitud=sujeto.get("lat") or 0, longitud=sujeto.get("lng") or 0,
-        pais=sujeto.get("pais") or "MX",
+        pais=sujeto.get("pais") or "MX", incluir_busqueda_ciudad=False,
     )
     try:
         vecinas = await avm._colonias_vecinas(req.latitud, req.longitud, req.colonia)
