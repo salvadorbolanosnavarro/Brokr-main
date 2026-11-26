@@ -15,11 +15,11 @@ import tarfile
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-# Approved design 66a8ed2 (df2fb75 + module rename) + only the new ACM module
-# «Análisis comparativo» with the design's stylesheets (base 0fc8733), kept on
-# branch cecil/diseno-impuestos. Previous: design 66a8ed2, base 9378291.
-DESIGN_REF = 'd5b6234c159e5f58e0517351f76705b9a1dea64e'
-BASE_REF = '0fc8733a941ce44c5a07bd0afb1711e25a404a10'
+# Approved design d5b6234 (66a8ed2 + ACM) + only the removal of the old AVM
+# (avm.html, avm-runtime.js and its compiler), kept on branch
+# cecil/diseno-impuestos. Previous: design d5b6234, base 0fc8733.
+DESIGN_REF = '7e68f7f5d2afc4d4fc95599f85f72790fb5cca59'
+BASE_REF = 'fbe703248b03c06648f19ee6e494dfc4de605c43'
 EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.gif', '.mp4', '.webm'}
 FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor', 'videos'}
 
