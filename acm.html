@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>Análisis de mercado · Broquer</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  /* Sólo lo específico del ACM; todo compone tokens del sistema. */
+  .acm-scroll { padding: var(--sp-6) var(--sp-7) var(--sp-16); max-width: 1180px; margin: 0 auto; }
+  @media (max-width: 720px) { .acm-scroll { padding: var(--sp-4) var(--sp-4) var(--sp-16); } }
+  .acm-barra { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; justify-content: space-between; margin-bottom: var(--sp-5); }
+  .acm-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--sp-4); }
+  .acm-item { cursor: pointer; display: flex; flex-direction: column; gap: var(--sp-2); }
+  .acm-item__t { font-size: var(--fs-h5); font-weight: 700; color: var(--ink); }
+  .acm-item__v { font-size: var(--fs-h3); font-weight: 700; color: var(--sky-navy); }
+  .acm-sub { font-size: var(--fs-sm); color: var(--mute); }
+  .acm-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-4); }
+  .acm-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+  .acm-grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-3); }
+  @media (max-width: 720px) { .acm-grid2, .acm-grid3 { grid-template-columns: 1fr; } .acm-grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .acm-sugs { position: relative; }
+  .acm-sugs__lista { position: absolute; z-index: var(--z-overlay); left: 0; right: 0; top: 100%; background: var(--bone); border: 1px solid var(--line-2); border-radius: var(--r-sm); box-shadow: var(--shadow-lg); margin-top: var(--sp-1); overflow: hidden; }
+  .acm-sugs__op { display: block; width: 100%; text-align: left; padding: var(--sp-3) var(--sp-4); border: 0; background: transparent; font: inherit; font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; }
+  .acm-sugs__op:hover { background: var(--paper-2); }
+  .acm-resumen { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-5); }
+  @media (max-width: 900px) { .acm-resumen { grid-template-columns: 1fr; } }
+  .acm-rango { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); text-align: center; margin-top: var(--sp-4); }
+  .acm-rango__l { font-size: var(--fs-caption); color: var(--mute); font-weight: 600; }
+  .acm-rango__v { font-size: var(--fs-h3); font-weight: 700; color: var(--ink); }
+  .acm-rango__v--med { color: var(--sky-blue); }
+  .acm-tabs { margin: var(--sp-5) 0 var(--sp-3); overflow-x: auto; }
+  .acm-comp { border: 1px solid var(--line); border-radius: var(--r); background: var(--bone); margin-bottom: var(--sp-3); }
+  .acm-comp--fuera { background: var(--paper-2); }
+  .acm-comp__fila { display: grid; grid-template-columns: auto minmax(0, 2.4fr) repeat(5, minmax(0, 1fr)) auto; gap: var(--sp-3); align-items: center; padding: var(--sp-3) var(--sp-4); }
+  @media (max-width: 900px) { .acm-comp__fila { grid-template-columns: auto minmax(0, 1fr) auto; } .acm-comp__m { display: none; } }
+  .acm-comp__t { font-weight: 600; color: var(--ink); font-size: var(--fs-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .acm-comp__t a { color: inherit; }
+  .acm-comp__s { font-size: var(--fs-caption); color: var(--mute); }
+  .acm-comp__m { font-size: var(--fs-sm); color: var(--ink-2); text-align: right; }
+  .acm-comp__m small { display: block; font-size: var(--fs-caption); color: var(--mute); }
+  .acm-comp__det { border-top: 1px solid var(--line); padding: var(--sp-4); display: grid; gap: var(--sp-3); }
+  .acm-aj { display: grid; grid-template-columns: minmax(0, 1fr) 110px auto; gap: var(--sp-2); align-items: center; }
+  .acm-movil { display: none; font-size: var(--fs-caption); color: var(--mute); }
+  @media (max-width: 900px) { .acm-movil { display: block; } }
+  .acm-est { cursor: pointer; border: 1px solid var(--line-2); border-radius: var(--r); padding: var(--sp-4); background: var(--bone); }
+  .acm-est.is-on { border-color: var(--sky-blue); box-shadow: var(--focus); }
+  .acm-est__n { font-size: var(--fs-sm); font-weight: 700; color: var(--mute); }
+  .acm-sec { margin-top: var(--sp-6); }
+  .acm-sec h2 { font-size: var(--fs-h5); font-weight: 700; margin-bottom: var(--sp-3); color: var(--ink); }
+  .acm-liga { display: flex; gap: var(--sp-2); align-items: center; }
+  .acm-liga input { flex: 1; min-width: 0; }
+  .acm-cargando { display: flex; gap: var(--sp-3); align-items: center; padding: var(--sp-4); }
+</style>
+</head>
+<body data-app="acm">
+<div class="acm-scroll" id="acm-root"><div class="bk-cargando">Cargando…</div></div>
+
+<div class="bk-overlay" id="acm-modal" aria-hidden="true">
+  <div class="bk-modal" role="dialog" aria-modal="true" aria-labelledby="acm-modal-t">
+    <div class="bk-modal__head"><div class="bk-modal__title" id="acm-modal-t">Agregar comparable</div>
+      <button class="bk-icon-btn" type="button" data-cerrar aria-label="Cerrar">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>
+      </button></div>
+    <form class="bk-modal__body bk-stack" id="acm-form-comp">
+      <div class="bk-field"><label class="bk-label" for="mc-titulo">Descripción</label>
+        <input class="bk-input" id="mc-titulo" required maxlength="160" placeholder="Ej. Casa en privada, calle Pino"/></div>
+      <div class="bk-field"><label class="bk-label" for="mc-grupo">Grupo</label>
+        <select class="bk-select" id="mc-grupo">
+          <option value="activo">En venta (competencia)</option>
+          <option value="vendido">Vendido o retirado</option>
+          <option value="bajas">Con bajas de precio o vencido</option>
+        </select></div>
+      <div class="acm-grid2">
+        <div class="bk-field"><label class="bk-label" for="mc-precio">Precio</label><input class="bk-input" id="mc-precio" inputmode="decimal" required/></div>
+        <div class="bk-field"><label class="bk-label" for="mc-dist">Distancia aprox. (m)</label><input class="bk-input" id="mc-dist" inputmode="numeric"/></div>
+        <div class="bk-field"><label class="bk-label" for="mc-m2c">m² construcción</label><input class="bk-input" id="mc-m2c" inputmode="decimal"/></div>
+        <div class="bk-field"><label class="bk-label" for="mc-m2t">m² terreno</label><input class="bk-input" id="mc-m2t" inputmode="decimal"/></div>
+        <div class="bk-field"><label class="bk-label" for="mc-rec">Recámaras</label><input class="bk-input" id="mc-rec" inputmode="numeric"/></div>
+        <div class="bk-field"><label class="bk-label" for="mc-ban">Baños</label><input class="bk-input" id="mc-ban" inputmode="decimal"/></div>
+        <div class="bk-field"><label class="bk-label" for="mc-est">Estacionamientos</label><input class="bk-input" id="mc-est" inputmode="numeric"/></div>
+        <div class="bk-field"><label class="bk-label" for="mc-dias">Días en el mercado</label><input class="bk-input" id="mc-dias" inputmode="numeric"/></div>
+      </div>
+      <div class="bk-field"><label class="bk-label" for="mc-url">Liga del anuncio (opcional)</label><input class="bk-input" id="mc-url" type="url" placeholder="https://"/></div>
+      <div class="bk-field"><label class="bk-label" for="mc-nota">Nota interna</label><input class="bk-input" id="mc-nota" maxlength="300" placeholder="Ej. Lo vendió un colega en agosto"/></div>
+    </form>
+    <div class="bk-modal__foot bk-cluster" style="justify-content:flex-end">
+      <button class="bk-btn bk-btn--ghost" type="button" data-cerrar>Cancelar</button>
+      <button class="bk-btn bk-btn--forest" type="submit" form="acm-form-comp">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<script src="app-shell.js" defer></script>
+<script src="bk-api.js" defer></script>
+<script src="acm.js" defer></script>
+</body>
+</html>

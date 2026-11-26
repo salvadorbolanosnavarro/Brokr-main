@@ -291,6 +291,7 @@
     { key:'cumplimiento', href:'cumplimiento.html',  label:'Cumplimiento',        group:'documentos',  icon:'shield' },
     // Números.
     { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'numeros',     icon:'peso' },
+    { key:'acm',          href:'acm.html',           label:'Análisis de mercado', group:'numeros',     icon:'chart' },
     { key:'isr',          href:'isr.html',           label:'ISR',                 group:'numeros',     icon:'calculator' },
     { key:'impuestos',    href:'impuestos.html',     label:'Impuestos',           group:'numeros',     icon:'calculator' },
     { key:'finanzas',     href:'finanzas.html',      label:'Finanzas',            group:'numeros',     icon:'wallet' },
@@ -323,6 +324,7 @@
     'cumplimiento': 'Cumplimiento PLD/UIF — expediente único de identificación del cliente, umbrales de aviso, acumulación de operaciones, avisos al SPPLD y bitácora',
     'firmas':       'Firma electrónica — mandar contratos a firma de las partes, código de verificación, constancia de firma y verificación pública por folio',
     'avm':          'Estimación de valor AVM — avalúo de mercado automatizado',
+    'acm':          'Análisis comparativo de mercado — comparables, rango y estrategia de precio para presentar al propietario',
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
     'impuestos':    'Calculadora de impuestos por venta de inmuebles del país de la cuenta',
@@ -349,6 +351,7 @@
     'cumplimiento':  { title:'Cumplimiento',           sub:'El expediente de identificación de cada cliente, el control de umbrales y los avisos a la UIF, en un solo lugar.' },
     'firmas':        { title:'Firma electrónica',      sub:'Manda el contrato, cada parte firma desde su celular y te regresa con constancia.' },
     'avm':           { title:'Estimación de valor',    sub:'Avalúo automático con comparables de tu zona.' },
+    'acm':           { title:'Análisis de mercado',    sub:'Comparables, rango y estrategia de precio para presentarle al propietario.' },
     'impuestos-avanzada': { title:'Calculadora avanzada', sub:'Varios titulares, usufructo y nuda propiedad, herencias y adquisiciones en distintas fechas.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },

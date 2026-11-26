@@ -1,5 +1,5 @@
 {
-  "count": 358,
+  "count": 369,
   "operations": [
     {
       "body": false,
@@ -8,6 +8,134 @@
       "path": "/",
       "responses": [
         "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:contacto_id",
+        "query:propiedad_id"
+      ],
+      "path": "/acm",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/acm",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [],
+      "path": "/acm/admin/recolectar",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:token!"
+      ],
+      "path": "/acm/ver/{token}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PUT",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}/actualizar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}/investigar",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}/liga",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:acm_id!"
+      ],
+      "path": "/acm/{acm_id}/pdf",
+      "responses": [
+        "200",
+        "422"
       ]
     },
     {

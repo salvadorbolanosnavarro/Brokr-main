@@ -661,6 +661,14 @@ app.include_router(supervision_router)
 from routers.cierres import router as cierres_router
 app.include_router(cierres_router)
 
+# Análisis comparativo de mercado: mesa de trabajo del asesor, reporte para
+# el propietario y base propia de comparables con recolección nocturna (ver
+# routers/acm.py y routers/acm_datos.py).
+from routers.acm import router as acm_router
+app.include_router(acm_router)
+from routers.acm_datos import router as acm_datos_router
+app.include_router(acm_datos_router)
+
 # Fase 7 · Sitio web de la inmobiliaria y del asesor: configuración, páginas,
 # dominio propio y páginas públicas renderizadas en servidor (routers/sitios.py).
 from routers.sitios import router as sitios_router, instalar_middleware as instalar_sitios_middleware
