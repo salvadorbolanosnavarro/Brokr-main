@@ -15,11 +15,11 @@ import tarfile
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-# Approved design d5b6234 (66a8ed2 + ACM) + only the removal of the old AVM
-# (avm.html, avm-runtime.js and its compiler), kept on branch
-# cecil/diseno-impuestos. Previous: design d5b6234, base 0fc8733.
-DESIGN_REF = '7e68f7f5d2afc4d4fc95599f85f72790fb5cca59'
-BASE_REF = 'fbe703248b03c06648f19ee6e494dfc4de605c43'
+# Approved design 7e68f7f (d5b6234 + old AVM removal) + only the legal update
+# for the ACM (base b36ee02), kept on branch cecil/diseno-impuestos.
+# Previous: design 7e68f7f, base fbe7032.
+DESIGN_REF = 'c5e8df397b6cfab6f8278dd888aa127f4254c9f8'
+BASE_REF = 'b36ee02076bd81d2dfa187722b050f7351b9d5c0'
 EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.gif', '.mp4', '.webm'}
 FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor', 'videos'}
 
