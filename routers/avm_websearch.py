@@ -56,6 +56,10 @@ class AvmWebSearchRequest(BaseModel):
     longitud: float = 0
     # País de la cuenta. Lo fija el servidor desde el perfil, no el navegador.
     pais: str = PAIS_DEFAULT
+    # Búsqueda "en toda la ciudad con la misma superficie". El ACM la apaga:
+    # trae anuncios de cualquier zona y sólo le sirven los de la colonia y sus
+    # vecinas. El Buscador de propiedades la conserva.
+    incluir_busqueda_ciudad: bool = True
 
 
 SEARCH_TIMEOUT = legacy_main_settings.avm_search_timeout
@@ -513,7 +517,7 @@ def _build_search_queries(req: AvmWebSearchRequest, colonias_vecinas: List[str] 
     # de tamaño parecido de zonas cercanas cuando la colonia tiene poca
     # oferta publicada (el modelo decide si son comparables por ubicación).
     superficie = req.m2_terreno if req.tipo_inmueble == "terreno" else (req.m2_construccion or req.m2_terreno)
-    if req.ciudad and superficie and superficie > 0:
+    if req.incluir_busqueda_ciudad and req.ciudad and superficie and superficie > 0:
         queries.append(f'{tipo} en {op} "{req.ciudad}" {int(round(superficie))} m2')
     # Colonias colindantes reales (descubiertas por geocodificación, no
     # adivinadas por el modelo): una query genérica por cada una para

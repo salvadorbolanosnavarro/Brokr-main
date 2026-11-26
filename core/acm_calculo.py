@@ -35,6 +35,24 @@ MAX_INCLUIDOS_INICIAL = 12
 SIMILITUD_MIN_INCLUIR = 40.0
 SIMILITUD_MIN_CIERRE = 25.0
 MAX_CIERRES_EXTRA = 4
+# Zona: un comparable sólo entra al cálculo si su ubicación está confirmada
+# y está cerca. El radio crece (1 → 2 → 3 km) sólo si no hay suficientes
+# comparables cerca; nunca se incluye solo algo a más de 3 km.
+RADIOS_INCLUSION_M = (1000, 2000, 3000)
+MIN_INCLUIDOS_POR_RADIO = 5
+RADIO_MIN_CIERRES_M = 2000
+DISTANCIA_MISMA_COLONIA_M = 400.0
+DISTANCIA_COLONIA_HERMANA_M = 900.0
+
+# Palabras que no distinguen a una colonia de sus "hermanas": Chapultepec
+# Sur, Chapultepec Oriente y Chapultepec Norte son la misma familia.
+_PALABRAS_GENERICAS_COLONIA = {
+    "norte", "sur", "oriente", "poniente", "este", "oeste", "centro", "nte", "pte", "ote",
+    "primera", "segunda", "tercera", "cuarta", "1a", "2a", "3a", "4a", "1ra", "2da", "3ra",
+    "i", "ii", "iii", "iv", "seccion", "secc", "etapa", "ampliacion", "amp", "fraccionamiento",
+    "fracc", "frac", "col", "colonia", "residencial", "res", "barrio", "unidad", "infonavit",
+    "la", "el", "los", "las", "de", "del", "y",
+}
 
 # Ajustes automáticos (en % sobre el precio/m² del comparable) y su tope.
 ELASTICIDAD_SUPERFICIE = 0.20      # inmuebles más grandes tienen menor precio/m²
@@ -195,13 +213,34 @@ def grupo_de(comp: Dict[str, Any], hoy: Optional[datetime] = None) -> str:
     return "activo"
 
 
+def familia_colonia(nombre: Any) -> str:
+    """Nombre de colonia sin puntos cardinales, secciones ni palabras
+    genéricas: "Chapultepec Sur" y "Col. Chapultepec Oriente" → "chapultepec"."""
+    palabras = [p for p in normalizar(nombre).split() if p not in _PALABRAS_GENERICAS_COLONIA]
+    return " ".join(palabras)
+
+
+def ubicacion_confiable(comp: Dict[str, Any]) -> bool:
+    """La colonia del comparable salió del propio anuncio o de un registro de
+    la cuenta, no se supuso a partir de la búsqueda."""
+    return comp.get("ubicacion_confirmada") is not False
+
+
 def distancia_comparable(sujeto: Dict[str, Any], comp: Dict[str, Any]) -> Optional[float]:
-    d = distancia_m(sujeto.get("lat"), sujeto.get("lng"), comp.get("lat"), comp.get("lng"))
-    if d is not None:
-        return d
-    # Sin coordenadas: misma colonia ≈ 400 m (centro a centro no aplica).
-    if normalizar(comp.get("colonia")) and normalizar(comp.get("colonia")) == normalizar(sujeto.get("colonia")):
-        return 400.0
+    """Distancia en metros, o None si la ubicación no es confiable. Nunca se
+    inventa cercanía: sin ubicación confirmada el comparable no está "cerca"."""
+    if not ubicacion_confiable(comp):
+        return None
+    if comp.get("precision_ubicacion") != "ciudad":   # el centro de la ciudad no ubica nada
+        d = distancia_m(sujeto.get("lat"), sujeto.get("lng"), comp.get("lat"), comp.get("lng"))
+        if d is not None:
+            return d
+    col_c, col_s = normalizar(comp.get("colonia")), normalizar(sujeto.get("colonia"))
+    if col_c and col_c == col_s:
+        return DISTANCIA_MISMA_COLONIA_M
+    fam_c, fam_s = familia_colonia(comp.get("colonia")), familia_colonia(sujeto.get("colonia"))
+    if fam_c and fam_c == fam_s:
+        return DISTANCIA_COLONIA_HERMANA_M
     return None
 
 
@@ -216,7 +255,7 @@ def similitud(sujeto: Dict[str, Any], comp: Dict[str, Any], hoy: Optional[dateti
     d = comp.get("distancia_m")
     if d is None:
         d = distancia_comparable(sujeto, comp)
-    puntos += 35 * (0.35 if d is None else max(0.0, 1 - d / 3000.0))
+    puntos += 35 * (0.1 if d is None else max(0.0, 1 - d / 2500.0))
 
     s_suj, base = superficie_base(sujeto, tipo)
     s_comp = superficie_en(comp, base)
@@ -358,9 +397,9 @@ def preparar_comparable(sujeto: Dict[str, Any], comp: Dict[str, Any], descuento_
     del asesor (incluido, ajustes manuales, nota)."""
     c = dict(comp)
     _, base = superficie_base(sujeto)
-    d = distancia_comparable(sujeto, c)
-    if d is not None:
-        c["distancia_m"] = round(d)
+    if c.get("origen") != "manual":          # la distancia de uno manual la da el asesor
+        d = distancia_comparable(sujeto, c)
+        c["distancia_m"] = round(d) if d is not None else None
     c["grupo"] = c.get("grupo") if c.get("origen") == "manual" and c.get("grupo") in GRUPOS else grupo_de(c, hoy)
     c["dias_mercado"] = c.get("dias_mercado") if c.get("origen") == "manual" else dias_en_mercado(c, hoy)
     c["superficie"], c["base_superficie"] = superficie_en(c, base), base
@@ -390,7 +429,9 @@ def marcar_atipicos(comps: List[Dict[str, Any]]) -> None:
         return
     for c in comps:
         v = c.get("precio_m2_ajustado")
-        if v and abs(0.6745 * (v - med) / mad) > 3.5:
+        # Además de la desviación robusta, se exige que se aleje más de 25%
+        # de la mediana: con precios muy parejos, un 5% parecería "atípico".
+        if v and abs(0.6745 * (v - med) / mad) > 3.5 and abs(v - med) / med > 0.25:
             c["atipico"] = True
 
 
@@ -413,16 +454,42 @@ def seleccionar(sujeto: Dict[str, Any], candidatos: Iterable[Dict[str, Any]], de
             continue
         preparados.append(c)
     preparados.sort(key=lambda c: (-c["similitud"], c.get("distancia_m") or 9e9))
-    # Los cierres reales son el dato más valioso (precio pagado, no pedido):
-    # siempre entran a la lista y, si se parecen razonablemente, incluidos.
-    cierres = [c for c in preparados if c.get("origen") == "cierre" and c["similitud"] >= SIMILITUD_MIN_CIERRE][:MAX_CIERRES_EXTRA]
-    resto = [c for c in preparados if c not in cierres]
-    elegidos = resto[:MAX_SELECCION - len(cierres)]
-    for i, c in enumerate(elegidos):
-        c["incluido"] = bool(c.get("precio_m2_ajustado")) and i < MAX_INCLUIDOS_INICIAL and c["similitud"] >= SIMILITUD_MIN_INCLUIR
+
+    # Radio de la zona: el más chico que junte suficientes comparables.
+    def en_radio(c: Dict[str, Any], radio: float) -> bool:
+        return c.get("distancia_m") is not None and c["distancia_m"] <= radio and bool(c.get("precio_m2_ajustado"))
+
+    radio = next((r for r in RADIOS_INCLUSION_M
+                  if sum(en_radio(c, r) for c in preparados) >= MIN_INCLUIDOS_POR_RADIO), RADIOS_INCLUSION_M[-1])
+    # Un precio de cierre real vale más que un anuncio: su radio es de al
+    # menos 2 km (nunca más del máximo de la zona).
+    radio_cierres = min(max(radio, RADIO_MIN_CIERRES_M), RADIOS_INCLUSION_M[-1])
+
+    def en_zona(c: Dict[str, Any]) -> bool:
+        return en_radio(c, radio_cierres if c.get("origen") == "cierre" else radio)
+
+    cerca = [c for c in preparados if en_zona(c)]
+    lejos = [c for c in preparados if not en_zona(c)]
+
+    # Los cierres reales de la zona son el dato más valioso (precio pagado,
+    # no pedido): entran aunque haya muchos otros, si se parecen razonablemente.
+    cierres = [c for c in cerca if c.get("origen") == "cierre" and c["similitud"] >= SIMILITUD_MIN_CIERRE][:MAX_CIERRES_EXTRA]
+    otros = [c for c in cerca if c not in cierres]
+    for i, c in enumerate(otros):
+        c["incluido"] = i < MAX_INCLUIDOS_INICIAL and c["similitud"] >= SIMILITUD_MIN_INCLUIR
     for c in cierres:
-        c["incluido"] = bool(c.get("precio_m2_ajustado"))
-    elegidos = sorted(elegidos + cierres, key=lambda c: -c["similitud"])
+        c["incluido"] = True
+    # Lo de fuera de la zona se muestra (el asesor puede incluirlo a mano),
+    # pero nunca entra solo al cálculo.
+    for c in lejos:
+        c["incluido"] = False
+        if c.get("distancia_m") is None:
+            c["motivo"] = "Ubicación no confirmada en el anuncio"
+        elif c.get("precio_m2_ajustado"):
+            c["motivo"] = f"Fuera de la zona ({c['distancia_m'] / 1000:.1f} km)"
+    elegidos = (cierres + otros)[:MAX_SELECCION]
+    elegidos += lejos[:max(0, MAX_SELECCION - len(elegidos))]
+    elegidos.sort(key=lambda c: (not c["incluido"], -c["similitud"]))
     marcar_atipicos(elegidos)
     for c in elegidos:
         if c["atipico"] and c["incluido"]:
