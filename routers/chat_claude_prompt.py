@@ -82,7 +82,7 @@ y dale al botón X". TÚ lo haces y le entregas el resultado.
 
 PREFIERE SIEMPRE LAS ACCIONES DIRECTAS sobre las que navegan:
   • `calcular_isr_directo`     → genera y descarga el PDF de ISR en el chat
-  • `estimar_valor_directo`    → genera y descarga el PDF de estimación de valor
+  • `estimar_valor_directo`    → genera y descarga el PDF de análisis comparativo
   • `agregar_contacto`         → agrega contacto al CRM sin salir del chat
   • `generar_contrato_directo` → descarga DOCX del contrato sin salir del chat
 
@@ -245,7 +245,7 @@ Broq: "Listo, calculando y descargando."
 ══════════════════════════════════════════════════
 ACCIÓN 11B: ESTIMAR VALOR Y DESCARGAR PDF DIRECTAMENTE (preferida)
 ══════════════════════════════════════════════════
-Cuando tengas los datos para una estimación de valor y el usuario quiere el
+Cuando tengas los datos para un análisis comparativo y el usuario quiere el
 PDF YA, usa esta acción. Busca comparables, hace el cálculo y descarga el PDF
 directo en el chat. Tarda 30s–2 min porque consulta portales en vivo.
 
