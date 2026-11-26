@@ -290,7 +290,7 @@
     { key:'firmas',       href:'firmas.html',        label:'Firma electrónica',   group:'documentos',  icon:'pencil' },
     { key:'cumplimiento', href:'cumplimiento.html',  label:'Cumplimiento',        group:'documentos',  icon:'shield' },
     // Números.
-    { key:'avm',          href:'avm.html',           label:'Estimación de valor', group:'numeros',     icon:'peso' },
+    { key:'avm',          href:'avm.html',           label:'Análisis comparativo', group:'numeros',     icon:'peso' },
     { key:'isr',          href:'isr.html',           label:'ISR',                 group:'numeros',     icon:'calculator' },
     { key:'impuestos',    href:'impuestos.html',     label:'Impuestos',           group:'numeros',     icon:'calculator' },
     { key:'finanzas',     href:'finanzas.html',      label:'Finanzas',            group:'numeros',     icon:'wallet' },
@@ -322,7 +322,7 @@
     'contratos':    'Contratos — arrendamiento y promesa de compraventa',
     'cumplimiento': 'Cumplimiento PLD/UIF — expediente único de identificación del cliente, umbrales de aviso, acumulación de operaciones, avisos al SPPLD y bitácora',
     'firmas':       'Firma electrónica — mandar contratos a firma de las partes, código de verificación, constancia de firma y verificación pública por folio',
-    'avm':          'Estimación de valor AVM — avalúo de mercado automatizado',
+    'avm':          'Análisis comparativo AVM — avalúo de mercado automatizado',
     'ficha-manual': 'Ficha Técnica Manual — crear ficha sin EasyBroker',
     'isr':          'Calculadora ISR por enajenación de inmuebles',
     'impuestos':    'Calculadora de impuestos por venta de inmuebles del país de la cuenta',
@@ -348,7 +348,7 @@
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
     'cumplimiento':  { title:'Cumplimiento',           sub:'El expediente de identificación de cada cliente, el control de umbrales y los avisos a la UIF, en un solo lugar.' },
     'firmas':        { title:'Firma electrónica',      sub:'Manda el contrato, cada parte firma desde su celular y te regresa con constancia.' },
-    'avm':           { title:'Estimación de valor',    sub:'Avalúo automático con comparables de tu zona.' },
+    'avm':           { title:'Análisis comparativo',    sub:'Avalúo automático con comparables de tu zona.' },
     'impuestos-avanzada': { title:'Calculadora avanzada', sub:'Varios titulares, usufructo y nuda propiedad, herencias y adquisiciones en distintas fechas.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
     'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
@@ -517,7 +517,7 @@
 }
 /* El nombre: chico y de peso fuerte para que se lea nítido a este
    tamaño, hasta 2 renglones si el módulo tiene nombre largo ("Firma
-   electrónica", "Estimación de valor") — nunca empuja al ícono ni se
+   electrónica", "Análisis comparativo") — nunca empuja al ícono ni se
    sale de su columna. */
 .bk-sb-ico__label {
   font-size: 8.5px; font-weight: 700; letter-spacing: 0.01em; line-height: 1.15;
@@ -2476,7 +2476,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     }
   }
 
-  /* ── Estimación de valor + PDF directo, sin sacar al usuario del chat ── */
+  /* ── Análisis comparativo + PDF directo, sin sacar al usuario del chat ── */
   async function estimarValorDirecto(ac) {
     const bubble = _addAssistantBubble('Buscando comparables en internet… (esto puede tomar algunos minutos)');
     try {
@@ -2540,8 +2540,8 @@ body[data-app="facebook-ads"]{--page-max:980px}
         return;
       }
       const blob = await pdfResp.blob();
-      const filename = tokData.filename || ('Estimacion_Valor_' + (body.colonia || 'inmueble') + '.pdf');
-      await deliverGeneratedFile(blob, filename, { type: 'application/pdf', title: 'Estimación de valor lista', text: 'Estimación de valor generada por Broquer' });
+      const filename = tokData.filename || ('Analisis_Comparativo_' + (body.colonia || 'inmueble') + '.pdf');
+      await deliverGeneratedFile(blob, filename, { type: 'application/pdf', title: 'Análisis comparativo listo', text: 'Análisis comparativo generado por Broquer' });
       bubble.innerHTML += '<br>✓ <strong>PDF listo.</strong> Se abrió en pantalla para compartirlo o guardarlo.';
     } catch (e) {
       bubble.textContent = 'No pude completar la estimación: ' + (e.message || e);

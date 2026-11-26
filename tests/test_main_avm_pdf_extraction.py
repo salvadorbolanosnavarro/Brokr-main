@@ -37,12 +37,12 @@ class AvmPdfExtractionTests(unittest.TestCase):
         owner = self.owner
         if self.legacy_owned:
             self.assertIn('token = str(_uuid.uuid4()).replace("-", "")[:16]', owner)
-            self.assertIn('filename = f"Estimacion_Valor_{colonia_slug}_{time.strftime(\'%Y%m%d\')}.pdf"', owner)
+            self.assertIn('filename = f"Analisis_Comparativo_{colonia_slug}_{time.strftime(\'%Y%m%d\')}.pdf"', owner)
             self.assertIn('_pdf_store[token] = (pdf_bytes, filename)', owner)
             self.assertIn('if len(_pdf_store) > 50:', owner)
         else:
             self.assertIn('token = str(uuid_mod.uuid4()).replace("-", "")[:16]', owner)
-            self.assertIn('filename = f"Estimacion_Valor_{colonia_slug}_{time_mod.strftime(\'%Y%m%d\')}.pdf"', owner)
+            self.assertIn('filename = f"Analisis_Comparativo_{colonia_slug}_{time_mod.strftime(\'%Y%m%d\')}.pdf"', owner)
             self.assertIn('pdf_store[token] = (pdf_bytes, filename)', owner)
             self.assertIn('if len(pdf_store) > 50:', owner)
         self.assertIn('colonia_slug = resultado.get("colonia", "propiedad").replace(" ", "_")[:20]', owner)
