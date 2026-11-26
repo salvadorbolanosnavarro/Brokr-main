@@ -17,7 +17,7 @@ El piloto incorpora un workflow Pages pilot que prepara los archivos web origina
 
 ## Publicación y activación
 
-1. Confirmar que main permanece en la base 8de3443 (26/nov/2026: la lista del ACM sólo muestra la zona y busca en portales sola si faltan; diseño 37764202 = 7390fd2f + solo ese cambio, rama cecil/diseno-impuestos; base anterior dec5409); si avanzó, integrar y repetir pruebas. No desactivar la protección del constructor.
+1. Confirmar que main permanece en la base 2a1f4f5 (26/nov/2026: oculta el módulo ACM del menú e inicio mientras se perfecciona; diseño df493735 = 37764202 + solo ese cambio, rama cecil/diseno-impuestos; base anterior 8de3443); si avanzó, integrar y repetir pruebas. No desactivar la protección del constructor.
 2. Preparar en Railway únicamente CECIL_UI_ENABLED=false y CECIL_UI_USER_IDS con el UUID real verificado de Salvador. No usar A3/B2 ni correo editable del cliente. No cambiar otras variables.
 3. Con los checks y la construcción Pages en verde, seleccionar GitHub Pages Source: GitHub Actions, conservando broquer.app y HTTPS.
 4. Fusionar PR217 a main con el SHA revisado y observar ambos despliegues. Mantener el flag apagado. Verificar Broquer habitual, /ui/cecil rechazando solicitudes sin sesión, artefacto Cecil real y ausencia de configuración staging.
