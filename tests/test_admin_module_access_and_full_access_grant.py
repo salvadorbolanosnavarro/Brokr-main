@@ -49,8 +49,8 @@ class FullAccessGrantActiveTests(unittest.TestCase):
 class NormalizeDisabledModulesTests(unittest.TestCase):
     def test_dedupes_and_sorts(self):
         self.assertEqual(
-            normalize_disabled_modules(["isr", " avm ", "isr", ""]),
-            ["avm", "isr"],
+            normalize_disabled_modules(["isr", " acm ", "isr", ""]),
+            ["acm", "isr"],
         )
 
     def test_empty_input_is_empty_list(self):
@@ -143,7 +143,7 @@ class SubscriptionStatusWithFullAccessGrantTests(unittest.IsolatedAsyncioTestCas
 
 class AdminSetModulosTests(unittest.IsolatedAsyncioTestCase):
     async def test_rejects_unknown_module_key(self):
-        req = AdminModulosReq(user_id="user-1", modulos_desactivados=["avm", "no-existe"])
+        req = AdminModulosReq(user_id="user-1", modulos_desactivados=["acm", "no-existe"])
         with patch(
             "routers.admin_accounts.require_legacy_admin",
             new=AsyncMock(return_value="admin-1"),
@@ -154,7 +154,7 @@ class AdminSetModulosTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("no-existe", ctx.exception.detail)
 
     async def test_saves_normalized_module_list(self):
-        req = AdminModulosReq(user_id="user-1", modulos_desactivados=["isr", "avm", "isr"])
+        req = AdminModulosReq(user_id="user-1", modulos_desactivados=["isr", "acm", "isr"])
         patch_mock = AsyncMock()
         with (
             patch(
@@ -164,11 +164,11 @@ class AdminSetModulosTests(unittest.IsolatedAsyncioTestCase):
             patch("routers.admin_accounts.patch_rows_no_response", new=patch_mock),
         ):
             result = await admin_set_modulos(req, request=object())
-        self.assertEqual(result["modulos_desactivados"], ["avm", "isr"])
+        self.assertEqual(result["modulos_desactivados"], ["acm", "isr"])
         called_table, called_filters, called_body = patch_mock.await_args.args
         self.assertEqual(called_table, "usuarios")
         self.assertEqual(called_filters, {"id": "eq.user-1"})
-        self.assertEqual(called_body, {"modulos_desactivados": ["avm", "isr"]})
+        self.assertEqual(called_body, {"modulos_desactivados": ["acm", "isr"]})
 
     async def test_requires_user_id(self):
         req = AdminModulosReq(user_id="  ", modulos_desactivados=[])

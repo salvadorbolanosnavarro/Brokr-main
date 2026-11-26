@@ -32,7 +32,6 @@ const base=process.env.BROQUER_TEST_URL || 'http://127.0.0.1:8080';
     else await p.locator('body').waitFor();
     if(await p.locator('#splash').count()) await p.locator('#splash').waitFor({state:'hidden',timeout:10000});
     await p.evaluate(()=>document.fonts.ready);
-    if(item.path==='avm.html') await p.waitForFunction(()=>document.querySelector('#root')?.childElementCount>0,{},{timeout:12000});
     const surface=await p.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,heading:document.querySelector('h1')?.textContent.trim(),controls:document.querySelectorAll('button,input,select,textarea').length,smallInputs:[...document.querySelectorAll('input,textarea,select')].filter(e=>e.getClientRects().length && parseFloat(getComputedStyle(e).fontSize)<16).map(e=>e.id||e.name)}));
     assert.equal(surface.smallInputs.length,0,'visible inputs are at least 16px');
     if(item.shared_shell){

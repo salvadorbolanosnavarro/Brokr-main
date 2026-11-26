@@ -6,7 +6,6 @@ Sistema de presentación sin credenciales.
 • POST /demo-live/sesion          → crea o devuelve sesión compartida
 • GET  /demo-live/estado          → snapshot completo de la sesión
 • POST /demo-live/accion          → registra acción visible a todos
-• POST /demo-live/avm             → valuación instantánea (precargada)
 • POST /demo-live/chat            → Broq IA real pero en contexto demo
 • GET  /demo-live/whatsapp        → conversaciones WA ficticias
 • POST /demo-live/whatsapp/enviar → simula envío de mensaje WA
@@ -18,7 +17,6 @@ Todos los participantes con el mismo session_id ven los mismos datos.
 """
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import json
 import time
@@ -324,33 +322,6 @@ _WA_CONVERSACIONES = [
     },
 ]
 
-_AVM_RESULTADO = {
-    "valor_estimado": 8_250_000,
-    "rango_min": 7_800_000,
-    "rango_max": 8_700_000,
-    "precio_m2": 25_781,
-    "confianza": "Alta",
-    "comparables": [
-        {"direccion": "Jardines del Pedregal Norte", "precio": 8_100_000, "m2": 310, "precio_m2": 26_129, "distancia": "0.4 km", "fecha": "Jul 2026"},
-        {"direccion": "Residencial Pedregal Sur", "precio": 8_900_000, "m2": 340, "precio_m2": 26_176, "distancia": "0.7 km", "fecha": "Jun 2026"},
-        {"direccion": "Pedregal de San Ángel", "precio": 7_600_000, "m2": 290, "precio_m2": 26_207, "distancia": "1.1 km", "fecha": "Ago 2026"},
-        {"direccion": "Lomas del Pedregal", "precio": 8_350_000, "m2": 325, "precio_m2": 25_692, "distancia": "1.3 km", "fecha": "Jul 2026"},
-    ],
-    "factores_ajuste": [
-        {"factor": "Alberca", "impacto": "+4.2%", "tipo": "positivo"},
-        {"factor": "Antigüedad (8 años)", "impacto": "-1.8%", "tipo": "negativo"},
-        {"factor": "Acabados premium", "impacto": "+3.1%", "tipo": "positivo"},
-        {"factor": "Zona exclusiva", "impacto": "+5.0%", "tipo": "positivo"},
-    ],
-    "recomendaciones": [
-        "Precio de lista sugerido: $8,500,000 MXN para negociación con margen.",
-        "El mercado en Pedregal ha mostrado +2.8% de apreciación en los últimos 6 meses.",
-        "Tiempo estimado de venta en este rango: 45-75 días.",
-    ],
-    "resumen_ejecutivo": "La propiedad se ubica en el cuartil superior del mercado para Jardines del Pedregal. Los 4 comparables recientes confirman solidez en el rango $7.8M-$8.7M. Se recomienda lista a $8.5M con flexibilidad hasta $8.1M en negociación.",
-    "fuentes": ["Inmuebles24", "Lamudi", "EasyBroker", "Registros públicos Michoacán"],
-    "fecha_analisis": datetime.now(timezone.utc).strftime("%d %b %Y"),
-}
 
 _ESTADISTICAS = {
     "propiedades_activas": 47,
@@ -432,18 +403,6 @@ class AccionIn(BaseModel):
     descripcion: str
     datos: dict = {}
 
-class AvmIn(BaseModel):
-    session_id: str
-    colonia: str = "Jardines del Pedregal"
-    tipo_inmueble: str = "Casa"
-    operacion: str = "Venta"
-    m2_construccion: float = 320
-    m2_terreno: float = 480
-    recamaras: int = 4
-    banos: float = 3.5
-    estacionamientos: int = 2
-    ciudad: str = "Morelia"
-    comentarios: str = ""
 
 class ChatIn(BaseModel):
     session_id: str
@@ -533,35 +492,6 @@ async def registrar_accion(body: AccionIn):
     return {"ok": True, "ts": sesion["ultima_actualizacion"]}
 
 
-@router.post("/avm")
-async def avm_demo(body: AvmIn):
-    """
-    Valuación instantánea. Simula 1.2 s de 'análisis' con datos reales ficticios
-    para la demo. No llama a ninguna API externa.
-    """
-    await asyncio.sleep(1.2)  # suspense realista
-    resultado = dict(_AVM_RESULTADO)
-    # Ajuste dinámico menor para que no sea idéntico en cada corrida
-    factor = 0.95 + (hash(body.colonia) % 10) * 0.01
-    resultado["valor_estimado"] = int(resultado["valor_estimado"] * factor)
-    resultado["rango_min"] = int(resultado["rango_min"] * factor)
-    resultado["rango_max"] = int(resultado["rango_max"] * factor)
-    resultado["precio_m2"] = int(resultado["precio_m2"] * factor)
-    resultado["colonia"] = body.colonia
-    resultado["tipo_inmueble"] = body.tipo_inmueble
-    resultado["m2_construccion"] = body.m2_construccion
-    resultado["m2_terreno"] = body.m2_terreno
-    resultado["fecha_analisis"] = datetime.now(timezone.utc).strftime("%d %b %Y")
-    if body.session_id in _SESSIONS:
-        _registrar_accion(
-            _SESSIONS[body.session_id],
-            "avm",
-            f"Valuación generada: {body.colonia} — ${resultado['valor_estimado']:,.0f} MXN",
-            {"colonia": body.colonia, "valor": resultado["valor_estimado"]},
-        )
-    return resultado
-
-
 @router.post("/chat")
 async def chat_demo(body: ChatIn):
     """
@@ -583,7 +513,7 @@ CONTEXTO ACTUAL DE LA DEMO:
 - Agencia: Grupo Navarro, Morelia, Michoacán
 - Propiedades en cartera: {n_props}
 - Contactos activos: {n_contactos}
-- Módulos activos: CRM, WhatsApp IA, AVM, Contratos, PLD, ISR, Firmas Electrónicas
+- Módulos activos: CRM, WhatsApp IA, Análisis comparativo, Contratos, PLD, ISR, Firmas Electrónicas
 
 Propiedades destacadas disponibles:
 1. Casa en Jardines del Pedregal — $8,500,000 MXN — 320m², 4 rec, alberca

@@ -135,6 +135,19 @@
         }
       } catch (e) { /* sin precarga: el asesor captura a mano */ }
     }
+    // Precarga que deja el asistente del chat (acción llenar_acm).
+    try {
+      var chat = JSON.parse(sessionStorage.getItem('shaark_acm') || 'null');
+      sessionStorage.removeItem('shaark_acm');
+      if (chat) {
+        var tipo = chat.tipo_inmueble || chat.tipo;
+        if (TIPOS.some(function (t) { return t[0] === tipo; })) g('n-tipo').value = tipo;
+        if (String(chat.operacion || '').indexOf('renta') === 0) g('n-op').querySelector('[data-op="renta"]').click();
+        [['n-colonia', chat.colonia], ['n-ciudad', chat.ciudad], ['n-estado', chat.estado], ['n-m2c', chat.m2_construccion],
+          ['n-m2t', chat.m2_terreno], ['n-rec', chat.recamaras], ['n-ban', chat.banos], ['n-est', chat.estacionamientos],
+          ['n-ant', chat.antiguedad]].forEach(function (x) { if (x[1] != null && x[1] !== '' && x[1] !== 0) g(x[0]).value = x[1]; });
+      }
+    } catch (e) { /* sin precarga */ }
     g('acm-nuevo').addEventListener('submit', async function (e) {
       e.preventDefault();
       var boton = g('n-ir');

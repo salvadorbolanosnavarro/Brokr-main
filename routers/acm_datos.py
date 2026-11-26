@@ -7,7 +7,7 @@
 #      se guarda UNA vez (deduplicado entre portales), con su primera y
 #      última fecha vista y su historial de precios.
 #   2. Investigación en vivo: si la base no tiene suficientes comparables
-#      cerca, se reutiliza la búsqueda web + lectura de portales del AVM
+#      cerca, se reutiliza la búsqueda web + lectura de portales
 #      (routers/avm_websearch.py) y TODO lo que encuentra se guarda en la
 #      base. Así el ACM funciona desde el primer día y cada búsqueda deja la
 #      base más completa para la siguiente.
@@ -445,7 +445,7 @@ def _zona_de(sujeto: Dict[str, Any]) -> Dict[str, Any]:
 async def investigar_en_vivo(sujeto: Dict[str, Any], user_id: Optional[str] = None) -> Dict[str, Any]:
     """Busca anuncios en portales para la zona del sujeto y los GUARDA en la
     base propia. Devuelve conteos; los comparables se leen después de la base."""
-    from routers import avm_websearch as avm  # búsqueda y lectura de portales ya probadas
+    from routers import avm_websearch as avm  # búsqueda y lectura de portales
 
     zona = _zona_de(sujeto)
     req = avm.AvmWebSearchRequest(

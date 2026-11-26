@@ -11,7 +11,7 @@ class MainPdfDownloadsExtractionTests(unittest.TestCase):
         router = (ROOT / "routers" / "pdf_downloads.py").read_text(encoding="utf-8")
 
         self.assertIn("from core.pdf_store import _pdf_store", router)
-        self.assertIn('@router.get("/avm-pdf/{token}")', router)
+        self.assertNotIn('@router.get("/avm-pdf/{token}")', router)  # AVM retirado
         self.assertIn('@router.get("/isr-pdf/{token}")', router)
         self.assertIn('@router.get("/ficha-pdf/{token}")', router)
         self.assertIn('detail="PDF no encontrado o expirado"', router)

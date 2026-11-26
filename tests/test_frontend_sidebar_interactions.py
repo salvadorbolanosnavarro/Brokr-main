@@ -16,7 +16,6 @@ class SidebarInteractionLanguageTests(unittest.TestCase):
             'body[data-app="leads"] .ftab.active',
             'body[data-app="tareas"] .tk-tab.active',
             'body[data-app="estadisticas"] .ftab.active',
-            'body[data-app="avm"] .avm-tab.active',
             'body[data-app="facebook-ads"] .fa-tab.active',
         ):
             self.assertIn(selector, css)
