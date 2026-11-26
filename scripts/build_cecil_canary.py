@@ -15,11 +15,11 @@ import tarfile
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-# Approved design c5e8df3 (7e68f7f + legal update) + only the ACM zone fix
-# (base dec5409), kept on branch cecil/diseno-impuestos.
-# Previous: design c5e8df3, base b36ee02.
-DESIGN_REF = '7390fd2f0a6d3e0f50215b4cb856a5e08d5e5415'
-BASE_REF = 'dec540988f9eae2bced83711628e44edda2574c2'
+# Approved design 7390fd2 (c5e8df3 + ACM zone fix) + only the zone-only list
+# of the ACM (base 8de3443), kept on branch cecil/diseno-impuestos.
+# Previous: design 7390fd2, base dec5409.
+DESIGN_REF = '37764202aece3cc9c3cbc5f21b8c24e1489447ad'
+BASE_REF = '8de34435f6a5f2d8531bcf4ae3a98c34bfedafae'
 EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.gif', '.mp4', '.webm'}
 FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor', 'videos'}
 
