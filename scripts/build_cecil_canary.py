@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # Design df49373 (approved Cecil, ACM hidden) + the private Seguimiento
 # automático pilot page, merged with its backend base 138cf25. Kept on branch
 # cecil/seguimiento-piloto. Previous: design df49373, base 2a1f4f5.
-DESIGN_REF = '301c8b7ec7a24562f2fe8f9e928bd095060143a3'
+DESIGN_REF = 'b677c71cd27b857ca33318b0cac85d8c531f36d2'
 BASE_REF = '138cf25a661cb08d492a95bf69c5e5603e4cbf89'
 EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.gif', '.mp4', '.webm'}
 FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor', 'videos'}
