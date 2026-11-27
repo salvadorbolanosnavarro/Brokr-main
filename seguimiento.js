@@ -446,7 +446,7 @@
       var t = todas.find(function (x) { return x.nombre === p.nombre; });
       var est = !t ? ['Falta', 'warn'] : t.estatus === 'APPROVED' ? ['Aprobada', 'success'] : t.estatus === 'REJECTED' ? ['Rechazada', 'danger'] : ['En revisión', 'info'];
       if (!t) faltan++;
-      return '<div class="sg-plantilla"><div><b style="font-size:var(--fs-sm)">' + esc(p.uso) + '</b><p class="sg-ayuda">' + esc(p.cuerpo) + '</p></div><span class="bk-badge bk-badge--' + est[1] + '">' + est[0] + '</span></div>';
+      return '<div class="sg-plantilla"><div><b style="font-size:var(--fs-sm)">' + esc(p.uso) + '</b><p class="sg-ayuda">' + esc(p.cuerpo.replace(/\{\{(\d)\}\}/g, function (_, n) { return p.ejemplo[n - 1] || ''; })) + '</p></div><span class="bk-badge bk-badge--' + est[1] + '">' + est[0] + '</span></div>';
     }).join('');
     $('sg-pack-enviar').disabled = !faltan || !numero;
   }
