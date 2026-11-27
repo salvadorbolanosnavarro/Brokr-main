@@ -42,6 +42,8 @@ def build(output):
     allowed_changes.update({'scripts/build_pages_pilot.py','.github/workflows/pages-pilot.yml','ui/cecil-error-probe.js','tests/check_cecil_error_probe.cjs'})
     # CI-only: the staging sync runs this builder's tests on the source tree (#228).
     allowed_changes.add('.github/workflows/sync-main-a-staging.yml')
+    # Backend-only CORS list (cecilapp.co): never part of the Cecil artifact.
+    allowed_changes.update({'core/cors.py','tests/test_cors_modes.py','cloudflare/cecil-app-worker.js'})
     changed=set(git('diff','--name-only',BASE_REF,'HEAD').decode().splitlines())
     if changed - allowed_changes:
         raise ValueError('Production advanced: integrate it into the design snapshot and update the pinned base before building.')
