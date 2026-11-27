@@ -440,8 +440,21 @@ html body[data-app] .es-hero{display:grid;grid-template-columns:1fr auto;align-i
 html body[data-app] .es-hero>.es-hero__row{margin:0!important}
 html body[data-app] .es-hero>.es-hero__sub{grid-column:1}
 html body[data-app] .es-hero>.es-seg{grid-column:2;grid-row:1/span 2}
-html body[data-app] .es-hero__count{background:none;border:0;padding:0;font-size:13px}
+html body[data-app] .es-hero__count{background:none!important;border:0!important;padding:0!important;font-size:13px!important;box-shadow:none!important}
 html body[data-app] .es-nav{margin-top:16px}
 html body[data-app] .es-nav,html body[data-app] .es-nav__card{padding:0!important;border:0!important;background:none!important;box-shadow:none!important}
 html body[data-app] .es-hero__count{display:inline!important;color:var(--ui-muted)!important}
 @media (max-width:720px){html body[data-app] .es-hero{grid-template-columns:1fr}html body[data-app] .es-hero>.es-seg{grid-column:1;grid-row:auto}html body[data-app] .es-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bk-tools-menu__list a{height:36px;box-sizing:border-box}
+.bk-tools-menu__list a>span{overflow:hidden;text-overflow:ellipsis}
+html body[data-app] .prop-card-price-row{margin-top:4px!important}
+@media(max-width:720px){
+  html body[data-app] :is(.page-head__row,.props-head__top,.tk-head__top){flex-direction:column;align-items:stretch;gap:12px}
+  html body[data-app] :is(.page-head__row,.props-head__top,.tk-head__top)>*{width:100%}
+  html body[data-app] .props-head__actions{flex-wrap:wrap;justify-content:flex-start}
+}
+html body :is(.bk-shk-close,.bk-shk-mic,.bk-shk-send),html body :is(.bk-shk-close,.bk-shk-mic,.bk-shk-send)[data-ui-size]{width:36px;height:36px;min-height:36px;padding:0;flex:none;display:grid;place-items:center;border-radius:10px}
+html body .bk-shk-close[data-ui-size]{border:0;background:transparent;color:var(--cp-muted)}
+html body .bk-shk-close:hover{background:var(--cp-soft);color:var(--cp-ink)}
+html body .bk-shk-send[data-ui-size]{background:var(--ui-action);border-color:var(--ui-action);color:var(--ui-ink)}
+html body :is(.bk-shk-close,.bk-shk-mic,.bk-shk-send) svg{width:16px!important;height:16px!important;flex:none}
