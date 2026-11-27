@@ -26,6 +26,12 @@ El piloto incorpora un workflow Pages pilot que prepara los archivos web origina
 7. En Cecil, Probar registro de errores envía un evento fijo sin usuario, petición ni breadcrumbs. Solo muestra Sentry aceptó cuando el transporte devuelve2xx para ese event_id; no confundir SDK invocado o cola vacía con aceptación. Registrar event_id/estado; la indexación en el panel Sentry es una comprobación distinta.
 8. No ampliar a nadie más sin nueva aprobación.
 
+## Dominio propio: cecilapp.co
+
+Zona cecilapp.co en Cloudflare (nameservers blakely/jarred). El Worker `cecil-app` (código en `cloudflare/cecil-app-worker.js`) sirve en la raíz de cecilapp.co el mismo artefacto publicado en broquer.app/cecil/, con rutas `cecilapp.co/*` y `www.cecilapp.co/*` (www redirige a cecilapp.co; HTTPS forzado; `noindex`). Cada publicación de main aparece en ambos. `ui/cecil-rollout.js` trata cecilapp.co como Cecil: "Volver a Broquer" y la salida por elegibilidad llevan a https://broquer.app. El acceso sigue gobernado por CECIL_UI_ENABLED/CECIL_UI_USER_IDS; la API ya lista cecilapp.co en `core/cors.py`. La sesión es por dominio: en cecilapp.co se inicia sesión una vez.
+
+Para retirar el dominio: borrar las dos rutas del Worker en la zona cecilapp.co (Cloudflare → cecilapp.co → Workers Routes).
+
 ## Reversión
 
 Primero apagar CECIL_UI_ENABLED y desplegar. Revalidación cada15s/al recuperar visibilidad; ante fallo de elegibilidad Cecil vuelve a Broquer sin borrar tokens. Si el frontend está bloqueado, abrir la ruta habitual y restaurar la publicación anterior.

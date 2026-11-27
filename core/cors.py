@@ -23,6 +23,9 @@ ORIGENES_CONOCIDOS = (
     "https://broquer.app",
     "https://www.broquer.app",
     "https://staging.broquer.app",
+    # Cecil, dominio propio (mismo frontend que broquer.app/cecil/).
+    "https://cecilapp.co",
+    "https://www.cecilapp.co",
     # App de iOS (Capacitor). La configuración actual usa capacitor://;
     # los otros dos cubren otras configuraciones de Capacitor/Ionic.
     "capacitor://localhost",

@@ -73,5 +73,19 @@ async function tick(p){await p.evaluate(()=>{Object.defineProperty(document,'hid
  // Another session user never inherits someone else's preference.
  await reset(p);state={enabled:true,user_id:'other'};sessionUser='other';await p.evaluate(()=>localStorage.setItem('broquer-ui-cecil:owner','on'));await p.goto(base+'/index.html');await p.getByRole('button',{name:'Probar el diseño Cecil'}).waitFor();assert.equal(new URL(p.url()).pathname,'/index.html');cases++;
  assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);cases++;await ctx.close();
- }}finally{await b.close();server.close();}console.log(JSON.stringify({passed:true,cases,widths:[1440,390],scope:'Rollout controller only; not real business workflows'}));
+ }
+ // Cecil's own domain (cecilapp.co): same pages at the root; Broquer is https://broquer.app.
+ {const port=server.address().port;const own=await chromium.launch({executablePath:process.env.BROQUER_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--host-resolver-rules=MAP cecilapp.co 127.0.0.1']});
+  try{const ctx=await own.newContext({viewport:{width:390,height:844}});const p=await ctx.newPage();const gone=[];
+   await ctx.route(/^https:\/\/broquer\.app\//,r=>{gone.push(r.request().url());r.fulfill({status:200,contentType:'text/html',body:'<!doctype html><title>Broquer</title>'});});
+   const root='http://cecilapp.co:'+port;
+   state={enabled:true,user_id:'owner'};sessionUser='owner';status=200;valid='token-1';hang=false;
+   await p.goto(root+'/tareas.html?x=1#y');
+   await p.getByRole('button',{name:'Cecil · piloto'}).waitFor();assert.equal(await p.getByRole('button',{name:'Probar el diseño Cecil'}).count(),0,'own domain is Cecil, not Broquer');cases++;
+   await p.getByRole('button',{name:'Cecil · piloto'}).click();await p.getByRole('button',{name:'Volver a Broquer'}).click();await p.waitForURL('https://broquer.app/tareas.html?x=1#y');cases++;
+   await p.goto(root+'/contratos.html');await reset(p);valid='token-2';await tick(p);assert.equal(new URL(p.url()).hostname,'cecilapp.co','expired token keeps the person on cecilapp.co');cases++;
+   status=503;await tick(p);assert.equal(new URL(p.url()).hostname,'cecilapp.co','server error keeps the person on cecilapp.co');cases++;
+   status=200;state={enabled:false,user_id:'owner'};await p.goto(root+'/contactos.html');await p.waitForURL('https://broquer.app/contactos.html');cases++;
+   await ctx.close();}finally{await own.close();}}
+ }finally{await b.close();server.close();}console.log(JSON.stringify({passed:true,cases,widths:[1440,390],scope:'Rollout controller only; not real business workflows'}));
 })().catch(e=>{console.error(e);server.close();process.exitCode=1});
