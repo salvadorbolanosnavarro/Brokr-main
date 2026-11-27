@@ -50,6 +50,7 @@ except Exception:
 
 
 from routers.cecil_ui import router as cecil_ui_router
+from routers.seguimiento_api import router as seguimiento_router
 from routers.admin_usage import router as admin_usage_router
 from routers.account_delete import router as account_delete_router
 from core.facebook_tokens import FACEBOOK_REQUIRED_SCOPES
@@ -246,6 +247,8 @@ app.include_router(create_chat_claude_router(lambda: {
     "SHAARK_SYSTEM_PROMPT": SHAARK_SYSTEM_PROMPT,
 }))
 app.include_router(cecil_ui_router)
+# Seguimiento automático: piloto privado (solo cuentas de CECIL_UI_USER_IDS).
+app.include_router(seguimiento_router)
 app.include_router(facebook_qa_selfcheck_router)
 app.include_router(facebook_create_ad_router)
 
