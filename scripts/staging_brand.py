@@ -61,6 +61,9 @@ def brand_asset(name, text):
         'broq-icon.png': ASSISTANT, 'favicon.png': MONOGRAM,
         'favicon.svg': MONOGRAM, 'icon-192.png': APP_ICON, 'icon-512.png': APP_ICON,
     }
+    if name == 'manifest.json':
+        # Installed-app icons need a solid background: use the white-background PNG.
+        images = {**images, 'isotipo-black.png': TOUCH_ICON, 'isotipo-white.png': TOUCH_ICON}
     for old, new in images.items():
         text = re.sub(r'(?<![\w/-])(?:\.\./|\./|/)?' + re.escape(old) + r'(?![\w.-])', new, text)
     # The assistant header is the monogram (avatar) plus the text "Cecil IA"
