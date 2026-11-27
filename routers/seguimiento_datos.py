@@ -23,7 +23,8 @@ FALTA_MIGRACION = ("El seguimiento automático todavía no está instalado en la
 
 
 def usuarios_piloto() -> set[str]:
-    return {x.strip() for x in (settings.cecil_ui_user_ids or "").split(",") if x.strip()}
+    lista = getattr(settings, "cecil_ui_user_ids", "") or ""
+    return {x.strip() for x in lista.split(",") if x.strip()}
 
 
 def es_piloto(user_id: str | None) -> bool:
