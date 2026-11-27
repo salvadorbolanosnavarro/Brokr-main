@@ -15,10 +15,11 @@ import tarfile
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-# Approved design 3776420 (7390fd2 + zone-only list) + only hiding the ACM
-# module while it is refined (base 2a1f4f5), kept on branch
-# cecil/diseno-impuestos. Previous: design 3776420, base 8de3443.
-DESIGN_REF = 'df49373595ad4a7678f499ad63f1358300456c09'
+# Production polish on branch cecil/produccion-pulido (built on design
+# df49373 = 3776420 + ACM hidden, base 2a1f4f5): tokens, shared heading,
+# mobile tab bar, transparent monogram and the Inicio/Agenda/Estadísticas/
+# Inmuebles fixes. Previous: design df49373 (cecil/diseno-impuestos).
+DESIGN_REF = '60aa01e31b9de6de13e6736bcfa7f19c99b952da'
 BASE_REF = '2a1f4f58f9cfa6df772c8956a1dc09f5ab72c56d'
 EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.gif', '.mp4', '.webm'}
 FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor', 'videos'}
