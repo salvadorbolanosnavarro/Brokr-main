@@ -56,7 +56,9 @@ body[data-app]:not(:has(> .bk-design-header)) > :not(.bk-design-header):not(scri
 .cp-tools-foot a{padding:0!important;color:var(--cp-muted)!important;background:none!important}
 
 /* ── One page container ───────────────────────────────────────── */
-body[data-app] .bk-page{padding:0 max(var(--cp-gutter),calc((100% - var(--cp-max)) / 2)) 64px;min-height:calc(100vh - var(--cp-header))}
+body[data-app] .bk-page{padding:0 max(var(--cp-gutter),calc((100% - var(--cp-max)) / 2)) 64px;min-height:calc(100vh - var(--cp-header));min-height:calc(100dvh - var(--cp-header))}
+/* 100vh in iPhone ignores Safari's toolbar and leaves extra space to scroll into. */
+body[data-app] .bk-shell-root{min-height:0}
 html body[data-app] .bk-page>:is(.bk-ph,.es-hero,.es-nav,.es-scroll,.tk-head,.tk-body,.props-head,.props-grid,.page-head,.list,.kanban,.fin-scroll,.fr-scroll,.fa-wrap,.bz,.msw-tabswrap,.ms-body,.vid-scroll,.cp-scroll,.bp-head,.bp-body,.page-scroll,#wrap,#app-ui,.main,.design-home,.eq-scroll,.vf-scroll,.bl-wrap,.ia-scroll,.crm-scroll,.al-scroll,.bolsa-wrap,.co-scroll,.acm-wrap,.w2-scroll,.wac-page,.bk-page){max-width:var(--cp-max)!important;width:auto!important;margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important;box-sizing:border-box}
 html body[data-app] .bk-page .bk-page{padding:0;min-height:0}
 html body[data-app] .bk-page .bk-page>.guide-wrap{max-width:var(--cp-max);margin:0;padding-left:0;padding-right:0}
@@ -169,7 +171,11 @@ html body[data-app] input[type=checkbox],html body[data-app] input[type=radio]{a
   .bk-tools-menu[open] .bk-tools-menu__list{position:fixed;left:0;right:0;top:auto;bottom:0;width:auto;max-height:80dvh;overflow:auto;grid-template-columns:1fr 1fr;border-radius:16px 16px 0 0;padding:16px 16px calc(80px + env(safe-area-inset-bottom,0px));z-index:790}
   .cp-tools-foot{grid-column:1/-1}
   /* Primary module action floats above the tab bar. */
-  html body[data-app] .cp-fab-primary{position:fixed!important;right:16px;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:calc(var(--z-fab,80) - 10);height:48px!important;border-radius:24px!important;box-shadow:0 6px 20px rgba(16,24,40,.2)!important;padding:0 18px!important}
+  /* One floating action per module: the labelled primary button (the old icon-only .fab is retired). */
+  html body[data-app] #fab-nuevo{display:none!important}
+  /* Primary action: centered above the tab bar, never wider than its label. */
+  html body[data-app] :is(.cp-fab-primary,.cp-fab-primary[data-ui-size],.fab){position:fixed!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:auto!important;max-width:calc(100vw - 32px)!important;margin:0!important;white-space:nowrap}
+  html body[data-app] .cp-fab-primary{position:fixed!important;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:calc(var(--z-fab,80) - 10);height:48px!important;border-radius:24px!important;box-shadow:0 6px 20px rgba(16,24,40,.2)!important;padding:0 18px!important}
   html body[data-app] .fab{bottom:calc(72px + env(safe-area-inset-bottom,0px))!important}
   /* Filters: search visible, the rest in a sheet. */
   html body[data-app] :is(.filters-row,.props-toolbar,.tk-toolbar,.cp-filterbar){display:flex!important;flex-wrap:nowrap!important}
@@ -469,6 +475,8 @@ html body :is(.bk-shk-close,.bk-shk-mic,.bk-shk-send) svg{width:16px!important;h
  * fondo mientras están abiertos. */
 @media(max-width:720px){
   html,body{overflow-x:hidden;max-width:100%}
+  /* No rubber-band past the end: the list stops at its last row, under a fixed tab bar. */
+  html,body{overscroll-behavior-y:none}
   /* Nada posicionado fuera de la pantalla que permita arrastrar la página. */
   .bk-tools-menu:not([open]) .bk-tools-menu__list{display:none!important}
   html body :is(.bk-overlay,.prop-modal-overlay,.ac-ov,.pick-overlay,.eb-import-overlay,.bk-ficha-ov,.overlay,.wac-modal,.lightbox-overlay){align-items:flex-end!important;justify-content:stretch!important;padding:0!important;overscroll-behavior:contain}
@@ -482,7 +490,8 @@ html body :is(.bk-shk-close,.bk-shk-mic,.bk-shk-send) svg{width:16px!important;h
   html body :is(input[type=date],input[type=time],input[type=datetime-local])::-webkit-date-and-time-value{text-align:left;margin:0}
   /* Con un recuadro abierto: el fondo no se mueve y la barra inferior se oculta. */
   html.cp-modal-open,html.cp-modal-open body{overflow:hidden!important;overscroll-behavior:none}
-  html.cp-modal-open :is(.cp-tabbar,.cp-fab-primary,.fab,#cecil-rollout-controls){visibility:hidden!important}
+  /* Transparent and inert, not visibility:hidden: focus must be able to return to the opener when the dialog closes. */
+  html.cp-modal-open :is(.cp-tabbar,.cp-fab-primary,.fab,#cecil-rollout-controls){opacity:0!important;pointer-events:none!important}
 }
 @media(max-width:720px){
   /* Fecha y Hora lado a lado con la misma separación que los demás campos. */
