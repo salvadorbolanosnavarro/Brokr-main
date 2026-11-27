@@ -94,6 +94,26 @@
     (root.querySelectorAll ? root : document).querySelectorAll(PRIMARY).forEach(el => el.classList.add('cp-fab-primary'));
   }
 
+  /* ── Is a dialog open? Lock the page behind it (phones) ── */
+  const OVERLAYS = '.bk-overlay,.prop-modal-overlay,.ac-ov,.pick-overlay,.eb-import-overlay,.bk-ficha-ov,.overlay,.wac-modal,.lightbox-overlay,dialog[open],.cp-sheet,.bk-profile-overlay';
+  function dialogOpen() {
+    for (const el of document.querySelectorAll(OVERLAYS)) {
+      if (el.hidden || !el.getClientRects().length) continue;
+      const cs = getComputedStyle(el);
+      // Opacity is ignored on purpose: several dialogs fade in from 0.
+      if (cs.display === 'none' || cs.visibility === 'hidden' || cs.pointerEvents === 'none') continue;
+      const r = el.getBoundingClientRect();
+      if (el.matches('dialog[open],.cp-sheet') || (r.width >= innerWidth * 0.9 && r.height >= innerHeight * 0.6)) return true;
+    }
+    return false;
+  }
+  let modalQueued = false;
+  function syncModalState() {
+    if (modalQueued) return; modalQueued = true;
+    requestAnimationFrame(() => { modalQueued = false; document.documentElement.classList.toggle('cp-modal-open', dialogOpen()); });
+  }
+  window.cpSyncModalState = syncModalState;
+
   function enhance(root) { fixNames(root); setupBars(root); setupFab(root); }
   function start() {
     enhance(document);
@@ -102,6 +122,11 @@
       if (pending) return; pending = true;
       requestAnimationFrame(() => { pending = false; fixNames(document); setupBars(document); });
     }).observe(document.body, {childList: true, subtree: true});
+    // Open/close of any dialog flips a class, style, hidden or open attribute.
+    new MutationObserver(syncModalState).observe(document.body, {subtree: true, attributes: true, attributeFilter: ['class', 'style', 'hidden', 'open']});
+    document.addEventListener('transitionend', syncModalState, true);
+    document.addEventListener('animationend', syncModalState, true);
+    syncModalState();
   }
   window.cpProperName = properName;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once: true}); else start();
