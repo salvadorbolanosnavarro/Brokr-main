@@ -8,21 +8,31 @@ import base64
 
 WORDMARK = '/brand/cecil-wordmark.webp'
 ASSISTANT = '/brand/cecil-assistant.webp'
-MONOGRAM = '/brand/cecil-icon.svg'
+# Interface monogram: transparent vector (brand/cecil-monogram.svg), with a
+# transparent PNG fallback. The white-background PNG is reserved for the
+# apple-touch-icon and app/manifest icons, which require a solid background.
+MONOGRAM = '/brand/cecil-monogram.svg'
+MONOGRAM_PNG = '/brand/cecil-monogram.png'
 TOUCH_ICON = '/brand/cecil-icon.png'
+APP_ICON = '/brand/cecil-icon.svg'
 
 
 def write_brand_artwork(root, output):
-    """Embed the platform's compact icon for favicon and manifest use."""
+    """Write the solid app icon (manifest) and make sure the transparent
+    interface monogram ships even if a fixture lacks it."""
     source = root / TOUCH_ICON.lstrip('/')
     if not source.is_file():
         return  # Minimal build fixtures may not include brand assets.
     data = base64.b64encode(source.read_bytes()).decode('ascii')
-    target = output / MONOGRAM.lstrip('/')
+    target = output / APP_ICON.lstrip('/')
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" '
                       f'role="img" aria-label="Cecil"><image width="180" height="180" '
                       f'href="data:image/png;base64,{data}"/></svg>\n')
+    for name in (MONOGRAM, MONOGRAM_PNG):
+        src, dst = root / name.lstrip('/'), output / name.lstrip('/')
+        if src.is_file() and not dst.exists():
+            dst.write_bytes(src.read_bytes())
 
 
 def brand_asset(name, text):
@@ -49,13 +59,12 @@ def brand_asset(name, text):
         'logotipo-brokr.svg': WORDMARK,
         'isotipo-black.png': MONOGRAM, 'isotipo-white.png': MONOGRAM,
         'broq-icon.png': ASSISTANT, 'favicon.png': MONOGRAM,
-        'favicon.svg': MONOGRAM, 'icon-192.png': MONOGRAM, 'icon-512.png': MONOGRAM,
+        'favicon.svg': MONOGRAM, 'icon-192.png': APP_ICON, 'icon-512.png': APP_ICON,
     }
     for old, new in images.items():
         text = re.sub(r'(?<![\w/-])(?:\.\./|\./|/)?' + re.escape(old) + r'(?![\w.-])', new, text)
-    if name == 'app-shell.js':
-        text = text.replace('<div class="bk-shk-name">Cecil IA</div>',
-            f'<div class="bk-shk-name"><img class="cecil-assistant-logo" src="{ASSISTANT}" alt="Cecil IA"></div>')
+    # The assistant header is the monogram (avatar) plus the text "Cecil IA"
+    # in the app typography; the lockup image is not repeated there.
     if name == 'landing.html':
         # The legacy decorative reel has the previous logo baked into its frames.
         text = re.sub(r'<video[^>]+poster="animacion-broquer\.png"[^>]*>.*?</video>',
@@ -63,5 +72,5 @@ def brand_asset(name, text):
     if name.endswith('.html'):
         text = re.sub(r'(<link\b[^>]*rel="icon"[^>]*type=")image/png', r'\1image/svg+xml', text)
         text = re.sub(r'(<link\b[^>]*rel="apple-touch-icon"[^>]*href=")[^"]+', rf'\1{TOUCH_ICON}', text)
-        text = text.replace('</head>', '<link rel="stylesheet" href="/brand/staging-brand.css"><link rel="stylesheet" href="/ui/refinement.css"><script defer src="/ui/iconography.js"></script>\n</head>', 1)
+        text = text.replace('</head>', '<link rel="stylesheet" href="/brand/staging-brand.css"><link rel="stylesheet" href="/ui/refinement.css"><link rel="stylesheet" href="/ui/cecil-production.css"><script defer src="/ui/iconography.js"></script><script defer src="/ui/cecil-production.js"></script>\n</head>', 1)
     return text

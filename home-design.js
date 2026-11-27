@@ -20,8 +20,12 @@
     document.getElementById('design-fav-count').textContent = favorites.size;
     document.getElementById('design-all').setAttribute('aria-pressed', String(!onlyFavorites));
     document.getElementById('design-favorites').setAttribute('aria-pressed', String(onlyFavorites));
-    document.getElementById('design-expand').textContent = expanded ? 'Ver herramientas principales ↑' : 'Explorar todas las herramientas →';
+    document.getElementById('design-expand').textContent = expanded ? 'Ver herramientas principales' : 'Explorar todas las herramientas →';
   }
+  cards.forEach(card => card.addEventListener('click', e => {
+    if (e.target.closest('button,a')) return;
+    card.querySelector('.design-tool-link')?.click();
+  }));
   cards.forEach(card => card.querySelector('.design-favorite').addEventListener('click', () => {
     const key = card.dataset.tool;
     favorites.has(key) ? favorites.delete(key) : favorites.add(key);
@@ -33,44 +37,79 @@
   document.getElementById('design-expand').onclick = () => { expanded = !expanded; render(); };
   document.getElementById('design-customize').onclick = () => { expanded = true; onlyFavorites = false; render(); cards[0]?.querySelector('button').focus(); };
   search.addEventListener('input', render);
-  document.getElementById('design-date').textContent = new Intl.DateTimeFormat('es-MX', { weekday:'long', day:'numeric', month:'long', timeZone:'America/Mexico_City' }).format(new Date());
+  document.getElementById('design-date').textContent = new Intl.DateTimeFormat('es-MX', { weekday:'long', day:'numeric', month:'long' }).format(new Date());
   document.getElementById('design-assistant').onclick = () => document.querySelector('.bk-shaark-fab')?.click();
+  // Greeting by the person's local time.
+  function greeting(date = new Date()) {
+    const h = date.getHours();
+    return h >= 5 && h < 12 ? 'Buenos días' : h >= 12 && h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  }
+  const hello = document.getElementById('design-hello');
+  hello.textContent = greeting();
+  setInterval(() => { hello.textContent = greeting(); }, 60000);
+  // First name of the person, never the company. Without one, no name.
+  const COMPANY = /\b(s\.?\s?a\.?|s\.?\s?c\.?|de\s+c\.?\s?v\.?|sapi|tech|inmobiliaria|bienes\s+ra[ií]ces|realty|group|grupo|corp|consult|properties|propiedades|asesores|desarrollos|capital|holding)\b/i;
+  function firstName(profile) {
+    const meta = profile?.user?.user_metadata || {};
+    const org = (profile?.org?.organizacion?.nombre || profile?.org?.org?.nombre || '').trim().toLocaleLowerCase('es');
+    const candidates = [meta.nombre, meta.first_name, meta.given_name, meta.full_name, meta.name, profile?.profile?.nombre];
+    for (const raw of candidates) {
+      const value = String(raw || '').trim();
+      if (!value || value.includes('@') || COMPANY.test(value)) continue;
+      if (org && value.toLocaleLowerCase('es') === org) continue;
+      const first = value.split(/\s+/)[0];
+      if (!/^[\p{L}'’-]{2,}$/u.test(first)) continue;
+      return window.cpProperName ? window.cpProperName(first) : first;
+    }
+    return '';
+  }
+  const dateTime = new Intl.DateTimeFormat('es-MX', { weekday:'short', day:'numeric', month:'short', hour:'numeric', minute:'2-digit' });
   window.addEventListener('brokr-shell-ready', async e => {
     const profile = e.detail?.profile;
-    const name = profile?.fullName || profile?.profile?.nombre || '';
-    document.getElementById('design-name').textContent = name ? ', ' + name.trim().split(/\s+/)[0] : '';
+    const name = firstName(profile);
+    document.getElementById('design-name').textContent = name ? ', ' + name : '';
     // Respect the platform's disabled modules in the launcher as well as the shell.
     const disabled = new Set(profile?.profile?.modulos_desactivados || []);
     const keys = {'propiedades.html':'props','tareas.html':'tareas','clientes.html':'clientes','contactos.html':'contactos','facebook-ads.html':'facebook-ads','image-cleaner.html':'image-cleaner'};
     cards.forEach(card => { card.dataset.disabled = String(disabled.has(keys[card.dataset.tool] || card.dataset.tool.replace('.html',''))); });
     render();
     const box = document.getElementById('design-next-task');
+    const section = box.closest('.design-next');
+    const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
     try {
-      const rows = await window.brokrSb.rest('tareas?select=id,titulo,fecha_entrega,propiedad_id&completada=eq.false&order=fecha_entrega.asc.nullslast&limit=1');
-      const next = rows?.[0];
-      let property;
-      if (next?.propiedad_id) {
-        try { property = (await window.brokrSb.rest('propiedades?id=eq.' + encodeURIComponent(next.propiedad_id) + '&select=id,titulo,fotos,colonia,ciudad'))?.[0]; } catch (_) {}
-      }
+      // Pending = not completed (false or empty), same rule as the Agenda.
+      const rows = await window.brokrSb.rest('tareas?select=id,titulo,fecha_entrega,contacto_id,propiedad_id,completada&completada=not.is.true&order=fecha_entrega.asc.nullslast&limit=1000') || [];
+      const now = Date.now();
+      const pending = rows.filter(t => !t.completada);
+      const overdue = pending.filter(t => t.fecha_entrega && new Date(t.fecha_entrega).getTime() < now);
+      const next = pending.find(t => !t.fecha_entrega || new Date(t.fecha_entrega).getTime() >= now);
       box.replaceChildren();
-      if (property) {
-        let photos = property.fotos;
-        try { if (typeof photos === 'string') photos = JSON.parse(photos); } catch (_) { photos = []; }
-        const source = Array.isArray(photos) ? (typeof photos[0] === 'string' ? photos[0] : photos[0]?.url) : '';
-        if (source && /^https?:\/\//.test(source)) {
-          const image = document.createElement('img'); image.src = source; image.alt = property.titulo || 'Inmueble de la próxima tarea'; image.className = 'design-next-photo'; box.append(image);
-        }
-        const location = document.createElement('p'); location.className = 'design-next-location'; location.textContent = [property.colonia, property.ciudad].filter(Boolean).join(', '); box.append(location);
+      if (next) {
+        const link = el('a', 'design-next-item'); link.href = 'tareas.html?tarea=' + encodeURIComponent(next.id);
+        link.append(el('strong', 'design-next-title', next.titulo || 'Tarea sin título'));
+        const meta = [next.fecha_entrega ? dateTime.format(new Date(next.fecha_entrega)) : 'Sin fecha'];
+        let vinculo = '';
+        try {
+          if (next.contacto_id) vinculo = (await window.brokrSb.rest('contactos?id=eq.' + encodeURIComponent(next.contacto_id) + '&select=nombre'))?.[0]?.nombre || '';
+          else if (next.propiedad_id) vinculo = (await window.brokrSb.rest('propiedades?id=eq.' + encodeURIComponent(next.propiedad_id) + '&select=titulo'))?.[0]?.titulo || '';
+        } catch (_) {}
+        if (vinculo) meta.push(window.cpProperName && vinculo === vinculo.toLocaleUpperCase('es') ? window.cpProperName(vinculo) : vinculo);
+        link.append(el('span', 'design-next-meta', meta.join(' · ')));
+        box.append(link);
+      } else {
+        box.append(el('p', 'design-next-empty', 'Sin pendientes'));
       }
-      const title = document.createElement('h3');
-      title.textContent = rows?.[0]?.titulo || 'Tu agenda está al día';
-      const date = document.createElement('p');
-      date.textContent = rows?.[0]?.fecha_entrega ? new Intl.DateTimeFormat('es-MX',{dateStyle:'medium',timeStyle:'short',timeZone:'America/Mexico_City'}).format(new Date(rows[0].fecha_entrega)) : 'Organiza tu siguiente paso.';
-      const link = document.createElement('a'); link.href = 'tareas.html'; link.textContent = 'Ver agenda ↗';
-      box.append(title,date,link);
+      if (overdue.length) {
+        const late = el('a', 'design-next-overdue', overdue.length === 1 ? '1 vencida' : overdue.length + ' vencidas');
+        late.href = 'tareas.html?filtro=vencidas';
+        box.append(late);
+      }
+      const all = el('a', 'design-next-all', 'Ver agenda →'); all.href = 'tareas.html'; box.append(all);
     } catch (_) {
-      const message = document.createElement('p'); message.textContent = 'No se pudo consultar tu próxima tarea. Abre la agenda para volver a intentar.'; box.replaceChildren(message); const link = document.createElement('a'); link.href = 'tareas.html'; link.textContent = 'Abrir agenda ↗'; box.append(link);
+      box.replaceChildren(el('p', 'design-next-empty', 'No se pudo consultar tu agenda.'));
+      const link = el('a', 'design-next-all', 'Abrir agenda →'); link.href = 'tareas.html'; box.append(link);
     }
+    section?.removeAttribute('aria-busy');
   });
   render();
 })();

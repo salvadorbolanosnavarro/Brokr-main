@@ -300,6 +300,7 @@ html, body { background: var(--canvas); }
 }
 .es-scroll { padding-top: 24px; }
 
+
 </style>
 <link rel="stylesheet" href="styles/mobile-inputs.css">
 <script defer src="mobile-inputs.js"></script>
@@ -317,9 +318,8 @@ html, body { background: var(--canvas); }
 <header class="es-hero">
   <div class="es-hero__row">
     <h1>Estadísticas</h1>
-    <span class="es-hero__count" id="count-badge">Cargando…</span>
   </div>
-  <div class="es-hero__sub">Así va tu negocio: leads, inventario, WhatsApp y cierres, todo en un solo lugar.</div>
+  <div class="es-hero__sub">Así va tu negocio: leads, inventario, WhatsApp y cierres. <span class="es-hero__count cp-meta" id="count-badge"><span class="cp-skel" style="width:12em" aria-label="Cargando"></span></span></div>
   <div class="es-seg" id="es-periodo">
     <button data-p="semana" onclick="setPeriodo('semana')">Semana</button>
     <button data-p="mes" onclick="setPeriodo('mes')">Mes</button>
@@ -341,7 +341,7 @@ html, body { background: var(--canvas); }
 </div></nav>
 
 <div class="es-scroll" id="es-body">
-  <div class="es-loading">Cargando estadísticas…</div>
+  <div class="es-skel" aria-busy="true"><span class="cp-skel-block" style="height:120px"></span></div>
 </div>
 
 <script src="app-shell.js" defer></script>
@@ -363,6 +363,13 @@ function getToken() { return localStorage.getItem('sb_token') || sessionStorage.
 async function sbFetch(path) {
   if (!window.brokrSb || !window.brokrSb.rest) throw new Error('La app aún se está cargando. Intenta de nuevo en un segundo.');
   return await window.brokrSb.rest(path, { method: 'GET' });
+}
+/* Full lists: Supabase cuts every response at 1000 rows, so totals such as
+   "1,000 contactos" were silently truncated. Page until everything arrives. */
+async function sbFetchAll(path, opts) {
+  if (!window.brokrSb || !window.brokrSb.restAll) return sbFetch(path);
+  try { return await window.brokrSb.restAll(path, opts); }
+  catch (e) { return sbFetch(path); } // never lose the module over paging
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -439,15 +446,15 @@ function diasEntre(desde, hasta) {
    ════════════════════════════════════════════════════════════ */
 async function cargarTodo() {
   const body = g('es-body');
-  body.innerHTML = '<div class="es-loading">Cargando estadísticas…</div>';
+  body.innerHTML = '<div class="es-skel" aria-busy="true" aria-label="Cargando estadísticas"><div class="es-kpis">' + '<div class="es-card es-kpi"><span class="cp-skel-block" style="height:28px;width:60%"></span><span class="cp-skel-block" style="height:12px;width:80%;margin-top:10px"></span></div>'.repeat(6) + '</div><span class="cp-skel-block" style="height:240px"></span></div>';
   try {
     const [et, c, p, ip, ac, tk] = await Promise.all([
       sbFetch('pipeline_etapas?select=nombre,orden,color&order=orden.asc').catch(() => []),
-      sbFetch('contactos?select=id,nombre,tipo,estatus,fuente,es_potencial,created_at,fecha_cambio_estatus&limit=5000'),
-      sbFetch('propiedades?select=id,titulo,clave_interna,tipo,operacion,estatus,precio,moneda,archivada,created_at,updated_at,colonia,ciudad,estado,m2_construccion,m2_terreno,recamaras,banos,estacionamientos,anio_construccion,comision_venta_pct,comision_renta_meses,comision_real&limit=3000'),
-      sbFetch('contactos_propiedades?select=contacto_id,propiedad_id,relacion&limit=8000').catch(() => []),
-      sbFetch('actividades?select=tipo,created_at,propiedad_id,contacto_id&order=created_at.desc&limit=10000').catch(() => []),
-      sbFetch('tareas?select=id,titulo,completada,fecha_entrega,created_at,propiedad_id,contacto_id&limit=3000').catch(() => []),
+      sbFetchAll('contactos?select=id,nombre,tipo,estatus,fuente,es_potencial,created_at,fecha_cambio_estatus&limit=5000'),
+      sbFetchAll('propiedades?select=id,titulo,clave_interna,tipo,operacion,estatus,precio,moneda,archivada,created_at,updated_at,colonia,ciudad,estado,m2_construccion,m2_terreno,recamaras,banos,estacionamientos,anio_construccion,comision_venta_pct,comision_renta_meses,comision_real&limit=3000'),
+      sbFetchAll('contactos_propiedades?select=contacto_id,propiedad_id,relacion&order=contacto_id.asc,propiedad_id.asc,relacion.asc&limit=8000', { tieBreaker: null }).catch(() => []),
+      sbFetchAll('actividades?select=tipo,created_at,propiedad_id,contacto_id&order=created_at.desc&limit=10000').catch(() => []),
+      sbFetchAll('tareas?select=id,titulo,completada,fecha_entrega,created_at,propiedad_id,contacto_id&limit=3000').catch(() => []),
     ]);
     if (Array.isArray(et) && et.length) {
       ETAPAS = et.map((r, i) => ({
@@ -688,15 +695,20 @@ function setFiltroTabla(v) {
 /* ════════════════════════════════════════════════════════════
    Formato
    ════════════════════════════════════════════════════════════ */
+/* Compact es-MX amounts that fit a KPI card: $950 mil · $12.5 M · $3,361 M
+   · $3.36 mil M. The currency code is shown only when it is not MXN. */
 function fmtMoneyShort(n, moneda) {
   n = Math.round(n || 0);
   const signo = n < 0 ? '-' : '';
   const abs = Math.abs(n);
+  const f = (v, d) => v.toLocaleString('es-MX', { maximumFractionDigits: d, minimumFractionDigits: 0 });
   let s;
-  if (abs >= 1e6) s = (abs / 1e6).toFixed(abs >= 1e7 ? 0 : 1) + 'M';
-  else if (abs >= 1e3) s = Math.round(abs / 1e3) + 'k';
-  else s = String(abs);
-  return signo + '$' + s + (moneda ? ' ' + moneda : '');
+  if (abs >= 1e10) s = f(abs / 1e9, 1) + ' mil M';
+  else if (abs >= 1e9) s = f(abs / 1e6, 0) + ' M';
+  else if (abs >= 1e6) s = f(abs / 1e6, abs >= 1e8 ? 0 : 1) + ' M';
+  else if (abs >= 1e4) s = f(abs / 1e3, 0) + ' mil';
+  else s = f(abs, 0);
+  return signo + '$' + s + (moneda && moneda !== 'MXN' ? ' ' + moneda : '');
 }
 function fmtMoney(n, moneda) {
   return '$' + Number(Math.round(n || 0)).toLocaleString(window.bkLocale ? bkLocale() : 'es-MX') + (moneda ? ' ' + moneda : '');
@@ -786,7 +798,7 @@ function chLine(bb, series, opts) {
     const pts = s.counts.map((n, i) => [PL + i * stepX, PT + ih - (n / max) * ih]);
     const linea = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
     let area = '';
-    if (series.length <= 2) {
+    if (false) { // flat lines: no gradient fill
       area = '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">'
         + '<stop offset="0%" stop-color="' + s.color + '" stop-opacity="0.22"/>'
         + '<stop offset="100%" stop-color="' + s.color + '" stop-opacity="0"/></linearGradient></defs>'
@@ -795,7 +807,7 @@ function chLine(bb, series, opts) {
     }
     const dots = pts.map((p, i) => '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3.2" fill="' + s.color + '">'
       + '<title>' + esc(s.label) + ' · ' + esc(cfg.fmt(buckets[i].date)) + ': ' + nf(s.counts[i]) + '</title></circle>').join('');
-    return area + '<path d="' + linea + '" fill="none" stroke="' + s.color + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' + dots;
+    return area + '<path d="' + linea + '" fill="none" stroke="' + s.color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' + dots;
   }).join('');
 
   const cada = Math.ceil(buckets.length / 9);
@@ -1239,10 +1251,10 @@ function panelResumen() {
       + kpi(fmtMoneyShort(P.comisionGanada, ''), 'Comisión ganada ' + PERIODO_LBL[periodo], 'is-good')
       + (w && w.parcial
           ? kpi(nf(w.totales.conversaciones_nuevas), 'Conversaciones de WhatsApp')
-          : kpi(w ? nf(w.totales.mensajes) : (waCargando ? '…' : '—'), 'Mensajes de WhatsApp'))
+          : kpi(w ? nf(w.totales.mensajes) : (waCargando ? '<span class="cp-skel" aria-label="Cargando"></span>' : '—'), 'Mensajes de WhatsApp'))
       + (w && w.parcial
           ? kpi(nf(w.totales.conversaciones_activas_24h), 'Chats activos en 24 horas')
-          : kpi(w ? w.totales.pct_ia + '%' : (waCargando ? '…' : '—'), 'Atendido por la IA', 'is-good'))
+          : kpi(w ? w.totales.pct_ia + '%' : (waCargando ? '<span class="cp-skel" aria-label="Cargando"></span>' : '—'), 'Atendido por la IA', 'is-good'))
       + kpi(nf(vencidas), 'Tareas vencidas', vencidas ? 'is-bad' : '')
       + '</div>')
 
@@ -2056,7 +2068,7 @@ function render() {
   const badge = g('count-badge');
   const w = W();
   if (badge) {
-    badge.textContent = nf(props.length) + ' inmuebles · ' + nf(contactos.length) + ' contactos'
+    badge.textContent = '· ' + nf(props.length) + ' inmuebles · ' + nf(contactos.length) + ' contactos'
       + (w ? ' · ' + nf(w.totales.mensajes) + ' mensajes' : '');
   }
   let html = '';

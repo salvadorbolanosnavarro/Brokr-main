@@ -1027,9 +1027,16 @@ async function _userId() {
 
 /* Trae todos los contactos del usuario logueado, ordenados por updated_at desc */
 async function cargarRemoto() {
-  const r = await _sb().fetch('rest/v1/contactos?select=*&order=updated_at.desc');
-  if (!r.ok) throw new Error('No se pudieron cargar los contactos (' + r.status + ')');
-  const data = await r.json();
+  // Every contact, not just the first 1000 rows PostgREST returns per request.
+  let data;
+  if (_sb().restAll) {
+    try { data = await _sb().restAll('contactos?select=*&order=updated_at.desc'); }
+    catch (e) { throw new Error('No se pudieron cargar los contactos (' + (e.message || 'error') + ')'); }
+  } else {
+    const r = await _sb().fetch('rest/v1/contactos?select=*&order=updated_at.desc');
+    if (!r.ok) throw new Error('No se pudieron cargar los contactos (' + r.status + ')');
+    data = await r.json();
+  }
   _contactosMem = Array.isArray(data) ? data : [];
   try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
   return _contactosMem;
@@ -1148,7 +1155,7 @@ function fechaCorta(iso) {
 let CT_INTERES = {}; // { contactoId: [propiedadId, ...] }
 async function cCargarInteresFiltro() {
   try {
-    const rows = await restGet('contactos_propiedades?select=contacto_id,propiedad_id&relacion=eq.interes&limit=5000');
+    const rows = await (_sb().restAll ? _sb().restAll('contactos_propiedades?select=contacto_id,propiedad_id&relacion=eq.interes&order=contacto_id.asc,propiedad_id.asc', { tieBreaker: null }).catch(() => restGet('contactos_propiedades?select=contacto_id,propiedad_id&relacion=eq.interes&limit=5000')) : restGet('contactos_propiedades?select=contacto_id,propiedad_id&relacion=eq.interes&limit=5000'));
     CT_INTERES = {};
     (Array.isArray(rows) ? rows : []).forEach(r => {
       (CT_INTERES[r.contacto_id] = CT_INTERES[r.contacto_id] || []).push(String(r.propiedad_id));
@@ -1427,9 +1434,25 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ── Vista Lista ─────────────────────────────────────────────────── */
+// Type tabs show how many contacts each one holds (0 stays hidden).
+function cPintarTabs() {
+  const todos = cargar();
+  const por = {};
+  todos.forEach(c => { por[c.tipo || 'otro'] = (por[c.tipo || 'otro'] || 0) + 1; });
+  document.querySelectorAll('#directorio-ftabs .ftab').forEach(b => {
+    const m = (b.getAttribute('onclick') || '').match(/setFiltro\('([^']+)'/);
+    if (!m) return;
+    const n = m[1] === 'todos' ? todos.length : (por[m[1]] || 0);
+    let el = b.querySelector('.cp-count');
+    if (!el) { el = document.createElement('span'); el.className = 'cp-count'; b.append(el); }
+    el.textContent = n ? n.toLocaleString('es-MX') : '';
+    el.hidden = !n;
+  });
+}
 function renderLista() {
   const filtrados = contactosFiltrados();
   cPintarConteo(filtrados.length, cargar().length);
+  cPintarTabs();
   const lista = document.getElementById('lista');
   const q = gv('search-input');
   if (!filtrados.length) {

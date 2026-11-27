@@ -881,9 +881,16 @@ let _contactosMem = [];
 
 /* Trae todos los contactos del usuario logueado, ordenados por updated_at desc */
 async function cargarRemoto() {
-  const r = await _sb().fetch('rest/v1/contactos?select=*&order=updated_at.desc');
-  if (!r.ok) throw new Error('No se pudieron cargar los clientes (' + r.status + ')');
-  const data = await r.json();
+  // Every contact, not just the first 1000 rows PostgREST returns per request.
+  let data;
+  if (_sb().restAll) {
+    try { data = await _sb().restAll('contactos?select=*&order=updated_at.desc'); }
+    catch (e) { throw new Error('No se pudieron cargar los clientes (' + (e.message || 'error') + ')'); }
+  } else {
+    const r = await _sb().fetch('rest/v1/contactos?select=*&order=updated_at.desc');
+    if (!r.ok) throw new Error('No se pudieron cargar los clientes (' + r.status + ')');
+    data = await r.json();
+  }
   _contactosMem = Array.isArray(data) ? data : [];
   try { localStorage.setItem(LS_CACHE, JSON.stringify(_contactosMem)); } catch {}
   return _contactosMem;
@@ -989,7 +996,7 @@ function fechaCorta(iso) {
 let CT_INTERES = {}; // { contactoId: [propiedadId, ...] }
 async function cCargarInteresFiltro() {
   try {
-    const rows = await restGet('contactos_propiedades?select=contacto_id,propiedad_id&relacion=eq.interes&limit=5000');
+    const rows = await (_sb().restAll ? _sb().restAll('contactos_propiedades?select=contacto_id,propiedad_id&relacion=eq.interes&order=contacto_id.asc,propiedad_id.asc', { tieBreaker: null }).catch(() => restGet('contactos_propiedades?select=contacto_id,propiedad_id&relacion=eq.interes&limit=5000')) : restGet('contactos_propiedades?select=contacto_id,propiedad_id&relacion=eq.interes&limit=5000'));
     CT_INTERES = {};
     (Array.isArray(rows) ? rows : []).forEach(r => {
       (CT_INTERES[r.contacto_id] = CT_INTERES[r.contacto_id] || []).push(String(r.propiedad_id));

@@ -318,7 +318,7 @@
       (tc || []).forEach(function (l) { if (abiertas[l.tarea_id]) EXTRA.tareas[l.contacto_id] = (EXTRA.tareas[l.contacto_id] || 0) + 1; });
     } catch (e) {}
     try {
-      var acts = await restGet('actividades?select=contacto_id,created_at&contacto_id=not.is.null&order=created_at.desc&limit=5000');
+      var acts = await (window.brokrSb && window.brokrSb.restAll ? window.brokrSb.restAll('actividades?select=contacto_id,created_at&contacto_id=not.is.null&order=created_at.desc').catch(function(){ return restGet('actividades?select=contacto_id,created_at&contacto_id=not.is.null&order=created_at.desc&limit=5000'); }) : restGet('actividades?select=contacto_id,created_at&contacto_id=not.is.null&order=created_at.desc&limit=5000'));
       (acts || []).forEach(function (a) { if (!EXTRA.actividad[a.contacto_id]) EXTRA.actividad[a.contacto_id] = a.created_at; });
     } catch (e) {}
     try {

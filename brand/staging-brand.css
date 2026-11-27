@@ -20,7 +20,7 @@
 }
 .bk-shk-name .cecil-assistant-logo{
   display:block;width:auto;height:1.4em;max-width:100%;object-fit:contain;
-  background:#fff;border-radius:4px;padding:2px 5px;
+  background:transparent;
 }
 .ln-broqbar__ico img[src="/brand/cecil-assistant.webp"]{
   width:62px;height:auto;object-fit:contain;

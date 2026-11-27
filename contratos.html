@@ -48,7 +48,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
 
 /* Cards */
 .card{background:var(--bone);border:1px solid var(--line);border-radius:var(--r);padding:22px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
-.card-title{font-size: var(--fs-label-3);font-weight:700;letter-spacing: 0.03em;color:var(--mute);padding-bottom:9px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.card-title{font-size:var(--ui-text-section);font-weight:600;letter-spacing:-.01em;color:var(--ink);padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:16px}
 
 /* Form */
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
@@ -317,7 +317,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <span class="doc-menu-ico"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m-9 5h12a2 2 0 002-2V7.5L14.5 3H6a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></span>
       <span class="doc-picker-txt">
         <span class="doc-picker-lbl" id="doc-picker-lbl">Arrendamiento</span>
-        <span class="doc-picker-sub" id="doc-picker-sub">Contrato de Broquer</span>
+        <span class="doc-picker-sub" id="doc-picker-sub" hidden></span>
       </span>
       <svg class="doc-picker-chev" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
     </button>
@@ -399,7 +399,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow three">
         <div class="f" style="grid-column:span 3">
           <label>Calle</label>
-          <input type="text" id="a-calle-inm" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-calle-inm" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
       <div class="frow">
@@ -415,7 +415,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow">
         <div class="f">
           <label>Colonia</label>
-          <input type="text" id="a-colonia" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-colonia" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
           <label>Código postal</label>
@@ -425,11 +425,11 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow">
         <div class="f">
           <label>Municipio / Alcaldía</label>
-          <input type="text" id="a-municipio-inm" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-municipio-inm" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
           <label>Estado</label>
-          <input type="text" id="a-estado-inm" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-estado-inm" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
       <div class="frow">
@@ -495,7 +495,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
         <div class="frow three">
           <div class="f" style="grid-column:span 3">
             <label>Calle</label>
-            <input type="text" id="a-calle-arr" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
+            <input type="text" id="a-calle-arr" oninput="this.value=this.value.toUpperCase()"/>
           </div>
         </div>
         <div class="frow">
@@ -511,7 +511,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
         <div class="frow">
           <div class="f">
             <label>Colonia</label>
-            <input type="text" id="a-colonia-arr" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
+            <input type="text" id="a-colonia-arr" oninput="this.value=this.value.toUpperCase()"/>
           </div>
           <div class="f">
             <label>Código postal</label>
@@ -521,11 +521,11 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
         <div class="frow">
           <div class="f">
             <label>Municipio / Alcaldía</label>
-            <input type="text" id="a-municipio-arr" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
+            <input type="text" id="a-municipio-arr" oninput="this.value=this.value.toUpperCase()"/>
           </div>
           <div class="f">
             <label>Estado</label>
-            <input type="text" id="a-estado-arr" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
+            <input type="text" id="a-estado-arr" oninput="this.value=this.value.toUpperCase()"/>
           </div>
         </div>
       </div>
@@ -576,7 +576,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow three">
         <div class="f" style="grid-column:span 3">
           <label>Calle</label>
-          <input type="text" id="a-calle-os" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-calle-os" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
       <div class="frow">
@@ -592,7 +592,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow">
         <div class="f">
           <label>Colonia</label>
-          <input type="text" id="a-colonia-os" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-colonia-os" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
           <label>Código postal</label>
@@ -602,11 +602,11 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow">
         <div class="f">
           <label>Municipio / Alcaldía</label>
-          <input type="text" id="a-municipio-os" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-municipio-os" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
           <label>Estado</label>
-          <input type="text" id="a-estado-os" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-estado-os" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
 
@@ -620,7 +620,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow three">
         <div class="f" style="grid-column:span 3">
           <label>Calle</label>
-          <input type="text" id="a-calle-inm-os" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-calle-inm-os" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
       <div class="frow">
@@ -636,7 +636,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow">
         <div class="f">
           <label>Colonia</label>
-          <input type="text" id="a-colonia-inm-os" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-colonia-inm-os" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
           <label>Código postal</label>
@@ -646,11 +646,11 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow">
         <div class="f">
           <label>Municipio / Alcaldía</label>
-          <input type="text" id="a-municipio-inm-os" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-municipio-inm-os" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
           <label>Estado</label>
-          <input type="text" id="a-estado-inm-os" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="a-estado-inm-os" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
     </div>
@@ -736,7 +736,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow three">
         <div class="f" style="grid-column:span 3">
           <label>Calle</label>
-          <input type="text" id="p-calle-inm" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="p-calle-inm" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
       <div class="frow">
@@ -752,7 +752,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow">
         <div class="f">
           <label>Colonia</label>
-          <input type="text" id="p-colonia" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="p-colonia" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
           <label>Código postal</label>
@@ -762,11 +762,11 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow">
         <div class="f">
           <label>Municipio / Alcaldía</label>
-          <input type="text" id="p-municipio-inm" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="p-municipio-inm" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
           <label>Estado</label>
-          <input type="text" id="p-estado-inm" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="p-estado-inm" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
       <div class="frow">
@@ -848,7 +848,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
         <div class="frow three">
           <div class="f" style="grid-column:span 3">
             <label>Calle</label>
-            <input type="text" id="p-calle-vend" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
+            <input type="text" id="p-calle-vend" oninput="this.value=this.value.toUpperCase()"/>
           </div>
         </div>
         <div class="frow">
@@ -864,7 +864,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
         <div class="frow">
           <div class="f">
             <label>Colonia</label>
-            <input type="text" id="p-colonia-vend" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
+            <input type="text" id="p-colonia-vend" oninput="this.value=this.value.toUpperCase()"/>
           </div>
           <div class="f">
             <label>Código postal</label>
@@ -874,11 +874,11 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
         <div class="frow">
           <div class="f">
             <label>Municipio / Alcaldía</label>
-            <input type="text" id="p-municipio-vend" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
+            <input type="text" id="p-municipio-vend" oninput="this.value=this.value.toUpperCase()"/>
           </div>
           <div class="f">
             <label>Estado</label>
-            <input type="text" id="p-estado-vend" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
+            <input type="text" id="p-estado-vend" oninput="this.value=this.value.toUpperCase()"/>
           </div>
         </div>
       </div>
@@ -917,7 +917,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow three">
         <div class="f" style="grid-column:span 3">
           <label>Calle</label>
-          <input type="text" id="p-calle-comp" placeholder="Calle" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="p-calle-comp" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
       <div class="frow">
@@ -933,7 +933,7 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow">
         <div class="f">
           <label>Colonia</label>
-          <input type="text" id="p-colonia-comp" placeholder="Colonia" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="p-colonia-comp" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
           <label>Código postal</label>
@@ -943,11 +943,11 @@ body{font-family:var(--font-sans);background:var(--canvas);color:var(--ink);min-
       <div class="frow">
         <div class="f">
           <label>Municipio / Alcaldía</label>
-          <input type="text" id="p-municipio-comp" placeholder="Municipio o alcaldía" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="p-municipio-comp" oninput="this.value=this.value.toUpperCase()"/>
         </div>
         <div class="f">
           <label>Estado</label>
-          <input type="text" id="p-estado-comp" placeholder="Estado" oninput="this.value=this.value.toUpperCase()"/>
+          <input type="text" id="p-estado-comp" oninput="this.value=this.value.toUpperCase()"/>
         </div>
       </div>
     </div>
@@ -1274,7 +1274,10 @@ document.addEventListener('click', function(e){
 
 function setDocPicker(lbl, sub){
   document.getElementById('doc-picker-lbl').textContent = lbl;
-  document.getElementById('doc-picker-sub').textContent = sub;
+  const subEl = document.getElementById('doc-picker-sub');
+  // "Contrato de Cecil" sobra: solo se muestra un subtítulo con información.
+  const util = sub && !/^Contrato de (Broquer|Cecil)$/.test(sub) ? sub : '';
+  subEl.textContent = util; subEl.hidden = !util;
 }
 
 // ── Selección de documento ──
