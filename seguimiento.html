@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+<title>Seguimiento automático · Broquer</title>
+<link rel="icon" type="image/png" href="isotipo-black.png"/>
+<link rel="stylesheet" href="brokr-theme.css"/>
+<style>
+  /* Seguimiento automático (piloto): toques que se detienen cuando el
+     prospecto contesta, avisos por evento y prospectos calientes. */
+  .sg-scroll { padding: var(--sp-6) var(--sp-7) var(--sp-12); max-width: var(--ui-content); margin: 0 auto; }
+  @media (max-width: 720px) { .sg-scroll { padding: var(--sp-4) var(--ui-gutter-mobile) var(--sp-10); } }
+  .sg-barra { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; margin-bottom: var(--sp-5); }
+  .sg-estado { font-size: var(--fs-sm); color: var(--mute); display: flex; align-items: center; gap: var(--sp-2); }
+  .sg-punto { width: 8px; height: 8px; border-radius: 50%; background: var(--mute); flex-shrink: 0; }
+  .sg-punto.is-on { background: var(--success); }
+  .sg-tabs-wrap { overflow-x: auto; margin-bottom: var(--sp-6); -webkit-overflow-scrolling: touch; }
+  .sg-tabs { min-width: max-content; }
+  .sg-tabs .bk-tab { background: none; border-left: 0; border-right: 0; border-top: 0; padding: var(--sp-3) var(--sp-1); font-size: var(--fs-sm); font-weight: 600; color: var(--mute); }
+  .sg-tabs .bk-tab.is-active { color: var(--ink); }
+  .sg-panel[hidden] { display: none !important; }
+  .sg-metricas { margin-bottom: var(--sp-7); }
+  .sg-metricas .bk-metric { min-height: 0; padding: var(--sp-5); }
+  .sg-metricas .bk-metric__value { font-size: var(--fs-h1); }
+  .sg-dos { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--sp-6); align-items: start; }
+  @media (max-width: 960px) { .sg-dos { grid-template-columns: minmax(0, 1fr); } }
+  .sg-seccion { margin-bottom: var(--sp-7); }
+  .sg-seccion > h2 { font-size: var(--fs-h3); margin: 0 0 var(--sp-2); }
+  .sg-seccion > p.sg-ayuda { margin: 0 0 var(--sp-4); }
+  .sg-ayuda { font-size: var(--fs-sm); color: var(--mute); line-height: var(--lh); }
+  .sg-lead { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--sp-4); align-items: center; padding: var(--sp-4); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--bone); margin-bottom: var(--sp-3); }
+  .sg-anillo { --p: 0; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--ui-action) calc(var(--p) * 1%), var(--paper-2) 0); }
+  .sg-anillo span { width: 42px; height: 42px; border-radius: 50%; background: var(--bone); display: grid; place-items: center; font-size: var(--fs-sm); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .sg-lead__nombre { font-weight: 700; font-size: var(--fs-body); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sg-lead__msg { font-size: var(--fs-sm); color: var(--mute); margin-top: var(--sp-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sg-chips { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-top: var(--sp-2); }
+  @media (max-width: 560px) {
+    .sg-lead { grid-template-columns: auto minmax(0, 1fr); }
+    .sg-lead > .bk-btn { grid-column: 1 / -1; width: 100%; }
+  }
+  .sg-fila-sub { font-size: var(--fs-caption); color: var(--mute); }
+  .sg-secuencias { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--sp-5); }
+  @media (max-width: 560px) { .sg-secuencias { grid-template-columns: minmax(0, 1fr); } }
+  .sg-sec { display: flex; flex-direction: column; gap: var(--sp-4); }
+  .sg-sec__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); }
+  .sg-sec__head h3 { font-size: var(--fs-h3); margin: 0; }
+  .sg-toques { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+  .sg-conteo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-2); }
+  .sg-conteo div { background: var(--paper-2); border-radius: var(--r-sm); padding: var(--sp-2) var(--sp-3); }
+  .sg-conteo b { display: block; font-size: var(--fs-h3); font-variant-numeric: tabular-nums; }
+  .sg-conteo span { font-size: var(--fs-caption); color: var(--mute); }
+  .sg-acciones { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+  .sg-paso { border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--sp-4); margin-bottom: var(--sp-3); background: var(--bone); }
+  .sg-paso__head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+  .sg-paso__head b { font-size: var(--fs-sm); }
+  .sg-paso__grid { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: var(--sp-3); }
+  @media (max-width: 560px) { .sg-paso__grid { grid-template-columns: minmax(0, 1fr); } }
+  .sg-vista { margin-top: var(--sp-3); padding: var(--sp-3) var(--sp-4); border-radius: var(--r); background: var(--sky-canvas); font-size: var(--fs-sm); color: var(--ink-2); line-height: var(--lh); white-space: pre-wrap; }
+  .sg-vars { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--sp-3); margin-top: var(--sp-3); }
+  .sg-form { display: grid; gap: var(--sp-4); }
+  .sg-form-dos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--sp-4); }
+  @media (max-width: 560px) { .sg-form-dos { grid-template-columns: minmax(0, 1fr); } }
+  .sg-interruptor { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-4); padding: var(--sp-3) 0; }
+  .sg-interruptor b { display: block; font-size: var(--fs-sm); }
+  .sg-lista-sel { max-height: 50vh; overflow: auto; border: 1px solid var(--line); border-radius: var(--r); }
+  .sg-sel { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--line); cursor: pointer; }
+  .sg-sel:last-child { border-bottom: 0; }
+  .sg-sel.is-off { cursor: not-allowed; opacity: .6; }
+  .sg-sel__txt { flex: 1; min-width: 0; }
+  .sg-sel__txt b { display: block; font-size: var(--fs-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sg-plantilla { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); padding: var(--sp-3) 0; border-bottom: 1px solid var(--line); }
+  .sg-plantilla:last-child { border-bottom: 0; }
+  .sg-plantilla p { margin: var(--sp-1) 0 0; }
+</style>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/actions.css">
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<script defer src="ui/actions.js"></script>
+<script defer src="ui/overlays.js"></script>
+</head>
+<body data-app="seguimiento-auto">
+<div class="sg-scroll">
+  <div class="sg-barra">
+    <div class="sg-estado" id="sg-estado" aria-live="polite"><span class="sg-punto"></span><span>Cargando…</span></div>
+    <button type="button" class="bk-btn bk-btn--ghost" id="sg-correr">Revisar ahora</button>
+  </div>
+
+  <div id="sg-aviso"></div>
+
+  <div class="sg-tabs-wrap">
+    <div class="bk-tabs sg-tabs" role="tablist" aria-label="Secciones">
+      <button type="button" class="bk-tab is-active" role="tab" aria-selected="true" data-tab="hoy">Hoy</button>
+      <button type="button" class="bk-tab" role="tab" aria-selected="false" data-tab="secuencias">Secuencias</button>
+      <button type="button" class="bk-tab" role="tab" aria-selected="false" data-tab="avisos">Avisos por evento</button>
+      <button type="button" class="bk-tab" role="tab" aria-selected="false" data-tab="ajustes">Ajustes</button>
+    </div>
+  </div>
+
+  <section class="sg-panel" data-panel="hoy">
+    <div class="bk-metric-grid sg-metricas" id="sg-kpis"></div>
+    <div class="sg-dos">
+      <div class="sg-seccion">
+        <h2>Atiende hoy</h2>
+        <p class="sg-ayuda">Ordenados por qué tan calientes están, con la razón de cada punto.</p>
+        <div id="sg-calientes"><div class="bk-cargando">Cargando…</div></div>
+      </div>
+      <div>
+        <div class="sg-seccion">
+          <h2>Contestaron tu seguimiento</h2>
+          <p class="sg-ayuda">Su secuencia ya se detuvo. Entra tú.</p>
+          <div id="sg-respuestas"></div>
+        </div>
+        <div class="sg-seccion">
+          <h2>Lo último que salió</h2>
+          <div id="sg-actividad"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sg-panel" data-panel="secuencias" hidden>
+    <div class="sg-barra">
+      <p class="sg-ayuda" style="margin:0;max-width:62ch;">Cada secuencia manda plantillas aprobadas con días de espera entre una y otra. En cuanto el prospecto contesta, se detiene y te avisa.</p>
+      <button type="button" class="bk-btn bk-btn--forest" id="sg-nueva">Nueva secuencia</button>
+    </div>
+    <div id="sg-secuencias"><div class="bk-cargando">Cargando…</div></div>
+  </section>
+
+  <section class="sg-panel" data-panel="avisos" hidden>
+    <div class="sg-seccion">
+      <h2>Avisos por evento</h2>
+      <p class="sg-ayuda">Cuando baja de precio un inmueble que ya le mandaste a alguien, o sale uno que coincide con lo que busca, Broquer le avisa solo. Se activan en Ajustes.</p>
+      <div id="sg-eventos"><div class="bk-cargando">Cargando…</div></div>
+    </div>
+  </section>
+
+  <section class="sg-panel" data-panel="ajustes" hidden>
+    <div class="sg-dos">
+      <form class="bk-card bk-card--pad sg-form" id="sg-ajustes" onsubmit="event.preventDefault()">
+        <h2 style="font-size:var(--fs-h3);margin:0;">Cómo y cuándo se envía</h2>
+        <div class="bk-field">
+          <label class="bk-label" for="aj-numero">Número que manda los avisos</label>
+          <select class="bk-select" id="aj-numero"></select>
+        </div>
+        <div class="sg-form-dos">
+          <div class="bk-field">
+            <label class="bk-label" for="aj-inicio">Desde las</label>
+            <select class="bk-select" id="aj-inicio"></select>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="aj-fin">Hasta las</label>
+            <select class="bk-select" id="aj-fin"></select>
+          </div>
+        </div>
+        <div class="bk-field">
+          <label class="bk-label" for="aj-tope">Máximo de mensajes automáticos al día</label>
+          <input class="bk-input" id="aj-tope" type="number" min="1" max="250" inputmode="numeric"/>
+          <div class="bk-hint">Los domingos no sale nada. Nadie recibe dos mensajes automáticos en menos de 44 horas.</div>
+        </div>
+        <div class="sg-interruptor">
+          <div><b>Resumen diario</b><span class="sg-ayuda">Cada mañana te llega al celular a quién atender primero.</span></div>
+          <label class="bk-switch"><input type="checkbox" id="aj-resumen"/><span class="bk-switch__track"></span></label>
+        </div>
+        <div class="sg-interruptor">
+          <div><b>Avisos por evento</b><span class="sg-ayuda">Bajadas de precio y coincidencias nuevas.</span></div>
+          <label class="bk-switch"><input type="checkbox" id="aj-eventos"/><span class="bk-switch__track"></span></label>
+        </div>
+        <div class="sg-form-dos">
+          <div class="bk-field">
+            <label class="bk-label" for="aj-precio">Plantilla de bajada de precio</label>
+            <select class="bk-select" id="aj-precio"></select>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="aj-coincidencia">Plantilla de nueva opción</label>
+            <select class="bk-select" id="aj-coincidencia"></select>
+          </div>
+        </div>
+        <div class="bk-hint">Las de avisos llevan 4 datos: nombre, inmueble, precio y liga a la ficha (las recomendadas ya vienen así).</div>
+        <div><button type="button" class="bk-btn bk-btn--forest" id="aj-guardar">Guardar ajustes</button></div>
+      </form>
+      <div class="bk-card bk-card--pad">
+        <h2 style="font-size:var(--fs-h3);margin:0 0 var(--sp-2);">Plantillas recomendadas</h2>
+        <p class="sg-ayuda" style="margin:0 0 var(--sp-3);">Meta tiene que aprobar cada plantilla antes de usarla fuera de las 24 horas. Estas ya están escritas para no sonar a spam.</p>
+        <div id="sg-pack"><div class="bk-cargando">Cargando…</div></div>
+        <div style="margin-top:var(--sp-4);"><button type="button" class="bk-btn bk-btn--forest" id="sg-pack-enviar">Mandar a aprobación las que faltan</button></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="bk-overlay bk-overlay--full" id="sg-editor">
+  <div class="bk-modal">
+    <div class="bk-modal__head">
+      <h2 class="bk-modal__title" id="ed-titulo">Nueva secuencia</h2>
+      <button type="button" class="bk-icon-btn" aria-label="Cerrar" data-cerrar="sg-editor">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+      </button>
+    </div>
+    <div class="bk-modal__body">
+      <div class="sg-form">
+        <div class="bk-field">
+          <label class="bk-label" for="ed-nombre">Nombre</label>
+          <input class="bk-input" id="ed-nombre" maxlength="80" placeholder="Leads de portales"/>
+        </div>
+        <div class="sg-form-dos">
+          <div class="bk-field">
+            <label class="bk-label" for="ed-numero">Número que envía</label>
+            <select class="bk-select" id="ed-numero"></select>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="ed-hora">Hora de envío</label>
+            <select class="bk-select" id="ed-hora"></select>
+          </div>
+        </div>
+        <div class="sg-interruptor">
+          <div><b>Inscribir sola a los leads nuevos</b><span class="sg-ayuda">Quien te escriba por primera vez y se quede callado los días del primer toque entra solo a esta secuencia.</span></div>
+          <label class="bk-switch"><input type="checkbox" id="ed-auto"/><span class="bk-switch__track"></span></label>
+        </div>
+        <div class="sg-interruptor">
+          <div><b>Secuencia activa</b><span class="sg-ayuda">Apagada, nadie recibe toques aunque esté inscrito.</span></div>
+          <label class="bk-switch"><input type="checkbox" id="ed-activa" checked/><span class="bk-switch__track"></span></label>
+        </div>
+        <div>
+          <div class="bk-section-header"><h2 style="font-size:var(--fs-h5);">Toques</h2></div>
+          <p class="sg-ayuda" id="ed-ayuda-dias" style="margin:0 0 var(--sp-3);">Los días cuentan desde el toque anterior. El primero cuenta desde que inscribes al contacto.</p>
+          <div id="ed-pasos"></div>
+          <button type="button" class="bk-btn bk-btn--ghost" id="ed-agregar">Agregar toque</button>
+        </div>
+        <div id="ed-error"></div>
+      </div>
+    </div>
+    <div class="bk-modal__foot">
+      <button type="button" class="bk-btn bk-btn--ghost" data-cerrar="sg-editor">Cancelar</button>
+      <button type="button" class="bk-btn bk-btn--forest" id="ed-guardar">Guardar secuencia</button>
+    </div>
+  </div>
+</div>
+
+<div class="bk-overlay bk-overlay--full" id="sg-inscribir">
+  <div class="bk-modal">
+    <div class="bk-modal__head">
+      <h2 class="bk-modal__title" id="in-titulo">Inscribir contactos</h2>
+      <button type="button" class="bk-icon-btn" aria-label="Cerrar" data-cerrar="sg-inscribir">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+      </button>
+    </div>
+    <div class="bk-modal__body">
+      <div class="sg-form">
+        <div class="sg-form-dos">
+          <div class="bk-field">
+            <label class="bk-label" for="in-buscar">Buscar</label>
+            <input class="bk-input" id="in-buscar" type="search" placeholder="Nombre o teléfono"/>
+          </div>
+          <div class="bk-field">
+            <label class="bk-label" for="in-etiqueta">Etiqueta</label>
+            <select class="bk-select" id="in-etiqueta"><option value="">Todas</option></select>
+          </div>
+        </div>
+        <label class="bk-check"><input type="checkbox" id="in-todos"/><span class="bk-check__box"><svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>Seleccionar los que se pueden inscribir</label>
+        <div class="sg-lista-sel" id="in-lista"></div>
+      </div>
+    </div>
+    <div class="bk-modal__foot">
+      <button type="button" class="bk-btn bk-btn--ghost" data-cerrar="sg-inscribir">Cancelar</button>
+      <button type="button" class="bk-btn bk-btn--forest" id="in-guardar" disabled>Inscribir</button>
+    </div>
+  </div>
+</div>
+
+<div class="bk-overlay bk-overlay--full" id="sg-inscritos">
+  <div class="bk-modal">
+    <div class="bk-modal__head">
+      <h2 class="bk-modal__title" id="li-titulo">Inscritos</h2>
+      <button type="button" class="bk-icon-btn" aria-label="Cerrar" data-cerrar="sg-inscritos">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M6 18L18 6"/></svg>
+      </button>
+    </div>
+    <div class="bk-modal__body"><div id="li-lista"></div></div>
+  </div>
+</div>
+
+<script src="app-shell.js" defer></script>
+<script src="bk-api.js" defer></script>
+<script src="seguimiento.js" defer></script>
+</body>
+</html>

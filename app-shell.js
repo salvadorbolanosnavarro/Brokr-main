@@ -294,6 +294,8 @@
     // Seguimiento — hablar con el prospecto hasta que se convierte en cliente.
     { key:'buzon',        href:'buzon.html',         label:'Buzón',               group:'seguimiento', icon:'inbox' },
     { key:'whatsapp',     href:'whatsapp.html',      label:'WhatsApp',            group:'seguimiento', icon:'whatsapp' },
+    // Piloto privado: solo aparece si el servidor confirma la cuenta (/seguimiento/acceso).
+    { key:'seguimiento-auto', href:'seguimiento.html', label:'Seguimiento automático', group:'seguimiento', icon:'send', piloto:true },
     { key:'correo',       href:'correo.html',        label:'Correo',              group:'seguimiento', icon:'mail', hidden:true },
     // Documentos — en el orden real de la operación: se redacta, se firma, se reporta.
     { key:'buscador',     href:'buscador.html',      label:'Buscador de propiedades', group:'documentos', icon:'search' },
@@ -345,6 +347,7 @@
     'admin':        'Panel administrativo',
     'facebook-ads': 'Meta Ads Express — crear, activar y medir anuncios de Facebook e Instagram',
     'whatsapp':     'WhatsApp — varios números, chats, conexión, Recepción automática y entrenamiento de la IA',
+    'seguimiento-auto': 'Seguimiento automático — secuencias de toques que se detienen al contestar, avisos por bajada de precio y coincidencias, prospectos calientes del día',
     'correo':       'Correo — bandeja de entrada conectada por IMAP, leer, responder y redactar correos',
   };
 
@@ -369,6 +372,7 @@
     'image-cleaner': { title:'Editor de imágenes',     sub:'Limpia y mejora las fotos de tus propiedades con IA.' },
     'facebook-ads':  { title:'Facebook Ads',           sub:'Crea, activa y mide anuncios de Facebook e Instagram.' },
     'whatsapp':      { title:'WhatsApp',                sub:'Varios números, un solo lugar. La IA califica, agenda y te pasa al prospecto cuando toca.' },
+    'seguimiento-auto': { title:'Seguimiento automático', sub:'Le escribe a cada prospecto en el momento justo, se calla cuando contesta y te dice a quién atender hoy.' },
     'verificador':   { title:'Verificador',            sub:'Revisión con IA para detectar problemas antes de firmar.' },
     'blog':          { title:'Blog',                   sub:'Recursos profesionales sobre PLD, legal y mercado.' },
     'mi-sitio':      { title:'Mi sitio',               sub:'El sitio web público que tus clientes ven cuando les compartes tu link.' },
@@ -1540,7 +1544,19 @@ body[data-app="verificador"] .top-header { display: none !important; }
 
     // "Equipo" vive en el drawer de perfil, no en el sidebar.
     const apagado = m => modulosOff.has(m.key) || (m.requiere && modulosOff.has(m.requiere));
-    const visible = m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && !apagado(m);
+    // Módulos en piloto: el servidor decide; aquí solo se recuerda su última respuesta.
+    const pilotoKey = 'bk_pilotos:' + (profile?.user?.id || '');
+    let pilotos = [];
+    try { pilotos = JSON.parse(localStorage.getItem(pilotoKey) || '[]'); } catch (_) {}
+    const visible = m => (!m.adminOnly || profile?.isAdmin) && !m.hidden && !apagado(m) && (!m.piloto || pilotos.includes(m.key));
+    fetch(API_BASE + '/seguimiento/acceso', { headers: { Authorization: 'Bearer ' + getToken() } })
+      .then(r => r.ok ? r.json() : null).then(d => {
+        if (!d) return;
+        const nuevos = d.piloto ? ['seguimiento-auto'] : [];
+        try { localStorage.setItem(pilotoKey, JSON.stringify(nuevos)); } catch (_) {}
+        const m = MODS.find(x => x.key === 'seguimiento-auto'), menu = document.querySelector('.bk-tools-menu__list');
+        if (nuevos.length && !pilotos.length && menu && m) menu.insertAdjacentHTML('beforeend', `<a href="${m.href}">${svg(m.icon,18)}${m.label}</a>`);
+      }).catch(() => {});
     const porGrupo = k => MODS.filter(m => m.group === k && visible(m));
     // Todo lo que no sea "Más" va suelto en el rail, en el orden en que ya
     // están declarados los módulos (que es el orden por momento de la
