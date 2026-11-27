@@ -278,7 +278,7 @@
 
   const MODS = [
     // CRM — el inventario y la gente.
-    { key:'props',        href:'propiedades.html',   label:'Tus Inmuebles',       group:'crm',         icon:'building' },
+    { key:'props',        href:'propiedades.html',   label:'Inmuebles',       group:'crm',         icon:'building' },
     // Contactos (lista, contactos.html) y Clientes (pipeline de venta en
     // kanban, clientes.html) son dos entradas del menú. Clientes estuvo
     // oculto y no había otra forma visible de llegar a su tablero.
@@ -288,7 +288,7 @@
     { key:'clientes',     href:'clientes.html',      label:'Clientes',           group:'crm',         icon:'apreton', requiere:'contactos' },
     { key:'alertas',      href:'alertas.html',       label:'Alertas de búsqueda', group:'crm',         icon:'search', hidden:true },
     { key:'crm-ajustes',  href:'crm-ajustes.html',   label:'Ajustes de CRM',     group:'crm',         icon:'cog', hidden:true },
-    { key:'tareas',       href:'tareas.html',        label:'Tareas',              group:'crm',         icon:'check' },
+    { key:'tareas',       href:'tareas.html',        label:'Agenda',              group:'crm',         icon:'check' },
     { key:'estadisticas', href:'estadisticas.html',  label:'Estadísticas',        group:'crm',         icon:'chart' },
     { key:'bolsa',        href:'bolsa.html',         label:'Bolsa inmobiliaria',  group:'crm',         icon:'apreton', hidden:true },
     // Seguimiento — hablar con el prospecto hasta que se convierte en cliente.
@@ -307,7 +307,7 @@
     { key:'impuestos',    href:'impuestos.html',     label:'Impuestos',           group:'numeros',     icon:'calculator' },
     { key:'finanzas',     href:'finanzas.html',      label:'Finanzas',            group:'numeros',     icon:'wallet' },
     // Marketing — de la foto cruda al anuncio publicado.
-    { key:'image-cleaner',href:'image-cleaner.html', label:'Editor imágenes',     group:'marketing',   icon:'image' },
+    { key:'image-cleaner',href:'image-cleaner.html', label:'Editor de imágenes',     group:'marketing',   icon:'image' },
     { key:'ficha-manual', href:'ficha-manual.html',  label:'Ficha técnica',       group:'marketing',   icon:'landscape' },
     { key:'facebook-ads', href:'facebook-ads.html',  label:'Facebook Ads',        group:'marketing',   icon:'facebook', hidden:true },
     { key:'video',        href:'video.html',         label:'Video',               group:'marketing',   icon:'video' },
@@ -318,6 +318,13 @@
     { key:'admin',        href:'admin.html',         label:'Admin',               group:'mas',         icon:'cog', adminOnly:true },
   ];
 
+  // Herramientas menu: grouped columns. Agenda lives in the main nav.
+  const TOOL_GROUPS = [
+    ['CRM', ['props','contactos','clientes','buzon','whatsapp','estadisticas']],
+    ['Documentos', ['contratos','firmas','cumplimiento']],
+    ['Marketing', ['facebook-ads','mi-sitio','video','ficha-manual','image-cleaner','buscador']],
+    ['Dinero', ['finanzas','isr','impuestos']],
+  ];
   const CONTEXT_LABELS = {
     'home':         'Dashboard principal — menú de módulos',
     'props':        'Tus Inmuebles — catálogo de propiedades',
@@ -359,16 +366,16 @@
     'bolsa':         { title:'Bolsa inmobiliaria',     sub:'Comparte inventario con otros agentes Broquer y cierra en equipo con comisión compartida.' },
     'contratos':     { title:'Contratos',              sub:'Genera contratos listos para firma en minutos.' },
     'cumplimiento':  { title:'Cumplimiento',           sub:'El expediente de identificación de cada cliente, el control de umbrales y los avisos a la UIF, en un solo lugar.' },
-    'firmas':        { title:'Firma electrónica',      sub:'Manda el contrato, cada parte firma desde su celular y te regresa con constancia.' },
+    'firmas':        { title:'Firma electrónica',      sub:'Manda el contrato, cada parte firma desde su celular y te regresa con constancia.', actions:'#fr-nuevo' },
     'acm':           { title:'Análisis comparativo',   sub:'Comparables, rango y estrategia de precio para presentarle al propietario.' },
     'impuestos-avanzada': { title:'Calculadora avanzada', sub:'Varios titulares, usufructo y nuda propiedad, herencias y adquisiciones en distintas fechas.' },
     'ficha-manual':  { title:'Ficha técnica',          sub:'Crea fichas profesionales de tus propiedades.' },
-    'isr':           { title:'Cálculo de ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
+    'isr':           { title:'ISR',         sub:'ISR por enajenación de inmuebles con el INPC vigente.' },
     'impuestos':     { title:'Impuestos por venta',    sub:'Lo que paga quien vende un inmueble, con las reglas de tu país.' },
-    'finanzas':      { title:'Tu dinero, en orden.', sub:'Ingresos, gastos y saldos de tus cuentas.' },
+    'finanzas':      { title:'Finanzas', sub:'Tu dinero, en orden: ingresos, gastos y saldos de tus cuentas.', actions:'#fin-btn-nuevo,#fin-btn-ticket,#fin-btn-reporte,#fin-btn-cuentas' },
     'image-cleaner': { title:'Editor de imágenes',     sub:'Limpia y mejora las fotos de tus propiedades con IA.' },
-    'facebook-ads':  { title:'Facebook Ads',           sub:'Crea, activa y mide anuncios de Facebook e Instagram.' },
-    'whatsapp':      { title:'WhatsApp',                sub:'Varios números, un solo lugar. La IA califica, agenda y te pasa al prospecto cuando toca.' },
+    'facebook-ads':  { title:'Campañas',               sub:'Crea, activa y mide anuncios de Facebook e Instagram.' },
+    'whatsapp':      { title:'WhatsApp',                sub:'Varios números, un solo lugar. La IA califica, agenda y te pasa al prospecto cuando toca.', actions:'.w2-topbar' },
     'verificador':   { title:'Verificador',            sub:'Revisión con IA para detectar problemas antes de firmar.' },
     'blog':          { title:'Blog',                   sub:'Recursos profesionales sobre PLD, legal y mercado.' },
     'mi-sitio':      { title:'Mi sitio',               sub:'El sitio web público que tus clientes ven cuando les compartes tu link.' },
@@ -410,6 +417,10 @@
     question:   '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>',
     check:      '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
     globo:      '<path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18"/>',
+    megaphone:  '<path stroke-linecap="round" stroke-linejoin="round" d="M3 10v4h3l7 4V6L6 10H3zm13-1.5a4 4 0 010 7M18.5 6a7.5 7.5 0 010 12"/>',
+    sparkAi:    '<path stroke-linecap="round" stroke-linejoin="round" d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"/>',
+    calendarDays: '<path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>',
+    gridMore:   '<path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/>',
     facebook:   '<path fill="currentColor" stroke="none" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.269h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>',
     /* Marca externa: el glifo oficial va sólido, igual que el de Facebook.
        Es la excepción reconocida a la regla de iconos de trazo. */
@@ -428,7 +439,7 @@
     `<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" style="flex-shrink:0;vertical-align:-2px;margin-right:6px">${ICONS[name] || ''}</svg>`;
 
   const SHAARK_CHIPS_MAP = {
-    home:         [{l:_CICO('document')+'Contratos', m:'Generar un contrato'}, {l:_CICO('calculator')+'Calc. ISR', m:'Calcular ISR'}, {l:_CICO('tag')+'Fichas téc.', m:'Crear ficha técnica'}, {l:_CICO('building')+'Tus Inmuebles', m:'Ver tus inmuebles'}],
+    home:         [{l:_CICO('document')+'Contratos', m:'Generar un contrato'}, {l:_CICO('calculator')+'Calc. ISR', m:'Calcular ISR'}, {l:_CICO('tag')+'Fichas téc.', m:'Crear ficha técnica'}, {l:_CICO('building')+'Inmuebles', m:'Ver tus inmuebles'}],
     contratos:    [{l:_CICO('pencil')+'Arrendamiento', m:'Genera un contrato de arrendamiento'}, {l:_CICO('handshake')+'Promesa', m:'Genera una promesa de compraventa'}, {l:_CICO('question')+'¿Cómo funciona?', m:'¿Qué tipos de contrato puedo generar?'}],
     cumplimiento: [{l:_CICO('shield')+'¿Genera aviso?', m:'¿Una operación de 900 mil pesos genera aviso?'}, {l:_CICO('users')+'Expediente', m:'¿Qué documentos necesito de un cliente persona moral?'}, {l:_CICO('question')+'Acumulación', m:'¿Cómo funciona la acumulación de 6 meses?'}],
     acm:          [{l:_CICO('chart')+'Analizar', m:'Hazme un análisis comparativo de una casa de 3 recámaras en'}, {l:_CICO('question')+'Precio de salida', m:'¿Qué precio de salida le recomiendo al propietario?'}, {l:_CICO('building')+'Comparables', m:'¿Cómo agrego un comparable que conozco?'}],
@@ -476,7 +487,7 @@
 .bk-sidebar__brand a { display: flex; align-items: center; gap: 8px; text-decoration: none; }
 .bk-sidebar__brand img {
   height: 30px; width: auto; display: block;
-  filter: brightness(0) invert(1); opacity: .96;
+  background: transparent; opacity: .96;
   transition: opacity var(--dur) var(--ease);
 }
 .bk-sidebar__brand a:hover img { opacity: 1; }
@@ -1032,14 +1043,14 @@ body[data-app="verificador"] .top-header { display: none !important; }
   background: rgba(255,255,255,0.14); pointer-events: none;
 }
 .bk-shk-avatar {
-  width: 38px; height: 38px; border-radius: 50%;
-  background: rgba(255,255,255,0.96);
-  border: 1px solid rgba(255,255,255,0.55);
-  box-shadow: 0 2px 10px rgba(8,28,78,0.26), inset 0 1px 0 rgba(255,255,255,0.9);
+  width: 32px; height: 32px; border-radius: 8px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   overflow: hidden;
 }
-.bk-shk-mark { font:700 var(--ui-text-mobile)/1 var(--ui-font); color:var(--ui-ink); letter-spacing:-.06em; }
+.bk-shk-mark { font:700 28px/1 var(--ui-font); color:var(--ui-ink); letter-spacing:-.06em; background:transparent; }
 .bk-shk-name { font-family: var(--font-display);  font-weight: 600; letter-spacing: -0.01em;  line-height: 1.25;  color: var(--ui-ink); font-size: var(--ui-text-base);}
 .bk-shk-status { display: flex; align-items: center; gap: 7px;   font-family: inherit; letter-spacing: 0; font-weight: 500; margin-top: 1px;  color: var(--ui-muted); font-size: var(--ui-text-xs);}
 /* Punto "en línea": núcleo verde con halo suave que respira */
@@ -1174,7 +1185,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   padding: 3px 9px; border-radius: var(--r-pill); margin-top: 7px;
 
  background: var(--ui-sky); color: var(--ui-ink);}
-.bk-pd-role-badge.admin { background: var(--danger); color: #FFFFFF; }
+.bk-pd-role-badge.admin { background: var(--paper-2); color: var(--ink); border: 1px solid var(--line); }
 .bk-pd-section-label {
   font-family: var(--font-sans); font-size: var(--fs-label-3); font-weight: 600;
   letter-spacing: 0.02em; color: var(--mute);
@@ -1520,6 +1531,12 @@ body[data-app="verificador"] .top-header { display: none !important; }
         p.textContent = _meta.sub;
         hd.appendChild(p);
       }
+      if (_meta.actions) {
+        const slot = document.createElement('div');
+        slot.className = 'bk-ph__actions';
+        pageWrap.querySelectorAll(_meta.actions).forEach(el => slot.appendChild(el));
+        if (slot.children.length) hd.appendChild(slot);
+      }
       pageWrap.insertBefore(hd, pageWrap.firstChild);
     }
 
@@ -1590,10 +1607,10 @@ body[data-app="verificador"] .top-header { display: none !important; }
         <a href="index.html" ${activeKey === 'home' ? 'aria-current="page"' : ''}>Inicio</a>
         <a href="facebook-ads.html" ${modulosOff.has('facebook-ads') ? 'hidden' : ''} ${activeKey === 'facebook-ads' ? 'aria-current="page"' : ''}>Campañas</a>
         <a href="tareas.html" ${modulosOff.has('tareas') ? 'hidden' : ''} ${activeKey === 'tareas' ? 'aria-current="page"' : ''}>Agenda</a>
-        <details class="bk-tools-menu"><summary>Herramientas</summary><div class="bk-tools-menu__list">${MODS.filter(visible).map(m => `<a href="${m.href}">${svg(m.icon,18)}${m.label}${['buzon','clientes'].includes(m.key) ? `<i class="bk-badge" id="bk-design-${m.key}-badge"></i>` : ''}</a>`).join('')}</div></details>
+        <details class="bk-tools-menu"><summary>Herramientas</summary><div class="bk-tools-menu__list">${TOOL_GROUPS.map(([title, keys]) => { const items = keys.map(k => k === 'facebook-ads' ? {key:k, href:'facebook-ads.html', label:'Campañas', icon:'megaphone'} : MODS.find(m => m.key === k)).filter(m => m && (m.key === 'facebook-ads' ? !modulosOff.has('facebook-ads') : visible(m))); return items.length ? `<div class="cp-tools-group"><h4>${title}</h4>${items.map(m => `<a href="${m.href}">${svg(m.icon,16)}<span>${m.label}</span>${['buzon','clientes'].includes(m.key) ? `<i class="bk-badge" id="bk-design-${m.key}-badge"></i>` : ''}</a>`).join('')}</div>` : ''; }).join('')}<div class="cp-tools-foot">${MODS.filter(m => m.group === 'mas' && visible(m)).map(m => `<a href="${m.href}">${m.label}</a>`).join('')}</div></div></details>
       </nav>
       <div class="bk-design-utilities">
-        <button class="bk-design-assistant" type="button" aria-label="Abrir Broq">${svg('mic',18)}<span>Broq</span></button>
+        <button class="bk-design-assistant" type="button" aria-label="Abrir Broq" aria-haspopup="dialog">${svg('sparkAi',18)}<span>Broq</span></button>
         <a class="bk-design-chats" href="whatsapp.html#chats" aria-label="Chats de WhatsApp" ${modulosOff.has('whatsapp') ? 'hidden' : ''}>${svg('whatsapp',18)}<span>Chats</span><i class="bk-badge" id="bk-design-chats-badge"></i></a>
       </div>
       <button class="bk-design-account" type="button">Mi cuenta <span aria-hidden="true"></span></button>
@@ -1602,9 +1619,33 @@ body[data-app="verificador"] .top-header { display: none !important; }
     designHeader.querySelector('.bk-design-account span').textContent = initials(profile.fullName || '');
     designHeader.querySelector('.bk-design-account').addEventListener('click', () => window.openProfileDrawer?.());
     document.body.appendChild(designHeader);
+    const toolsMenu = designHeader.querySelector('.bk-tools-menu');
+    // Mobile: five fixed tabs. "Más" opens the same Herramientas menu as a sheet.
+    const tabbar = document.createElement('nav');
+    tabbar.className = 'cp-tabbar';
+    tabbar.setAttribute('aria-label', 'Navegación');
+    tabbar.innerHTML = `<a href="index.html" ${activeKey === 'home' ? 'aria-current="page"' : ''}>${svg('home',22)}<span>Inicio</span></a>`
+      + `<a href="tareas.html" ${modulosOff.has('tareas') ? 'hidden' : ''} ${activeKey === 'tareas' ? 'aria-current="page"' : ''}>${svg('calendarDays',22)}<span>Agenda</span></a>`
+      + `<button type="button" class="cp-tab-ai" data-ui-kind="tabbar" aria-haspopup="dialog">${svg('sparkAi',22)}<span>Broq</span></button>`
+      + `<a href="whatsapp.html#chats" ${modulosOff.has('whatsapp') ? 'hidden' : ''} ${activeKey === 'whatsapp' ? 'aria-current="page"' : ''}>${svg('whatsapp',22)}<span>Chats</span><i class="bk-badge" id="cp-tab-chats-badge"></i></a>`
+      + `<button type="button" class="cp-tab-more" data-ui-kind="tabbar" aria-haspopup="menu">${svg('gridMore',22)}<span>Más</span></button>`;
+    document.body.appendChild(tabbar);
+    tabbar.querySelector('.cp-tab-ai').addEventListener('click', () => toggleShaarkPopup());
+    tabbar.querySelector('.cp-tab-more').addEventListener('click', e => { e.stopPropagation(); closeFloating('tools'); if (toolsMenu) toolsMenu.open = !toolsMenu.open; });
+    const chatsBadge = designHeader.querySelector('#bk-design-chats-badge'), tabBadge = tabbar.querySelector('#cp-tab-chats-badge');
+    if (chatsBadge && tabBadge) new MutationObserver(() => { tabBadge.className = chatsBadge.className; tabBadge.textContent = chatsBadge.textContent; }).observe(chatsBadge, {attributes:true, childList:true, characterData:true, subtree:true});
     designHeader.querySelectorAll('details').forEach(menu => {
       document.addEventListener('click', e => { if (!menu.contains(e.target)) menu.open = false; });
       menu.addEventListener('keydown', e => { if (e.key === 'Escape') { menu.open = false; menu.querySelector('summary').focus(); } });
+      menu.addEventListener('toggle', () => { if (menu.open) closeFloating('tools'); });
+      // Desktop: also open on hover (with a short grace period to cross the gap).
+      let hoverTimer = null;
+      const fine = () => window.matchMedia('(hover: hover) and (min-width: 721px)').matches;
+      let hoverOpenedAt = 0;
+      menu.addEventListener('mouseenter', () => { if (!fine()) return; clearTimeout(hoverTimer); if (!menu.open) hoverOpenedAt = Date.now(); menu.open = true; });
+      // A click right after hover-open must not close what the person is about to use.
+      menu.querySelector('summary').addEventListener('click', e => { if (menu.open && Date.now() - hoverOpenedAt < 1500) { e.preventDefault(); hoverOpenedAt = 0; } });
+      menu.addEventListener('mouseleave', () => { if (!fine()) return; clearTimeout(hoverTimer); hoverTimer = setTimeout(() => { menu.open = false; }, 220); });
     });
     document.body.appendChild(shell);
 
@@ -1850,7 +1891,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
       </div>
       <div class="bk-shk-input-row">
         <button class="bk-shk-mic" id="bk-shk-mic" type="button" aria-label="Hablar">${svg('mic', 16, 1.8)}</button>
-        <input class="bk-shk-input" id="bk-shk-input" type="text" placeholder="Pregunta lo que necesites…"/>
+        <input class="bk-shk-input" id="bk-shk-input" type="text" name="cecil-ia-prompt" autocomplete="off" autocorrect="on" spellcheck="true" enterkeyhint="send" data-rollout-ignore aria-label="Mensaje para Broq" placeholder="Pregunta lo que necesites…"/>
         <button class="bk-shk-send" id="bk-shk-send" type="button" aria-label="Enviar">${svg('send', 15, 2)}</button>
       </div>
     `;
@@ -1871,12 +1912,27 @@ body[data-app="verificador"] .top-header { display: none !important; }
   let shaarkOpen = false;
   let shaarkMsgs = [];
 
+  /* Only one floating panel at a time; Escape closes any of them. */
+  function closeFloating(except) {
+    if (except !== 'chat' && shaarkOpen) toggleShaarkPopup(false);
+    if (except !== 'account') window.closeProfileDrawer?.();
+    if (except !== 'tools') document.querySelectorAll('.bk-design-header details[open]').forEach(d => { d.open = false; });
+    if (except !== 'sheet') window.cpCloseSheets?.();
+  }
+  window.bkCloseFloating = closeFloating;
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || e.defaultPrevented) return;
+    if (document.querySelector('.bk-overlay.is-open, .bk-overlay.open, dialog[open]')) return; // module modals own Escape
+    closeFloating();
+  });
+
   function toggleShaarkPopup(force) {
     const p = document.getElementById('bk-shaark-popup');
     if (!p) return;
     shaarkOpen = (typeof force === 'boolean') ? force : !shaarkOpen;
     p.classList.toggle('is-open', shaarkOpen);
     if (shaarkOpen) {
+      closeFloating('chat');
       refreshShaarkChips();
       setTimeout(() => {
         const m = document.getElementById('bk-shk-msgs');
@@ -3011,6 +3067,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
   let _pdProfile = null; // datos del usuario cargados
 
   function openProfileDrawer() {
+    closeFloating('account');
     let overlay = document.getElementById('bk-profile-overlay');
     if (!overlay) buildProfileDrawer();
     overlay = document.getElementById('bk-profile-overlay');
@@ -3086,6 +3143,20 @@ body[data-app="verificador"] .top-header { display: none !important; }
                   </div>
                   <button class="bk-pd-btn bk-pd-btn-primary" onclick="saveProfileData()">Guardar cambios</button>
                   <div class="bk-pd-toast" id="pd-toast-personal"></div>
+                  <!-- Eliminar cuenta (requerido por App Store; visible también en iOS).
+                       Vive al fondo de Datos personales, como enlace de texto. -->
+                  <div class="bk-pd-delete" id="pdsec-del">
+                    <button type="button" class="bk-pd-del-link" data-ui-kind="link" aria-expanded="false" onclick="const z=this.parentElement;z.classList.toggle('is-open');this.setAttribute('aria-expanded',z.classList.contains('is-open'))">Eliminar mi cuenta</button>
+                    <div class="bk-pd-del-body">
+                      <p style="font-size:12px;color:var(--mute);line-height:1.5;margin:8px 0 12px">Esta acción elimina de forma permanente tu cuenta y todos tus datos (propiedades, contactos, contratos e integraciones). No se puede deshacer.</p>
+                      <div class="bk-pd-field">
+                        <label>Para confirmar, escribe tu correo</label>
+                        <input type="email" id="pd-del-input" placeholder="tu@correo.com" autocomplete="off" autocorrect="off" spellcheck="false" oninput="checkDeleteMatch()"/>
+                      </div>
+                      <button class="bk-pd-btn bk-pd-btn-danger" id="pd-del-confirm-btn" onclick="ejecutarEliminarCuenta()" style="opacity:.4;pointer-events:none">Eliminar mi cuenta permanentemente</button>
+                      <div class="bk-pd-toast" id="pd-toast-del"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3238,30 +3309,6 @@ body[data-app="verificador"] .top-header { display: none !important; }
             </div>
           </div>
 
-          <!-- Eliminar cuenta (requerido por App Store; visible también en iOS) -->
-          <div class="bk-pd-menu-item" id="pdsec-del">
-            <button class="bk-pd-menu-trigger" onclick="togglePdSection('del')">
-              <span class="bk-pd-menu-trigger-left">
-                <span class="bk-pd-menu-icon bk-pd-menu-icon--danger">${svg('trash', 16)}</span>
-                Eliminar mi cuenta
-              </span>
-              <svg class="bk-pd-menu-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-            <div class="bk-pd-menu-panel">
-              <div class="bk-pd-menu-panel-inner">
-                <div class="bk-pd-card">
-                  <p style="font-size:12px;color:var(--mute);line-height:1.5;margin-bottom:12px">Esta acción elimina de forma permanente tu cuenta y todos tus datos (propiedades, contactos, contratos e integraciones). No se puede deshacer.</p>
-                  <div class="bk-pd-field">
-                    <label>Para confirmar, escribe tu correo</label>
-                    <input type="email" id="pd-del-input" placeholder="tu@correo.com" autocomplete="off" autocorrect="off" spellcheck="false" oninput="checkDeleteMatch()"/>
-                  </div>
-                  <button class="bk-pd-btn bk-pd-btn-danger" id="pd-del-confirm-btn" onclick="ejecutarEliminarCuenta()" style="opacity:.4;pointer-events:none">Eliminar mi cuenta permanentemente</button>
-                  <div class="bk-pd-toast" id="pd-toast-del"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <!-- Equipo (solo cuentas empresariales) -->
           <!-- Vivía en el menú lateral, dentro de CRM. No es una herramienta de
                trabajo diario: es configuración de la cuenta — quién entra, qué
@@ -3308,15 +3355,17 @@ body[data-app="verificador"] .top-header { display: none !important; }
             </div>
           </div>
 
-        </div>
-      </div>
+          <!-- Cerrar sesión: una fila normal al final de la lista. -->
+          <div class="bk-pd-menu-item bk-pd-menu-item--logout">
+            <button class="bk-pd-menu-trigger" type="button" onclick="doLogout()">
+              <span class="bk-pd-menu-trigger-left">
+                <span class="bk-pd-menu-icon"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg></span>
+                Cerrar sesión
+              </span>
+            </button>
+          </div>
 
-      <!-- Foot: cerrar sesión -->
-      <div class="bk-pd-foot">
-        <button class="bk-pd-btn bk-pd-btn-danger" onclick="doLogout()">
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg>
-          Cerrar sesión
-        </button>
+        </div>
       </div>
     `;
     document.body.appendChild(drawer);
@@ -4248,6 +4297,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     window.__BK_SUB_ACTIVE = (subActive === true);
     // Fail-closed: sin confirmar, no se muestra Equipo.
     profile.esEmpresa = !!(_org && _org.tiene_org && _org.es_empresa);
+    profile.org = _org || null;
     if (_cfg && _cfg.fb_app_id) window._brokrFbAppId = _cfg.fb_app_id;
 
     // El drawer de perfil necesita saber si la cuenta es empresarial para
@@ -4379,6 +4429,33 @@ body[data-app="verificador"] .top-header { display: none !important; }
         return txt ? JSON.parse(txt) : [];
       }
 
+      /* PostgREST/Supabase answers at most 1000 rows per request even if the
+         query asks for limit=5000. restAll pages with limit/offset (stable
+         order, id as tie-breaker) until a short page arrives. */
+      async function sbRestAll(pathAndQuery, { pageSize = 1000, max = 100000, tieBreaker = 'id' } = {}) {
+        const [path, query = ''] = pathAndQuery.split('?');
+        const params = new URLSearchParams(query);
+        params.delete('limit'); params.delete('offset');
+        const order = params.get('order');
+        if (tieBreaker && !order) params.set('order', tieBreaker + '.asc');
+        else if (tieBreaker && !new RegExp('(^|,)' + tieBreaker + '\\.').test(order)) params.set('order', order + ',' + tieBreaker + '.asc');
+        const out = [];
+        for (let offset = 0; offset < max; offset += pageSize) {
+          params.set('limit', String(pageSize)); params.set('offset', String(offset));
+          const page = await sbRest(path + '?' + params.toString().replace(/%2C/g, ',').replace(/%28/g, '(').replace(/%29/g, ')'));
+          if (!Array.isArray(page)) return page;
+          out.push(...page);
+          if (page.length < pageSize) break;
+        }
+        return out;
+      }
+      /* Exact total without downloading rows (Prefer: count=exact). */
+      async function sbCount(pathAndQuery) {
+        const r = await sbApi('rest/v1/' + pathAndQuery.replace(/^\/+/, ''), { method: 'HEAD', headers: { Prefer: 'count=exact', Range: '0-0' } });
+        const total = (r.headers.get('content-range') || '').split('/')[1];
+        return total && total !== '*' ? Number(total) : null;
+      }
+
       window.brokrSb = {
         url: SB_URL,
         key: SB_KEY,
@@ -4386,6 +4463,8 @@ body[data-app="verificador"] .top-header { display: none !important; }
         refreshNow,
         fetch: sbApi,   // contactos.html usa esta firma: sb.fetch('rest/v1/...')
         rest: sbRest,   // para módulos nuevos
+        restAll: sbRestAll,
+        count: sbCount,
       };
     })();
 

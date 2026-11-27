@@ -10,13 +10,14 @@ def inspect(html,css,tokens):
     errors=[]
     if re.search(r'\sstyle\s*=',html,re.I) or '<style' in html.lower():errors.append('Inline/module CSS is forbidden in the showroom')
     sizes=re.findall(r'--ui-text-[\w-]+\s*:\s*(\d+)px',tokens)
-    if len(sizes)!=7 or sorted(map(int,sizes))!=[12,14,16,20,24,32,48]:errors.append('Typography must use the seven approved sizes')
+    # Cecil production scale: 28/24 title, 16 section, 14 base, 12–13 meta, 28/24 KPI.
+    if not sizes or not set(map(int,sizes))<={12,13,14,16,24,28}:errors.append('Typography must use the approved Cecil scale')
     for prop,value in re.findall(r'(?<![\w-])(font-size|color|background(?:-color)?|border-radius)\s*:\s*([^;}]+)',css):
         if not ('var(--ui-' in value or value.strip() in {'inherit','transparent','none','0'}):errors.append(f'Non-token {prop}: {value}')
     if re.search(r'font-family\s*:[^;}]*Inter',css+tokens,re.I):errors.append('Inter is not part of this system')
     for key in ['buttons','fields','filters','navigation','cards','overlays','modal-sample','account-sample','broq-sample','calendar-sample']:
         if f'id="{key}"' not in html:errors.append('Missing component: '+key)
-    for name,expected in [('control','48px'),('control-small','44px'),('radius','12px')]:
+    for name,expected in [('control','40px'),('control-small','36px'),('radius','8px')]:
         if not re.search(r'--ui-'+name+r'\s*:\s*'+expected,tokens):errors.append('Invalid '+name)
     return errors
 if __name__=='__main__':

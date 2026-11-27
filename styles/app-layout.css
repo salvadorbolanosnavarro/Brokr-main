@@ -63,7 +63,7 @@ body[data-app] .fin-kpis>.bk-card:nth-child(3) {background:var(--ui-paper);color
 body[data-app] .fin-kpis>.bk-card:nth-child(3) * {color:inherit}
 body[data-app] .fin-kpi-val {color:var(--ink);font-size:var(--ui-text-section);font-weight:700}
 body[data-app] .fa-wrap {max-width:var(--page-max);margin:auto;padding:var(--sp-10) 0}
-body[data-app='facebook-ads'] .bk-ph {display:none}
+/* Campañas shows the shared module heading. */
 body[data-app] .fa-hero {background:var(--paper);border:0;padding:0;margin-bottom:var(--sp-10);text-align:left}
 body[data-app] .fa-hero h1 {font-size:var(--fs-h1);color:var(--ink);font-weight:600}
 body[data-app] .fa-eyebrow {color:var(--mute);font-size:var(--fs-sm);text-transform:none;letter-spacing:0;background:none;padding:0;margin-bottom:var(--sp-4)}
@@ -117,7 +117,8 @@ body[data-app='acceso'] .bk-field label {font-weight:500}
 .design-home-summary {margin-top:var(--sp-8)}.design-home-summary h2 {font-size:var(--fs-sm);margin-bottom:var(--sp-4)}
 .design-home-summary>a {display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:var(--sp-5) 0;font-size:var(--fs-sm)}
 .design-assistant {display:flex;gap:var(--sp-3);align-items:center;text-align:left;width:100%;margin-top:var(--sp-6)}
-.design-assistant>strong {background:var(--ink);color:var(--paper);font-size:var(--ui-text-section);border-radius:var(--r-sm);width:38px;height:38px;display:grid;place-items:center}
+.design-assistant>strong {background:transparent;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;flex:none;overflow:hidden}
+.design-assistant>strong img {width:100%;height:100%;object-fit:contain;display:block}
 .design-assistant span {flex:1}.design-assistant small {color:var(--mute);font-size:var(--ui-text-xs)}
 .design-home-account {position:relative;margin-top:var(--sp-6)}.design-home-account>.home-avatar {display:none}
 .design-footer {border-top:1px solid var(--line);margin-top:64px;padding:40px 0 0;display:flex;align-items:center;justify-content:space-between;color:var(--mute);font-size:var(--fs-xs)}

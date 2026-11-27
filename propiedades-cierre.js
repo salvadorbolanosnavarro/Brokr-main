@@ -18,7 +18,7 @@
   }
   async function contactos() {
     if (CONTACTOS) return CONTACTOS;
-    try { CONTACTOS = await window.bkRest('contactos?select=id,nombre,telefono&order=nombre.asc&limit=5000'); } catch (e) { CONTACTOS = []; }
+    try { CONTACTOS = window.brokrSb && window.brokrSb.restAll ? await window.brokrSb.restAll('contactos?select=id,nombre,telefono&order=nombre.asc') : await window.bkRest('contactos?select=id,nombre,telefono&order=nombre.asc&limit=5000'); } catch (e) { CONTACTOS = []; }
     return CONTACTOS;
   }
   function campo(lbl, ctrl) { return '<div class="pf-field"><label>' + lbl + '</label>' + ctrl + '</div>'; }

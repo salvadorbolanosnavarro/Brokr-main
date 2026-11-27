@@ -233,7 +233,8 @@
 <div class="tk-head">
   <div class="tk-head__top">
     <div class="tk-head__title">
-      <h1>Tu siguiente paso,<br>a tiempo.<span class="tk-head__count" id="tk-count"></span></h1>
+      <h1>Agenda</h1>
+      <p class="tk-head__sub">Tu siguiente paso, a tiempo. <span class="cp-meta" id="tk-count" aria-live="polite"></span></p>
     </div>
     <button class="btn-new-tarea" onclick="tknAbrir()">
       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
@@ -273,10 +274,10 @@
 <!-- CONTENIDO -->
 <div class="tk-body">
   <div id="pane-tareas">
-    <div class="tk-composer">
-      <input type="text" id="tk-nueva-titulo" placeholder="Nueva tarea… (ej. Llamar a Pedro para agendar visita)" onkeydown="if(event.key==='Enter')crearTarea()"/>
-      <input type="date" id="tk-nueva-fecha"/>
-      <select id="tk-nueva-vinculo">
+    <div class="tk-composer" data-rollout-ignore>
+      <input type="text" id="tk-nueva-titulo" aria-label="Nueva tarea" placeholder="Nueva tarea, p. ej. Llamar a Pedro para agendar visita" onkeydown="if(event.key==='Enter')crearTarea()"/>
+      <input type="date" id="tk-nueva-fecha" aria-label="Fecha"/>
+      <select id="tk-nueva-vinculo" aria-label="Vínculo">
         <option value="">Sin vínculo</option>
       </select>
       <button class="go" id="tk-nueva-btn" onclick="crearTarea()">Agregar</button>
@@ -472,7 +473,7 @@ async function tkAsignarA(tareaId, agenteId) {
 async function tkCargarCategorias() {
   tkCategorias = await catCargar(tkOrgId);
   try {
-    const rows = await sbFetch('tareas_categorias?select=tarea_id,categoria_id&limit=4000');
+    const rows = await (window.brokrSb && window.brokrSb.restAll ? window.brokrSb.restAll('tareas_categorias?select=tarea_id,categoria_id').catch(() => sbFetch('tareas_categorias?select=tarea_id,categoria_id&limit=4000')) : sbFetch('tareas_categorias?select=tarea_id,categoria_id&limit=4000'));
     TAREA_CATS = {};
     (Array.isArray(rows) ? rows : []).forEach(row => {
       (TAREA_CATS[row.tarea_id] = TAREA_CATS[row.tarea_id] || []).push(String(row.categoria_id));
@@ -540,14 +541,18 @@ function construirVinculos(tareasList, filasContactos, filasPropiedades) {
   return { contactos: aArrays(v.contactos), propiedades: aArrays(v.propiedades) };
 }
 
+// Whole lists (PostgREST cuts responses at 1000 rows); fall back to one page.
+function tkAll(path, fallback) {
+  return window.brokrSb && window.brokrSb.restAll ? window.brokrSb.restAll(path).catch(() => sbFetch(fallback)) : sbFetch(fallback);
+}
 async function cargarTodo() {
   const lista = g('tk-lista');
-  lista.innerHTML = '<div class="tk-empty"><h3>Cargando tareas…</h3></div>';
+  lista.innerHTML = '<div class="tk-skel" aria-busy="true" aria-label="Cargando tareas">' + '<div class="tk-skel__row"><span class="cp-skel-block"></span><span class="cp-skel-block"></span></div>'.repeat(6) + '</div>';
   try {
     const [t, c, p] = await Promise.all([
       sbFetch('tareas?select=*&order=completada.asc,fecha_entrega.asc.nullslast,created_at.desc&limit=500'),
-      sbFetch('contactos?select=id,nombre&order=updated_at.desc&limit=1000'),
-      sbFetch('propiedades?select=id,titulo,clave_interna&order=updated_at.desc&limit=1000'),
+      tkAll('contactos?select=id,nombre&order=updated_at.desc', 'contactos?select=id,nombre&order=updated_at.desc&limit=1000'),
+      tkAll('propiedades?select=id,titulo,clave_interna&order=updated_at.desc', 'propiedades?select=id,titulo,clave_interna&order=updated_at.desc&limit=1000'),
     ]);
     tareas = Array.isArray(t) ? t : [];
     contactosMin = Array.isArray(c) ? c : [];
@@ -564,7 +569,11 @@ async function cargarTodo() {
     VINCULOS = construirVinculos(tareas, vc, vp);
     await completarNombresVinculados();
     poblarSelectVinculo();
+    // Links from Inicio: ?filtro=vencidas and ?tarea=<id>.
+    const qs = new URLSearchParams(location.search);
+    if (qs.get('filtro') && [...g('tk-filtro-estado').options].some(o => o.value === qs.get('filtro'))) g('tk-filtro-estado').value = qs.get('filtro');
     renderTareas();
+    if (qs.get('tarea') && tareas.some(x => String(x.id) === qs.get('tarea'))) tkAbrirEditar(qs.get('tarea'));
   } catch (e) {
     lista.innerHTML = '<div class="tk-empty"><h3>No se pudieron cargar tus tareas</h3><p>' + esc(e.message || 'Revisa tu conexión.') + '</p></div>';
   }
@@ -758,32 +767,54 @@ function filaTarea(t, mostrarVencida) {
   const vencida = mostrarVencida && due && !t.completada && due < hoy;
   const asignadoHtml = (tkEsEmpresa && t.asignado_a)
     ? `<span class="tk-link" style="cursor:default" title="Asignado a">${esc(tkNombreAgente(t.asignado_a))}</span>` : '';
-  return `<div class="tk-item${t.completada ? ' is-done' : ''}">
-    <button class="tk-check" onclick="event.stopPropagation();toggleTarea('${esc(String(t.id))}')" title="${t.completada ? 'Reabrir' : 'Completar'}">
-      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+  const idq = esc(String(t.id));
+  return `<div class="tk-item${t.completada ? ' is-done' : ''}${vencida ? ' is-overdue' : ''}" data-tarea="${idq}">
+    <button class="tk-check" onclick="event.stopPropagation();toggleTarea('${idq}')" title="${t.completada ? 'Reabrir' : 'Completar'}" aria-label="${t.completada ? 'Reabrir tarea' : 'Completar tarea'}">
+      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
     </button>
-    <div class="tk-main" onclick="tkAbrirEditar('${esc(String(t.id))}')" style="cursor:pointer" title="Abrir tarea">
+    <div class="tk-main" onclick="tkAbrirEditar('${idq}')" title="Abrir tarea">
       <div class="tk-title">${esc(t.titulo)}</div>
       <div class="tk-meta">
-        ${due ? `<span class="tk-due${vencida ? ' is-overdue' : ''}">${vencida ? 'Vencida · ' : ''}${fechaCorta(t.fecha_entrega)} · ${horaCorta(t.fecha_entrega)}</span>` : ''}
+        ${vencida ? '<span class="tk-due is-overdue">Vencida</span><span class="tk-sep">·</span>' : ''}${due ? `<span class="tk-due">${fechaCorta(t.fecha_entrega)} · ${horaCorta(t.fecha_entrega)}</span>` : ''}
         ${asignadoHtml}
         ${vinculoChip(t)}
         ${adjuntosChip(t)}
       </div>
       ${catChipsSoloLectura(TAREA_CATS[t.id], tkCategorias)}
     </div>
-    <button class="tk-edit" title="Editar tarea" onclick="event.stopPropagation();tkAbrirEditar('${esc(String(t.id))}')">
-      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg>
-    </button>
-    <button class="tk-x" title="Eliminar tarea" onclick="event.stopPropagation();eliminarTarea('${esc(String(t.id))}')">×</button>
+    <div class="tk-actions">
+      <button class="tk-edit" title="Editar tarea" aria-label="Editar tarea" onclick="event.stopPropagation();tkAbrirEditar('${idq}')">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg>
+      </button>
+      <button class="tk-x" title="Eliminar tarea" aria-label="Eliminar tarea" onclick="event.stopPropagation();eliminarTarea('${idq}')">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M14.7 9l-.35 9m-4.7 0L9.3 9m9.97-3.2c.34.05.68.1 1.02.17M18.16 19.67A2.25 2.25 0 0115.92 21.75H8.08a2.25 2.25 0 01-2.24-2.08L4.77 5.79m14.46 0a48.1 48.1 0 00-3.48-.4m-12 .57c.34-.06.68-.11 1.02-.16m0 0a48.1 48.1 0 013.48-.4m7.5 0V4.48c0-1.18-.91-2.16-2.09-2.2a51.96 51.96 0 00-3.32 0c-1.18.04-2.09 1.02-2.09 2.2v.92m7.5 0a48.67 48.67 0 00-7.5 0"/></svg>
+      </button>
+    </div>
+    <button class="tk-more" aria-label="Más acciones" aria-haspopup="menu" onclick="event.stopPropagation();tkMenu(this,'${idq}')">⋯</button>
   </div>`;
 }
+
+function tkMenu(btn, id) {
+  document.querySelectorAll('.tk-menu').forEach(m => m.remove());
+  const menu = document.createElement('div');
+  menu.className = 'tk-menu'; menu.setAttribute('role', 'menu');
+  menu.innerHTML = '<button role="menuitem" type="button" data-a="editar">Editar</button><button role="menuitem" type="button" data-a="eliminar" class="is-danger">Eliminar</button>';
+  menu.addEventListener('click', e => {
+    const a = e.target.closest('button')?.dataset.a; menu.remove();
+    if (a === 'editar') tkAbrirEditar(id); else if (a === 'eliminar') eliminarTarea(id);
+  });
+  btn.closest('.tk-item').append(menu);
+  setTimeout(() => document.addEventListener('click', () => menu.remove(), { once: true }), 0);
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.tk-menu').forEach(m => m.remove()); });
 
 function renderTareas() {
   const lista = g('tk-lista');
   const filtradas = tareasFiltradas();
   const pendientes = tareas.filter(t => !t.completada).length;
-  g('tk-count').textContent = pendientes ? '— ' + pendientes + ' pendientes' : '';
+  const hoy0 = new Date(); hoy0.setHours(0,0,0,0);
+  const vencidas = tareas.filter(t => !t.completada && t.fecha_entrega && new Date(t.fecha_entrega) < hoy0).length;
+  g('tk-count').innerHTML = pendientes ? '· ' + pendientes + ' pendientes' + (vencidas ? ' · <span class="is-danger">' + vencidas + ' vencidas</span>' : '') : '';
 
   if (!filtradas.length) {
     const hayFiltro = g('tk-search').value || g('tk-filtro-estado').value !== 'pendientes' || g('tk-filtro-vinculo').value || g('tk-filtro-categoria').value;
@@ -796,11 +827,11 @@ function renderTareas() {
   }
 
   const gr = agrupar(filtradas);
+  gr.proximas = gr.semana.concat(gr.despues);
   const secciones = [
     ['vencidas',    'Vencidas',     true],
     ['hoy',         'Hoy',          false],
-    ['semana',      'Esta semana',  false],
-    ['despues',     'Más adelante', false],
+    ['proximas',    'Próximas',     false],
     ['sinFecha',    'Sin fecha',    false],
     ['completadas', 'Completadas',  false],
   ];

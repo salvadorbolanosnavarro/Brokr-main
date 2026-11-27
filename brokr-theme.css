@@ -48,16 +48,16 @@
   --line-3: #7C858D;
 
   /* ── Accents (AZUL de acción) ─────────────── */
-  --forest: #165474;    /* alias histórico → azul de acción canon */
-  --forest-2: #12425C;    /* azul pressed (hover) */
-  --forest-soft: #E7F4FC;
+  --forest: #2B3137;    /* Cecil: el azul petróleo heredado pasa a tinta neutra */
+  --forest-2: #191C1F;    /* pressed */
+  --forest-soft: #F1F3F5;
 
   /* Marca Broquer */
   --sky-navy: #191C1F;  /* estructura canon: nav, footer, botón primario */
   --sky-navy-mid: #165474;
   --sky-navy-deep: #191C1F;  /* sidebar, fondos navy profundos */
-  --sky-blue: #165474;  /* acción canon */
-  --sky-blue-press: #12425C;
+  --sky-blue: #2B3137;  /* Cecil: neutral; el naranja es la única acción */
+  --sky-blue-press: #191C1F;
   --sky-blue-lift: #9FD8F5;  /* azul brillante, solo estados activos */
   --sky-canvas: #E7F4FC;
 
@@ -146,8 +146,8 @@
 
   /* Escala tipográfica.
      Hero/landing usa --fs-hero. La app arranca en --fs-h1 (32-36). */
-  --fs-hero: var(--ui-text-title);       /* landing H1 (clamp aplicado en .bk-hero__title) */
-  --fs-display: var(--ui-text-title);    /* landing H2 / número protagonista */
+  --fs-hero: 48px;       /* landing H1 (clamp aplicado en .bk-hero__title) */
+  --fs-display: 40px;    /* landing H2 / número protagonista */
   --fs-h1: var(--ui-text-title);         /* app page title */
   --fs-h2: var(--ui-text-section);         /* app section title */
   --fs-h3: var(--ui-text-lg);
@@ -523,7 +523,7 @@ html {
   box-shadow: var(--shadow-xs);
   transition: transform var(--dur) var(--ease);
 }
-.bk-switch input:checked + .bk-switch__track { background: var(--forest); }
+.bk-switch input:checked + .bk-switch__track { background: var(--ui-action); }
 .bk-switch input:checked + .bk-switch__track::after { transform: translateX(18px); }
 .bk-switch input:focus-visible + .bk-switch__track { box-shadow: var(--focus); }
 

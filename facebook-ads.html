@@ -541,11 +541,11 @@ async function checkConnection(){
 function paintConnection(){
   if(!_connection) return;
   document.getElementById('fa-page-name').textContent = _connection.page_name || 'Página conectada';
-  document.getElementById('fa-page-sub').textContent  = _connection.page_id ? ('ID ' + _connection.page_id) : '';
+  document.getElementById('fa-page-sub').textContent  = 'Página de Facebook'; // sin IDs técnicos visibles
   const pp = document.getElementById('fa-page-pic');
   pp.style.backgroundImage = _connection.page_pic ? `url('${_connection.page_pic}')` : '';
-  document.getElementById('fa-acct-name').textContent = _connection.ad_account_name || _connection.ad_account_id || 'Cuenta conectada';
-  document.getElementById('fa-acct-sub').textContent  = _connection.ad_account_id || '';
+  document.getElementById('fa-acct-name').textContent = _connection.ad_account_name || 'Cuenta publicitaria';
+  document.getElementById('fa-acct-sub').textContent  = 'Cuenta publicitaria';
 }
 
 // ── Tabs ────────────────────────────────────────────────────
