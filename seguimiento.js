@@ -118,7 +118,7 @@
         return '<article class="sg-lead"><div class="sg-anillo" style="--p:' + c.puntaje + '" aria-label="Puntaje ' + c.puntaje + ' de 100"><span>' + c.puntaje + '</span></div>' +
           '<div style="min-width:0"><div class="sg-lead__nombre">' + esc(c.nombre) + '</div>' +
           (c.ultimo_mensaje ? '<div class="sg-lead__msg">“' + esc(c.ultimo_mensaje) + '”</div>' : '') +
-          '<div class="sg-chips">' + c.razones.map(function (r) { return '<span class="bk-chip">' + esc(r) + '</span>'; }).join('') + '</div></div>' +
+          '<div class="sg-chips">' + c.razones.map(function (r) { return '<span class="bk-badge bk-badge--info">' + esc(r) + '</span>'; }).join('') + '</div></div>' +
           '<a class="bk-btn bk-btn--forest" href="whatsapp.html?c=' + encodeURIComponent(c.conversacion_id) + '#chats">Abrir chat</a></article>';
       }).join('') : vacio('Nadie urgente por ahora', 'Cuando alguien escriba seguido, pida visita o conteste tu seguimiento, aparece aquí primero.');
       $('sg-respuestas').innerHTML = d.respuestas.length ? d.respuestas.map(function (r) {

@@ -9,8 +9,10 @@
 <style>
   /* Seguimiento automático (piloto): toques que se detienen cuando el
      prospecto contesta, avisos por evento y prospectos calientes. */
-  .sg-scroll { padding: var(--sp-6) var(--sp-7) var(--sp-12); max-width: var(--ui-content); margin: 0 auto; }
-  @media (max-width: 720px) { .sg-scroll { padding: var(--sp-4) var(--ui-gutter-mobile) var(--sp-10); } }
+  /* El shell ya da el margen lateral: aquí solo el vertical, así el contenido
+     queda alineado con el título de la página. */
+  .sg-scroll { padding: var(--sp-6) 0 var(--sp-12); max-width: var(--ui-content); margin: 0 auto; }
+  @media (max-width: 720px) { .sg-scroll { padding: var(--sp-4) 0 var(--sp-10); } }
   .sg-barra { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; margin-bottom: var(--sp-5); }
   .sg-estado { font-size: var(--fs-sm); color: var(--mute); display: flex; align-items: center; gap: var(--sp-2); }
   .sg-punto { width: 8px; height: 8px; border-radius: 50%; background: var(--mute); flex-shrink: 0; }
@@ -23,6 +25,11 @@
   .sg-metricas { margin-bottom: var(--sp-7); }
   .sg-metricas .bk-metric { min-height: 0; padding: var(--sp-5); }
   .sg-metricas .bk-metric__value { font-size: var(--fs-h1); }
+  @media (max-width: 720px) {
+    .sg-metricas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
+    .sg-metricas .bk-metric { padding: var(--sp-4); }
+    .sg-metricas .bk-metric__value { font-size: var(--fs-h2); }
+  }
   .sg-dos { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--sp-6); align-items: start; }
   @media (max-width: 960px) { .sg-dos { grid-template-columns: minmax(0, 1fr); } }
   .sg-seccion { margin-bottom: var(--sp-7); }
@@ -35,6 +42,7 @@
   .sg-lead__nombre { font-weight: 700; font-size: var(--fs-body); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sg-lead__msg { font-size: var(--fs-sm); color: var(--mute); margin-top: var(--sp-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sg-chips { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-top: var(--sp-2); }
+  .sg-chips .bk-badge { white-space: nowrap; }
   @media (max-width: 560px) {
     .sg-lead { grid-template-columns: auto minmax(0, 1fr); }
     .sg-lead > .bk-btn { grid-column: 1 / -1; width: 100%; }
