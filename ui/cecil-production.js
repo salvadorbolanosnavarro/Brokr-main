@@ -89,7 +89,7 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && openSheet) { e.preventDefault(); closeSheets(); } });
 
   /* ── Mobile: the module's primary action floats above the tab bar ── */
-  const PRIMARY = '.btn-new-tarea,.btn-new-prop';
+  const PRIMARY = '.btn-new-tarea,.btn-new-prop,#add-btn-top';
   function setupFab(root) {
     (root.querySelectorAll ? root : document).querySelectorAll(PRIMARY).forEach(el => el.classList.add('cp-fab-primary'));
   }
