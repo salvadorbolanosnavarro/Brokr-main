@@ -17,7 +17,7 @@ El piloto incorpora un workflow Pages pilot que prepara los archivos web origina
 
 ## Publicación y activación
 
-1. Confirmar que main permanece en la base 2a1f4f5 (26/nov/2026: oculta el módulo ACM del menú e inicio mientras se perfecciona; diseño df493735 = 37764202 + solo ese cambio, rama cecil/diseno-impuestos; base anterior 8de3443); si avanzó, integrar y repetir pruebas. No desactivar la protección del constructor.
+1. Confirmar que main permanece en la base 138cf25 (27/nov/2026: agrega el piloto privado de Seguimiento automático —backend en main y pantalla seguimiento.html en Cecil—; diseño 301c8b7 = df49373 + ese módulo, rama cecil/seguimiento-piloto; base anterior 2a1f4f5); si avanzó, integrar y repetir pruebas. No desactivar la protección del constructor.
 2. Preparar en Railway únicamente CECIL_UI_ENABLED=false y CECIL_UI_USER_IDS con el UUID real verificado de Salvador. No usar A3/B2 ni correo editable del cliente. No cambiar otras variables.
 3. Con los checks y la construcción Pages en verde, seleccionar GitHub Pages Source: GitHub Actions, conservando broquer.app y HTTPS.
 4. Fusionar PR217 a main con el SHA revisado y observar ambos despliegues. Mantener el flag apagado. Verificar Broquer habitual, /ui/cecil rechazando solicitudes sin sesión, artefacto Cecil real y ausencia de configuración staging.
@@ -33,3 +33,11 @@ Primero apagar CECIL_UI_ENABLED y desplegar. Revalidación cada15s/al recuperar 
 Versión anterior de main: dac7118c952deeda4f6b9160c05f19b0a42ca8a0. Railway deployment previo4ada004a-4ae6-4ad2-93dc-a43b705d26be. GitHub Pages deployment previo actions/runs/42901159196. Si hace falta revertir el merge, crear revert revisable y publicar main con GitHub Pages Source: Deploy from a branch, main /root, conservando dominio/HTTPS. No forzar historial ni borrar commits.
 
 Un fallo visual se revierte por flag/artefacto, no restaurando toda la base. Recuperación de filas/archivos exige conciliar escrituras posteriores y limitarse al UUID de Salvador. Nunca tocar filas de otra cuenta ni restaurar datos sobre producción sin evaluar el daño real.
+
+## Seguimiento automático (piloto privado, 27/nov/2026)
+
+Solo para las cuentas de CECIL_UI_USER_IDS; cualquier otra recibe 403 y no ve el módulo. Antes de usarlo, correr migracion-seguimiento-piloto.sql en Supabase (aditiva e idempotente). Mientras no exista, la pantalla muestra el aviso y el ciclo se salta la cuenta.
+
+El ciclo corre cada 5 minutos en la instancia con RECORDATORIOS_ACTIVOS: detecta respuestas y detiene la secuencia (push al agente), inscribe leads nuevos que se enfriaron si la secuencia lo pide, detecta bajadas de precio y coincidencias cada hora y, de lunes a sábado dentro del horario y del tope diario, manda los toques y avisos. Nadie recibe dos mensajes automáticos en menos de 44 h. Solo se usan plantillas aprobadas por Meta. Todo envío queda en la bandeja de WhatsApp y en seg_envios.
+
+Reversión: apagar las secuencias desde la pantalla o, para todo, vaciar CECIL_UI_USER_IDS (también apaga Cecil). Las tablas seg_* no tocan datos existentes.

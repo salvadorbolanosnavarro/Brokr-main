@@ -15,11 +15,11 @@ import tarfile
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-# Approved design 3776420 (7390fd2 + zone-only list) + only hiding the ACM
-# module while it is refined (base 2a1f4f5), kept on branch
-# cecil/diseno-impuestos. Previous: design 3776420, base 8de3443.
-DESIGN_REF = 'df49373595ad4a7678f499ad63f1358300456c09'
-BASE_REF = '2a1f4f58f9cfa6df772c8956a1dc09f5ab72c56d'
+# Design df49373 (approved Cecil, ACM hidden) + the private Seguimiento
+# automático pilot page, merged with its backend base 138cf25. Kept on branch
+# cecil/seguimiento-piloto. Previous: design df49373, base 2a1f4f5.
+DESIGN_REF = '301c8b7ec7a24562f2fe8f9e928bd095060143a3'
+BASE_REF = '138cf25a661cb08d492a95bf69c5e5603e4cbf89'
 EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.gif', '.mp4', '.webm'}
 FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor', 'videos'}
 
