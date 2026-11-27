@@ -461,3 +461,35 @@ html body .bk-shk-close[data-ui-size]{border:0;background:transparent;color:var(
 html body .bk-shk-close:hover{background:var(--cp-soft);color:var(--cp-ink)}
 html body .bk-shk-send[data-ui-size]{background:var(--ui-action);border-color:var(--ui-action);color:var(--ui-ink)}
 html body :is(.bk-shk-close,.bk-shk-mic,.bk-shk-send) svg{width:16px!important;height:16px!important;flex:none}
+
+/* ════ Móvil: todo recuadro es una hoja fija anclada abajo ════
+ * Los modales centrados se recolocaban al abrir el teclado o cambiar de
+ * campo, y en iPhone se podían arrastrar hacia los lados. En teléfono se
+ * anclan abajo a todo el ancho, solo desplazan en vertical y bloquean el
+ * fondo mientras están abiertos. */
+@media(max-width:720px){
+  html,body{overflow-x:hidden;max-width:100%}
+  /* Nada posicionado fuera de la pantalla que permita arrastrar la página. */
+  .bk-tools-menu:not([open]) .bk-tools-menu__list{display:none!important}
+  html body :is(.bk-overlay,.prop-modal-overlay,.ac-ov,.pick-overlay,.eb-import-overlay,.bk-ficha-ov,.overlay,.wac-modal,.lightbox-overlay){align-items:flex-end!important;justify-content:stretch!important;padding:0!important;overscroll-behavior:contain}
+  html body :is(.bk-overlay,.prop-modal-overlay,.ac-ov,.pick-overlay,.eb-import-overlay,.bk-ficha-ov,.overlay)>:is(.bk-modal,[data-ui-modal],.ac-modal,.pick-sheet,.eb-import-modal,.sheet,.bk-ficha,.wac-dialog){width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;left:auto!important;right:auto!important;border-radius:16px 16px 0 0!important;max-height:calc(var(--vvh,100dvh) - 12px)!important;transform:none!important;overflow-x:hidden!important}
+  html body :is(.bk-modal,[data-ui-modal],.ac-modal,.pick-sheet,.eb-import-modal,.sheet,.bk-ficha)>:is(.bk-modal__foot,.ui-modal-foot,.sheet-footer,.sheet-foot,.ac-foot):last-child{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))!important}
+  /* Solo desplazamiento vertical dentro del recuadro; el zoom con dos dedos se conserva. */
+  html body :is(.bk-modal__body,.sheet-body,.prop-modal-body,.ui-dialog-body,.ac-body,.pick-body,.bk-ficha__body,.bk-pd-body,.cp-sheet){overflow-x:hidden!important;overscroll-behavior:contain;touch-action:pan-y pinch-zoom}
+  html body :is(.bk-modal,[data-ui-modal],.sheet,.ac-modal) *{max-width:100%;min-width:0}
+  /* iOS da ancho mínimo propio a fecha y hora: que se ajusten al recuadro. */
+  html body :is(input[type=date],input[type=time],input[type=datetime-local],input[type=month]){-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;width:100%;box-sizing:border-box}
+  html body :is(input[type=date],input[type=time],input[type=datetime-local])::-webkit-date-and-time-value{text-align:left;margin:0}
+  /* Con un recuadro abierto: el fondo no se mueve y la barra inferior se oculta. */
+  html.cp-modal-open,html.cp-modal-open body{overflow:hidden!important;overscroll-behavior:none}
+  html.cp-modal-open :is(.cp-tabbar,.cp-fab-primary,.fab,#cecil-rollout-controls){visibility:hidden!important}
+}
+@media(max-width:720px){
+  /* Fecha y Hora lado a lado con la misma separación que los demás campos. */
+  html body .bk-modal .bk-field-row{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0}
+  /* Fila "lista o buscador + botón": el campo ocupa el espacio y el botón queda compacto. */
+  html body .bk-modal .bk-field-row:has(>button:last-child){grid-template-columns:minmax(0,1fr) auto}
+  html body .bk-modal .bk-field-row>button:last-child{width:auto;height:var(--ui-control);min-height:var(--ui-control);padding:0 14px;white-space:nowrap}
+  html body .bk-modal .bk-field-row>.bk-field{margin:0;min-width:0}
+  html body .bk-modal .bk-modal__body>.bk-field+.bk-field,html body .bk-modal .bk-modal__body>.bk-field-row+.bk-field,html body .bk-modal .bk-modal__body>.bk-field+.bk-field-row{margin-top:14px}
+}
