@@ -1,5 +1,5 @@
 {
-  "count": 360,
+  "count": 374,
   "operations": [
     {
       "body": false,
@@ -3123,6 +3123,154 @@
         "path:slug!"
       ],
       "path": "/s/{slug}/venta",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/seguimiento/acceso",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/seguimiento/ajustes",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PUT",
+      "params": [],
+      "path": "/seguimiento/ajustes",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "query:etiqueta",
+        "query:numero_id!",
+        "query:q"
+      ],
+      "path": "/seguimiento/contactos",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "POST",
+      "params": [],
+      "path": "/seguimiento/correr",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/seguimiento/eventos",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:inscripcion_id!"
+      ],
+      "path": "/seguimiento/inscripciones/{inscripcion_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/seguimiento/resumen",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/seguimiento/secuencias",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [],
+      "path": "/seguimiento/secuencias",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "DELETE",
+      "params": [
+        "path:secuencia_id!"
+      ],
+      "path": "/seguimiento/secuencias/{secuencia_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "PATCH",
+      "params": [
+        "path:secuencia_id!"
+      ],
+      "path": "/seguimiento/secuencias/{secuencia_id}",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [
+        "path:secuencia_id!"
+      ],
+      "path": "/seguimiento/secuencias/{secuencia_id}/inscripciones",
+      "responses": [
+        "200",
+        "422"
+      ]
+    },
+    {
+      "body": true,
+      "method": "POST",
+      "params": [
+        "path:secuencia_id!"
+      ],
+      "path": "/seguimiento/secuencias/{secuencia_id}/inscripciones",
       "responses": [
         "200",
         "422"
