@@ -23,7 +23,8 @@
     document.getElementById('design-expand').textContent = expanded ? 'Ver herramientas principales' : 'Explorar todas las herramientas →';
   }
   cards.forEach(card => card.addEventListener('click', e => {
-    if (e.target.closest('button,a')) return;
+    // composedPath survives the star being re-rendered during this same click.
+    if (e.composedPath().some(el => el.matches && el.matches('button,a'))) return;
     card.querySelector('.design-tool-link')?.click();
   }));
   cards.forEach(card => card.querySelector('.design-favorite').addEventListener('click', () => {

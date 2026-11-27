@@ -154,7 +154,7 @@ html body[data-app] input[type=checkbox],html body[data-app] input[type=radio]{a
   .bk-design-account span{font-size:12px}
   .bk-design-brand{font-size:22px}
   body[data-app] .bk-page{padding:0 var(--cp-gutter) calc(88px + env(safe-area-inset-bottom,0px))}
-  .cp-tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:800;background:var(--ui-paper);border-top:1px solid var(--cp-line);padding:4px 4px env(safe-area-inset-bottom,0px)}
+  .cp-tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:calc(var(--z-fab,80) - 10);background:var(--ui-paper);border-top:1px solid var(--cp-line);padding:4px 4px env(safe-area-inset-bottom,0px)}
   .cp-tabbar>:is(a,button){display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:56px;border:0;background:none;color:var(--cp-muted);font:500 11px/1.2 var(--ui-font);text-decoration:none;position:relative;cursor:pointer;padding:0}
   .cp-tabbar svg{width:22px;height:22px}
   .cp-tabbar [aria-current=page]{color:var(--cp-ink);font-weight:600}
@@ -166,7 +166,7 @@ html body[data-app] input[type=checkbox],html body[data-app] input[type=radio]{a
   .bk-tools-menu[open] .bk-tools-menu__list{position:fixed;left:0;right:0;top:auto;bottom:0;width:auto;max-height:80dvh;overflow:auto;grid-template-columns:1fr 1fr;border-radius:16px 16px 0 0;padding:16px 16px calc(80px + env(safe-area-inset-bottom,0px));z-index:790}
   .cp-tools-foot{grid-column:1/-1}
   /* Primary module action floats above the tab bar. */
-  html body[data-app] .cp-fab-primary{position:fixed!important;right:16px;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:780;height:48px!important;border-radius:24px!important;box-shadow:0 6px 20px rgba(16,24,40,.2)!important;padding:0 18px!important}
+  html body[data-app] .cp-fab-primary{position:fixed!important;right:16px;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:calc(var(--z-fab,80) - 10);height:48px!important;border-radius:24px!important;box-shadow:0 6px 20px rgba(16,24,40,.2)!important;padding:0 18px!important}
   html body[data-app] .fab{bottom:calc(72px + env(safe-area-inset-bottom,0px))!important}
   /* Filters: search visible, the rest in a sheet. */
   html body[data-app] :is(.filters-row,.props-toolbar,.tk-toolbar,.cp-filterbar){display:flex!important;flex-wrap:nowrap!important}
