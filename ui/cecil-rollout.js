@@ -11,9 +11,13 @@
 (() => {
   'use strict';
   const prefix = '/cecil/';
-  const inside = location.pathname.startsWith(prefix);
+  // Cecil's own domain serves the same pages at the root; Broquer lives on broquer.app.
+  const standalone = /(^|\.)cecilapp\.co$/i.test(location.hostname);
+  const BROQUER = 'https://broquer.app';
+  const inside = standalone || location.pathname.startsWith(prefix);
   const INTERVAL = 15000, TIMEOUT = 6000;
   function original() {
+    if (standalone) return BROQUER + location.pathname.replace(/^\/cecil\//, '/') + location.search + location.hash;
     return (inside ? '/' + location.pathname.slice(prefix.length) : location.pathname) + location.search + location.hash;
   }
   function key(id) { return 'broquer-ui-cecil:' + id; }

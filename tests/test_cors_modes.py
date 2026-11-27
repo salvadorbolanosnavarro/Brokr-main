@@ -35,6 +35,7 @@ class CorsTests(unittest.TestCase):
     def test_lista_incluye_web_staging_ios_y_antiguos(self):
         lista = cors.origenes_permitidos("")
         for o in ("https://broquer.app", "https://www.broquer.app", "https://staging.broquer.app",
+                  "https://cecilapp.co", "https://www.cecilapp.co",
                   "capacitor://localhost", "https://localhost", "ionic://localhost",
                   "https://navarroai.github.io", "https://app.navarroai.com.mx"):
             self.assertIn(o, lista)
