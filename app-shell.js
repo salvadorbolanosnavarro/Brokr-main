@@ -4215,7 +4215,7 @@ body[data-app="verificador"] .top-header { display: none !important; }
     // Optional UI only: do not delay or change the existing application boot.
     const cecilRollout = document.createElement('script');
     cecilRollout.src = '/ui/cecil-rollout.js';
-    cecilRollout.onload = () => window.bkCecilRollout?.({api: API_BASE, token: getToken(), userId: profile.user.id});
+    cecilRollout.onload = () => window.bkCecilRollout?.({api: API_BASE, getToken, userId: profile.user.id});
     document.head.appendChild(cecilRollout);
 
 
