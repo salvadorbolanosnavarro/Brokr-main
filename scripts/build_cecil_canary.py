@@ -18,8 +18,9 @@ ROOT = Path(__file__).resolve().parents[1]
 # Production polish on branch cecil/produccion-pulido (built on design
 # df49373 = 3776420 + ACM hidden, base 2a1f4f5): tokens, shared heading,
 # mobile tab bar, transparent monogram and the Inicio/Agenda/Estadísticas/
-# Inmuebles fixes. Previous: design df49373 (cecil/diseno-impuestos).
-DESIGN_REF = '60aa01e31b9de6de13e6736bcfa7f19c99b952da'
+# Inmuebles fixes, plus fixed bottom sheets on phones (cecil/movil-hojas).
+# Previous: design 60aa01e; before that df49373 (cecil/diseno-impuestos).
+DESIGN_REF = '2a8a51fe40451360419a1b68cd8936e064ec87b2'
 BASE_REF = '2a1f4f58f9cfa6df772c8956a1dc09f5ab72c56d'
 EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.gif', '.mp4', '.webm'}
 FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor', 'videos'}
