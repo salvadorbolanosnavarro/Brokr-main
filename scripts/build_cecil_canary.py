@@ -78,7 +78,7 @@ def build(output):
                             raise ValueError('Missing legacy pinch-zoom guard: review the approved transformation')
                         marker='    if (!profile) return; // redirected to login/landing'
                         if marker not in text:raise ValueError('Missing shell authentication hook')
-                        text=text.replace(marker,marker+"\n    const rollout=document.createElement('script');rollout.src='/ui/cecil-rollout.js';rollout.onload=()=>window.bkCecilRollout?.({api:API_BASE,token:getToken(),userId:profile.user.id});document.head.appendChild(rollout);",1)
+                        text=text.replace(marker,marker+"\n    const rollout=document.createElement('script');rollout.src='/ui/cecil-rollout.js';rollout.onload=()=>window.bkCecilRollout?.({api:API_BASE,getToken,userId:profile.user.id});document.head.appendChild(rollout);",1)
                     if relative==Path('propiedades.html'):
                         # Approved modal footer is outside the form in this design.
                         text=text.replace("const btn = form.querySelector('.pf-save-btn');", "const btn = e.submitter || form.querySelector('.pf-save-btn') || document.querySelector('.pf-save-btn[form=\"prop-form\"]');")
