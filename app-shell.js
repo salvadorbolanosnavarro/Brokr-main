@@ -1641,7 +1641,10 @@ body[data-app="verificador"] .top-header { display: none !important; }
       // Desktop: also open on hover (with a short grace period to cross the gap).
       let hoverTimer = null;
       const fine = () => window.matchMedia('(hover: hover) and (min-width: 721px)').matches;
-      menu.addEventListener('mouseenter', () => { if (!fine()) return; clearTimeout(hoverTimer); menu.open = true; });
+      let hoverOpenedAt = 0;
+      menu.addEventListener('mouseenter', () => { if (!fine()) return; clearTimeout(hoverTimer); if (!menu.open) hoverOpenedAt = Date.now(); menu.open = true; });
+      // A click right after hover-open must not close what the person is about to use.
+      menu.querySelector('summary').addEventListener('click', e => { if (menu.open && Date.now() - hoverOpenedAt < 1500) { e.preventDefault(); hoverOpenedAt = 0; } });
       menu.addEventListener('mouseleave', () => { if (!fine()) return; clearTimeout(hoverTimer); hoverTimer = setTimeout(() => { menu.open = false; }, 220); });
     });
     document.body.appendChild(shell);

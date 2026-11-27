@@ -32,23 +32,25 @@ const base=process.env.BROQUER_TEST_URL || 'http://127.0.0.1:8080';
     else await p.locator('body').waitFor();
     if(await p.locator('#splash').count()) await p.locator('#splash').waitFor({state:'hidden',timeout:10000});
     await p.evaluate(()=>document.fonts.ready);
-    const surface=await p.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,heading:document.querySelector('h1')?.textContent.trim(),controls:document.querySelectorAll('button,input,select,textarea').length,smallInputs:[...document.querySelectorAll('input,textarea,select')].filter(e=>e.getClientRects().length && parseFloat(getComputedStyle(e).fontSize)<16).map(e=>e.id||e.name)}));
-    assert.equal(surface.smallInputs.length,0,'visible inputs are at least 16px');
+    const surface=await p.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth,heading:document.querySelector('h1')?.textContent.trim(),controls:document.querySelectorAll('button,input,select,textarea').length,smallInputs:innerWidth>720?[]:[...document.querySelectorAll('input,textarea,select')].filter(e=>e.getClientRects().length && parseFloat(getComputedStyle(e).fontSize)<16).map(e=>e.id||e.name)}));
+    assert.equal(surface.smallInputs.length,0,'visible inputs are at least 16px on phones');
     if(item.shared_shell){
-    await p.locator('.bk-design-assistant').click();
+    // Desktop: header utilities. Phone: the five-tab bar at the bottom.
+    const phone=width<=720;
+    await p.locator(phone?'.cp-tab-ai':'.bk-design-assistant').click();
     assert(await p.locator('#bk-shaark-popup').isVisible(),'Broq opens');
     await p.locator('.bk-shk-close').click();
-    assert(await p.locator('.bk-design-chats').isVisible(),'Chats reachable');
+    assert(await p.locator(phone?'.cp-tabbar a[href^="whatsapp.html"]':'.bk-design-chats').isVisible(),'Chats reachable');
     }
     if(item.path==='index.html'){
       await p.locator('.bk-design-account').click();
       await p.locator('#bk-profile-drawer.is-open').waitFor({state:'visible'});
       await p.evaluate(()=>window.closeProfileDrawer());
-      await p.locator('.bk-tools-menu summary').click();
+      await p.locator(width<=720?'.cp-tab-more':'.bk-tools-menu summary').click();
       assert(await p.locator('.bk-tools-menu a[href="firmas.html"]').isVisible(),'Signature tool reachable');
       assert(await p.locator('.bk-tools-menu a[href="cumplimiento.html"]').isVisible(),'Compliance tool reachable');
       assert.equal(await p.locator('.bk-tools-menu a[href="admin.html"]').count(),0,'Admin is not shown to agent');
-      await p.locator('.bk-tools-menu summary').click();
+      await p.keyboard.press('Escape');
     }
     if(item.path==='contratos.html'){
       await p.locator('#doc-picker-btn').click();

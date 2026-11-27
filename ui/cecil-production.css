@@ -149,7 +149,10 @@ html body[data-app] input[type=checkbox],html body[data-app] input[type=radio]{a
 .cp-tabbar{display:none}
 @media(max-width:720px){
   .bk-design-header__inner{flex-wrap:nowrap;padding-top:0;min-height:var(--cp-header)}
-  .bk-design-nav,.bk-design-utilities{display:none!important}
+  .bk-design-utilities{display:none!important}
+  /* The nav links hide on phones, but the Herramientas menu stays mounted: "Más" opens it as a sheet. */
+  .bk-design-nav{position:absolute;width:0;height:0;margin:0;overflow:visible}
+  .bk-design-nav>a,.bk-tools-menu>summary{display:none!important}
   .bk-design-account,.bk-design-account[data-ui-size]{margin-left:auto;font-size:0!important;gap:0;padding:0;width:auto}
   .bk-design-account span{font-size:12px}
   .bk-design-brand{font-size:22px}
