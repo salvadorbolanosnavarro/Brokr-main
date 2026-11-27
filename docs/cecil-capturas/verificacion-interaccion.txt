@@ -1,0 +1,42 @@
+PASS Agenda: vínculo 220px con opción de 80 caracteres — vínculo 220px
+PASS Agenda: fecha 160px — 160px
+PASS Agenda: nada encimado en la fila nueva
+PASS Agenda: fila no desborda
+PASS Agenda: filas compactas (~56px) — 56,56,56,56,56
+PASS Cecil IA: input sin autollenado — off|cecil-ia-prompt|text|send
+PASS Cecil IA: avatar sin recuadro, monograma transparente — rgba(0, 0, 0, 0) /cecil/brand/cecil-monogram.svg
+PASS Escape cierra el chat
+PASS Mi cuenta: filas alineadas a la izquierda — 7 filas
+PASS Mi cuenta: "Eliminar mi cuenta" fuera de la lista
+PASS Mi cuenta: Cerrar sesión es la última fila
+PASS Abrir un panel cierra el otro
+PASS Herramientas: abre al pasar el cursor y agrupa — CRM,Documentos,Marketing,Dinero
+PASS Herramientas: sin "Agenda/Tareas"
+PASS Herramientas: etiquetas en una línea
+PASS Inicio: saludo por hora local — Buenas tardes, Alex
+PASS Inicio: próxima tarea real + vencidas filtradas — Visita demo a casa en Altozano | sáb 28 de nov, 4:59 p.m. · Ruth B Mercado | 13 vencidas | Ver agenda →
+PASS Inicio: logo Cecil IA sin fondo — rgba(0, 0, 0, 0)
+PASS Inmuebles: precio mín–máx es un solo control — {"wrapB":"1px","inB":["0px","0px"],"ph":["Precio mín.","Precio máx."],"fit":true}
+PASS Inmuebles: filtros en una sola fila — 176,176,176,176,176,176
+PASS Sin errores de página (1440)
+PASS Agenda móvil: título a todo el ancho
+PASS Agenda móvil: fecha, vínculo y botón en una línea
+PASS Agenda: nada encimado en la fila nueva
+PASS Agenda: fila no desborda
+PASS Agenda: filas compactas (~56px) — 61,61,61,61,61
+PASS Cecil IA: input sin autollenado — off|cecil-ia-prompt|text|send
+PASS Cecil IA: avatar sin recuadro, monograma transparente — rgba(0, 0, 0, 0) /cecil/brand/cecil-monogram.svg
+PASS Escape cierra el chat
+PASS Mi cuenta: filas alineadas a la izquierda — 7 filas
+PASS Mi cuenta: "Eliminar mi cuenta" fuera de la lista
+PASS Mi cuenta: Cerrar sesión es la última fila
+PASS Abrir un panel cierra el otro
+PASS Móvil: "Más" abre Herramientas
+PASS Móvil: 5 pestañas abajo — Inicio,Agenda,Cecil IA,Chats,Más
+PASS Móvil: filtros en hoja inferior
+PASS Móvil: al cerrar, los filtros vuelven a su lugar
+PASS Móvil: menú ⋯ con Editar/Eliminar
+PASS Inicio: saludo por hora local — Buenas tardes, Alex
+PASS Inicio: próxima tarea real + vencidas filtradas — Visita demo a casa en Altozano | sáb 28 de nov, 4:59 p.m. · Ruth B Mercado | 13 vencidas | Ver agenda →
+PASS Inicio: logo Cecil IA sin fondo — rgba(0, 0, 0, 0)
+PASS Sin errores de página (390)
