@@ -203,7 +203,12 @@ LARGE_FILE_MAX_BYTES = {
     # Bumped 1,234 bytes: la cláusula 9.3 pasa del AVM retirado al ACM
     # (cómo se arma el análisis y quién responde por lo que se presenta al
     # propietario) — texto legal pedido por el usuario, no debt.
-    "legal.html": 118_173,
+    # +169 bytes en cecil/diseno-impuestos (c5e8df39): rebranding del texto
+    # legal del ACM; venía en rojo desde la rama base, no es deuda nueva.
+    "legal.html": 118_342,
+    # Biblioteca de terceros minificada (React 18.2.0), vendorizada en
+    # 27bf876d para el rediseño; no es código propio que se pueda partir.
+    "vendor/react-18.2.0/react-dom.production.min.js": 131_882,
     # Nuevo en el inventario: el detalle de usuario de la Consola de admin
     # incorporó "Acceso completo fuera del equipo" y "Módulos habilitados
     # para esta cuenta" (PR #79), lo que cruzó admin.html el umbral de
