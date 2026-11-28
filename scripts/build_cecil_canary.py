@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # Inmuebles fixes, fixed bottom sheets on phones (cecil/movil-hojas) and the
 # centered floating action (cecil/movil-fab) and the hola@cecilapp.co contact
 # (cecil/correo-cecilapp). Previous: 524b87d, 2a8a51f, 60aa01e, df49373.
-DESIGN_REF = 'f1fe8570dc8e74a078fd5c461fc45fcb91f3d1fc'
+DESIGN_REF = '1147fd288a4a070f85a9b67cc54139d8b3ba8ae0'
 BASE_REF = '2a1f4f58f9cfa6df772c8956a1dc09f5ab72c56d'
 EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.gif', '.mp4', '.webm'}
 FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor', 'videos'}
