@@ -1,7 +1,19 @@
-"""Self-service account deletion extracted statically from main.py.
+"""Self-service account deletion ("Eliminar mi cuenta").
 
-This router preserves the historical irreversible deletion sequence. The audit
-never invokes this endpoint; extraction is structural only.
+La baja es atómica: se apoya en la misma función de base de datos que usa la
+consola admin (``admin_eliminar_usuario_total``), que en UNA transacción borra
+las organizaciones que la persona posee, toda fila con su ``user_id`` /
+``owner_id``, su perfil en ``usuarios`` y su cuenta en ``auth.users``. Si
+cualquier paso falla, Postgres revierte todo y la cuenta queda intacta.
+
+Antes se borraban tablas sueltas, luego ``usuarios`` y al final ``auth.users``
+por separado. Como ``organizaciones.owner_id`` apunta a ``auth.users`` con
+ON DELETE RESTRICT, el último paso fallaba para todo dueño de organización:
+la persona perdía datos y suscripción pero su cuenta seguía viva, sin fila en
+``usuarios`` (invisible en la consola y sin acceso a funciones de pago).
+
+La suscripción de Stripe solo se cancela DESPUÉS de que la baja se confirmó,
+para no dejar de cobrar a una cuenta que en realidad sigue existiendo.
 """
 from __future__ import annotations
 
@@ -10,8 +22,12 @@ from fastapi import APIRouter, HTTPException, Request
 
 from core.auth import get_user_id_from_token
 from core.config import settings
-from core.database import delete_rows, get_service_json
+from core.database import call_service_rpc, get_service_json
 from core.stripe import STRIPE_SECRET_KEY, stripe_headers as _stripe_headers
+from routers.admin_delete import (
+    _storage_borrar_carpeta_usuario,
+    _storage_rutas_fotos_de_usuario,
+)
 
 
 router = APIRouter()
@@ -23,15 +39,14 @@ SUPABASE_SERVICE_KEY = settings.supabase_service_key
 async def eliminar_cuenta_y_datos(request: Request):
     """Borra TODA la información del usuario autenticado, de forma permanente.
 
-    Pasos (irreversibles, en este orden):
-      1. Cancela de inmediato la suscripción de Stripe (si tiene una activa).
-      2. Borra las fotos del usuario del bucket de Storage (fotos-propiedades).
-      3. Borra sus filas: propiedades, contactos, contratos, user_integrations,
-         suscripciones, usage_logs, module_sessions.
-      4. Borra su fila en `usuarios`.
-      5. Borra al usuario de Supabase Auth (auth.users).
+    Pasos:
+      1. Lee (sin borrar) su suscripción de Stripe y las rutas de sus fotos.
+      2. Baja atómica en base de datos: organizaciones propias, todas sus
+         filas, ``usuarios`` y ``auth.users``. Todo o nada.
+      3. Solo si (2) se confirmó: cancela Stripe y borra sus archivos.
 
-    El frontend confirma dos veces (el usuario escribe su correo) antes de llamar.
+    El frontend confirma dos veces (el usuario escribe su correo) antes de
+    llamar y solo da por buena la baja si responde 200 con ``auth`` en true.
     """
     user_id = await get_user_id_from_token(request)
     if not user_id:
@@ -39,132 +54,75 @@ async def eliminar_cuenta_y_datos(request: Request):
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
         raise HTTPException(status_code=500, detail="Supabase no está configurado.")
 
-    sb_headers = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-        "Content-Type": "application/json",
-        "Prefer": "return=minimal",
-    }
-    sb_read_headers = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-    }
-    tablas = ["propiedades", "contactos", "contratos", "user_integrations",
-              "suscripciones", "usage_logs", "module_sessions"]
-    borrados = {}
-    errores = []
-    async with httpx.AsyncClient(timeout=30) as client:
-        if STRIPE_SECRET_KEY:
+    borrados: dict = {}
+    errores: list = []
+
+    # 1) Lecturas previas: después de la baja estas filas ya no existen.
+    sub_id = None
+    try:
+        sub_rows = await get_service_json(
+            "suscripciones",
+            {
+                "user_id": f"eq.{user_id}",
+                "select": "stripe_subscription_id",
+                "order": "updated_at.desc",
+                "limit": "1",
+            },
+            timeout=30,
+            accepted_statuses=(200,),
+        )
+        sub_id = sub_rows[0].get("stripe_subscription_id") if sub_rows else None
+    except Exception as e:
+        print(f"[eliminar-cuenta] No se pudo leer la suscripción de {user_id}: {e}")
+    rutas_fotos = await _storage_rutas_fotos_de_usuario(user_id)
+
+    # 2) Baja atómica. Si falla, no se borró nada y la cuenta sigue completa.
+    try:
+        resultado = await call_service_rpc(
+            "admin_eliminar_usuario_total",
+            {"p_user_id": user_id},
+            timeout=60,
+            accepted_statuses=(200,),
+        )
+    except httpx.HTTPStatusError as exc:
+        print(f"[eliminar-cuenta] Falló la baja de {user_id}: {exc.response.text[:300]}")
+        raise HTTPException(
+            status_code=500,
+            detail="No se pudo eliminar la cuenta. No se borró ningún dato; intenta de nuevo o escríbenos a soporte.",
+        )
+    if not (isinstance(resultado, dict) and resultado.get("ok")):
+        detalle = resultado.get("error") if isinstance(resultado, dict) else str(resultado)
+        print(f"[eliminar-cuenta] Baja de {user_id} no completada: {detalle}")
+        raise HTTPException(
+            status_code=500,
+            detail="No se pudo eliminar la cuenta. No se borró ningún dato; intenta de nuevo o escríbenos a soporte.",
+        )
+    borrados.update(resultado.get("borrado") or {})
+    borrados["usuarios"] = True
+    borrados["auth"] = True
+
+    # 3) Efectos externos, solo con la baja ya confirmada.
+    if STRIPE_SECRET_KEY:
+        if sub_id:
             try:
-                try:
-                    sub_rows = await get_service_json(
-                        "suscripciones",
-                        {
-                            "user_id": f"eq.{user_id}",
-                            "select": "stripe_subscription_id",
-                            "order": "updated_at.desc",
-                            "limit": "1",
-                        },
-                        timeout=30,
-                        accepted_statuses=(200,),
-                    )
-                except httpx.HTTPStatusError:
-                    sub_rows = []
-                sub_id = sub_rows[0].get("stripe_subscription_id") if sub_rows else None
-                if sub_id:
+                async with httpx.AsyncClient(timeout=30) as client:
                     rc = await client.delete(
                         f"https://api.stripe.com/v1/subscriptions/{sub_id}",
                         headers=_stripe_headers(),
                     )
-                    borrados["stripe"] = (rc.status_code in (200, 201))
-                    if rc.status_code not in (200, 201):
-                        errores.append(f"stripe: {rc.status_code} {rc.text[:120]}")
-                else:
-                    borrados["stripe"] = "sin_suscripcion"
+                borrados["stripe"] = rc.status_code in (200, 201)
+                if rc.status_code not in (200, 201):
+                    errores.append(f"stripe: {rc.status_code} {rc.text[:120]}")
             except Exception as e:
                 errores.append(f"stripe: {e}")
                 borrados["stripe"] = False
+        else:
+            borrados["stripe"] = "sin_suscripcion"
 
-        try:
-            try:
-                filas_fotos = await get_service_json(
-                    "propiedades",
-                    {"user_id": f"eq.{user_id}", "select": "fotos"},
-                    timeout=30,
-                    accepted_statuses=(200,),
-                )
-            except httpx.HTTPStatusError:
-                filas_fotos = []
-            objetos = []
-            for fila in (filas_fotos or []):
-                for url in (fila.get("fotos") or []):
-                    if not isinstance(url, str):
-                        continue
-                    marcador = "/fotos-propiedades/"
-                    if marcador in url:
-                        nombre = url.split(marcador, 1)[1].split("?", 1)[0]
-                        if nombre:
-                            objetos.append(nombre)
-            objetos = list(dict.fromkeys(objetos))
-            fotos_borradas = 0
-            for nombre in objetos:
-                try:
-                    rf = await client.delete(
-                        f"{SUPABASE_URL}/storage/v1/object/fotos-propiedades/{nombre}",
-                        headers=sb_read_headers,
-                    )
-                    if rf.status_code in (200, 204):
-                        fotos_borradas += 1
-                except Exception:
-                    pass
-            borrados["fotos_storage"] = f"{fotos_borradas}/{len(objetos)}"
-        except Exception as e:
-            errores.append(f"fotos_storage: {e}")
-            borrados["fotos_storage"] = False
-
-        for tabla in tablas:
-            try:
-                await delete_rows(
-                    tabla,
-                    {"user_id": f"eq.{user_id}"},
-                    timeout=30,
-                    accepted_statuses=(200, 204),
-                )
-                borrados[tabla] = True
-            except httpx.HTTPStatusError as e:
-                errores.append(f"{tabla}: {e.response.status_code} {e.response.text[:120]}")
-                borrados[tabla] = False
-            except Exception as e:
-                errores.append(f"{tabla}: {e}")
-                borrados[tabla] = False
-
-        try:
-            await delete_rows(
-                "usuarios",
-                {"id": f"eq.{user_id}"},
-                timeout=30,
-                accepted_statuses=(200, 204),
-            )
-            borrados["usuarios"] = True
-        except httpx.HTTPStatusError:
-            borrados["usuarios"] = False
-        except Exception as e:
-            errores.append(f"usuarios: {e}")
-            borrados["usuarios"] = False
-
-        try:
-            r = await client.delete(
-                f"{SUPABASE_URL}/auth/v1/admin/users/{user_id}",
-                headers={
-                    "apikey": SUPABASE_SERVICE_KEY,
-                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
-                },
-            )
-            borrados["auth"] = (r.status_code in (200, 204))
-            if r.status_code not in (200, 204):
-                errores.append(f"auth: {r.status_code} {r.text[:120]}")
-        except Exception as e:
-            errores.append(f"auth: {e}")
-            borrados["auth"] = False
+    archivos = await _storage_borrar_carpeta_usuario(user_id, rutas_fotos)
+    if archivos > 0:
+        borrados["storage (archivos)"] = archivos
+    elif archivos < 0:
+        errores.append("storage: no se pudieron borrar todos los archivos")
 
     return {"ok": True, "user_id": user_id, "borrados": borrados, "errores": errores}
