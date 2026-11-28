@@ -19,8 +19,9 @@ ROOT = Path(__file__).resolve().parents[1]
 # df49373 = 3776420 + ACM hidden, base 2a1f4f5): tokens, shared heading,
 # mobile tab bar, transparent monogram and the Inicio/Agenda/Estadísticas/
 # Inmuebles fixes, fixed bottom sheets on phones (cecil/movil-hojas) and the
-# centered floating action (cecil/movil-fab). Previous: 2a8a51f, 60aa01e, df49373.
-DESIGN_REF = '524b87d0f9d16ba63219d8833df7d0f3d37e82a6'
+# centered floating action (cecil/movil-fab) and the hola@cecilapp.co contact
+# (cecil/correo-cecilapp). Previous: 524b87d, 2a8a51f, 60aa01e, df49373.
+DESIGN_REF = 'f1fe8570dc8e74a078fd5c461fc45fcb91f3d1fc'
 BASE_REF = '2a1f4f58f9cfa6df772c8956a1dc09f5ab72c56d'
 EXTENSIONS = {'.html', '.js', '.css', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.gif', '.mp4', '.webm'}
 FOLDERS = {'brand', 'fonts', 'ui', 'styles', 'vendor', 'videos'}
