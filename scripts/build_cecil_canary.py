@@ -45,6 +45,8 @@ def build(output):
     allowed_changes.add('.github/workflows/sync-main-a-staging.yml')
     # Backend-only CORS list (cecilapp.co): never part of the Cecil artifact.
     allowed_changes.update({'core/cors.py','tests/test_cors_modes.py','cloudflare/cecil-app-worker.js'})
+    # Server-side document branding (Cecil asks for brand=cecil): backend only.
+    allowed_changes.update({'core/marca_documentos.py','core/marca_assets/cecil-wordmark.png','routers/ficha_pdf_renderer.py','routers/finanzas.py','tests/test_marca_documentos.py'})
     changed=set(git('diff','--name-only',BASE_REF,'HEAD').decode().splitlines())
     if changed - allowed_changes:
         raise ValueError('Production advanced: integrate it into the design snapshot and update the pinned base before building.')
