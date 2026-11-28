@@ -54,12 +54,12 @@
 
   /* Marca Broquer */
   --sky-navy: #191C1F;  /* estructura canon: nav, footer, botón primario */
-  --sky-navy-mid: #165474;
+  --sky-navy-mid: #2B3137;  /* Cecil: tinta, no azul petróleo */
   --sky-navy-deep: #191C1F;  /* sidebar, fondos navy profundos */
   --sky-blue: #2B3137;  /* Cecil: neutral; el naranja es la única acción */
   --sky-blue-press: #191C1F;
-  --sky-blue-lift: #9FD8F5;  /* azul brillante, solo estados activos */
-  --sky-canvas: #E7F4FC;
+  --sky-blue-lift: #FFC7A3;  /* Cecil: naranja claro para estados activos */
+  --sky-canvas: #FFF3EA;  /* Cecil: lienzo cálido (antes celeste) */
 
   --warn:     #B34E0B;   /* naranja canon */
   --warn-soft:rgba(243,116,13,0.14);
@@ -952,7 +952,7 @@ html {
   --font: var(--font-sans);
 
   /* Fondo navy tenue — para chips/badges "navy" (contactos/leads roles) */
-  --navy-soft: rgba(8, 65, 154, 0.06);
+  --navy-soft: rgba(25, 28, 31, 0.05);
 
   /* Superficies / bordes legacy (verificador, contratos, otros) */
   --wh:      var(--bone);      /* superficie blanca de card   */
@@ -1001,7 +1001,7 @@ html {
 
   /* Acento azul claro para texto sobre superficies navy (heros oscuros).
      El azul de acción #1240A0 no contrasta sobre --sky-navy. */
-  --sky-blue-on-dark: #8FB0F5;
+  --sky-blue-on-dark: #FFB585;
 
   /* ════════════════════════════════════════════════════════════
      CANVAS DE APLICACION
@@ -1026,9 +1026,9 @@ html {
      Decision de Chava: la paleta es VIVA y variada — una grafica
      jamas debe verse como ocho tonos de azul.
      ════════════════════════════════════════════════════════════ */
-  --data-1: #0A5DE0;   /* azul     — serie principal (= azul de accion) */
+  --data-1: #F26A1B;   /* naranja Cecil — serie principal */
   --data-2: #12A150;   /* verde */
-  --data-3: #F7740D;   /* naranja */
+  --data-3: #0A5DE0;   /* azul (serie secundaria) */
   --data-4: #ED4C86;   /* rosa */
   --data-5: #7A4DF0;   /* violeta */
   --data-6: #0AA6C8;   /* cian */
@@ -1037,9 +1037,9 @@ html {
 
   /* Rellenos translucidos de la misma rampa (areas, heatmaps, fondos
      de badge). Mismo indice = mismo color, solo que al 12%. */
-  --data-1-soft: rgba(10, 93, 224, 0.12);
+  --data-1-soft: rgba(242, 106, 27, 0.13);
   --data-2-soft: rgba(18, 161, 80, 0.13);
-  --data-3-soft: rgba(247, 116, 13, 0.13);
+  --data-3-soft: rgba(10, 93, 224, 0.12);
   --data-4-soft: rgba(237, 76, 134, 0.13);
   --data-5-soft: rgba(122, 77, 240, 0.12);
   --data-6-soft: rgba(10, 166, 200, 0.13);

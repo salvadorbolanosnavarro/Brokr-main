@@ -502,3 +502,184 @@ html body :is(.bk-shk-close,.bk-shk-mic,.bk-shk-send) svg{width:16px!important;h
   html body .bk-modal .bk-field-row>.bk-field{margin:0;min-width:0}
   html body .bk-modal .bk-modal__body>.bk-field+.bk-field,html body .bk-modal .bk-modal__body>.bk-field-row+.bk-field,html body .bk-modal .bk-modal__body>.bk-field+.bk-field-row{margin-top:14px}
 }
+
+/* ── Ficha técnica: la vista previa usa la marca de Cecil, igual que el PDF ── */
+body[data-app=ficha-manual] .ficha-page{--sky-blue:#F26A1B;--sky-blue-press:#D9550A;--sky-blue-lift:#FFC7A3;--sky-navy:#191C1F;--sky-navy-mid:#2B3137}
+body[data-app=ficha-manual] .cover-brandmark{height:30px!important;padding:6px 10px;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(25,28,31,.18)}
+body[data-app=ficha-manual] .cover-brandmark img{height:100%!important;width:auto}
+
+/* ══ Consola de dueño (admin.html) ══════════════════════════════════════
+ * Solo la consola de administración: lienzo naranja Cecil, tarjetas blancas
+ * y texto tinta. Blanco sobre este naranja no llega a 4.5:1, así que todo
+ * texto sobre el lienzo es tinta (5.6:1) o el secundario #3B2417 (≥4.6:1). */
+body[data-app=admin]{
+  --own-bg:#F26A1B;--own-ink:#191C1F;--own-ink-2:#3B2417;--own-card:#fff;--own-warm:#FFF7F1;
+  --own-soft:#FFE6D6;--own-line:#EEE4DC;--own-mute:#5C6670;--own-accent:#F26A1B;--own-accent-ink:#C2470A;
+  --own-shadow:0 1px 2px rgba(25,28,31,.08),0 10px 30px -12px rgba(110,35,0,.35);--own-r:16px;
+  background:var(--own-bg)!important;color:var(--own-ink)
+}
+html:has(body[data-app=admin]){background:var(--own-bg)}
+body[data-app=admin]::before{display:none!important}
+body[data-app=admin]>:is(.ac-root,.ac-ov,.adm-toast){max-width:none!important;margin:0!important;box-sizing:border-box!important}
+body[data-app=admin]>.ac-root{padding:0!important;background:radial-gradient(1100px 520px at 88% -8%,#FF9C5E 0%,rgba(255,156,94,0) 62%),var(--own-bg)}
+body[data-app=admin]>.adm-toast{padding:12px 24px!important;left:50%!important}
+@media(min-width:881px){body[data-app=admin]>.ac-ov{padding:16px!important}}
+html body[data-app=admin] .ac-ov{background:rgba(25,28,31,.55)}
+
+/* Barra superior: tinta, con el sello de dueño */
+html body[data-app=admin] .ac-root .ac-top{background:var(--own-ink);color:#fff;border-bottom:0;height:64px;padding:0 max(24px,calc((100% - 1320px)/2 + 24px));gap:16px}
+html body[data-app=admin] .ac-top__brand{display:flex;align-items:center;gap:12px;color:#fff}
+html body[data-app=admin] .ac-top__logo{height:22px;width:auto;filter:brightness(0) invert(1);display:block}
+html body[data-app=admin] .ac-top__badge{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--own-accent);color:var(--own-ink);font:700 12px/1 var(--ui-font);letter-spacing:.01em;white-space:nowrap}
+html body[data-app=admin] .ac-root .ac-range{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:3px;gap:2px}
+html body[data-app=admin] .ac-range .ac-range__btn.ac-range__btn{height:30px;min-height:30px;padding:0 12px;border:0;border-radius:999px;background:transparent;color:#D5D9DD;font:600 13px/1 var(--ui-font);box-shadow:none}
+html body[data-app=admin] .ac-range .ac-range__btn.ac-range__btn:hover{color:#fff;background:rgba(255,255,255,.08)}
+html body[data-app=admin] .ac-range .ac-range__btn.ac-range__btn.is-on{background:var(--own-accent);color:var(--own-ink)}
+html body[data-app=admin] .ac-root .ac-top__back{color:#fff;height:34px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);font:600 13px/1 var(--ui-font);background:transparent}
+html body[data-app=admin] .ac-root .ac-top__back:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* Pestañas: píldoras sobre el naranja */
+html body[data-app=admin] .ac-tabs{background:transparent;border:0;gap:4px;padding:16px max(24px,calc((100% - 1320px)/2 + 24px)) 0}
+html body[data-app=admin] .ac-tabs .ac-tab.ac-tab{height:38px;min-height:38px;padding:0 16px;border:0;margin:0;border-radius:999px;background:rgba(255,255,255,.2);color:var(--own-ink);font:600 14px/1 var(--ui-font);box-shadow:none;white-space:nowrap}
+html body[data-app=admin] .ac-tabs .ac-tab.ac-tab:hover{background:rgba(255,255,255,.38)}
+html body[data-app=admin] .ac-tabs .ac-tab.ac-tab.is-on{background:var(--own-ink);color:#fff}
+html body[data-app=admin] .ac-tab__n{background:#fff;color:var(--own-accent-ink)}
+html body[data-app=admin] .ac-tab.is-on .ac-tab__n{background:var(--own-accent);color:var(--own-ink)}
+
+/* Encabezados sobre el lienzo */
+html body[data-app=admin] .ac-root .ac-wrap{max-width:1320px;padding:28px 24px 56px}
+html body[data-app=admin] .ac-eyebrow{font:700 13px/1.3 var(--ui-font);letter-spacing:.04em;text-transform:uppercase;color:var(--own-ink-2);margin-bottom:6px}
+html body[data-app=admin] .ac-h{font:800 clamp(30px,4vw,44px)/1.05 var(--ui-font);letter-spacing:-.035em;color:var(--own-ink);margin-bottom:8px}
+html body[data-app=admin] .ac-sub{font-size:15px;color:var(--own-ink-2);margin-bottom:24px}
+html body[data-app=admin] .ac-sec{margin-top:36px}
+html body[data-app=admin] .ac-sec__h h2{font:700 20px/1.2 var(--ui-font);letter-spacing:-.02em;color:var(--own-ink)}
+html body[data-app=admin] .ac-sec__h>span{font-size:13px;color:var(--own-ink-2)}
+html body[data-app=admin] .ac-wrap>.ac-note,html body[data-app=admin] .ac-sec>.ac-note{color:var(--own-ink-2)}
+
+/* Tarjetas blancas */
+html body[data-app=admin] .ac-root :is(.ac-card,.ac-kpi,.ac-tablewrap,.ac-seg){background:var(--own-card);border:0;border-radius:var(--own-r);box-shadow:var(--own-shadow)}
+html body[data-app=admin] .ac-card{padding:20px 24px}
+
+/* KPIs: tarjeta héroe tinta de 2×2 + mosaico */
+html body[data-app=admin] .ac-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+html body[data-app=admin] .ac-kpi{padding:20px 22px;min-width:0;display:flex;flex-direction:column}
+html body[data-app=admin] .ac-kpi__l{font:600 13px/1.3 var(--ui-font);letter-spacing:0;color:var(--own-mute)}
+html body[data-app=admin] .ac-kpi__v{font:800 clamp(26px,2.6vw,34px)/1.05 var(--ui-font);letter-spacing:-.03em;color:var(--own-ink);margin-top:10px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+html body[data-app=admin] .ac-kpi__d{font:600 12px/1.4 var(--ui-font);color:var(--own-mute);margin-top:auto;padding-top:10px}
+html body[data-app=admin] .ac-kpi__d.up{color:#127A45}
+html body[data-app=admin] .ac-kpi__d.down{color:#B42318}
+html body[data-app=admin] .ac-kpis>.ac-kpi:last-child:is(:nth-child(6),:nth-child(8)){grid-column:span 2}
+html body[data-app=admin] #pan-kpis .ac-kpi--navy{grid-row:span 2}
+html body[data-app=admin] .ac-kpi.ac-kpi--navy{grid-column:span 2;background:var(--own-ink);padding:26px 28px;position:relative;overflow:hidden}
+html body[data-app=admin] .ac-kpi--navy .ac-kpi__l{color:#FFB585;font-size:14px}
+html body[data-app=admin] .ac-kpi--navy .ac-kpi__v{color:#fff;font-size:clamp(40px,5vw,64px);margin-top:12px}
+html body[data-app=admin] .ac-kpi--navy .ac-kpi__d{color:#C9CDD2;font-size:14px;margin-top:8px;padding-top:0}
+html body[data-app=admin] .ac-kpi__spark{display:block;width:100%;height:64px;margin-top:auto;padding-top:16px;overflow:visible}
+html body[data-app=admin] .ac-kpi__spark polygon{fill:rgba(242,106,27,.22)}
+html body[data-app=admin] .ac-kpi__spark polyline{fill:none;stroke:var(--own-accent);stroke-width:2.5;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
+
+/* Gráfica y barras */
+html body[data-app=admin] .ac-chart{height:200px;gap:4px}
+html body[data-app=admin] .ac-chart__bar{background:var(--own-accent);border-radius:4px 4px 0 0}
+html body[data-app=admin] .ac-chart__col:hover .ac-chart__bar{background:var(--own-ink)}
+html body[data-app=admin] .ac-chart__axis{color:var(--own-mute);border-top-color:var(--own-line)}
+html body[data-app=admin] .ac-bars{gap:8px}
+html body[data-app=admin] .ac-bar{background:#FAF6F3;border-radius:10px;padding:12px 14px}
+html body[data-app=admin] .ac-bar__fill{background:var(--own-soft);border-radius:10px;box-shadow:inset 3px 0 0 var(--own-accent)}
+html body[data-app=admin] .ac-bar__name{font-size:14px;color:var(--own-ink)}
+html body[data-app=admin] .ac-bar__val{font-size:13px;font-weight:600;color:var(--own-ink)}
+html body[data-app=admin] .ac-bar__meta{color:var(--own-mute)}
+@media(min-width:1100px){
+  html body[data-app=admin] #v-panorama .ac-wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}
+  html body[data-app=admin] #v-panorama .ac-wrap>:is(.ac-eyebrow,.ac-h,.ac-sub,.ac-kpis),html body[data-app=admin] #v-panorama .ac-wrap>.ac-sec:nth-of-type(1){grid-column:1/-1}
+}
+
+/* Tablas */
+html body[data-app=admin] .ac-table th{background:#FAF6F3;color:var(--own-mute);font-size:12px;letter-spacing:.02em;border-bottom-color:var(--own-line);padding:12px 16px}
+html body[data-app=admin] .ac-table td{border-bottom-color:var(--own-line);color:var(--own-ink);padding:14px 16px}
+html body[data-app=admin] .ac-table tbody tr:hover{background:var(--own-warm)}
+html body[data-app=admin] .ac-empty{color:var(--own-mute)}
+
+/* Usuarios y Correo: dos tarjetas flotando sobre el naranja */
+html body[data-app=admin] :is(.adm-root,.co-root){gap:16px;padding:16px max(24px,calc((100% - 1320px)/2 + 24px)) 24px;box-sizing:border-box}
+html body[data-app=admin] :is(.adm-side,.co-side){background:var(--own-card);border:0;border-radius:var(--own-r);box-shadow:var(--own-shadow);overflow:hidden}
+html body[data-app=admin] :is(.adm-panel,.co-read){background:var(--own-warm);border-radius:var(--own-r);box-shadow:var(--own-shadow)}
+html body[data-app=admin] :is(.adm-side__top,.adm-filters,.co-side__top,.co-item){border-color:var(--own-line)}
+html body[data-app=admin] .adm-stat{background:var(--own-warm);border:0;border-radius:12px;padding:10px 8px}
+html body[data-app=admin] .adm-stat__v{font:800 22px/1.1 var(--ui-font);color:var(--own-ink)}
+html body[data-app=admin] .adm-stat__l{color:var(--own-mute)}
+html body[data-app=admin] .adm-filters{flex-wrap:wrap;gap:6px;overflow:visible}
+html body[data-app=admin] .adm-filters .adm-chip.adm-chip{height:32px!important;min-height:32px!important;padding:0 12px!important;border-radius:999px!important;border:1px solid var(--own-line)!important;background:#fff!important;color:var(--own-ink)!important;font:600 13px/1 var(--ui-font)!important;box-shadow:none!important}
+html body[data-app=admin] .adm-filters .adm-chip.adm-chip.is-on{background:var(--own-ink)!important;border-color:var(--own-ink)!important;color:#fff!important}
+html body[data-app=admin] .adm-search #adm-search{padding-left:36px!important}
+html body[data-app=admin] .adm-search svg{z-index:1;pointer-events:none}
+html body[data-app=admin] .adm-row{border-radius:12px;padding:10px 12px}
+html body[data-app=admin] .adm-row:hover{background:var(--own-warm)}
+html body[data-app=admin] .adm-row.is-on{background:var(--own-soft);border-color:transparent;box-shadow:inset 3px 0 0 var(--own-accent)}
+html body[data-app=admin] :is(.adm-row__av,.adm-det__av){background:var(--own-ink);border-radius:999px}
+html body[data-app=admin] .adm-row.is-on .adm-row__av{background:var(--own-accent);color:var(--own-ink)}
+html body[data-app=admin] .adm-empty-state svg{color:#E0B99E}
+html body[data-app=admin] .adm-empty-state p{color:var(--own-ink-2)}
+html body[data-app=admin] .adm-det__head{background:var(--own-card);border-bottom-color:var(--own-line)}
+html body[data-app=admin] .adm-sec{background:var(--own-card);border:0;border-radius:14px;box-shadow:0 1px 2px rgba(25,28,31,.06),0 0 0 1px var(--own-line)}
+html body[data-app=admin] .adm-sec__title{color:var(--own-mute)}
+html body[data-app=admin] :is(.adm-ust,.adm-uso-list){background:var(--own-warm);border-color:var(--own-line)}
+html body[data-app=admin] .adm-switch.is-on{background:var(--own-accent)}
+html body[data-app=admin] .adm-actions{background:var(--own-card);border-top-color:var(--own-line)}
+html body[data-app=admin] .co-item:hover{background:var(--own-warm)}
+html body[data-app=admin] .co-item.is-on{background:var(--own-soft);box-shadow:inset 3px 0 0 var(--own-accent)}
+html body[data-app=admin] .co-read__head{background:var(--own-card);border-bottom-color:var(--own-line)}
+html body[data-app=admin] .co-boxes{background:var(--own-warm);border-color:var(--own-line)}
+
+/* Marketing: segmentos como tarjetas grandes */
+html body[data-app=admin] .ac-segs{gap:16px}
+html body[data-app=admin] .ac-seg.ac-seg{height:auto;min-height:0;display:block;padding:22px 24px;border:0;text-align:left;position:relative;overflow:hidden}
+html body[data-app=admin] .ac-seg.ac-seg::after{content:'';position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;background:var(--own-soft)}
+html body[data-app=admin] .ac-seg.ac-seg:hover{box-shadow:0 0 0 2px var(--own-ink),var(--own-shadow)}
+html body[data-app=admin] .ac-seg__n{font:800 40px/1 var(--ui-font);color:var(--own-ink);position:relative;z-index:1}
+html body[data-app=admin] .ac-seg__t{position:relative;z-index:1;font-size:15px}
+html body[data-app=admin] .ac-seg__d{color:var(--own-mute);position:relative;z-index:1}
+
+/* Botones principales en tinta (naranja queda para acentos) */
+html body[data-app=admin] .ac-btn--blue.ac-btn--blue{background:var(--own-ink)!important;border-color:var(--own-ink)!important;color:#fff!important}
+html body[data-app=admin] .ac-btn--blue.ac-btn--blue:hover{background:#000!important}
+html body[data-app=admin] .adm-rolgrid .adm-roloption.adm-roloption{height:auto!important;min-height:0!important;display:block!important;padding:12px 14px!important;white-space:normal;text-align:left;border-radius:12px!important;border:1px solid var(--own-line)!important;background:#fff!important;color:var(--own-ink)!important;box-shadow:none!important}
+html body[data-app=admin] .adm-rolgrid .adm-roloption.adm-roloption:is(.is-sel-admin,.is-sel-equipo,.is-sel-agente){border-color:var(--own-accent)!important;background:var(--own-soft)!important;box-shadow:inset 0 0 0 1px var(--own-accent)!important}
+html body[data-app=admin] :is(.ac-input,.ac-textarea,.adm-search input):focus{border-color:var(--own-accent);box-shadow:0 0 0 3px rgba(242,106,27,.22)}
+html body[data-app=admin] .adm-toast{background:var(--own-ink)}
+
+/* Teléfono */
+@media(max-width:720px){
+  html body[data-app=admin] .ac-root .ac-top{height:auto;min-height:56px;padding:10px 16px;gap:10px;flex-wrap:wrap}
+  html body[data-app=admin] .ac-top__spacer{display:none}
+  html body[data-app=admin] .ac-root .ac-range{order:3;width:100%;display:flex}
+  html body[data-app=admin] .ac-root .ac-range .ac-range__btn.ac-range__btn{flex:1}
+  html body[data-app=admin] .ac-top__logo{height:18px}
+  html body[data-app=admin] .ac-top__badge{height:24px;padding:0 8px;font-size:11px}
+  html body[data-app=admin] .ac-root .ac-top__back{display:none}
+  html body[data-app=admin] .ac-root .ac-range .ac-range__btn.ac-range__btn{padding:0 9px;font-size:12px;height:28px;min-height:28px}
+  html body[data-app=admin] .ac-tabs{padding:12px 16px 0}
+  html body[data-app=admin] .ac-root .ac-wrap{padding:20px 16px 48px}
+  html body[data-app=admin] .ac-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  html body[data-app=admin] .ac-kpi{padding:16px}
+  html body[data-app=admin] .ac-kpis .ac-kpi.ac-kpi--navy{grid-row:auto;padding:20px}
+  html body[data-app=admin] .ac-kpis>.ac-kpi:last-child:is(:nth-child(6),:nth-child(8)){grid-column:auto}
+  html body[data-app=admin] .ac-kpis>.ac-kpi:last-child:nth-child(even){grid-column:span 2}
+  html body[data-app=admin] .ac-kpi__v{font-size:26px}
+  html body[data-app=admin] .ac-kpi--navy .ac-kpi__v{font-size:40px}
+  html body[data-app=admin] .ac-card{padding:16px}
+  html body[data-app=admin] :is(.adm-root,.co-root){padding:12px 12px 16px}
+}
+@media(max-width:1000px){html body[data-app=admin] .adm-panel{border-radius:0;box-shadow:none;inset:0;z-index:calc(var(--z-overlay,1000) - 1)}}
+html body[data-app=admin] .adm-det__back{display:none}
+html body[data-app=admin] .adm-sec{min-width:0}
+@media(max-width:1000px){
+  html body[data-app=admin] .adm-det__head{flex-wrap:wrap;padding:12px 16px 16px;gap:12px}
+  html body[data-app=admin] .adm-det__back.adm-det__back{display:inline-flex;align-items:center;gap:4px;flex-basis:100%;justify-content:flex-start;height:36px!important;min-height:36px!important;padding:0 10px 0 4px!important;margin-left:-4px;border:0!important;background:transparent!important;color:var(--own-ink)!important;font:600 14px/1 var(--ui-font)!important;box-shadow:none!important;width:100%}
+  html body[data-app=admin] .adm-det__head>.ac-btn{order:5;flex:1 1 100%}
+  html body[data-app=admin] .adm-det__info{flex:1 1 0;min-width:0}
+  html body[data-app=admin] .adm-det__body{grid-template-columns:minmax(0,1fr)}
+}
+html body[data-app=admin] .ac-row-acts{flex-wrap:wrap}
+@media(max-width:1000px){html body[data-app=admin] .co-read:has(#co-detalle.is-hidden){display:none}}
+html body[data-app=admin] .ac-card .ac-tablewrap{box-shadow:0 0 0 1px var(--own-line)}

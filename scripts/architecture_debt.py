@@ -205,7 +205,7 @@ LARGE_FILE_MAX_BYTES = {
     # propietario) — texto legal pedido por el usuario, no debt.
     # +169 bytes en cecil/diseno-impuestos (c5e8df39): rebranding del texto
     # legal del ACM; venía en rojo desde la rama base, no es deuda nueva.
-    "legal.html": 118_342,
+    "legal.html": 118_392,  # + dominio cecilapp.co en el aviso legal
     # Biblioteca de terceros minificada (React 18.2.0), vendorizada en
     # 27bf876d para el rediseño; no es código propio que se pueda partir.
     "vendor/react-18.2.0/react-dom.production.min.js": 131_882,

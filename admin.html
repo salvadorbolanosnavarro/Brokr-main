@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="isotipo-black.png"/>
 <link rel="apple-touch-icon" href="isotipo-black.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-<title>Consola · Broquer</title>
+<title>Consola de dueño · Cecil</title>
 <link rel="stylesheet" href="brokr-theme.css"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -351,8 +351,8 @@ button{cursor:pointer}
   <!-- ═══ Barra superior ═══ -->
   <header class="ac-top">
     <div class="ac-top__brand">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-      Consola Broquer
+      <img class="ac-top__logo" src="brand/cecil-wordmark.webp" alt="Cecil" width="72" height="24"/>
+      <span class="ac-top__badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 18h18l-1.5-10-5 4L12 5l-2.5 7-5-4z"/></svg>Consola de dueño</span>
     </div>
     <div class="ac-top__spacer"></div>
     <div class="ac-range" id="ac-range">
@@ -360,7 +360,7 @@ button{cursor:pointer}
       <button class="ac-range__btn is-on" data-d="30" onclick="setRango(30)">30 días</button>
       <button class="ac-range__btn" data-d="90" onclick="setRango(90)">90 días</button>
     </div>
-    <a class="ac-top__back" href="index.html">Volver</a>
+    <a class="ac-top__back" href="index.html">Volver a Cecil</a>
   </header>
 
   <!-- ═══ Pestañas ═══ -->
@@ -375,6 +375,7 @@ button{cursor:pointer}
   <!-- ═══════════ PANORAMA ═══════════ -->
   <section class="ac-view is-on" id="v-panorama">
     <div class="ac-wrap">
+      <p class="ac-eyebrow" id="pan-hola">Consola de dueño</p>
       <h1 class="ac-h">Panorama del negocio</h1>
       <p class="ac-sub" id="pan-sub">Cargando…</p>
 
@@ -462,6 +463,7 @@ button{cursor:pointer}
 
         <div class="adm-detail" id="adm-detail" role="region" aria-label="Detalle de usuario">
           <header class="adm-det__head">
+            <button type="button" class="adm-det__back" onclick="closeMobileDetail()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Usuarios</button>
             <div class="adm-det__av" id="d-av" onclick="closeMobileDetail()">—</div>
             <div class="adm-det__info">
               <div class="adm-det__name" id="d-name">—</div>
@@ -971,8 +973,18 @@ function kpi(label, valor, delta, clase, navy){
   '</div>';
 }
 
+function saludoDueno(){
+  const el = document.getElementById('pan-hola'); if(!el) return;
+  const now = new Date(), h = now.getHours();
+  const hola = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  let fecha = '';
+  try{ fecha = now.toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long'}); }catch(_){}
+  el.textContent = hola + (fecha ? ' · ' + fecha : '');
+}
+
 function renderPanorama(d){
   const k = d.kpis;
+  saludoDueno();
   document.getElementById('pan-sub').textContent =
     'Últimos ' + d.dias + ' días · ' + nfmt(k.usuarios_total) + ' usuarios en total · ' +
     nfmt(k.suscritos) + ' pagando · ' + nfmt(k.cortesia) + ' de cortesía';
@@ -995,6 +1007,15 @@ function renderPanorama(d){
 
   const altas = d.altas || [];
   const max = Math.max.apply(null, altas.map(a => a.n).concat([1]));
+  const hero = document.querySelector('#pan-kpis .ac-kpi--navy');
+  if(hero && altas.length > 1){
+    const W = 240, H = 48, step = W / (altas.length - 1);
+    const pts = altas.map((a, i) => (i*step).toFixed(1) + ',' + (H - 4 - (a.n/max)*(H - 8)).toFixed(1));
+    hero.insertAdjacentHTML('beforeend',
+      '<svg class="ac-kpi__spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+      '<polygon points="0,' + H + ' ' + pts.join(' ') + ' ' + W + ',' + H + '"/>' +
+      '<polyline points="' + pts.join(' ') + '"/></svg>');
+  }
   document.getElementById('pan-chart').innerHTML = altas.map(a =>
     '<div class="ac-chart__col" title="' + a.fecha + ': ' + a.n + '">' +
       '<div class="ac-chart__bar" style="height:' + Math.max(2, Math.round(a.n*100/max)) + '%"></div>' +

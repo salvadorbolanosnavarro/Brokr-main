@@ -1210,7 +1210,8 @@ async function generarFicha(){
       amenities: d.amen ? d.amen.split(',').map(a=>({name:a.trim()})).filter(a=>a.name) : [],
       videos: (d.mm || '').split(/\s+/).filter(u => /^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(u)),
       virtual_tours: (d.mm || '').split(/\s+/).filter(u => /^https:\/\//i.test(u) && !/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(u)),
-      property_images: fotos.map(f => ({ url: f.url, original: f.url }))
+      property_images: fotos.map(f => ({ url: f.url, original: f.url })),
+      brand: 'cecil' // el servidor arma la ficha con la marca de Cecil
     };
 
     const _tk = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token') || '';
