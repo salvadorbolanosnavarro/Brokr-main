@@ -31,10 +31,19 @@ class StagingBrandTests(unittest.TestCase):
         result = brand_asset('index.html', source)
         self.assertIn('<title>Cecil · Inicio</title>', result)
         for token in ['id="broquer-login"', 'onclick="showBroquerMaxModal()"',
-                      'mailto:hola@broquer.app?subject=Broquer%20Max',
+
                       "'Broquer-use-in-ficha'", 'window.BroquerEditorImages',
                       "'https://api.broquer.app'", "localStorage.getItem('broquer-session')"]:
             self.assertIn(token, result)
+
+    def test_contact_mailbox_is_cecils_own(self):
+        source = '<a href="mailto:hola@broquer.app?subject=Broquer%20Max">hola@broquer.app</a><script>var EMAIL = \'hola@broquer.app\';const API=\'https://api.broquer.app\';</script>'
+        result = brand_asset('soporte.html', source)
+        self.assertIn('href="mailto:hola@cecilapp.co?subject=Cecil%20Max"', result)
+        self.assertIn('>hola@cecilapp.co</a>', result)
+        self.assertIn("var EMAIL = 'hola@cecilapp.co'", result)
+        self.assertNotIn('hola@broquer.app', result)
+        self.assertIn("'https://api.broquer.app'", result)
 
     def test_logo_sources_and_accessible_name(self):
         source = '<a class="bk-design-brand" href="index.html" aria-label="Broquer, inicio">broquer<span>.</span></a>'

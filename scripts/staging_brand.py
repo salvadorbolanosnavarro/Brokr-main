@@ -15,6 +15,7 @@ MONOGRAM = '/brand/cecil-monogram.svg'
 MONOGRAM_PNG = '/brand/cecil-monogram.png'
 TOUCH_ICON = '/brand/cecil-icon.png'
 APP_ICON = '/brand/cecil-icon.svg'
+CONTACT_EMAIL = 'hola@cecilapp.co'
 
 
 def write_brand_artwork(root, output):
@@ -40,6 +41,10 @@ def brand_asset(name, text):
     text = re.sub(r'(?:https?://|mailto:)[^\s\"\'<>`]+|(?<![\w@./-])Broquer(?![\w/-]|\.(?:app|com|png|svg|js))',
                   lambda match: 'Cecil' if match[0] == 'Broquer' else match[0], text)
     text = re.sub(r'(?<![\w@./-])Broq(?![\w/-]|\.(?:app|com|png|svg|js))', 'Cecil IA', text)
+    # Cecil's own contact mailbox (GoDaddy, cecilapp.co). Display text and
+    # mailto links only; server-side senders and API hosts are untouched.
+    text = text.replace('hola@broquer.app', CONTACT_EMAIL)
+    text = re.sub(r'(mailto:' + re.escape(CONTACT_EMAIL) + r'\?[^"\'<>\s]*?subject=)Broquer(%20|\+|\b)', r'\1Cecil\2', text)
     if name == 'app-shell.js':
         # Name aliases only; retain existing voice activation behavior/aliases.
         text = text.replace('const WAKE = [', "const WAKE = ['cecil ia','cecil','oye cecil ia','oye cecil',", 1)
