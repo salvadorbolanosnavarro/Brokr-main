@@ -31,6 +31,30 @@ def git(*args):
     return subprocess.check_output(['git', *args], cwd=ROOT)
 
 
+def cecil_legal(text, brand):
+    """Legal text for the Cecil build.
+
+    * Clause 14.1 of the Terms and the Terms' update date come from production
+      (ROOT/legal.html), so legal wording is never stale in the pilot.
+    * The Subscription Contract keeps "Broquer" as the counterparty: the
+      presentation rebrand must not rename the contracting party.
+    """
+    prod=(ROOT/'legal.html').read_text(encoding='utf-8')
+    clause=re.search(r'<p>14\.1\..*?</p>', prod, re.S)
+    if not clause:raise ValueError('Production legal.html lost clause 14.1')
+    text,n=re.subn(r'<p>14\.1\..*?</p>', lambda _m: brand.brand_asset('legal-fragment', clause.group(0)), text, count=1, flags=re.S)
+    if n!=1:raise ValueError('Cecil legal.html lost clause 14.1')
+    fecha=re.search(r'<p class="doc-date">[^<]*</p>', prod)
+    text=re.sub(r'<p class="doc-date">[^<]*</p>', lambda _m: fecha.group(0), text, count=1)
+    start=text.find('<div id="panel-contrato"')
+    if start<0:raise ValueError('Cecil legal.html lost the Subscription Contract panel')
+    end=text.find('<div id="panel-', start+1)
+    end=len(text) if end<0 else end
+    contrato=re.sub(r'(?<![\w@./-])Cecil IA(?![\w/-])', 'Broq', text[start:end])
+    contrato=re.sub(r'(?<![\w@./-])Cecil(?![\w/-]|\.(?:app|co|com))', 'Broquer', contrato)
+    return text[:start]+contrato+text[end:]
+
+
 def build(output):
     output = Path(output).resolve()
     if output == ROOT or output.name != 'cecil' or output.exists():
@@ -47,6 +71,11 @@ def build(output):
     allowed_changes.update({'core/cors.py','tests/test_cors_modes.py','cloudflare/cecil-app-worker.js'})
     # Backend-only atomic self-delete fix + its test and SQL check: never part of the Cecil artifact.
     allowed_changes.update({'routers/account_delete.py','tests/test_main_self_account_delete_core_refactor.py','sql-manual/20261128-usuarios-huerfanos.sql'})
+    # Billing-safe self-delete: backend module, plus production legal.html
+    # (clause 14.1 is sourced from production by cecil_legal) and the
+    # production-only delete prompt in guia-agente.html.
+    # Approved by the owner (2026-11-28): size ceilings bumped for these changes.
+    allowed_changes.update({'core/suscripcion_baja.py','legal.html','guia-agente.html','scripts/architecture_debt.py'})
     changed=set(git('diff','--name-only',BASE_REF,'HEAD').decode().splitlines())
     if changed - allowed_changes:
         raise ValueError('Production advanced: integrate it into the design snapshot and update the pinned base before building.')
@@ -86,6 +115,8 @@ def build(output):
                         marker='    if (!profile) return; // redirected to login/landing'
                         if marker not in text:raise ValueError('Missing shell authentication hook')
                         text=text.replace(marker,marker+"\n    const rollout=document.createElement('script');rollout.src='/ui/cecil-rollout.js';rollout.onload=()=>window.bkCecilRollout?.({api:API_BASE,getToken,userId:profile.user.id});document.head.appendChild(rollout);",1)
+                    if relative==Path('legal.html'):
+                        text=cecil_legal(text, brand)
                     if relative==Path('propiedades.html'):
                         # Approved modal footer is outside the form in this design.
                         text=text.replace("const btn = form.querySelector('.pf-save-btn');", "const btn = e.submitter || form.querySelector('.pf-save-btn') || document.querySelector('.pf-save-btn[form=\"prop-form\"]');")

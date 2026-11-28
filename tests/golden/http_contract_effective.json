@@ -1,5 +1,5 @@
 {
-  "count": 361,
+  "count": 362,
   "operations": [
     {
       "body": false,
@@ -3425,6 +3425,15 @@
       "method": "DELETE",
       "params": [],
       "path": "/usuario/eliminar-cuenta",
+      "responses": [
+        "200"
+      ]
+    },
+    {
+      "body": false,
+      "method": "GET",
+      "params": [],
+      "path": "/usuario/eliminar-cuenta/suscripcion",
       "responses": [
         "200"
       ]

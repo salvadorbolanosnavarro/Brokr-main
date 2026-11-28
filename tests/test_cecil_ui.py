@@ -88,3 +88,31 @@ class PilotTests(unittest.TestCase):
                 self.assertNotIn('user-scalable=no', page.read_text())
             self.assertIn('Cecil', (output/'index.html').read_text())
             with self.assertRaises(ValueError):build(output)
+
+
+class CecilLegalTests(unittest.TestCase):
+    """Contract counterparty stays "Broquer"; clause 14.1 comes from production."""
+
+    class Brand:
+        @staticmethod
+        def brand_asset(name, text):
+            return text.replace('Broquer', 'Cecil')
+
+    def test_contract_keeps_broquer_and_clause_from_production(self):
+        from scripts.build_cecil_canary import cecil_legal, ROOT
+        design = ('<p class="doc-date">Última actualización: 1 de enero</p>'
+                  '<div id="panel-tyc"><p>Cecil</p><p>14.1. viejo Cecil.</p></div>'
+                  '<div id="panel-contrato" class="tab-panel"><p>Contrato con Cecil (en adelante, "Cecil"); asistente Cecil IA; hola@cecilapp.co</p></div>'
+                  '<div id="panel-privacidad"><p>Cecil</p></div>')
+        out = cecil_legal(design, self.Brand)
+        a = out.index('<div id="panel-contrato"'); b = out.index('<div id="panel-privacidad"')
+        self.assertNotIn('Cecil', out[a:b])
+        self.assertIn('"Broquer"', out[a:b])
+        self.assertIn('Broq;', out[a:b])
+        self.assertIn('hola@cecilapp.co', out[a:b])
+        self.assertIn('Cecil', out[b:])
+        prod = (ROOT / 'legal.html').read_text(encoding='utf-8')
+        self.assertIn('cancela automáticamente cualquier Suscripción activa', prod)
+        self.assertIn('cancela automáticamente cualquier Suscripción activa', out[:a])
+        self.assertNotIn('14.1. viejo', out)
+        self.assertNotIn('1 de enero', out)

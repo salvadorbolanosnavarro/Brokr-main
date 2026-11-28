@@ -3307,6 +3307,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
               <div class="bk-pd-menu-panel-inner">
                 <div class="bk-pd-card">
                   <p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:12px">Esta acción elimina de forma permanente tu cuenta y todos tus datos (propiedades, contactos, contratos e integraciones). No se puede deshacer.</p>
+                  <p id="pd-del-sub-aviso" style="display:none;font-size:13px;color:var(--ink);background:rgba(220,38,38,.08);border-radius:10px;padding:10px 12px;line-height:1.5;margin-bottom:12px"></p>
                   <div class="bk-pd-field">
                     <label>Para confirmar, escribe tu correo</label>
                     <input type="email" id="pd-del-input" placeholder="tu@correo.com" autocomplete="off" autocorrect="off" spellcheck="false" oninput="checkDeleteMatch()"/>
@@ -3401,6 +3402,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
     document.querySelectorAll('.bk-pd-menu-item.is-open').forEach(el => el.classList.remove('is-open'));
     // Abrir el seleccionado si estaba cerrado
     if (!isOpen) item.classList.add('is-open');
+    if (!isOpen && key === 'del') revisarSuscripcionAntesDeEliminar();
   }
   window.togglePdSection = togglePdSection;
 
@@ -3725,6 +3727,23 @@ body[data-app="facebook-ads"]{--page-max:980px}
   window.changePasswordFromProfile = changePasswordFromProfile;
 
   // ── Eliminar cuenta (acción irreversible) ────────────────────
+  // Antes de confirmar, avisa si hay una suscripción activa: al eliminar la
+  // cuenta se cancela y ya no se cobra (o, si es de Apple, cómo cancelarla).
+  async function revisarSuscripcionAntesDeEliminar() {
+    const aviso = document.getElementById('pd-del-sub-aviso');
+    const tok = getToken();
+    if (!aviso || !tok) return;
+    aviso.style.display = 'none';
+    try {
+      const r = await fetch(API_BASE + '/usuario/eliminar-cuenta/suscripcion', {
+        headers: { Authorization: 'Bearer ' + tok }
+      });
+      const d = await r.json().catch(() => ({}));
+      const msg = r.ok ? (d && d.activa ? d.mensaje : '') : (d && d.detail) || '';
+      if (msg) { aviso.textContent = msg; aviso.style.display = ''; }
+    } catch (_) {}
+  }
+
   // Habilita el botón solo cuando el correo escrito coincide con el de la cuenta.
   function checkDeleteMatch() {
     const inp = document.getElementById('pd-del-input');
@@ -3752,10 +3771,17 @@ body[data-app="facebook-ads"]{--page-max:980px}
       });
       const d = await r.json().catch(() => ({}));
       // Solo damos por buena la baja si el usuario de Auth se eliminó de verdad.
-      if (!r.ok || (d && d.borrados && d.borrados.auth === false)) throw new Error('delete failed');
+      // Si no se pudo cancelar la suscripción, el servidor no borra nada y
+      // explica por qué en `detail`: se lo mostramos tal cual.
+      if (!r.ok || (d && d.borrados && d.borrados.auth === false)) {
+        const err = new Error('delete failed');
+        err.detalle = d && typeof d.detail === 'string' ? d.detail : '';
+        throw err;
+      }
       // Confirmación visible (también para la grabación de App Review).
       const card = btn ? btn.closest('.bk-pd-card') : null;
-      if (card) card.innerHTML = '<p style="font-size:14px;color:var(--ink);line-height:1.5">Tu cuenta y todos tus datos fueron eliminados permanentemente.</p>';
+      const cancelada = d && d.borrados && Array.isArray(d.borrados.stripe) && d.borrados.stripe.length;
+      if (card) card.innerHTML = '<p style="font-size:14px;color:var(--ink);line-height:1.5">Tu cuenta y todos tus datos fueron eliminados permanentemente.' + (cancelada ? ' Tu suscripción quedó cancelada y ya no se te cobrará.' : '') + ' Te enviamos un correo de confirmación.</p>';
       // Limpiar sesión y salir.
       localStorage.removeItem('sb_token');
       localStorage.removeItem('sb_refresh');
@@ -3765,7 +3791,7 @@ body[data-app="facebook-ads"]{--page-max:980px}
       sessionStorage.clear();
       setTimeout(() => { location.href = 'login.html'; }, 1800);
     } catch (e) {
-      if (toast) { toast.textContent = 'No se pudo eliminar la cuenta. Intenta de nuevo o escríbenos a soporte.'; toast.className = 'bk-pd-toast err'; }
+      if (toast) { toast.textContent = (e && e.detalle) || 'No se pudo eliminar la cuenta. Intenta de nuevo o escríbenos a soporte.'; toast.className = 'bk-pd-toast err'; }
       if (btn) { btn.style.pointerEvents = 'auto'; btn.style.opacity = ''; btn.textContent = 'Eliminar mi cuenta permanentemente'; }
     }
   }

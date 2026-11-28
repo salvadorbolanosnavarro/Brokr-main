@@ -796,12 +796,21 @@
 })();
 
 async function confirmEliminarCuenta() {
-  if (!confirm('¿Eliminar tu cuenta y TODOS tus datos? Esta acción es irreversible.')) return;
-  const txt = prompt('Para confirmar, escribe ELIMINAR en mayúsculas:');
-  if (txt !== 'ELIMINAR') { alert('Cancelado.'); return; }
   const tok = localStorage.getItem('sb_token') || sessionStorage.getItem('sb_token');
   if (!tok) { alert('Tu sesión expiró. Vuelve a iniciar sesión.'); return; }
   const API = window.API_BASE || 'https://api.broquer.app';
+  // Si hay una suscripción activa, se avisa antes de confirmar.
+  let aviso = '';
+  try {
+    const rs = await fetch(API + '/usuario/eliminar-cuenta/suscripcion', {
+      headers: { Authorization: 'Bearer ' + tok }
+    });
+    const ds = await rs.json().catch(() => ({}));
+    aviso = rs.ok ? (ds && ds.activa ? ds.mensaje : '') : (ds && ds.detail) || '';
+  } catch (_) {}
+  if (!confirm((aviso ? aviso + '\n\n' : '') + '¿Eliminar tu cuenta y TODOS tus datos? Esta acción es irreversible.')) return;
+  const txt = prompt('Para confirmar, escribe ELIMINAR en mayúsculas:');
+  if (txt !== 'ELIMINAR') { alert('Cancelado.'); return; }
   try {
     const r = await fetch(API + '/usuario/eliminar-cuenta', {
       method: 'DELETE',
@@ -811,10 +820,11 @@ async function confirmEliminarCuenta() {
     if (!r.ok) throw new Error(d.detail || ('Error ' + r.status));
     localStorage.clear();
     sessionStorage.clear();
-    alert('Tu cuenta y datos fueron eliminados. Gracias por probar Broquer.');
+    const cancelada = d && d.borrados && Array.isArray(d.borrados.stripe) && d.borrados.stripe.length;
+    alert('Tu cuenta y datos fueron eliminados.' + (cancelada ? ' Tu suscripción quedó cancelada y ya no se te cobrará.' : '') + ' Te enviamos un correo de confirmación.');
     location.href = 'login.html';
   } catch (e) {
-    alert('No se pudo eliminar la cuenta. ' + (e.message || e));
+    alert(e.message || 'No se pudo eliminar la cuenta. Intenta de nuevo o escríbenos a soporte.');
   }
 }
 </script>
