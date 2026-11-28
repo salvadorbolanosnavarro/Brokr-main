@@ -1,69 +1,60 @@
-"""Permanent guards for self-account deletion PostgREST routing through Core."""
+"""Permanent guards for self-account deletion ("Eliminar mi cuenta").
+
+The deletion must be atomic: it goes through the same database function as
+the admin console (``admin_eliminar_usuario_total``), so either everything is
+deleted (including ``auth.users``) or nothing is. The old sequence deleted
+tables one by one, then ``usuarios``, then ``auth.users`` separately; for any
+organization owner the last step failed (``organizaciones.owner_id`` is ON
+DELETE RESTRICT) and left a live account with no ``usuarios`` row and no
+subscription.
+"""
 from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-MAIN = ROOT / "main.py"
 ROUTER = ROOT / "routers" / "account_delete.py"
 
 
-class MainSelfAccountDeleteCoreRefactorTests(unittest.TestCase):
+class SelfAccountDeleteAtomicTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source = MAIN.read_text(encoding="utf-8")
-        router = ROUTER.read_text(encoding="utf-8") if ROUTER.exists() else ""
-        # Keep this guard valid across the prepared -> applied extraction edge.
-        # Before extraction, assert against the exact legacy main.py block. After
-        # extraction, assert against the statically equivalent domain router.
-        if 'async def eliminar_cuenta_y_datos(' in cls.source:
-            marker = 'tablas = ["propiedades", "contactos", "contratos", "user_integrations",'
-            start = cls.source.rfind('@app.', 0, cls.source.index(marker))
-            end = cls.source.find('\n\n@app.', start + 1)
-            if end == -1:
-                end = len(cls.source)
-            cls.block = cls.source[start:end]
-        else:
-            cls.block = router
+        cls.block = ROUTER.read_text(encoding="utf-8")
 
-    def test_subscription_lookup_uses_exact_200_service_read(self):
-        block = self.block
-        self.assertIn('sub_rows = await get_service_json(', block)
-        self.assertIn('"suscripciones"', block)
-        self.assertIn('accepted_statuses=(200,)', block)
-        self.assertIn('except httpx.HTTPStatusError:\n                    sub_rows = []', block)
-        self.assertNotIn('/rest/v1/suscripciones', block)
+    def test_uses_atomic_rpc(self):
+        self.assertIn('"admin_eliminar_usuario_total"', self.block)
+        self.assertIn('{"p_user_id": user_id}', self.block)
 
-    def test_photo_lookup_uses_exact_200_service_read_before_storage_deletes(self):
+    def test_no_piecemeal_table_or_auth_deletes(self):
         block = self.block
-        self.assertIn('filas_fotos = await get_service_json(', block)
-        self.assertIn('"propiedades"', block)
-        self.assertIn('accepted_statuses=(200,)', block)
-        self.assertNotIn('/rest/v1/propiedades', block)
-        self.assertLess(block.index('filas_fotos = await get_service_json('), block.index('/storage/v1/object/fotos-propiedades/'))
+        self.assertNotIn("delete_rows(", block)
+        self.assertNotIn("for tabla in tablas", block)
+        self.assertNotIn("/auth/v1/admin/users/", block)
+        self.assertNotIn("/rest/v1/", block)
 
-    def test_table_deletes_preserve_ledger_and_exact_status_contract(self):
+    def test_rpc_failure_is_an_http_error_not_ok_true(self):
         block = self.block
-        self.assertIn('for tabla in tablas:', block)
-        self.assertIn('await delete_rows(\n                    tabla,', block)
-        self.assertIn('{"user_id": f"eq.{user_id}"}', block)
-        self.assertIn('accepted_statuses=(200, 204)', block)
-        self.assertIn('errores.append(f"{tabla}: {e.response.status_code} {e.response.text[:120]}")', block)
-        self.assertIn('except Exception as e:\n                errores.append(f"{tabla}: {e}")', block)
-        self.assertNotIn('/rest/v1/{tabla}', block)
+        rpc = block.index('"admin_eliminar_usuario_total"')
+        ok = block.index('return {"ok": True')
+        self.assertIn("raise HTTPException(\n            status_code=500", block[rpc:ok])
+        self.assertIn('resultado.get("ok")', block[rpc:ok])
 
-    def test_usuario_delete_preserves_http_fail_without_error_entry(self):
+    def test_subscription_and_photos_are_read_before_the_delete(self):
         block = self.block
-        self.assertIn('await delete_rows(\n                "usuarios",', block)
-        self.assertIn('{"id": f"eq.{user_id}"}', block)
-        self.assertIn('except httpx.HTTPStatusError:', block)
-        self.assertIn('borrados["usuarios"] = False', block)
-        self.assertNotIn('/rest/v1/usuarios?id=eq.', block)
+        rpc = block.index('"admin_eliminar_usuario_total"')
+        self.assertLess(block.index("sub_rows = await get_service_json("), rpc)
+        self.assertLess(block.index("rutas_fotos = await _storage_rutas_fotos_de_usuario("), rpc)
 
-    def test_storage_and_auth_apis_remain_separate_from_postgrest_core(self):
+    def test_stripe_cancel_and_storage_only_after_confirmed_delete(self):
         block = self.block
-        self.assertIn('/storage/v1/object/fotos-propiedades/', block)
-        self.assertIn('/auth/v1/admin/users/{user_id}', block)
-        self.assertNotIn('/rest/v1/', block)
+        rpc = block.index('"admin_eliminar_usuario_total"')
+        self.assertGreater(block.index("https://api.stripe.com/v1/subscriptions/"), rpc)
+        self.assertGreater(block.index("await _storage_borrar_carpeta_usuario("), rpc)
+
+    def test_frontend_contract_keys_preserved(self):
+        block = self.block
+        self.assertIn('borrados["auth"] = True', block)
+        self.assertIn('"borrados": borrados', block)
+        self.assertIn('"errores": errores', block)
 
 
 if __name__ == "__main__":

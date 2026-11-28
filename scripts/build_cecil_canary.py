@@ -47,6 +47,8 @@ def build(output):
     allowed_changes.update({'core/cors.py','tests/test_cors_modes.py','cloudflare/cecil-app-worker.js'})
     # Server-side document branding (Cecil asks for brand=cecil): backend only.
     allowed_changes.update({'core/marca_documentos.py','core/marca_assets/cecil-wordmark.png','routers/ficha_pdf_renderer.py','routers/finanzas.py','tests/test_marca_documentos.py'})
+    # Backend-only atomic self-delete fix + its test and SQL check: never part of the Cecil artifact.
+    allowed_changes.update({'routers/account_delete.py','tests/test_main_self_account_delete_core_refactor.py','sql-manual/20261128-usuarios-huerfanos.sql'})
     changed=set(git('diff','--name-only',BASE_REF,'HEAD').decode().splitlines())
     if changed - allowed_changes:
         raise ValueError('Production advanced: integrate it into the design snapshot and update the pinned base before building.')
