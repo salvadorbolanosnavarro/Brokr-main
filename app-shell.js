@@ -3307,11 +3307,11 @@ body[data-app="facebook-ads"]{--page-max:980px}
               <div class="bk-pd-menu-panel-inner">
                 <div class="bk-pd-card">
                   <p style="font-size:13px;color:var(--mute);line-height:1.5;margin-bottom:12px">Esta acción elimina de forma permanente tu cuenta y todos tus datos (propiedades, contactos, contratos e integraciones). No se puede deshacer.</p>
-                  <p id="pd-del-sub-aviso" style="display:none;font-size:13px;color:var(--ink);background:rgba(220,38,38,.08);border-radius:10px;padding:10px 12px;line-height:1.5;margin-bottom:12px"></p>
                   <div class="bk-pd-field">
                     <label>Para confirmar, escribe tu correo</label>
                     <input type="email" id="pd-del-input" placeholder="tu@correo.com" autocomplete="off" autocorrect="off" spellcheck="false" oninput="checkDeleteMatch()"/>
                   </div>
+                  <p id="pd-del-sub-aviso" style="display:none;font-size:13px;color:var(--ink);background:rgba(220,38,38,.08);border-radius:10px;padding:10px 12px;line-height:1.5;margin-bottom:12px"></p>
                   <button class="bk-pd-btn bk-pd-btn-danger" id="pd-del-confirm-btn" onclick="ejecutarEliminarCuenta()" style="opacity:.4;pointer-events:none">Eliminar mi cuenta permanentemente</button>
                   <div class="bk-pd-toast" id="pd-toast-del"></div>
                 </div>
