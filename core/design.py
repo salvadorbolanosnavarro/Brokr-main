@@ -28,15 +28,48 @@ def theme_css() -> str:
     return css
 
 
-@lru_cache(maxsize=1)
-def theme_tokens() -> dict[str, str]:
-    """Parse CSS custom properties from the canonical theme."""
+def load_theme_tokens(path: Path) -> dict[str, str]:
+    """Read local imported tokens and resolve aliases for non-browser renderers.
+
+    Parent declarations keep the existing precedence. Remote imports are never
+    fetched; imports must stay inside the theme directory.
+    """
     tokens: dict[str, str] = {}
-    for name, value in _TOKEN.findall(theme_css()):
-        tokens.setdefault(name, value.strip())
+    root = path.resolve().parent
+    visited: set[Path] = set()
+    def collect(source: Path) -> None:
+        source = source.resolve()
+        source.relative_to(root)
+        if source in visited:
+            return
+        visited.add(source)
+        css = re.sub(r"/\*.*?\*/", "", source.read_text(encoding="utf-8"), flags=re.S)
+        for name, value in _TOKEN.findall(css):
+            tokens.setdefault(name, value.strip())
+        for imported in re.findall(r"@import\s+url\([\"']([^\"']+)[\"']\)", css):
+            if ":" not in imported and imported.endswith(".css"):
+                collect(source.parent / imported)
+    collect(path)
     if not tokens:
         raise RuntimeError("Canonical Broquer theme does not expose CSS tokens")
-    return tokens
+    resolved: dict[str, str] = {}
+    reference = re.compile(r"var\(\s*--([\w-]+)(?:\s*,\s*([^()]+))?\)")
+    def resolve(name: str, seen: frozenset[str] = frozenset()) -> str:
+        if name in resolved:
+            return resolved[name]
+        if name in seen:
+            raise RuntimeError("Cyclic design token: " + name)
+        value = reference.sub(lambda m: resolve(m[1], seen | {name}) if m[1] in tokens else (m[2] or m[0]), tokens[name])
+        resolved[name] = value
+        return value
+    return {name: resolve(name) for name in tokens}
+
+
+@lru_cache(maxsize=1)
+def theme_tokens() -> dict[str, str]:
+    """Return concrete canonical token values, including local imports."""
+    theme_css()
+    return load_theme_tokens(_THEME_PATH)
 
 
 def require_theme_tokens(names: Iterable[str]) -> dict[str, str]:

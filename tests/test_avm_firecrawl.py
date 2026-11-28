@@ -258,5 +258,18 @@ class SoloDominiosInmobiliariosTests(unittest.TestCase):
         self.assertFalse(any("elpais.com" in u for u in urls))
 
 
+class StagingSourceSafetyTests(unittest.TestCase):
+    def test_omitted_integrations_do_not_poison_avm_response_or_call_scrapers(self):
+        import os
+        from core import side_effects
+        urls=['https://www.easybroker.com/mx/listing/test','https://www.facebook.com/property/test','https://www.instagram.com/property/test']
+        token=side_effects._events.set([])
+        try:
+            with mock.patch.dict(os.environ, {'BROQUER_ENV':'staging'},clear=True):
+                pages,_,_=correr([{'url':u} for u in urls],lambda u:self.fail('DIRECT FETCH'),lambda u:self.fail('INDIRECT FETCH'))
+            self.assertEqual([p['fetch_status'] for p in pages],['skipped_staging_integration']*3)
+            self.assertEqual(side_effects._events.get(),[])
+        finally:side_effects._events.reset(token)
+
 if __name__ == "__main__":
     unittest.main()

@@ -50,13 +50,10 @@
   box-shadow: var(--shadow-md);
 }
 .bp-sugerencia {
-  display: block; width: 100%; text-align: left;
-  padding: 9px 11px; border: none; background: none; cursor: pointer;
-  font-family: inherit; font-size: var(--fs-sm); color: var(--ink);
+  display: block; width: 100%; text-align: left; cursor: pointer;
   border-bottom: 1px solid var(--line);
 }
 .bp-sugerencia:last-child { border-bottom: none; }
-.bp-sugerencia:hover { background: var(--paper-2); }
 .bp-sugerencia--vacio { color: var(--mute); cursor: default; }
 .bp-sugerencia--vacio:hover { background: none; }
 .bp-cliente-elegido {
@@ -64,9 +61,7 @@
   margin-top: var(--sp-2); font-size: var(--fs-sm); color: var(--ink-2);
 }
 .bp-cliente-elegido.is-on { display: flex; }
-.bp-cliente-elegido button {
-  background: none; border: none; color: var(--mute); cursor: pointer;
-  font-size: var(--fs-xs); text-decoration: underline;
+.bp-cliente-elegido button { cursor: pointer; text-decoration: underline;
 }
 
 .bp-guardar-fila { display: none; }
@@ -96,6 +91,16 @@
 
 .bp-skel { height: 92px; background: var(--paper-2); border-radius: var(--r-md); }
 </style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="buscador">
 

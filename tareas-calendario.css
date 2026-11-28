@@ -27,7 +27,7 @@
 .tkc-mas { font-size: var(--fs-caption); color: var(--mute); margin-top: 2px; padding-left: 4px; }
 @media (max-width: 640px) {
   .tkc-dia { min-height: 64px; padding: 2px; }
-  .tkc-dia .tkc-ev { padding: 2px 3px 2px 6px; font-size: 10px; }
+  .tkc-dia .tkc-ev { padding: 2px 3px 2px 6px; font-size: var(--ui-text-xs); }
   .tkc-dia .tkc-ev::before { width: 3px; }
 }
 .tkc-semana { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--sp-2); }

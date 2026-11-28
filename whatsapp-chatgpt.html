@@ -17,11 +17,7 @@
     .wac-sub { color:var(--ink-2); font-size:var(--fs-body); line-height:var(--lh); max-width:850px; }
     .wac-actions,.wac-row { display:flex; gap:var(--sp-2); flex-wrap:wrap; align-items:center; }
     .wac-actions { margin-top:var(--sp-5); }
-    .wac-btn { min-height:var(--h-sm); border:1px solid var(--line-2); background:var(--paper); color:var(--ink); border-radius:var(--r-sm); padding:0 var(--sp-4); font:700 var(--fs-sm)/1 var(--font-sans); cursor:pointer; text-decoration:none; transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease); }
-    .wac-btn:hover { background:var(--paper-2); border-color:var(--sky-blue-lift); }
-    .wac-btn.primary { background:var(--sky-blue); border-color:var(--sky-blue); color:var(--paper); }
-    .wac-btn.primary:hover { background:var(--sky-blue-press); border-color:var(--sky-blue-press); }
-    .wac-btn.green { background:var(--success); border-color:var(--success); color:var(--paper); }
+    .wac-btn { cursor:pointer; text-decoration:none; transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease); }
     .wac-btn:disabled { opacity:.5; cursor:not-allowed; }
     .wac-status { padding:var(--sp-5); display:grid; gap:var(--sp-4); }
     .wac-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-2); }
@@ -32,7 +28,7 @@
     .wac-head { padding:var(--sp-4); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
     .wac-head h2 { font-size:var(--fs-sm); margin:0; }
     .wac-body { padding:var(--sp-4); }
-    .wac-number { width:100%; border:1px solid var(--line); background:var(--paper); border-radius:var(--r); padding:var(--sp-3); text-align:left; margin-bottom:var(--sp-2); cursor:pointer; display:flex; gap:var(--sp-3); align-items:center; font-family:var(--font-sans); }
+    .wac-number { width:100%; border:1px solid var(--line); background:var(--paper); border-radius:var(--ui-radius); padding:var(--sp-3); text-align:left; margin-bottom:var(--sp-2); cursor:pointer; display:flex; gap:var(--sp-3); align-items:center; font-family:var(--font-sans); }
     .wac-number:hover { background:var(--paper-2); }
     .wac-number.is-active { background:var(--sky-canvas); border-color:var(--sky-blue); }
     .wac-avatar { width:40px; height:40px; border-radius:var(--r-sm); background:var(--sky-navy); color:var(--paper); display:grid; place-items:center; font-weight:800; }
@@ -67,6 +63,16 @@
     @media (max-width:1100px) { .wac-hero,.wac-grid { grid-template-columns:1fr; } .wac-feed { max-height:none; } }
     @media (max-width:720px) { .wac-page { padding:var(--sp-3) var(--sp-3) var(--sp-20); } .wac-kpis { grid-template-columns:1fr; } .wac-msg { max-width:92%; } .wac-title{font-size:var(--fs-h1);line-height:var(--lh-h1);} }
   </style>
+<link rel="stylesheet" href="styles/mobile-inputs.css">
+<script defer src="mobile-inputs.js"></script>
+<link rel="stylesheet" href="ui/tokens.css">
+<link rel="stylesheet" href="ui/date-picker.css">
+<script defer src="ui/date-picker.js"></script>
+<link rel="stylesheet" href="ui/actions.css">
+<script defer src="ui/actions.js"></script>
+<link rel="stylesheet" href="ui/fields.css">
+<link rel="stylesheet" href="ui/overlays.css">
+<script defer src="ui/overlays.js"></script>
 </head>
 <body data-app="whatsapp-chatgpt">
   <main class="wac-page">

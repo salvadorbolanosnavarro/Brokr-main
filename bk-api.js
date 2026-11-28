@@ -60,3 +60,32 @@
     setTimeout(function () { t.remove(); }, 3200);
   };
 })();
+
+// Shared accessible states. All text is inserted as text, including API errors.
+window.bkRenderState = function (target, kind, options) {
+  var host = typeof target === 'string' ? document.getElementById(target) : target;
+  if (!host) return;
+  options = options || {};
+  host.dataset.state = kind;
+  host.setAttribute('aria-busy', String(kind === 'loading'));
+  var box = document.createElement('div');
+  box.className = 'bk-state bk-state--' + kind;
+  box.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+  var mark = document.createElement('span');
+  mark.className = 'bk-state__mark'; mark.setAttribute('aria-hidden', 'true');
+  mark.textContent = kind === 'error' ? '!' : kind === 'empty' ? '—' : '';
+  var title = document.createElement('p'); title.className = 'bk-state__title';
+  title.textContent = options.title || (kind === 'loading' ? 'Cargando…' : 'Sin resultados');
+  box.append(mark, title);
+  if (options.detail) {
+    var detail = document.createElement('p'); detail.className = 'bk-state__detail';
+    detail.textContent = options.detail; box.appendChild(detail);
+  }
+  if (options.onRetry) {
+    var retry = document.createElement('button'); retry.type = 'button';
+    retry.className = 'bk-btn bk-btn--ghost'; retry.textContent = 'Volver a intentar';
+    retry.onclick = function () { retry.disabled = true; options.onRetry(); };
+    box.appendChild(retry);
+  }
+  host.replaceChildren(box);
+};

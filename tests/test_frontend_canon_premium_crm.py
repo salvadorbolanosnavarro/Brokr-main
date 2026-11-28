@@ -21,14 +21,16 @@ class PremiumPropertiesContactsTests(unittest.TestCase):
     def test_propiedades_has_editorial_catalog_hierarchy(self):
         self.assertIn('.prop-card-img { aspect-ratio: 16 / 10; }', self.premium)
         self.assertIn('font-size: var(--fs-h2);\n  font-weight: 800;', self.premium)
-        self.assertIn('.prop-act-btn {\n  height: var(--h-sm);\n  border: 0;', self.premium)
+        self.assertIn('height:var(--ui-control-small)', (ROOT/'ui/actions.css').read_text())
+        self.assertIn('data-ui-size=small', (ROOT/'ui/actions.css').read_text())
         self.assertIn('.props-toolbar {\n  gap: var(--sp-2);', self.premium)
 
     def test_contactos_is_dense_on_desktop(self):
         self.assertIn('.page-head {\n  position: relative;', self.premium)
         self.assertIn('.contact-card {\n  min-height: 72px;', self.premium)
         self.assertIn('border-radius: 0;\n  background: var(--paper);', self.premium)
-        self.assertIn('.ftab.active {\n  color: var(--ink);\n  border-bottom-color: var(--sky-blue);', self.premium)
+        self.assertIn('[data-ui-kind=tab][data-ui-selected=true]', (ROOT/'ui/actions.css').read_text())
+        self.assertIn('border-bottom-color:var(--ui-ink)', (ROOT/'ui/actions.css').read_text())
 
     def test_contactos_restores_touch_cards_on_mobile(self):
         mobile = self.premium.split('@media (max-width: 720px)', 1)[1]

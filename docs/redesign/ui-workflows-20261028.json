@@ -1,0 +1,39 @@
+{
+  "mode": "demo",
+  "results": [
+    {
+      "width": 1440,
+      "passed": true,
+      "checks": [
+        "repeatable contact phone",
+        "modal footer visible",
+        "Escape/focus restoration",
+        "contact save/reload",
+        "zero-selection bulk hidden",
+        "property labels not covered",
+        "multiple operations retained",
+        "Spanish date display and ISO change handler",
+        "keyboard date selection",
+        "date bounds and disabled state"
+      ],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "passed": true,
+      "checks": [
+        "repeatable contact phone",
+        "modal footer visible",
+        "Escape/focus restoration",
+        "contact save/reload",
+        "zero-selection bulk hidden",
+        "property labels not covered",
+        "multiple operations retained",
+        "Spanish date display and ISO change handler",
+        "keyboard date selection",
+        "date bounds and disabled state"
+      ],
+      "errors": []
+    }
+  ]
+}

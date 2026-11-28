@@ -7,6 +7,7 @@ file is temporarily unavailable while the monolith is decomposed.
 from __future__ import annotations
 
 from pathlib import Path
+from core.design import load_theme_tokens
 import re
 
 
@@ -27,8 +28,8 @@ _THEME_TOKENS_FALLBACK = """
   --success:#0E9F6E; --success-soft:rgba(14,159,110,0.12);
   --info:#0A5DE0; --info-soft:rgba(10,93,224,0.10);
   --r-xs:8px; --r-sm:12px; --r:14px; --r-lg:22px; --r-xl:26px; --r-pill:999px;
-  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
-  --font-display:'Inter',-apple-system,BlinkMacSystemFont,system-ui,Roboto,sans-serif;
+  --font-sans:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,'Helvetica Neue',sans-serif;
+  --font-display:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,Roboto,sans-serif;
 """
 
 
@@ -37,10 +38,8 @@ def _theme_tokens() -> str:
     if _theme_tokens_cache is not None:
         return _theme_tokens_cache
     try:
-        css = _THEME_PATH.read_text(encoding="utf-8")
-        css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
-        blocks = re.findall(r":root\s*\{([^{}]*)\}", css)
-        decls = "\n".join(b.strip() for b in blocks if b.strip())
+        values = load_theme_tokens(_THEME_PATH)
+        decls = "\n".join(f"--{name}:{value};" for name, value in values.items())
         for required in ("--ink", "--sky-navy", "--sky-blue", "--font-sans"):
             if required not in decls:
                 raise ValueError(f"brokr-theme.css sin {required}")
@@ -54,7 +53,7 @@ def _theme_tokens() -> str:
 def theme_css_for_pdf(extra: str = "") -> str:
     return (
         "@import url('https://fonts.googleapis.com/css2?"
-        "family=Inter:opsz,wght@14..32,400..800&display=swap');\n"
+        "family=Manrope:wght@400;600;700&display=swap');\n"
         ":root{\n" + _theme_tokens() + "\n}\n"
         "/* Overrides del documento impreso: el papel es blanco (el canvas\n"
         "   azul de la app no aplica) y los radios son de documento. */\n"

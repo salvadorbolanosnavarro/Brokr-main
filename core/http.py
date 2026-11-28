@@ -122,6 +122,9 @@ async def fetch_public_http_result(
         headers=headers,
     ) as client:
         for redirect_count in range(max_redirects + 1):
+            from core.side_effects import market_read_blocked
+            if market_read_blocked(current):
+                raise UnsafePublicURL("Integration source omitted by staging safety policy")
             await assert_public_http_url(current)
             async with client.stream("GET", current) as response:
                 if response.status_code in _REDIRECTS:

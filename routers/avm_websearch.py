@@ -1035,6 +1035,9 @@ async def _fetch_candidate_pages(
     async def one(item: Dict[str, Any]) -> Dict[str, Any]:
         url = item.get("url", "")
         host = _host(url)
+        from core.side_effects import market_read_blocked
+        if market_read_blocked(url):
+            return {**item, "fetch_status": "skipped_staging_integration", "page_text": ""}
         if any(bad in host for bad in BLOCKED_FETCH_DOMAINS):
             return {**item, "fetch_status": "skipped_domain", "page_text": ""}
 
