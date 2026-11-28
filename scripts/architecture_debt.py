@@ -84,7 +84,10 @@ LARGE_FILE_MAX_BYTES = {
     # valuación + PDF del chat, que ahora arma un ACM). Deuda pagada.
     # Bumped 82 bytes: hidden:true (con su comentario) en la entrada 'acm'
     # mientras el módulo se perfecciona — pedido del usuario, no debt.
-    "app-shell.js": 259_318,
+    # Bumped 1,524 bytes: "Eliminar mi cuenta" avisa antes de confirmar si
+    # hay una suscripción activa y muestra por qué no se pudo eliminar
+    # (cancelación fallida) — pedido del usuario, no debt.
+    "app-shell.js": 260_842,
     "whatsapp.py": 223_594,
     "contratos.html": 156_081,
     # Bumped 5,747 bytes: los cambios de estatus, notas, comisión real y
@@ -203,7 +206,10 @@ LARGE_FILE_MAX_BYTES = {
     # Bumped 1,234 bytes: la cláusula 9.3 pasa del AVM retirado al ACM
     # (cómo se arma el análisis y quién responde por lo que se presenta al
     # propietario) — texto legal pedido por el usuario, no debt.
-    "legal.html": 118_173,
+    # Bumped 636 bytes: la cláusula 14.1 aclara que eliminar la cuenta
+    # cancela la suscripción al cierre del periodo pagado — texto legal
+    # pedido por el usuario, no debt.
+    "legal.html": 118_809,
     # Nuevo en el inventario: el detalle de usuario de la Consola de admin
     # incorporó "Acceso completo fuera del equipo" y "Módulos habilitados
     # para esta cuenta" (PR #79), lo que cruzó admin.html el umbral de
