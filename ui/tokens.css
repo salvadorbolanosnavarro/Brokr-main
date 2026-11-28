@@ -3,7 +3,7 @@
 @font-face{font-family:Manrope;src:url('../fonts/manrope-700.ttf') format('truetype');font-weight:700;font-display:swap}
 :root{
  --ui-font:Manrope,Arial,sans-serif;
- --ui-ink:#191C1F;--ui-muted:#59636C;--ui-paper:#FFFFFF;--ui-surface:#F5F7F8;--ui-sky:#E8F4FA;--ui-border:#D5D9DD;--ui-action:#FF9257;--ui-action-hover:#F57E3A;--ui-danger:#B42318;--ui-danger-soft:#FFF1F0;
+ --ui-ink:#191C1F;--ui-muted:#59636C;--ui-paper:#FFFFFF;--ui-surface:#F5F7F8;--ui-sky:#FFF0E6;--ui-border:#D5D9DD;--ui-action:#FF9257;--ui-action-hover:#F57E3A;--ui-danger:#B42318;--ui-danger-soft:#FFF1F0;
  --ui-text-xs:12px;--ui-text-meta:13px;--ui-text-sm:14px;--ui-text-base:14px;--ui-text-lg:16px;--ui-text-section:16px;--ui-text-kpi:28px;--ui-text-mobile:24px;--ui-text-title:28px;
  --ui-space-1:4px;--ui-space-2:8px;--ui-space-3:12px;--ui-space-4:16px;--ui-space-6:24px;--ui-space-8:32px;--ui-space-12:48px;
  --ui-control:40px;--ui-control-small:36px;--ui-radius:8px;--ui-radius-card:12px;--ui-line:1px;--ui-stroke:2px;--ui-gutter-mobile:20px;--ui-content:1256px;--ui-modal:720px;--ui-panel:420px;--ui-icon:20px;--ui-layer:100;--ui-overlay:#191C1F66;--ui-shadow:0 16px 48px #191C1F22;--ui-page-gap:24px;--ui-row:56px;

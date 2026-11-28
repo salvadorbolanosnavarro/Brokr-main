@@ -924,7 +924,7 @@
     if (!d || !h) { toast('Elige el periodo.', 'error'); return; }
     btn.classList.add('is-loading');
     try {
-      var r = await api('/finanzas/reporte', { method: 'POST', json: { desde: d, hasta: h } });
+      var r = await api('/finanzas/reporte', { method: 'POST', json: { desde: d, hasta: h, brand: 'cecil' } }); // informe con la marca de Cecil
       window.open(API_BASE + '/finanzas/reporte/' + encodeURIComponent(r.token), '_blank');
       cerrarOverlay('fin-ov-rep');
     } catch (e) { toast(e.message, 'error'); }
