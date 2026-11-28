@@ -3,22 +3,23 @@ from __future__ import annotations
 
 import base64
 
+from core.marca_documentos import logo_data_uri, marca as _marca, sin_azul
 from core.pdf_design import theme_css_for_pdf
 
 
-def _qr_svg(url: str) -> str:
+def _qr_svg(url: str, tinta: str = "#14213d") -> str:
     """QR como data URI SVG (sin red). Vacío si segno no está instalado."""
     try:
         import segno
     except Exception:
         return ""
     try:
-        return segno.make(url, error="m").svg_data_uri(scale=3, border=1, dark="#14213d")
+        return segno.make(url, error="m").svg_data_uri(scale=3, border=1, dark=tinta)
     except Exception:
         return ""
 
 
-def _multimedia_html(videos: list, tours: list) -> str:
+def _multimedia_html(videos: list, tours: list, tinta: str = "#14213d") -> str:
     """Bloque de la ficha con ligas de video/tour y su QR."""
     from html import escape
     items = []
@@ -27,7 +28,7 @@ def _multimedia_html(videos: list, tours: list) -> str:
             url = str(url or "").strip()
             if not url.startswith("https://"):
                 continue
-            qr = _qr_svg(url)
+            qr = _qr_svg(url, tinta)
             items.append(
                 '<div class="mm-item">{}<div class="mm-txt"><div class="char-lbl">{}</div>'
                 '<a class="mm-url" href="{}">{}</a></div></div>'.format(
@@ -42,6 +43,9 @@ def _multimedia_html(videos: list, tours: list) -> str:
 
 
 def build_ficha_html(p: dict, images_b64: dict) -> str:
+    # Marca del documento: Cecil la pide con "brand": "cecil"; sin ella, Broquer.
+    M = _marca(p.get("brand"))
+    NOMBRE = M["nombre"]
     """Plantilla editorial Broquer para la ficha técnica en PDF — edición Sky.
     Portada con tarjeta flotante sobre la foto, franja de specs con
     iconografía propia, galería en cuadrícula, características agrupadas
@@ -103,7 +107,7 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         except Exception:
             return ""
 
-    logo_white = asset_data_uri("logotipo-white.png")
+    logo_white = logo_data_uri(M)
 
     def fmt_m2(n):
         if not n:
@@ -162,14 +166,15 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
     photocount_html = ''
     if total_fotos:
         photocount_html = '<div class="cover-photocount">{}{} foto{}</div>'.format(ICO["photo"], total_fotos, "" if total_fotos == 1 else "s")
-    brandmark_html = '<div class="cover-brandmark"><img src="{}" alt="Broquer"/></div>'.format(logo_white) if logo_white else '<div class="cover-brandmark"><strong style="color:#fff">Broquer</strong></div>'
+    chip = ' cover-brandmark--chip' if M["logo_sobre_foto_chip"] else ''
+    brandmark_html = '<div class="cover-brandmark{}"><img src="{}" alt="{}"/></div>'.format(chip, logo_white, NOMBRE) if logo_white else '<div class="cover-brandmark"><strong style="color:#fff">{}</strong></div>'.format(NOMBRE)
 
     def footer(page_num, total_pages):
-        logo = '<img src="{}" alt="Broquer"/>'.format(logo_white) if logo_white else '<strong>Broquer</strong>'
+        logo = '<img src="{}" alt="{}"/>'.format(logo_white, NOMBRE) if logo_white else '<strong>{}</strong>'.format(NOMBRE)
         id_html = '<span class="ft-id">{}</span>'.format(id_prop) if id_prop else ''
         return (
             '<div class="ficha-footer">'
-            '<div class="ft-brand">{}<span>Powered by Broquer</span></div>'
+            '<div class="ft-brand">{}<span>Powered by ' + NOMBRE + '</span></div>'
             '<div class="ft-meta">{}<span>{} / {}</span></div>'
             '</div>'
         ).format(logo, id_html, page_num, total_pages)
@@ -259,7 +264,7 @@ def build_ficha_html(p: dict, images_b64: dict) -> str:
         amen_html = '<div class="chars-group amen-section"><div class="chars-group-ttl">Amenidades y extras</div><div class="amen-grid">{}</div></div>'.format(items)
 
     # ── Video y recorrido virtual: liga + QR para abrirlo desde el papel ──
-    mm_html = _multimedia_html(p.get("videos") or [], p.get("virtual_tours") or [])
+    mm_html = _multimedia_html(p.get("videos") or [], p.get("virtual_tours") or [], M["tinta"])
 
     chars_content = (
         '<div class="fp-kicker"><div class="fp-kicker-left"><div class="fp-kicker-ico">{}</div><h2>Características del inmueble</h2></div>'
@@ -363,7 +368,9 @@ body{font-family:var(--font-sans);background:var(--paper);color:var(--ink);-webk
 .ft-meta{display:flex;align-items:center;gap:10px;font-size:10px;color:rgba(255,255,255,.5)}
 .ft-id{letter-spacing:.03em}
 @page{size:A4 portrait;margin:0}
+.cover-brandmark--chip{height:30px;padding:6px 10px;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(25,28,31,.18)}
 """
+    CSS = sin_azul(M["fuentes"] + CSS + M["css"], M)
 
     return (
         "<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'/>"

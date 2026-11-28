@@ -772,8 +772,16 @@ _PDF_TOKENS = pdf_palette()
 _pdf_store: Dict[str, tuple] = {}
 
 
-def _html_reporte(nombre_periodo: str, agg: Dict[str, Any]) -> str:
-    t = _PDF_TOKENS
+def _html_reporte(nombre_periodo: str, agg: Dict[str, Any], brand: str | None = None) -> str:
+    from core.marca_documentos import logo_data_uri, marca
+    m = marca(brand)
+    t = dict(_PDF_TOKENS)
+    if m["clave"] == "cecil":
+        t["navy"] = m["tinta"]  # titles and rules in ink; orange only for the brand
+    logo = logo_data_uri(m) if m["clave"] == "cecil" else ""
+    marca_html = (f'<img src="{logo}" alt="{m["nombre"]}" style="height:26px;display:block"/>'
+                  if logo else m["nombre"])
+    sitio = "cecilapp.co" if m["clave"] == "cecil" else "broquer.app"
     filas_cat = "".join(
         f"<tr><td>{c['nombre']}</td>"
         f"<td class='num verde'>{_mx(c['ingreso']) if c['ingreso'] else '—'}</td>"
@@ -833,7 +841,7 @@ td{{padding:5px 8px;border-bottom:1px solid {t['line']};font-size:10.5px}}
   color:{t['mute']};font-size:9px}}
 </style></head><body>
 <div class="head">
-  <div><div class="marca">Broquer</div></div>
+  <div><div class="marca">{marca_html}</div></div>
   <div style="text-align:right">
     <div class="titulo">Informe financiero</div>
     <div class="periodo">{nombre_periodo}</div>
@@ -855,7 +863,7 @@ td{{padding:5px 8px;border-bottom:1px solid {t['line']};font-size:10.5px}}
 <th class="num">Gastos</th><th class="num">Utilidad</th></tr></thead>
 <tbody>{filas_mes}</tbody></table>
 {seccion_prop}
-<div class="pie">Generado con Broquer · broquer.app · Documento informativo,
+<div class="pie">Generado con {m["nombre"]} · {sitio} · Documento informativo,
 no constituye contabilidad fiscal ni sustituye a tu contador.</div>
 </body></html>"""
 
@@ -863,6 +871,7 @@ no constituye contabilidad fiscal ni sustituye a tu contador.</div>
 class ReporteIn(BaseModel):
     desde: str
     hasta: str
+    brand: Optional[str] = None  # "cecil" desde Cecil; sin valor, Broquer
 
 
 @router.post("/reporte")
@@ -893,7 +902,7 @@ async def generar_reporte(request: Request, body: ReporteIn):
     def _f(x: date) -> str:
         return x.strftime("%d/%m/%Y")
     nombre_periodo = f"Del {_f(d)} al {_f(h)}"
-    html = _html_reporte(nombre_periodo, agg)
+    html = _html_reporte(nombre_periodo, agg, body.brand)
 
     from playwright.async_api import async_playwright
     async with async_playwright() as pw:
